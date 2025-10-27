@@ -181,8 +181,9 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       setQueue(data || []);
       // Also update local storage as backup
       saveLocalQueue(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error fetching queue:', error);
+      console.error('Error details:', error?.message, error?.details, error?.hint);
       // Fall back to local storage
       setQueue(getLocalQueue());
     }
@@ -208,8 +209,9 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         // Also update local storage as backup
         saveLocalMachineState(data);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching machine state:', error);
+      console.error('Error details:', error?.message, error?.details, error?.hint);
       // Fall back to local storage
       setMachineState(getLocalMachineState());
     }
@@ -233,8 +235,9 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       setHistory(data || []);
       // Also update local storage as backup
       saveLocalHistory(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching history:', error);
+      console.error('Error details:', error?.message, error?.details, error?.hint);
       // Fall back to local storage
       setHistory(getLocalHistory());
     }
@@ -276,8 +279,9 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.from('queue').insert(newItem);
       if (error) throw error;
       console.log('✅ Successfully added to queue');
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error joining queue:', error);
+      console.error('Error details:', error?.message, error?.details, error?.hint, error?.code);
       // Fallback to local storage on error
       addToLocalQueue(user);
       fetchQueue(); // Refresh queue from local storage
