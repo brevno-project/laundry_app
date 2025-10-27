@@ -9,11 +9,12 @@ import HistoryList from '@/components/HistoryList';
 
 export default function Home() {
   const { user, isLoading } = useLaundry();
+  const isSupabaseConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-xl font-semibold">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
       </div>
     );
   }
@@ -23,6 +24,15 @@ export default function Home() {
       <header className="mb-8 text-center bg-gradient-to-r from-blue-600 to-blue-700 p-6 rounded-lg shadow-lg">
         <h1 className="text-4xl font-bold text-white mb-2">🧺 Dorm Laundry Queue</h1>
         <p className="text-blue-100 text-lg">Manage your laundry schedule efficiently</p>
+        <div className="mt-3">
+          <span className={`inline-block px-4 py-1 rounded-full text-sm font-semibold ${
+            isSupabaseConfigured 
+              ? 'bg-green-500 text-white' 
+              : 'bg-yellow-500 text-gray-900'
+          }`}>
+            {isSupabaseConfigured ? '✅ Real-time Mode (Supabase)' : '⚠️ Local Storage Mode (No Sync)'}
+          </span>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

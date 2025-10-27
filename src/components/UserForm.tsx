@@ -15,11 +15,16 @@ export default function UserForm() {
     }
   }, [user]);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (name.trim()) {
-      joinQueue(name.trim(), room.trim() || undefined);
+      await joinQueue(name.trim(), room.trim() || undefined);
     }
+  };
+
+  const handleResetUser = () => {
+    localStorage.clear();
+    window.location.reload();
   };
 
   return (
@@ -58,6 +63,13 @@ export default function UserForm() {
           className="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-blue-700 transition-colors shadow-md"
         >
           Join Queue
+        </button>
+        <button
+          type="button"
+          onClick={handleResetUser}
+          className="w-full bg-gray-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-gray-600 transition-colors mt-2"
+        >
+          🔄 Reset App (Switch Mode)
         </button>
       </form>
     </div>
