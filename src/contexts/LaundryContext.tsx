@@ -98,33 +98,44 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     if (isSupabaseConfigured) {
       try {
         if (!supabase) {
-          console.warn('Supabase client is not available for real-time updates');
+          console.warn('⚠️ Supabase client is not available for real-time updates');
           return;
         }
+        
+        console.log('🔌 Setting up Realtime subscriptions...');
         
         // Subscribe to queue changes
         const queueSubscription = supabase
           .channel('public:queue')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'queue' }, payload => {
+            console.log('🔔 Queue change detected:', payload);
             fetchQueue();
           })
-          .subscribe();
+          .subscribe((status) => {
+            console.log('Queue subscription status:', status);
+          });
         
         // Subscribe to machine state changes
         const machineStateSubscription = supabase
           .channel('public:machine_state')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'machine_state' }, payload => {
+            console.log('🔔 Machine state change detected:', payload);
             fetchMachineState();
           })
-          .subscribe();
+          .subscribe((status) => {
+            console.log('Machine state subscription status:', status);
+          });
         
         // Subscribe to history changes
         const historySubscription = supabase
           .channel('public:history')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'history' }, payload => {
+            console.log('🔔 History change detected:', payload);
             fetchHistory();
           })
-          .subscribe();
+          .subscribe((status) => {
+            console.log('History subscription status:', status);
+          });
         
         return () => {
           queueSubscription.unsubscribe();
@@ -153,22 +164,25 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   // Fetch queue from Supabase or local storage
   const fetchQueue = async () => {
     if (!isSupabaseConfigured || !supabase) {
+      console.log('📱 Using localStorage for queue');
       setQueue(getLocalQueue());
       return;
     }
     
     try {
+      console.log('🔄 Fetching queue from Supabase...');
       const { data, error } = await supabase
         .from('queue')
         .select('*')
         .order('joinedAt', { ascending: true });
       
       if (error) throw error;
+      console.log('✅ Queue fetched:', data);
       setQueue(data || []);
       // Also update local storage as backup
       saveLocalQueue(data || []);
     } catch (error) {
-      console.error('Error fetching queue:', error);
+      console.error('❌ Error fetching queue:', error);
       // Fall back to local storage
       setQueue(getLocalQueue());
     }
@@ -258,10 +272,12 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     }
     
     try {
+      console.log('➕ Adding to queue:', newItem);
       const { error } = await supabase.from('queue').insert(newItem);
       if (error) throw error;
+      console.log('✅ Successfully added to queue');
     } catch (error) {
-      console.error('Error joining queue:', error);
+      console.error('❌ Error joining queue:', error);
       // Fallback to local storage on error
       addToLocalQueue(user);
       fetchQueue(); // Refresh queue from local storage

@@ -54,3 +54,9 @@ CREATE POLICY "Allow authenticated insert access" ON public.machine_state FOR IN
 CREATE POLICY "Allow authenticated update access" ON public.machine_state FOR UPDATE WITH CHECK (true);
 
 CREATE POLICY "Allow authenticated insert access" ON public.history FOR INSERT WITH CHECK (true);
+
+-- Enable Realtime for tables
+-- This allows the Supabase Realtime server to broadcast changes
+ALTER PUBLICATION supabase_realtime ADD TABLE public.queue;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.machine_state;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.history;
