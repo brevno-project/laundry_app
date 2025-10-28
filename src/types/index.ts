@@ -1,5 +1,24 @@
+export type Student = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  room: string | null;
+  isRegistered: boolean;
+  registeredAt?: string;
+  createdAt: string;
+};
+
+export type StudentAuth = {
+  id: string;
+  studentId: string;
+  passwordHash: string;
+  createdAt: string;
+};
+
 export type User = {
   id: string;
+  studentId: string;
   name: string;
   room?: string;
   isAdmin?: boolean;

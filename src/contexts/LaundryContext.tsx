@@ -3,7 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/lib/supabase';
-import { User, QueueItem, MachineState, HistoryItem, QueueStatus, MachineStatus } from '@/types';
+import { User, Student, QueueItem, MachineStatus, QueueStatus, MachineState, HistoryItem } from '@/types';
+import { hashPassword, verifyPassword } from '@/lib/auth';
 import { parseISO, addMinutes } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import {
@@ -41,9 +42,14 @@ export const formatDate = (dateString: string) => {
 type LaundryContextType = {
   user: User | null;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  students: Student[];
   queue: QueueItem[];
   machineState: MachineState;
   history: HistoryItem[];
+  registerStudent: (studentId: string, password: string) => Promise<void>;
+  loginStudent: (studentId: string, password: string) => Promise<void>;
+  logoutStudent: () => void;
+  resetStudentRegistration: (studentId: string) => Promise<void>;
   joinQueue: (name: string, room?: string) => void;
   leaveQueue: (queueItemId: string) => void;
   updateQueueItem: (queueItemId: string, updates: Partial<QueueItem>) => void;
@@ -64,6 +70,7 @@ const LaundryContext = createContext<LaundryContextType | undefined>(undefined);
 export function LaundryProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [students, setStudents] = useState<Student[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [machineState, setMachineState] = useState<MachineState>({
     status: MachineStatus.IDLE,
