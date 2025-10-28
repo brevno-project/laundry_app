@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { User, Student, QueueItem, MachineStatus, QueueStatus, MachineState, HistoryItem } from '@/types';
 import { hashPassword, verifyPassword } from '@/lib/auth';
 import { getLaundryTimeStatus } from '@/lib/timeHelper';
+import { sendTelegramNotification } from '@/lib/telegram';
 import { parseISO, addMinutes } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import {
@@ -440,10 +441,20 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     }
     
     try {
-      console.log('➕ Adding to queue:', newItem);
+      console.log('➥ Adding to queue:', newItem);
       const { error } = await supabase.from('queue').insert(newItem);
       if (error) throw error;
       console.log('✅ Successfully added to queue');
+      
+      // Отправить уведомление в Telegram
+      sendTelegramNotification({
+        type: 'joined',
+        userName: name,
+        userRoom: room,
+        washCount: washCount,
+        paymentType: paymentType,
+        queueLength: queue.length + 1,
+      });
     } catch (error: any) {
       console.error('❌ Error joining queue:', error);
       console.error('Error details:', error?.message, error?.details, error?.hint, error?.code);
