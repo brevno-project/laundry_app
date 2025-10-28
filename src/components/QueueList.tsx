@@ -11,7 +11,8 @@ export default function QueueList() {
     user, 
     leaveQueue, 
     updateQueueItem, 
-    startWashing, 
+    startWashing,
+    markDone,
     isAdmin 
   } = useLaundry();
   
@@ -161,7 +162,15 @@ export default function QueueList() {
                       Start Washing
                     </button>
                   )}
-                  {isWashing && (
+                  {isWashing && isAdmin && (
+                    <button
+                      className="bg-green-600 text-white font-semibold py-2 px-4 rounded text-sm hover:bg-green-700 shadow-md"
+                      onClick={markDone}
+                    >
+                      ✅ Mark Done
+                    </button>
+                  )}
+                  {isWashing && !isAdmin && (
                     <span className="text-yellow-700 font-bold text-sm">⏳ В процессе...</span>
                   )}
                   {isDone && (

@@ -36,13 +36,14 @@ export default function MachineStatus() {
     }
   }, [machineState]);
 
-  // Find current washing user
-  const currentWashingItem = machineState.currentQueueItemId
-    ? queue.find((item) => item.id === machineState.currentQueueItemId)
-    : null;
+  // Find current washing user from queue (not just machineState)
+  const currentWashingItem = queue.find((item) => item.status === 'washing');
+  
+  // Check if machine is actually in use
+  const isWashing = !!currentWashingItem;
 
   // Render appropriate status card
-  if (machineState.status === MachineStatusEnum.WASHING && currentWashingItem) {
+  if (isWashing && currentWashingItem) {
     return (
       <div className="bg-blue-600 p-6 rounded-lg shadow-lg mb-6 border-2 border-blue-700">
         <h2 className="text-2xl font-bold text-white mb-3">🧺 Machine in Use</h2>
