@@ -48,7 +48,8 @@ type LaundryContextType = {
   leaveQueue: (queueItemId: string) => void;
   updateQueueItem: (queueItemId: string, updates: Partial<QueueItem>) => void;
   startWashing: (queueItemId: string) => void;
-  markDone: () => void;
+  cancelWashing: (queueItemId: string) => void;
+  markDone: (queueItemId: string) => void;
   startNext: () => void;
   clearQueue: () => void;
   isAdmin: boolean;
@@ -388,9 +389,12 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Admin: Mark current washing as done
-  const markDone = async () => {
-    if (!isAdmin || machineState.status !== MachineStatus.WASHING) return;
+  // Admin: Mark washing as done
+  const markDone = async (queueItemId: string) => {
+    if (!isAdmin) return;
+    
+    const queueItem = queue.find(item => item.id === queueItemId);
+    if (!queueItem || queueItem.status !== QueueStatus.WASHING) return;
     
     if (!isSupabaseConfigured || !supabase) {
       // Use local storage fallback
@@ -402,15 +406,13 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     }
     
     try {
-      const currentQueueItem = queue.find(item => item.id === machineState.currentQueueItemId);
-      if (!currentQueueItem) return;
       
       // Add to history
       const historyItem: HistoryItem = {
         id: uuidv4(),
-        userId: currentQueueItem.userId,
-        userName: currentQueueItem.userName,
-        userRoom: currentQueueItem.userRoom,
+        userId: queueItem.userId,
+        userName: queueItem.userName,
+        userRoom: queueItem.userRoom,
         startedAt: machineState.startedAt || new Date().toISOString(),
         finishedAt: new Date().toISOString(),
       };
@@ -425,7 +427,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       const { error: updateError } = await supabase
         .from('queue')
         .update({ status: QueueStatus.DONE })
-        .eq('id', currentQueueItem.id);
+        .eq('id', queueItemId);
       
       if (updateError) throw updateError;
       
@@ -447,6 +449,52 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       fetchQueue(); // Refresh queue from local storage
       fetchMachineState(); // Refresh machine state from local storage
       fetchHistory(); // Refresh history from local storage
+    }
+  };
+
+  // Admin: Cancel washing (return to queue)
+  const cancelWashing = async (queueItemId: string) => {
+    if (!isAdmin) return;
+    
+    const queueItem = queue.find(item => item.id === queueItemId);
+    if (!queueItem || queueItem.status !== QueueStatus.WASHING) return;
+    
+    if (!isSupabaseConfigured || !supabase) {
+      // Use local storage fallback
+      const queue = getLocalQueue();
+      const item = queue.find(i => i.id === queueItemId);
+      if (item) {
+        item.status = QueueStatus.QUEUED;
+        saveLocalQueue(queue);
+      }
+      saveLocalMachineState({ status: MachineStatus.IDLE });
+      fetchQueue();
+      fetchMachineState();
+      return;
+    }
+    
+    try {
+      // Update queue item status back to 'queued'
+      const { error: updateError } = await supabase
+        .from('queue')
+        .update({ status: QueueStatus.QUEUED })
+        .eq('id', queueItemId);
+      
+      if (updateError) throw updateError;
+      
+      // Reset machine state
+      const { error: machineError } = await supabase
+        .from('machine_state')
+        .upsert({
+          status: MachineStatus.IDLE,
+          currentQueueItemId: null,
+          startedAt: null,
+          expectedFinishAt: null,
+        });
+      
+      if (machineError) throw machineError;
+    } catch (error) {
+      console.error('Error canceling washing:', error);
     }
   };
 
@@ -540,6 +588,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     leaveQueue,
     updateQueueItem,
     startWashing,
+    cancelWashing,
     markDone,
     startNext,
     clearQueue,

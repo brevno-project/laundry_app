@@ -12,6 +12,7 @@ export default function QueueList() {
     leaveQueue, 
     updateQueueItem, 
     startWashing,
+    cancelWashing,
     markDone,
     isAdmin 
   } = useLaundry();
@@ -163,12 +164,22 @@ export default function QueueList() {
                     </button>
                   )}
                   {isWashing && isAdmin && (
-                    <button
-                      className="bg-green-600 text-white font-semibold py-2 px-4 rounded text-sm hover:bg-green-700 shadow-md"
-                      onClick={markDone}
-                    >
-                      ✅ Mark Done
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        className="bg-orange-600 text-white font-semibold py-2 px-3 rounded text-sm hover:bg-orange-700 shadow-md"
+                        onClick={() => cancelWashing(item.id)}
+                        title="Остановить стирку и вернуть в очередь"
+                      >
+                        ⏹️ Stop
+                      </button>
+                      <button
+                        className="bg-green-600 text-white font-semibold py-2 px-3 rounded text-sm hover:bg-green-700 shadow-md"
+                        onClick={() => markDone(item.id)}
+                        title="Отметить как завершенное"
+                      >
+                        ✅ Done
+                      </button>
+                    </div>
                   )}
                   {isWashing && !isAdmin && (
                     <span className="text-yellow-700 font-bold text-sm">⏳ В процессе...</span>
