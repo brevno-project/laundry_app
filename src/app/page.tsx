@@ -24,15 +24,6 @@ export default function Home() {
       <header className="mb-8 text-center bg-gradient-to-r from-blue-600 to-blue-700 p-6 rounded-lg shadow-lg">
         <h1 className="text-4xl font-bold text-white mb-2">🧺 Очередь на стирку</h1>
         <p className="text-blue-100 text-lg">Управляйте расписанием стирки эффективно</p>
-        <div className="mt-3">
-          <span className={`inline-block px-4 py-1 rounded-full text-sm font-semibold ${
-            isSupabaseConfigured 
-              ? 'bg-green-500 text-white' 
-              : 'bg-yellow-500 text-gray-900'
-          }`}>
-            {isSupabaseConfigured ? '✅ Режим реального времени (Supabase)' : '⚠️ Локальный режим (без синхронизации)'}
-          </span>
-        </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
