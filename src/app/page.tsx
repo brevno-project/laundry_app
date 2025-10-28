@@ -24,8 +24,7 @@ export default function Home() {
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
       <header className="mb-8 text-center bg-gradient-to-r from-blue-600 to-blue-700 p-6 rounded-lg shadow-lg">
-        <h1 className="text-4xl font-bold text-white mb-2">🧺 Очередь на стирку</h1>
-        <p className="text-blue-100 text-lg">Управляйте расписанием стирки эффективно</p>
+        <h1 className="text-4xl font-bold text-white">🧺 Очередь на стирку</h1>
       </header>
 
       <TimeBanner />

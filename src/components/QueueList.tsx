@@ -101,7 +101,9 @@ export default function QueueList() {
                   <span className="text-lg font-bold text-blue-600">{item.washCount || 1}</span>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm">
-                  {item.paymentType === 'coupon' ? '🎫 Купон' : '💵 Деньги'}
+                  {item.paymentType === 'coupon' ? '🎫 Купон' : 
+                   item.paymentType === 'both' ? '💵+🎫 Оба' : 
+                   '💵 Деньги'}
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
                   <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusDisplay.badgeColor}`}>

@@ -59,16 +59,16 @@ export default function UserForm() {
               <label htmlFor="washCount" className="block text-sm font-bold mb-2 text-gray-700">
                 Количество стирок
               </label>
-              <select
+              <input
                 id="washCount"
+                type="number"
+                min="1"
+                max="10"
                 value={washCount}
                 onChange={(e) => setWashCount(Number(e.target.value))}
                 className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-              >
-                <option value="1">1 стирка</option>
-                <option value="2">2 стирки</option>
-                <option value="3">3 стирки</option>
-              </select>
+              />
+              <p className="text-xs text-gray-500 mt-1">От 1 до 10 стирок</p>
             </div>
 
             <div className="mb-4">
@@ -83,6 +83,7 @@ export default function UserForm() {
               >
                 <option value="money">💵 Деньги</option>
                 <option value="coupon">🎫 Купон</option>
+                <option value="both">💵+🎫 Купон + Деньги</option>
               </select>
             </div>
 
