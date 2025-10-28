@@ -55,6 +55,8 @@ type LaundryContextType = {
   joinQueue: (name: string, room?: string, washCount?: number, paymentType?: string) => void;
   leaveQueue: (queueItemId: string) => void;
   updateQueueItem: (queueItemId: string, updates: Partial<QueueItem>) => void;
+  sendAdminMessage: (queueItemId: string, message: string) => Promise<void>;
+  setQueueStatus: (queueItemId: string, status: QueueStatus) => Promise<void>;
   startWashing: (queueItemId: string) => void;
   cancelWashing: (queueItemId: string) => void;
   markDone: (queueItemId: string) => void;
@@ -518,6 +520,50 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Admin: Отправить сообщение студенту
+  const sendAdminMessage = async (queueItemId: string, message: string) => {
+    if (!isAdmin) return;
+    
+    if (!isSupabaseConfigured || !supabase) {
+      console.warn('Supabase not configured');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('queue')
+        .update({ adminMessage: message })
+        .eq('id', queueItemId);
+      
+      if (error) throw error;
+      console.log('✅ Admin message sent:', message);
+    } catch (error) {
+      console.error('❌ Error sending admin message:', error);
+    }
+  };
+
+  // Admin: Изменить статус записи в очереди
+  const setQueueStatus = async (queueItemId: string, status: QueueStatus) => {
+    if (!isAdmin) return;
+    
+    if (!isSupabaseConfigured || !supabase) {
+      console.warn('Supabase not configured');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('queue')
+        .update({ status })
+        .eq('id', queueItemId);
+      
+      if (error) throw error;
+      console.log('✅ Status updated:', status);
+    } catch (error) {
+      console.error('❌ Error updating status:', error);
+    }
+  };
+
   // Admin: Start washing for a queue item
   const startWashing = async (queueItemId: string) => {
     if (!isAdmin) return;
@@ -774,6 +820,8 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     joinQueue,
     leaveQueue,
     updateQueueItem,
+    sendAdminMessage,
+    setQueueStatus,
     startWashing,
     cancelWashing,
     markDone,
