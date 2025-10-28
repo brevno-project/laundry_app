@@ -4,21 +4,13 @@ import { useState, useEffect, FormEvent } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 
 export default function UserForm() {
-  const { user, setUser, joinQueue, logoutStudent } = useLaundry();
-  const [name, setName] = useState('');
-  const [room, setRoom] = useState('');
-
-  useEffect(() => {
-    if (user) {
-      setName(user.name || '');
-      setRoom(user.room || '');
-    }
-  }, [user]);
+  const { user, joinQueue, logoutStudent } = useLaundry();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (name.trim()) {
-      await joinQueue(name.trim(), room.trim() || undefined);
+    if (user?.name) {
+      console.log('Joining queue with:', user.name, user.room);
+      await joinQueue(user.name, user.room);
     }
   };
 
@@ -32,29 +24,26 @@ export default function UserForm() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="mb-4">
           <label htmlFor="name" className="block text-sm font-bold mb-2 text-gray-700">
-            Имя (обязательно)
+            Имя
           </label>
           <input
             id="name"
             type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Ваше имя"
-            className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-            required
+            value={user?.name || ''}
+            readOnly
+            className="mt-1 block w-full rounded-md border-2 border-gray-200 bg-gray-50 shadow-sm p-3 text-gray-700 cursor-not-allowed"
           />
         </div>
         <div className="mb-4">
           <label htmlFor="room" className="block text-sm font-bold mb-2 text-gray-700">
-            Комната (необязательно)
+            Комната
           </label>
           <input
             id="room"
             type="text"
-            value={room}
-            onChange={(e) => setRoom(e.target.value)}
-            placeholder="Номер комнаты"
-            className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+            value={user?.room || 'Не указана'}
+            readOnly
+            className="mt-1 block w-full rounded-md border-2 border-gray-200 bg-gray-50 shadow-sm p-3 text-gray-700 cursor-not-allowed"
           />
         </div>
         <button
