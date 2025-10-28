@@ -50,7 +50,7 @@ type LaundryContextType = {
   loginStudent: (studentId: string, password: string) => Promise<void>;
   logoutStudent: () => void;
   resetStudentRegistration: (studentId: string) => Promise<void>;
-  joinQueue: (name: string, room?: string) => void;
+  joinQueue: (name: string, room?: string, washCount?: number, paymentType?: string) => void;
   leaveQueue: (queueItemId: string) => void;
   updateQueueItem: (queueItemId: string, updates: Partial<QueueItem>) => void;
   startWashing: (queueItemId: string) => void;
@@ -402,7 +402,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   };
 
   // Join the queue
-  const joinQueue = async (name: string, room?: string) => {
+  const joinQueue = async (name: string, room?: string, washCount: number = 1, paymentType: string = 'money') => {
     if (!user) return;
     
     // Update user name if it changed
@@ -412,7 +412,11 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     }
     
     // Check if user is already in queue
-    const existingItem = queue.find(item => item.userId === user.id && item.status === QueueStatus.QUEUED);
+    // Проверка на дубли - один студент может быть только один раз в очереди
+    const existingItem = queue.find(item => 
+      item.userId === user.id && 
+      (item.status === QueueStatus.WAITING || item.status === QueueStatus.READY || item.status === QueueStatus.KEY_ISSUED || item.status === QueueStatus.WASHING)
+    );
     if (existingItem) return;
     
     // Create new queue item
@@ -421,8 +425,10 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       userId: user.id,
       userName: name,
       userRoom: room,
+      washCount: washCount,
+      paymentType: paymentType,
       joinedAt: new Date().toISOString(),
-      status: QueueStatus.QUEUED,
+      status: QueueStatus.WAITING,
     };
     
     if (!isSupabaseConfigured || !supabase) {
@@ -621,7 +627,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       const queue = getLocalQueue();
       const item = queue.find(i => i.id === queueItemId);
       if (item) {
-        item.status = QueueStatus.QUEUED;
+        item.status = QueueStatus.WAITING;
         saveLocalQueue(queue);
       }
       saveLocalMachineState({ status: MachineStatus.IDLE });
@@ -634,7 +640,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       // Update queue item status back to 'queued'
       const { error: updateError } = await supabase
         .from('queue')
-        .update({ status: QueueStatus.QUEUED })
+        .update({ status: QueueStatus.WAITING })
         .eq('id', queueItemId);
       
       if (updateError) throw updateError;
@@ -667,7 +673,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    const nextItem = queue.find(item => item.status === QueueStatus.QUEUED);
+    const nextItem = queue.find(item => item.status === QueueStatus.WAITING || item.status === QueueStatus.READY);
     if (nextItem) {
       await startWashing(nextItem.id);
     } else if (!isSupabaseConfigured || !supabase) {
@@ -707,7 +713,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       const { error: queueError } = await supabase
         .from('queue')
         .delete()
-        .eq('status', QueueStatus.QUEUED);
+        .eq('status', QueueStatus.WAITING);
       
       if (queueError) throw queueError;
     } catch (error) {
@@ -732,7 +738,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   const getUserQueueItem = (): QueueItem | undefined => {
     if (!user) return undefined;
     return queue.find(item => item.userId === user.id && 
-                     (item.status === QueueStatus.QUEUED || item.status === QueueStatus.WASHING));
+                     (item.status === QueueStatus.WAITING || item.status === QueueStatus.READY || item.status === QueueStatus.WASHING));
   };
 
   const value = {

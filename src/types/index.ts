@@ -25,9 +25,11 @@ export type User = {
 };
 
 export enum QueueStatus {
-  QUEUED = 'queued',
-  WASHING = 'washing',
-  DONE = 'done',
+  WAITING = 'waiting',        // Ждет в очереди
+  READY = 'ready',            // Следующий! (выделяется)
+  KEY_ISSUED = 'key_issued',  // Ключ выдан
+  WASHING = 'washing',        // Стирает
+  DONE = 'done',              // Закончил
 }
 
 export type QueueItem = {
@@ -35,10 +37,13 @@ export type QueueItem = {
   userId: string;
   userName: string;
   userRoom?: string;
+  washCount: number;          // Количество стирок
+  paymentType?: string;       // 'money' или 'coupon'
   joinedAt: string;
   plannedStartAt?: string;
   expectedFinishAt?: string;
   note?: string;
+  adminMessage?: string;      // Сообщение от админа
   status: QueueStatus;
 };
 

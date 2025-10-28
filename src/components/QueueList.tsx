@@ -19,7 +19,9 @@ export default function QueueList() {
   
   // Queue items including washing and done
   const queuedItems = queue.filter(item => 
-    item.status === QueueStatus.QUEUED || 
+    item.status === QueueStatus.WAITING || 
+    item.status === QueueStatus.READY || 
+    item.status === QueueStatus.KEY_ISSUED || 
     item.status === QueueStatus.WASHING || 
     item.status === QueueStatus.DONE
   );
