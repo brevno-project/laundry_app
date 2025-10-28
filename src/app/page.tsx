@@ -43,7 +43,7 @@ export default function Home() {
         </div>
         
         <div className="space-y-6">
-          {!user?.name && <UserForm />}
+          <UserForm />
           <AdminPanel />
         </div>
       </div>
