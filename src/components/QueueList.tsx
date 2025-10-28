@@ -15,8 +15,10 @@ export default function QueueList() {
     isAdmin 
   } = useLaundry();
   
-  // Queue items that are not currently washing
-  const queuedItems = queue.filter(item => item.status === QueueStatus.QUEUED);
+  // Queue items including those currently washing
+  const queuedItems = queue.filter(item => 
+    item.status === QueueStatus.QUEUED || item.status === QueueStatus.WASHING
+  );
 
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [expectedFinishTime, setExpectedFinishTime] = useState<string>('');
@@ -67,13 +69,22 @@ export default function QueueList() {
           {queuedItems.map((item, index) => {
             const isCurrentUser = user && item.userId === user.id;
             
+            const isWashing = item.status === QueueStatus.WASHING;
+            const rowClass = isWashing 
+              ? 'bg-yellow-100 border-l-4 border-yellow-600' 
+              : isCurrentUser 
+                ? 'bg-blue-100 border-l-4 border-blue-600' 
+                : 'hover:bg-gray-50';
+            
             return (
-              <tr key={item.id} className={isCurrentUser ? 'bg-blue-100 border-l-4 border-blue-600' : 'hover:bg-gray-50'}>
+              <tr key={item.id} className={rowClass}>
                 <td className="px-4 py-4 whitespace-nowrap text-base font-bold text-gray-900">
                   {index + 1}
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap text-base font-medium text-gray-800">
+                  {isWashing && '🧺 '}
                   {item.userName} {item.userRoom && `(Room ${item.userRoom})`}
+                  {isWashing && <span className="ml-2 text-xs font-bold text-yellow-700 bg-yellow-200 px-2 py-1 rounded">СТИРАЕТ</span>}
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
                   {formatDate(item.joinedAt)}
@@ -135,13 +146,16 @@ export default function QueueList() {
                       </button>
                     </>
                   )}
-                  {isAdmin && (
+                  {isAdmin && !isWashing && (
                     <button
                       className="bg-green-600 text-white font-semibold py-2 px-4 rounded text-sm hover:bg-green-700 shadow-md"
                       onClick={() => startWashing(item.id)}
                     >
                       Start Washing
                     </button>
+                  )}
+                  {isWashing && (
+                    <span className="text-yellow-700 font-bold text-sm">⏳ В процессе...</span>
                   )}
                 </td>
               </tr>
