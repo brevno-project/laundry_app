@@ -17,6 +17,24 @@ export default function QueueList() {
     isAdmin 
   } = useLaundry();
   
+  // Функция для получения цвета и текста статуса
+  const getStatusDisplay = (status: QueueStatus) => {
+    switch(status) {
+      case QueueStatus.WAITING:
+        return { bg: 'bg-gray-50', text: 'text-gray-700', badge: '⏳ Ожидает', badgeColor: 'bg-gray-200 text-gray-700' };
+      case QueueStatus.READY:
+        return { bg: 'bg-yellow-50', text: 'text-yellow-900', badge: '🟡 СЛЕДУЮЩИЙ!', badgeColor: 'bg-yellow-400 text-yellow-900' };
+      case QueueStatus.KEY_ISSUED:
+        return { bg: 'bg-blue-50', text: 'text-blue-900', badge: '🔑 Ключ выдан', badgeColor: 'bg-blue-400 text-blue-900' };
+      case QueueStatus.WASHING:
+        return { bg: 'bg-green-50', text: 'text-green-900', badge: '🟢 СТИРАЕТ', badgeColor: 'bg-green-400 text-green-900' };
+      case QueueStatus.DONE:
+        return { bg: 'bg-emerald-50', text: 'text-emerald-900', badge: '✅ ГОТОВО', badgeColor: 'bg-emerald-400 text-emerald-900' };
+      default:
+        return { bg: 'bg-white', text: 'text-gray-700', badge: status, badgeColor: 'bg-gray-200' };
+    }
+  };
+  
   // Queue items including washing and done
   const queuedItems = queue.filter(item => 
     item.status === QueueStatus.WAITING || 
@@ -55,16 +73,19 @@ export default function QueueList() {
         <thead className="bg-gray-100">
           <tr>
             <th scope="col" className="px-4 py-3 text-left text-sm font-bold text-gray-800 uppercase tracking-wider">
-              Позиция
+              #
             </th>
             <th scope="col" className="px-4 py-3 text-left text-sm font-bold text-gray-800 uppercase tracking-wider">
-              Имя
+              Студент
             </th>
             <th scope="col" className="px-4 py-3 text-left text-sm font-bold text-gray-800 uppercase tracking-wider">
-              Вступил
+              Стирок
             </th>
             <th scope="col" className="px-4 py-3 text-left text-sm font-bold text-gray-800 uppercase tracking-wider">
-              Окончание
+              Оплата
+            </th>
+            <th scope="col" className="px-4 py-3 text-left text-sm font-bold text-gray-800 uppercase tracking-wider">
+              Статус
             </th>
             <th scope="col" className="px-4 py-3 text-left text-sm font-bold text-gray-800 uppercase tracking-wider">
               Действия
@@ -74,44 +95,31 @@ export default function QueueList() {
         <tbody className="bg-white divide-y divide-gray-200">
           {queuedItems.map((item, index) => {
             const isCurrentUser = user && item.userId === user.id;
+            const statusDisplay = getStatusDisplay(item.status);
             
-            const isWashing = item.status === QueueStatus.WASHING;
-            const isDone = item.status === QueueStatus.DONE;
-            const rowClass = isDone
-              ? 'bg-green-100 border-l-4 border-green-600 opacity-75'
-              : isWashing 
-                ? 'bg-yellow-100 border-l-4 border-yellow-600' 
-                : isCurrentUser 
-                  ? 'bg-blue-100 border-l-4 border-blue-600' 
-                  : 'hover:bg-gray-50';
+            const rowClass = `${statusDisplay.bg} border-l-4 ${isCurrentUser ? 'border-blue-600' : 'border-gray-300'}`;
             
             return (
               <tr key={item.id} className={rowClass}>
                 <td className="px-4 py-4 whitespace-nowrap text-base font-bold text-gray-900">
                   {index + 1}
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap text-base font-medium text-gray-800">
-                  {isWashing && '🧺 '}
-                  {isDone && '✅ '}
-                  {item.userName} {item.userRoom && `(Room ${item.userRoom})`}
-                  {isWashing && <span className="ml-2 text-xs font-bold text-yellow-700 bg-yellow-200 px-2 py-1 rounded">СТИРАЕТ</span>}
-                  {isDone && <span className="ml-2 text-xs font-bold text-green-700 bg-green-200 px-2 py-1 rounded">ПОСТИРАЛ</span>}
+                <td className="px-4 py-4 text-base font-medium text-gray-900">
+                  <div className="font-bold">{item.userName}</div>
+                  {item.userRoom && <div className="text-sm text-gray-600">Комната {item.userRoom}</div>}
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                  {formatDate(item.joinedAt)}
+                <td className="px-4 py-4 whitespace-nowrap text-center">
+                  <span className="text-lg font-bold text-blue-600">{item.washCount || 1}</span>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                  {editingItem === item.id ? (
-                    <input
-                      type="datetime-local"
-                      value={expectedFinishTime}
-                      onChange={(e) => setExpectedFinishTime(e.target.value)}
-                      className="border-2 border-blue-400 rounded p-2 text-sm text-gray-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-                    />
-                  ) : (
-                    item.expectedFinishAt ? formatDate(item.expectedFinishAt) : '—'
-                  )}
+                <td className="px-4 py-4 whitespace-nowrap text-sm">
+                  {item.paymentType === 'coupon' ? '🎫 Купон' : '💵 Деньги'}
                 </td>
+                <td className="px-4 py-4 whitespace-nowrap">
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusDisplay.badgeColor}`}>
+                    {statusDisplay.badge}
+                  </span>
+                </td>
+
                 <td className="px-4 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                   {isCurrentUser && (
                     <>
@@ -157,23 +165,15 @@ export default function QueueList() {
                       </button>
                     </>
                   )}
-                  {isAdmin && !isWashing && (
+                  {isAdmin && item.status === QueueStatus.WAITING && (
                     <button
-                        className="bg-red-600 text-white font-semibold py-2 px-4 rounded text-sm hover:bg-red-700 shadow-md mr-2"
-                        onClick={() => leaveQueue(item.id)}
-                      >
-                        Покинуть очередь
-                      </button>
-                  )}
-                  {isAdmin && !isWashing && (
-                    <button
-                      className="bg-green-600 text-white font-semibold py-2 px-4 rounded text-sm hover:bg-green-700 shadow-md"
+                      className="bg-blue-600 text-white font-semibold py-2 px-4 rounded text-sm hover:bg-blue-700 shadow-md"
                       onClick={() => startWashing(item.id)}
                     >
-                      Начать стирку
+                      🔑 Выдать ключ
                     </button>
                   )}
-                  {isWashing && isAdmin && (
+                  {item.status === QueueStatus.WASHING && isAdmin && (
                     <div className="flex gap-2">
                       <button
                         className="bg-orange-600 text-white font-semibold py-2 px-3 rounded text-sm hover:bg-orange-700 shadow-md"
@@ -191,11 +191,11 @@ export default function QueueList() {
                       </button>
                     </div>
                   )}
-                  {isWashing && !isAdmin && (
-                    <span className="text-yellow-700 font-bold text-sm">⏳ В процессе...</span>
+                  {item.status === QueueStatus.WASHING && !isAdmin && (
+                    <span className="text-green-700 font-bold text-sm">🟢 Стирает...</span>
                   )}
-                  {isDone && (
-                    <span className="text-green-700 font-bold text-sm">✅ Завершено</span>
+                  {item.status === QueueStatus.DONE && (
+                    <span className="text-emerald-700 font-bold text-sm">✅ Готово</span>
                   )}
                 </td>
               </tr>
