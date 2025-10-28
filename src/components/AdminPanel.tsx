@@ -9,7 +9,8 @@ export default function AdminPanel() {
     isAdmin, 
     setIsAdmin, 
     verifyAdminKey, 
-    machineState, 
+    machineState,
+    queue,
     markDone, 
     startNext, 
     clearQueue 
@@ -18,6 +19,9 @@ export default function AdminPanel() {
   const [adminKey, setAdminKey] = useState('');
   const [showConfirmClear, setShowConfirmClear] = useState(false);
   const [error, setError] = useState('');
+  
+  // Find current washing item from queue
+  const washingItem = queue.find(item => item.status === 'washing');
 
   // Handle admin login
   const handleAdminLogin = () => {
@@ -89,9 +93,9 @@ export default function AdminPanel() {
       </div>
       
       <div className="space-y-4">
-        {machineState.status === MachineStatus.WASHING && (
+        {washingItem && (
           <button
-            onClick={markDone}
+            onClick={() => markDone(washingItem.id)}
             className="w-full bg-green-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-green-700 transition-colors shadow-md"
           >
             ✅ Mark Current Washing as Done
