@@ -74,7 +74,7 @@ export const addToLocalQueue = (
   
   // Check if user is already in queue
   const existingItem = queue.find(
-    item => item.userId === user.id && item.status === QueueStatus.QUEUED
+    item => item.userId === user.id && (item.status === QueueStatus.WAITING || item.status === QueueStatus.READY || item.status === QueueStatus.WASHING)
   );
   
   if (existingItem) {
@@ -87,7 +87,8 @@ export const addToLocalQueue = (
     userName: user.name,
     userRoom: user.room,
     joinedAt: new Date().toISOString(),
-    status: QueueStatus.QUEUED,
+    status: QueueStatus.WAITING,
+    washCount: 1,
   };
   
   queue.push(newItem);
@@ -189,7 +190,7 @@ export const markLocalDone = (): HistoryItem | null => {
 
 export const startLocalNext = (): boolean => {
   const queue = getLocalQueue();
-  const nextItem = queue.find(item => item.status === QueueStatus.QUEUED);
+  const nextItem = queue.find(item => item.status === QueueStatus.WAITING || item.status === QueueStatus.READY);
   
   if (nextItem) {
     startLocalWashing(nextItem.id);
