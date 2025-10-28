@@ -1,6 +1,7 @@
 "use client";
 
 import { useLaundry } from '@/contexts/LaundryContext';
+import TimeBanner from '@/components/TimeBanner';
 import StudentAuth from '@/components/StudentAuth';
 import UserForm from '@/components/UserForm';
 import MachineStatus from '@/components/MachineStatus';
@@ -26,6 +27,8 @@ export default function Home() {
         <h1 className="text-4xl font-bold text-white mb-2">🧺 Очередь на стирку</h1>
         <p className="text-blue-100 text-lg">Управляйте расписанием стирки эффективно</p>
       </header>
+
+      <TimeBanner />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">

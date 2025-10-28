@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/lib/supabase';
 import { User, Student, QueueItem, MachineStatus, QueueStatus, MachineState, HistoryItem } from '@/types';
 import { hashPassword, verifyPassword } from '@/lib/auth';
+import { getLaundryTimeStatus } from '@/lib/timeHelper';
 import { parseISO, addMinutes } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import {
@@ -509,6 +510,13 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   // Admin: Start washing for a queue item
   const startWashing = async (queueItemId: string) => {
     if (!isAdmin) return;
+    
+    // Проверка времени - нельзя начать стирку ночью
+    const timeStatus = getLaundryTimeStatus();
+    if (timeStatus.isClosed) {
+      alert('⚠️ Стирка закрыта с 22:00 до 09:00. Нельзя начать стирку.');
+      return;
+    }
     
     if (!isSupabaseConfigured || !supabase) {
       // Use local storage fallback
