@@ -177,9 +177,9 @@ export const markLocalDone = (): HistoryItem | null => {
   }
   saveLocalHistory(history);
   
-  // Remove from queue
-  const updatedQueue = queue.filter(item => item.id !== machineState.currentQueueItemId);
-  saveLocalQueue(updatedQueue);
+  // Update queue item status to 'done' instead of removing
+  currentItem.status = QueueStatus.DONE;
+  saveLocalQueue(queue);
   
   // Reset machine state
   saveLocalMachineState({ status: MachineStatus.IDLE });

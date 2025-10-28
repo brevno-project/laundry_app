@@ -15,9 +15,11 @@ export default function QueueList() {
     isAdmin 
   } = useLaundry();
   
-  // Queue items including those currently washing
+  // Queue items including washing and done
   const queuedItems = queue.filter(item => 
-    item.status === QueueStatus.QUEUED || item.status === QueueStatus.WASHING
+    item.status === QueueStatus.QUEUED || 
+    item.status === QueueStatus.WASHING || 
+    item.status === QueueStatus.DONE
   );
 
   const [editingItem, setEditingItem] = useState<string | null>(null);
@@ -70,11 +72,14 @@ export default function QueueList() {
             const isCurrentUser = user && item.userId === user.id;
             
             const isWashing = item.status === QueueStatus.WASHING;
-            const rowClass = isWashing 
-              ? 'bg-yellow-100 border-l-4 border-yellow-600' 
-              : isCurrentUser 
-                ? 'bg-blue-100 border-l-4 border-blue-600' 
-                : 'hover:bg-gray-50';
+            const isDone = item.status === QueueStatus.DONE;
+            const rowClass = isDone
+              ? 'bg-green-100 border-l-4 border-green-600 opacity-75'
+              : isWashing 
+                ? 'bg-yellow-100 border-l-4 border-yellow-600' 
+                : isCurrentUser 
+                  ? 'bg-blue-100 border-l-4 border-blue-600' 
+                  : 'hover:bg-gray-50';
             
             return (
               <tr key={item.id} className={rowClass}>
@@ -83,8 +88,10 @@ export default function QueueList() {
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap text-base font-medium text-gray-800">
                   {isWashing && '🧺 '}
+                  {isDone && '✅ '}
                   {item.userName} {item.userRoom && `(Room ${item.userRoom})`}
                   {isWashing && <span className="ml-2 text-xs font-bold text-yellow-700 bg-yellow-200 px-2 py-1 rounded">СТИРАЕТ</span>}
+                  {isDone && <span className="ml-2 text-xs font-bold text-green-700 bg-green-200 px-2 py-1 rounded">ПОСТИРАЛ</span>}
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
                   {formatDate(item.joinedAt)}
@@ -156,6 +163,9 @@ export default function QueueList() {
                   )}
                   {isWashing && (
                     <span className="text-yellow-700 font-bold text-sm">⏳ В процессе...</span>
+                  )}
+                  {isDone && (
+                    <span className="text-green-700 font-bold text-sm">✅ Завершено</span>
                   )}
                 </td>
               </tr>
