@@ -85,21 +85,16 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     
     if (storedUser) {
       setUser(JSON.parse(storedUser));
-    } else {
-      const newUser: User = {
-        id: generateUserId(),
-        name: '',
-      };
-      localStorage.setItem('laundryUser', JSON.stringify(newUser));
-      setUser(newUser);
     }
-
-    setIsAdmin(storedIsAdmin);
     
+    setIsAdmin(storedIsAdmin);
+
     // Initial data fetch
+    loadStudents(); // Load students list
     fetchQueue();
     fetchMachineState();
     fetchHistory();
+    
     setIsLoading(false);
     
     // Only set up Supabase subscriptions if properly configured
@@ -168,6 +163,161 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     localStorage.setItem('laundryIsAdmin', isAdmin.toString());
   }, [isAdmin]);
+
+  // Load students from Supabase
+  const loadStudents = async () => {
+    if (!isSupabaseConfigured || !supabase) {
+      console.log('⚠️ Supabase not configured, cannot load students');
+      return;
+    }
+
+    try {
+      console.log('👥 Loading students...');
+      const { data, error } = await supabase
+        .from('students')
+        .select('*')
+        .order('fullName', { ascending: true });
+
+      if (error) throw error;
+      console.log('✅ Students loaded:', data?.length);
+      setStudents(data || []);
+    } catch (error: any) {
+      console.error('❌ Error loading students:', error);
+      setStudents([]);
+    }
+  };
+
+  // Register a new student
+  const registerStudent = async (studentId: string, password: string) => {
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase не настроен');
+    }
+
+    try {
+      // Check if student exists and is not registered
+      const student = students.find(s => s.id === studentId);
+      if (!student) throw new Error('Студент не найден');
+      if (student.isRegistered) throw new Error('Этот студент уже зарегистрирован');
+
+      // Hash password
+      const passwordHash = await hashPassword(password);
+
+      // Save password
+      const { error: authError } = await supabase
+        .from('student_auth')
+        .insert({ studentId, passwordHash });
+
+      if (authError) throw authError;
+
+      // Mark student as registered
+      const { error: updateError } = await supabase
+        .from('students')
+        .update({ isRegistered: true, registeredAt: new Date().toISOString() })
+        .eq('id', studentId);
+
+      if (updateError) throw updateError;
+
+      // Auto-login after registration
+      await loginStudent(studentId, password);
+      
+      // Reload students list
+      await loadStudents();
+
+      console.log('✅ Student registered successfully');
+    } catch (error: any) {
+      console.error('❌ Error registering student:', error);
+      throw error;
+    }
+  };
+
+  // Login student
+  const loginStudent = async (studentId: string, password: string) => {
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase не настроен');
+    }
+
+    try {
+      // Get student info
+      const { data: studentData, error: studentError } = await supabase
+        .from('students')
+        .select('*')
+        .eq('id', studentId)
+        .single();
+
+      if (studentError) throw studentError;
+      if (!studentData.isRegistered) throw new Error('Студент не зарегистрирован');
+
+      // Get password hash
+      const { data: authData, error: authError } = await supabase
+        .from('student_auth')
+        .select('passwordHash')
+        .eq('studentId', studentId)
+        .single();
+
+      if (authError) throw authError;
+
+      // Verify password
+      const isValid = await verifyPassword(password, authData.passwordHash);
+      if (!isValid) throw new Error('Неверный пароль');
+
+      // Create user object
+      const newUser: User = {
+        id: uuidv4(),
+        studentId: studentData.id,
+        name: studentData.fullName,
+        room: studentData.room || undefined,
+      };
+
+      setUser(newUser);
+      localStorage.setItem('laundryUser', JSON.stringify(newUser));
+
+      console.log('✅ Student logged in:', newUser.name);
+    } catch (error: any) {
+      console.error('❌ Error logging in:', error);
+      throw error;
+    }
+  };
+
+  // Logout student
+  const logoutStudent = () => {
+    setUser(null);
+    localStorage.removeItem('laundryUser');
+    console.log('👋 Student logged out');
+  };
+
+  // Admin: Reset student registration
+  const resetStudentRegistration = async (studentId: string) => {
+    if (!isAdmin) throw new Error('Требуются права администратора');
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase не настроен');
+    }
+
+    try {
+      // Delete password
+      const { error: authError } = await supabase
+        .from('student_auth')
+        .delete()
+        .eq('studentId', studentId);
+
+      if (authError) throw authError;
+
+      // Mark student as not registered
+      const { error: updateError } = await supabase
+        .from('students')
+        .update({ isRegistered: false, registeredAt: null })
+        .eq('id', studentId);
+
+      if (updateError) throw updateError;
+
+      // Reload students list
+      await loadStudents();
+
+      console.log('✅ Student registration reset');
+    } catch (error: any) {
+      console.error('❌ Error resetting registration:', error);
+      throw error;
+    }
+  };
 
   // Fetch queue from Supabase or local storage
   const fetchQueue = async () => {
@@ -588,9 +738,14 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   const value = {
     user,
     setUser,
+    students,
     queue,
     machineState,
     history,
+    registerStudent,
+    loginStudent,
+    logoutStudent,
+    resetStudentRegistration,
     joinQueue,
     leaveQueue,
     updateQueueItem,

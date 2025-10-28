@@ -3,42 +3,22 @@
 import { useState, useEffect } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 
-interface Student {
-  id: string;
-  firstName: string;
-  lastName: string;
-  fullName: string;
-  room: string | null;
-  isRegistered: boolean;
-}
-
 export default function StudentAuth() {
-  const { user, registerStudent, loginStudent } = useLaundry();
-  const [students, setStudents] = useState<Student[]>([]);
+  const { students, registerStudent, loginStudent } = useLaundry();
   const [selectedStudent, setSelectedStudent] = useState<string>('');
   const [password, setPassword] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  // Load students from Supabase
-  useEffect(() => {
-    loadStudents();
-  }, []);
-
-  const loadStudents = async () => {
-    try {
-      // Здесь будет загрузка из Supabase
-      setLoading(false);
-    } catch (err) {
-      console.error('Error loading students:', err);
-      setLoading(false);
-    }
-  };
+  const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
     if (!selectedStudent || !password) {
       setError('Выберите студента и введите пароль');
+      return;
+    }
+
+    if (password.length < 4) {
+      setError('Пароль должен быть минимум 4 символа');
       return;
     }
 
@@ -50,12 +30,16 @@ export default function StudentAuth() {
       return;
     }
 
+    setLoading(true);
     try {
-      await registerStudent(student.id, password);
+      await registerStudent(selectedStudent, password);
       setError('');
       setPassword('');
+      setSelectedStudent('');
     } catch (err: any) {
       setError(err.message || 'Ошибка регистрации');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -65,21 +49,21 @@ export default function StudentAuth() {
       return;
     }
 
+    setLoading(true);
     try {
       await loginStudent(selectedStudent, password);
       setError('');
     } catch (err: any) {
       setError(err.message || 'Неверный пароль');
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="bg-white p-6 rounded-lg shadow-lg mb-6 border border-gray-200">
-        <p className="text-gray-600">Загрузка...</p>
-      </div>
-    );
-  }
+  // Filter students for dropdown - show all if registering, only registered if logging in
+  const filteredStudents = isRegistering 
+    ? students.filter(s => !s.isRegistered)
+    : students.filter(s => s.isRegistered);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg mb-6 border border-gray-200">
@@ -102,10 +86,9 @@ export default function StudentAuth() {
             className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
           >
             <option value="">-- Выберите студента --</option>
-            {students.map((student) => (
+            {filteredStudents.map((student) => (
               <option key={student.id} value={student.id}>
                 {student.fullName} {student.room && `(Комната ${student.room})`}
-                {student.isRegistered && ' ✓'}
               </option>
             ))}
           </select>
@@ -135,9 +118,10 @@ export default function StudentAuth() {
 
         <button
           onClick={isRegistering ? handleRegister : handleLogin}
-          className="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-blue-700 transition-colors shadow-md"
+          disabled={loading || !selectedStudent || !password}
+          className="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-blue-700 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isRegistering ? '📝 Зарегистрироваться' : '🔐 Войти'}
+          {loading ? '⏳ Загрузка...' : (isRegistering ? '📝 Зарегистрироваться' : '🔐 Войти')}
         </button>
 
         <button

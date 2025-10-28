@@ -4,7 +4,7 @@ import { useState, useEffect, FormEvent } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 
 export default function UserForm() {
-  const { user, setUser, joinQueue } = useLaundry();
+  const { user, setUser, joinQueue, logoutStudent } = useLaundry();
   const [name, setName] = useState('');
   const [room, setRoom] = useState('');
 
@@ -22,9 +22,8 @@ export default function UserForm() {
     }
   };
 
-  const handleResetUser = () => {
-    localStorage.clear();
-    window.location.reload();
+  const handleLogout = () => {
+    logoutStudent();
   };
 
   return (
@@ -66,10 +65,10 @@ export default function UserForm() {
         </button>
         <button
           type="button"
-          onClick={handleResetUser}
-          className="w-full bg-gray-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-gray-600 transition-colors mt-2"
+          onClick={handleLogout}
+          className="w-full bg-red-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-600 transition-colors mt-2"
         >
-          🔄 Сбросить приложение
+          🚪 Выйти
         </button>
       </form>
     </div>

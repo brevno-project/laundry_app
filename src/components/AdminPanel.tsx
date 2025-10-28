@@ -11,13 +11,17 @@ export default function AdminPanel() {
     verifyAdminKey, 
     machineState,
     queue,
+    students,
     markDone, 
     startNext, 
-    clearQueue 
+    clearQueue,
+    resetStudentRegistration 
   } = useLaundry();
   
   const [adminKey, setAdminKey] = useState('');
   const [showConfirmClear, setShowConfirmClear] = useState(false);
+  const [showStudents, setShowStudents] = useState(false);
+  const [resetingStudentId, setResetingStudentId] = useState<string | null>(null);
   const [error, setError] = useState('');
   
   // Find current washing item from queue
@@ -48,6 +52,18 @@ export default function AdminPanel() {
   const handleClearQueueConfirm = () => {
     clearQueue();
     setShowConfirmClear(false);
+  };
+
+  // Handle student registration reset
+  const handleResetStudent = async (studentId: string) => {
+    setResetingStudentId(studentId);
+    try {
+      await resetStudentRegistration(studentId);
+    } catch (err: any) {
+      console.error('Error resetting student:', err);
+    } finally {
+      setResetingStudentId(null);
+    }
   };
 
   if (!isAdmin) {
@@ -133,6 +149,48 @@ export default function AdminPanel() {
               >
                 ✅ Да, очистить
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Students Management */}
+        <button
+          onClick={() => setShowStudents(!showStudents)}
+          className="w-full bg-purple-800 text-white font-semibold py-3 px-4 rounded-md hover:bg-purple-900 transition-colors shadow-md"
+        >
+          👥 {showStudents ? 'Скрыть студентов' : 'Управление студентами'}
+        </button>
+
+        {showStudents && (
+          <div className="bg-white p-4 rounded-md max-h-96 overflow-y-auto">
+            <h3 className="text-lg font-bold text-gray-800 mb-3">Список студентов</h3>
+            <div className="space-y-2">
+              {students.map((student) => (
+                <div key={student.id} className="flex justify-between items-center p-2 border-b">
+                  <div>
+                    <p className="font-semibold text-gray-800">
+                      {student.fullName} 
+                      {student.room && <span className="text-gray-500 text-sm"> ({student.room})</span>}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {student.isRegistered ? (
+                        <span className="text-green-600">✅ Зарегистрирован</span>
+                      ) : (
+                        <span className="text-gray-400">❌ Не зарегистрирован</span>
+                      )}
+                    </p>
+                  </div>
+                  {student.isRegistered && (
+                    <button
+                      onClick={() => handleResetStudent(student.id)}
+                      disabled={resetingStudentId === student.id}
+                      className="bg-orange-600 text-white text-xs font-semibold py-1 px-3 rounded hover:bg-orange-700 disabled:opacity-50"
+                    >
+                      {resetingStudentId === student.id ? '⏳' : '🔄 Сбросить'}
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}

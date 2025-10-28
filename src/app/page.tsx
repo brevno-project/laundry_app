@@ -1,6 +1,7 @@
 "use client";
 
 import { useLaundry } from '@/contexts/LaundryContext';
+import StudentAuth from '@/components/StudentAuth';
 import UserForm from '@/components/UserForm';
 import MachineStatus from '@/components/MachineStatus';
 import QueueList from '@/components/QueueList';
@@ -34,7 +35,11 @@ export default function Home() {
         </div>
         
         <div className="space-y-6">
-          <UserForm />
+          {!user ? (
+            <StudentAuth />
+          ) : (
+            <UserForm />
+          )}
           <AdminPanel />
         </div>
       </div>
