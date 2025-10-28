@@ -40,32 +40,32 @@ export default function QueueList() {
   if (queuedItems.length === 0) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-lg mb-6 border border-gray-200">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">📋 Queue</h2>
-        <p className="text-gray-700 text-lg">No one in queue. Join now!</p>
+        <h2 className="text-2xl font-bold mb-4 text-gray-800">📋 Очередь</h2>
+        <p className="text-gray-700 text-lg">Никого в очереди. Встаньте первым!</p>
       </div>
     );
   }
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg mb-6 overflow-x-auto border border-gray-200">
-      <h2 className="text-2xl font-bold mb-4 text-gray-800">📋 Queue</h2>
+      <h2 className="text-2xl font-bold mb-4 text-gray-800">📋 Очередь</h2>
       <table className="min-w-full divide-y-2 divide-gray-300">
         <thead className="bg-gray-100">
           <tr>
             <th scope="col" className="px-4 py-3 text-left text-sm font-bold text-gray-800 uppercase tracking-wider">
-              Position
+              Позиция
             </th>
             <th scope="col" className="px-4 py-3 text-left text-sm font-bold text-gray-800 uppercase tracking-wider">
-              Name
+              Имя
             </th>
             <th scope="col" className="px-4 py-3 text-left text-sm font-bold text-gray-800 uppercase tracking-wider">
-              Joined
+              Вступил
             </th>
             <th scope="col" className="px-4 py-3 text-left text-sm font-bold text-gray-800 uppercase tracking-wider">
-              Expected Finish
+              Окончание
             </th>
             <th scope="col" className="px-4 py-3 text-left text-sm font-bold text-gray-800 uppercase tracking-wider">
-              Actions
+              Действия
             </th>
           </tr>
         </thead>
@@ -151,16 +151,24 @@ export default function QueueList() {
                         className="text-red-700 font-semibold hover:text-red-900 bg-red-100 px-3 py-1 rounded"
                         onClick={() => leaveQueue(item.id)}
                       >
-                        Leave
+                        Покинуть очередь
                       </button>
                     </>
+                  )}
+                  {isAdmin && !isWashing && (
+                    <button
+                        className="bg-red-600 text-white font-semibold py-2 px-4 rounded text-sm hover:bg-red-700 shadow-md mr-2"
+                        onClick={() => leaveQueue(item.id)}
+                      >
+                        Покинуть очередь
+                      </button>
                   )}
                   {isAdmin && !isWashing && (
                     <button
                       className="bg-green-600 text-white font-semibold py-2 px-4 rounded text-sm hover:bg-green-700 shadow-md"
                       onClick={() => startWashing(item.id)}
                     >
-                      Start Washing
+                      Начать стирку
                     </button>
                   )}
                   {isWashing && isAdmin && (
@@ -170,14 +178,14 @@ export default function QueueList() {
                         onClick={() => cancelWashing(item.id)}
                         title="Остановить стирку и вернуть в очередь"
                       >
-                        ⏹️ Stop
+                        ⏹️ Остановить
                       </button>
                       <button
                         className="bg-green-600 text-white font-semibold py-2 px-3 rounded text-sm hover:bg-green-700 shadow-md"
                         onClick={() => markDone(item.id)}
                         title="Отметить как завершенное"
                       >
-                        ✅ Done
+                        ✅ Готово
                       </button>
                     </div>
                   )}

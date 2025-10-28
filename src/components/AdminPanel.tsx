@@ -52,20 +52,20 @@ export default function AdminPanel() {
 
   if (!isAdmin) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow-lg mb-6 border border-gray-200">
-        <h2 className="text-xl font-bold mb-4 text-gray-800">🔒 Admin Access</h2>
+      <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+        <h2 className="text-2xl font-bold mb-4 text-gray-800">🔒 Администратор</h2>
         <div className="space-y-4">
-          <div>
-            <label htmlFor="adminKey" className="block text-sm font-semibold text-gray-700 mb-1">
-              Admin Key
-            </label>
+          <div className="mb-4">
+          <label htmlFor="adminKey" className="block text-sm font-bold mb-2 text-gray-700">
+            Ключ администратора
+          </label>
             <input
               id="adminKey"
               type="password"
               value={adminKey}
               onChange={(e) => setAdminKey(e.target.value)}
               className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
-              placeholder="Enter admin key"
+              placeholder="Введите ключ администратора"
             />
             {error && <p className="mt-1 text-red-600 text-sm font-semibold">{error}</p>}
           </div>
@@ -73,7 +73,7 @@ export default function AdminPanel() {
             onClick={handleAdminLogin}
             className="w-full bg-purple-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-purple-700 transition-colors shadow-md"
           >
-            Login as Admin
+            Войти как админ
           </button>
         </div>
       </div>
@@ -81,14 +81,14 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="bg-purple-700 p-6 rounded-lg shadow-lg mb-6 border-2 border-purple-800">
+    <div className="bg-purple-600 p-6 rounded-lg shadow-lg border border-gray-200">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-white">🔧 Admin Panel</h2>
+        <h2 className="text-2xl font-bold text-white">✏️ Панель админа</h2>
         <button
           onClick={handleAdminLogout}
-          className="text-sm font-semibold text-white bg-purple-800 hover:bg-purple-900 px-3 py-2 rounded"
+          className="text-white text-sm hover:text-purple-200 underline"
         >
-          Logout
+          Выйти
         </button>
       </div>
       
@@ -98,7 +98,7 @@ export default function AdminPanel() {
             onClick={() => markDone(washingItem.id)}
             className="w-full bg-green-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-green-700 transition-colors shadow-md"
           >
-            ✅ Mark Current Washing as Done
+            ✅ Отметить стирку завершенной
           </button>
         )}
         
@@ -106,7 +106,7 @@ export default function AdminPanel() {
           onClick={startNext}
           className="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-blue-700 transition-colors shadow-md"
         >
-          ▶️ Start Next in Queue
+          ▶️ Запустить следующего
         </button>
         
         {!showConfirmClear ? (
@@ -114,23 +114,23 @@ export default function AdminPanel() {
             onClick={() => setShowConfirmClear(true)}
             className="w-full bg-red-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-red-700 transition-colors shadow-md"
           >
-            🗑️ Clear Queue
+            🗑️ Очистить очередь
           </button>
         ) : (
           <div className="bg-red-100 p-4 rounded-md border-2 border-red-300">
-            <p className="text-red-900 font-bold mb-3 text-base">Are you sure you want to clear the queue?</p>
+            <p className="text-gray-800 font-semibold text-lg mb-4">Вы уверены, что хотите очистить всю очередь?</p>
             <div className="flex space-x-2">
               <button
-                onClick={handleClearQueueConfirm}
-                className="bg-red-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-700 transition-colors shadow"
+                onClick={() => setShowConfirmClear(false)}
+                className="bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded hover:bg-gray-400 transition-colors"
               >
-                Yes, Clear Queue
+                Отмена
               </button>
               <button
-                onClick={() => setShowConfirmClear(false)}
-                className="bg-gray-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-gray-700 transition-colors shadow"
+                onClick={handleClearQueueConfirm}
+                className="bg-red-600 text-white font-semibold py-2 px-4 rounded hover:bg-red-700 transition-colors"
               >
-                Cancel
+                Да, очистить
               </button>
             </div>
           </div>

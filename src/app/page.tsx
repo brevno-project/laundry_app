@@ -22,15 +22,15 @@ export default function Home() {
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
       <header className="mb-8 text-center bg-gradient-to-r from-blue-600 to-blue-700 p-6 rounded-lg shadow-lg">
-        <h1 className="text-4xl font-bold text-white mb-2">🧺 Dorm Laundry Queue</h1>
-        <p className="text-blue-100 text-lg">Manage your laundry schedule efficiently</p>
+        <h1 className="text-4xl font-bold text-white mb-2">🧺 Очередь на стирку</h1>
+        <p className="text-blue-100 text-lg">Управляйте расписанием стирки эффективно</p>
         <div className="mt-3">
           <span className={`inline-block px-4 py-1 rounded-full text-sm font-semibold ${
             isSupabaseConfigured 
               ? 'bg-green-500 text-white' 
               : 'bg-yellow-500 text-gray-900'
           }`}>
-            {isSupabaseConfigured ? '✅ Real-time Mode (Supabase)' : '⚠️ Local Storage Mode (No Sync)'}
+            {isSupabaseConfigured ? '✅ Режим реального времени (Supabase)' : '⚠️ Локальный режим (без синхронизации)'}
           </span>
         </div>
       </header>
@@ -49,7 +49,7 @@ export default function Home() {
       </div>
       
       <footer className="mt-12 text-center text-gray-600 text-sm bg-white p-4 rounded-lg shadow">
-        <p className="font-medium">Dorm Laundry Queue App &copy; {new Date().getFullYear()}</p>
+        <p className="font-medium">Приложение очереди на стирку &copy; {new Date().getFullYear()}</p>
       </footer>
     </div>
   );
