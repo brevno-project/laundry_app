@@ -201,7 +201,7 @@ export default function QueueList() {
                           🔑 Забрал
                         </button>
                         
-                        {/* Принеси ключ */}
+                        {/* Вернуть ключ */}
                         <button
                           className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm"
                           onClick={async () => {
@@ -227,7 +227,7 @@ export default function QueueList() {
                             }
                           }}
                         >
-                          🔔 Верни
+                          🔔 Вернуть
                         </button>
                         
                         {/* Постирался */}
@@ -238,15 +238,17 @@ export default function QueueList() {
                           ✅ Готово
                         </button>
                         
-                        {/* Отменить уведомление */}
+                        {/* Отменить стирку */}
                         <button
                           className="bg-gray-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-gray-600 shadow-sm"
                           onClick={async () => {
                             try {
+                              // Отменить стирку и вернуть в ожидание
+                              await cancelWashing(item.id);
                               await updateQueueItem(item.id, { returnKeyAlert: false });
-                              alert(`✅ Уведомление отменено!`);
+                              alert(`✅ Стирка отменена, ${item.userName} в ожидании!`);
                             } catch (error) {
-                              console.error('Error updating queue item:', error);
+                              console.error('Error canceling:', error);
                               alert('❌ Ошибка отмены');
                             }
                           }}
