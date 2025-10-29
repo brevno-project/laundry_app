@@ -60,7 +60,7 @@ export default function QueueList() {
       <h2 className="text-xl font-bold p-3 bg-gray-50 rounded-t-lg text-gray-800">📋 Очередь ({queuedItems.length})</h2>
       <div className="p-2 space-y-3">
         {queuedItems.map((item, index) => {
-            const isCurrentUser = user && item.userId === user.id;
+            const isCurrentUser = user && item.studentId === user.studentId;
             const statusDisplay = getStatusDisplay(item.status);
             
             const rowClass = `${statusDisplay.bg} border-l-4 ${isCurrentUser ? 'border-blue-600' : 'border-gray-300'}`;
@@ -96,10 +96,12 @@ export default function QueueList() {
                     </span>
                   </div>
                   {/* Время стирки - показывать только для KEY_ISSUED и WASHING */}
-                  {(item.status === QueueStatus.KEY_ISSUED || item.status === QueueStatus.WASHING) && (
+                  {(item.status === QueueStatus.KEY_ISSUED || item.status === QueueStatus.WASHING) && item.expectedFinishAt && (
                     <div className="flex items-center gap-1">
-                      <span className="font-bold text-gray-900">Время стирки:</span>
-                      <span className="text-sm text-gray-700">{item.expectedFinishAt ? new Date(item.expectedFinishAt).toLocaleString() : 'Не указано'}</span>
+                      <span className="font-bold text-gray-900">Закончит в:</span>
+                      <span className="text-lg font-bold text-blue-700">
+                        {new Date(item.expectedFinishAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                      </span>
                     </div>
                   )}
                 </div>
