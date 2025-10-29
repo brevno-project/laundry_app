@@ -73,7 +73,7 @@ export default function StudentAuth() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="🔍 Поиск по имени или комнате..."
-          className="w-full p-4 rounded-lg border-2 border-blue-300 text-xl font-semibold mb-4 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+          className="w-full p-4 rounded-lg border-2 border-blue-300 text-xl font-semibold mb-4 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 placeholder:text-gray-600"
         />
 
         {/* Список студентов */}
@@ -89,21 +89,21 @@ export default function StudentAuth() {
                 onClick={() => handleStudentSelect(student)}
                 className="w-full bg-white hover:bg-blue-100 border-3 border-gray-400 hover:border-blue-600 rounded-lg p-4 text-left transition-all shadow-md hover:shadow-xl"
               >
-                <div className="flex items-center justify-between">
-                  <div>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
                     <div className="font-black text-xl text-gray-900">{student.fullName}</div>
                     {student.room && (
                       <div className="text-base text-gray-700 font-bold">🚪 Комната {student.room}</div>
                     )}
                   </div>
-                  <div>
+                  <div className="flex-shrink-0">
                     {student.isRegistered ? (
-                      <span className="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-black shadow-md">
-                        ✅ Зарегистрирован
+                      <span className="bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-md whitespace-nowrap">
+                        ✅
                       </span>
                     ) : (
-                      <span className="bg-yellow-500 text-white px-4 py-2 rounded-full text-sm font-black shadow-md">
-                        🆕 Новый
+                      <span className="bg-yellow-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-md whitespace-nowrap">
+                        🆕
                       </span>
                     )}
                   </div>
