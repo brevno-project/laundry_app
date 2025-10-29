@@ -53,7 +53,7 @@ type LaundryContextType = {
   logoutStudent: () => void;
   resetStudentRegistration: (studentId: string) => Promise<void>;
   linkTelegram: (telegramCode: string) => Promise<{ success: boolean; error?: string }>;
-  joinQueue: (name: string, room?: string, washCount?: number, paymentType?: string) => void;
+  joinQueue: (name: string, room?: string, washCount?: number, paymentType?: string, expectedFinishAt?: string) => void;
   leaveQueue: (queueItemId: string) => void;
   updateQueueItem: (queueItemId: string, updates: Partial<QueueItem>) => void;
   sendAdminMessage: (queueItemId: string, message: string) => Promise<void>;
@@ -457,7 +457,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   };
 
   // Join the queue
-  const joinQueue = async (name: string, room?: string, washCount: number = 1, paymentType: string = 'money') => {
+  const joinQueue = async (name: string, room?: string, washCount: number = 1, paymentType: string = 'money', expectedFinishAt?: string) => {
     if (!user) return;
     
     // Update user name if it changed
@@ -483,6 +483,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       washCount: washCount,
       paymentType: paymentType,
       joinedAt: new Date().toISOString(),
+      expectedFinishAt: expectedFinishAt,
       status: QueueStatus.WAITING,
     };
     

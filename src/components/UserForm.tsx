@@ -20,8 +20,23 @@ export default function UserForm() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (user?.name && !isInQueue) {
-      console.log('Joining queue with:', user.name, user.room, washCount, paymentType);
-      await joinQueue(user.name, user.room, washCount, paymentType);
+      // Валидация времени
+      if (!expectedTime) {
+        alert('Пожалуйста, укажите время окончания стирки');
+        return;
+      }
+      
+      // Рассчитать время окончания
+      let expectedFinishAt: string | undefined;
+      if (expectedTime) {
+        const today = new Date();
+        const [hours, minutes] = expectedTime.split(':');
+        today.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+        expectedFinishAt = today.toISOString();
+      }
+      
+      console.log('Joining queue with:', user.name, user.room, washCount, paymentType, expectedFinishAt);
+      await joinQueue(user.name, user.room, washCount, paymentType, expectedFinishAt);
     }
   };
 
@@ -98,13 +113,14 @@ export default function UserForm() {
 
               <div className="mb-4">
                 <label htmlFor="expectedTime" className="block text-sm font-bold mb-2 text-gray-700">
-                  До какого времени закончу стирать
+                  До какого времени закончу стирать *
                 </label>
                 <input
                   id="expectedTime"
                   type="time"
                   value={expectedTime}
                   onChange={(e) => setExpectedTime(e.target.value)}
+                  required
                   className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                 />
                 <p className="text-xs text-gray-500 mt-1">Например: 20:00</p>

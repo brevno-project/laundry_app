@@ -95,10 +95,13 @@ export default function QueueList() {
                        '💵 Деньги'}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <span className="font-bold text-gray-900">Время стирки:</span>
-                    <span className="text-sm text-gray-700">{item.expectedFinishAt ? new Date(item.expectedFinishAt).toLocaleString() : 'Не указано'}</span>
-                  </div>
+                  {/* Время стирки - показывать только для KEY_ISSUED и WASHING */}
+                  {(item.status === QueueStatus.KEY_ISSUED || item.status === QueueStatus.WASHING) && (
+                    <div className="flex items-center gap-1">
+                      <span className="font-bold text-gray-900">Время стирки:</span>
+                      <span className="text-sm text-gray-700">{item.expectedFinishAt ? new Date(item.expectedFinishAt).toLocaleString() : 'Не указано'}</span>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Действия */}
