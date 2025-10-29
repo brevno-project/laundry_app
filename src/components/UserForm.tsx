@@ -8,7 +8,8 @@ export default function UserForm() {
   const { user, joinQueue, logoutStudent, getUserQueueItem, queue } = useLaundry();
   const [washCount, setWashCount] = useState<number>(1);
   const [paymentType, setPaymentType] = useState<string>('money');
-  const [expectedTime, setExpectedTime] = useState<string>('');
+  const [selectedHour, setSelectedHour] = useState<string>('20');
+  const [selectedMinute, setSelectedMinute] = useState<string>('00');
   
   // Проверка есть ли уже в очереди
   const existingQueueItem = getUserQueueItem();
@@ -20,27 +21,10 @@ export default function UserForm() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (user?.name && !isInQueue) {
-      // Валидация времени
-      if (!expectedTime) {
-        alert('Пожалуйста, укажите время окончания стирки');
-        return;
-      }
-      
-      // Проверка времени до 22:00
-      const [hours, minutes] = expectedTime.split(':');
-      const selectedHour = parseInt(hours);
-      if (selectedHour > 22 || (selectedHour === 22 && parseInt(minutes) > 0)) {
-        alert('⚠️ Стирка должна закончиться до 22:00!\nПожалуйста, выберите время до 22:00.');
-        return;
-      }
-      
       // Рассчитать время окончания
-      let expectedFinishAt: string | undefined;
-      if (expectedTime) {
-        const today = new Date();
-        today.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-        expectedFinishAt = today.toISOString();
-      }
+      const today = new Date();
+      today.setHours(parseInt(selectedHour), parseInt(selectedMinute), 0, 0);
+      const expectedFinishAt = today.toISOString();
       
       console.log('Joining queue with:', user.name, user.room, washCount, paymentType, expectedFinishAt);
       await joinQueue(user.name, user.room, washCount, paymentType, expectedFinishAt);
@@ -119,21 +103,49 @@ export default function UserForm() {
               </div>
 
               <div className="mb-4">
-                <label htmlFor="expectedTime" className="block text-sm font-bold mb-2 text-gray-700">
+                <label className="block text-sm font-bold mb-2 text-gray-700">
                   До какого времени закончу стирать
                 </label>
-                <input
-                  id="expectedTime"
-                  type="time"
-                  value={expectedTime}
-                  onChange={(e) => setExpectedTime(e.target.value)}
-                  required
-                  max="22:00"
-                  step="60"
-                  className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                  style={{ colorScheme: 'light' }}
-                />
-                <p className="text-xs text-red-600 font-bold mt-1">⚠️ Стирка должна закончиться до 22:00! (например: 20:00)</p>
+                <div className="flex gap-3">
+                  {/* Часы */}
+                  <div className="flex-1">
+                    <label htmlFor="hour" className="block text-xs text-gray-600 mb-1">Часы</label>
+                    <select
+                      id="hour"
+                      value={selectedHour}
+                      onChange={(e) => setSelectedHour(e.target.value)}
+                      required
+                      className="w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 text-lg font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    >
+                      {Array.from({ length: 23 }, (_, i) => i).map(hour => (
+                        <option key={hour} value={hour.toString().padStart(2, '0')}>
+                          {hour.toString().padStart(2, '0')}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="flex items-end pb-3 text-2xl font-bold text-gray-700">:</div>
+                  
+                  {/* Минуты */}
+                  <div className="flex-1">
+                    <label htmlFor="minute" className="block text-xs text-gray-600 mb-1">Минуты</label>
+                    <select
+                      id="minute"
+                      value={selectedMinute}
+                      onChange={(e) => setSelectedMinute(e.target.value)}
+                      required
+                      className="w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 text-lg font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    >
+                      <option value="00">00</option>
+                      <option value="15">15</option>
+                      <option value="30">30</option>
+                      <option value="45">45</option>
+                    </select>
+                  </div>
+                </div>
+                <p className="text-xs text-red-600 font-bold mt-2">⚠️ Стирка должна закончиться до 22:00!</p>
+                <p className="text-sm text-blue-700 font-bold mt-1">🕒 Выбрано: {selectedHour}:{selectedMinute}</p>
               </div>
 
               <button
