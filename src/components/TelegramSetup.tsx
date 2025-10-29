@@ -67,17 +67,18 @@ export default function TelegramSetup() {
               1
             </div>
             <div className="flex-1">
-              <p className="font-bold text-gray-900 mb-1">
-                <span className="font-bold">Шаг 1:</span> Откройте Telegram бота{' '}
+              <p className="font-bold text-gray-900 mb-2">
+                <span className="font-bold">Шаг 1:</span> Откройте бота для получения ID:{' '}
                 <a
-                  href="https://t.me/keiin_dorm_laundry_bot"
+                  href="https://t.me/userinfobot"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:text-blue-800 underline font-semibold"
                 >
-                  @keiin_dorm_laundry_bot
+                  @userinfobot
                 </a>
               </p>
+              <p className="text-sm text-gray-600 italic">💡 Chat ID один для всех ботов! Получите здесь, используйте везде.</p>
             </div>
           </div>
         </div>
@@ -88,9 +89,10 @@ export default function TelegramSetup() {
               2
             </div>
             <div className="flex-1">
-              <p className="text-gray-700">
+              <p className="text-gray-700 mb-1">
                 <span className="font-bold">Шаг 2:</span> Напишите боту <span className="font-semibold">/start</span>
               </p>
+              <p className="text-sm text-gray-600">Бот сразу ответит вашим Chat ID</p>
             </div>
           </div>
         </div>
@@ -101,10 +103,10 @@ export default function TelegramSetup() {
               3
             </div>
             <div className="flex-1">
-              <p className="text-gray-700">
-                <span className="font-bold">Шаг 3:</span> Бот сразу пришлет ваш{' '}
-                <span className="font-semibold">Id:</span> (это и есть Chat ID!)
+              <p className="text-gray-700 mb-1">
+                <span className="font-bold">Шаг 3:</span> Скопируйте ваш <span className="font-semibold">Chat ID</span> и вставьте ниже
               </p>
+              <p className="text-sm text-gray-600">✅ Уведомления от <span className="font-semibold">@keiin_dorm_laundry_bot</span> будут приходить на этот ID!</p>
             </div>
           </div>
         </div>
