@@ -152,6 +152,9 @@ export default function QueueList() {
                             <button
                               className="bg-yellow-500 text-white font-semibold py-2 px-3 rounded-lg text-sm hover:bg-yellow-600 shadow-sm w-full"
                               onClick={async () => {
+                                // Изменить статус на READY
+                                await setQueueStatus(item.id, QueueStatus.READY);
+                                
                                 const success = await sendTelegramNotification({
                                   type: 'admin_call_for_key',
                                   userName: item.userName,

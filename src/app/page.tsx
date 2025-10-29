@@ -8,10 +8,11 @@ import AdminLogin from '@/components/AdminLogin';
 import UserForm from '@/components/UserForm';
 import MachineStatus from '@/components/MachineStatus';
 import QueueList from '@/components/QueueList';
+import AdminPanel from '@/components/AdminPanel';
 import TelegramSetup from '@/components/TelegramSetup';
 
 export default function Home() {
-  const { user, isLoading, logoutStudent } = useLaundry();
+  const { user, isLoading, logoutStudent, isAdmin } = useLaundry();
   const isSupabaseConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   const [activeTab, setActiveTab] = React.useState('main'); // main, settings
 
@@ -71,7 +72,13 @@ export default function Home() {
                 <AdminLogin />
               </>
             ) : (
-              <UserForm />
+              <>
+                {/* Форма для обычных пользователей */}
+                {!isAdmin && <UserForm />}
+                
+                {/* Админ панель для админа */}
+                {isAdmin && <AdminPanel />}
+              </>
             )}
             
             {/* Статус машинки - только для вошедших */}
@@ -84,8 +91,8 @@ export default function Home() {
 
         {activeTab === 'settings' && user && (
           <div className="space-y-4">
-            {/* Telegram */}
-            <TelegramSetup />
+            {/* Telegram - только для обычных пользователей */}
+            {!isAdmin && <TelegramSetup />}
             
             {/* Выход */}
             <div className="bg-white p-4 rounded-lg shadow-sm">
