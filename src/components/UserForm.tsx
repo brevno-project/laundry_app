@@ -26,11 +26,18 @@ export default function UserForm() {
         return;
       }
       
+      // Проверка времени до 22:00
+      const [hours, minutes] = expectedTime.split(':');
+      const selectedHour = parseInt(hours);
+      if (selectedHour > 22 || (selectedHour === 22 && parseInt(minutes) > 0)) {
+        alert('⚠️ Стирка должна закончиться до 22:00!\nПожалуйста, выберите время до 22:00.');
+        return;
+      }
+      
       // Рассчитать время окончания
       let expectedFinishAt: string | undefined;
       if (expectedTime) {
         const today = new Date();
-        const [hours, minutes] = expectedTime.split(':');
         today.setHours(parseInt(hours), parseInt(minutes), 0, 0);
         expectedFinishAt = today.toISOString();
       }
@@ -113,7 +120,7 @@ export default function UserForm() {
 
               <div className="mb-4">
                 <label htmlFor="expectedTime" className="block text-sm font-bold mb-2 text-gray-700">
-До какого времени закончу стирать
+                  До какого времени закончу стирать
                 </label>
                 <input
                   id="expectedTime"
@@ -121,11 +128,12 @@ export default function UserForm() {
                   value={expectedTime}
                   onChange={(e) => setExpectedTime(e.target.value)}
                   required
+                  max="22:00"
                   step="60"
                   className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                   style={{ colorScheme: 'light' }}
                 />
-                <p className="text-xs text-gray-500 mt-1">⚠️ Используйте 24-часовой формат (например: 20:00)</p>
+                <p className="text-xs text-red-600 font-bold mt-1">⚠️ Стирка должна закончиться до 22:00! (например: 20:00)</p>
               </div>
 
               <button
