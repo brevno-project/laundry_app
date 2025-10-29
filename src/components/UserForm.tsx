@@ -113,7 +113,14 @@ export default function UserForm() {
                     <select
                       id="hour"
                       value={selectedHour}
-                      onChange={(e) => setSelectedHour(e.target.value)}
+                      onChange={(e) => {
+                        const newHour = e.target.value;
+                        setSelectedHour(newHour);
+                        // Если 22 часа, сбросить минуты на 00
+                        if (newHour === '22') {
+                          setSelectedMinute('00');
+                        }
+                      }}
                       required
                       className="w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 text-lg font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                     >
@@ -135,12 +142,14 @@ export default function UserForm() {
                       value={selectedMinute}
                       onChange={(e) => setSelectedMinute(e.target.value)}
                       required
-                      className="w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 text-lg font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                      disabled={selectedHour === '22'}
+                      className="w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 text-lg font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     >
-                      <option value="00">00</option>
-                      <option value="15">15</option>
-                      <option value="30">30</option>
-                      <option value="45">45</option>
+                      {Array.from({ length: 60 }, (_, i) => i).map(minute => (
+                        <option key={minute} value={minute.toString().padStart(2, '0')}>
+                          {minute.toString().padStart(2, '0')}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
