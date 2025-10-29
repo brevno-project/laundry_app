@@ -95,8 +95,8 @@ export default function QueueList() {
                        '💵 Деньги'}
                     </span>
                   </div>
-                  {/* Время стирки - показывать только для KEY_ISSUED и WASHING */}
-                  {(item.status === QueueStatus.KEY_ISSUED || item.status === QueueStatus.WASHING) && item.expectedFinishAt && (
+                  {/* Время окончания стирки */}
+                  {item.expectedFinishAt && (
                     <div className="flex items-center gap-1">
                       <span className="font-bold text-gray-900">Закончит в:</span>
                       <span className="text-lg font-bold text-blue-700">
@@ -144,7 +144,8 @@ export default function QueueList() {
                                 userName: item.userName,
                                 userRoom: item.userRoom,
                                 studentId: item.studentId,
-                                position: index + 1
+                                position: index + 1,
+                                expectedFinishAt: item.expectedFinishAt
                               });
                               await setQueueStatus(item.id, QueueStatus.READY);
                               
@@ -169,7 +170,8 @@ export default function QueueList() {
                                 type: 'admin_key_issued',
                                 userName: item.userName,
                                 userRoom: item.userRoom,
-                                studentId: item.studentId
+                                studentId: item.studentId,
+                                expectedFinishAt: item.expectedFinishAt
                               });
                               await setQueueStatus(item.id, QueueStatus.KEY_ISSUED);
                               
@@ -205,7 +207,8 @@ export default function QueueList() {
                                   type: 'admin_return_key',
                                   userName: item.userName,
                                   userRoom: item.userRoom,
-                                  studentId: item.studentId
+                                  studentId: item.studentId,
+                                  expectedFinishAt: item.expectedFinishAt
                                 });
                                 // Уведомить админа
                                 if (success) {

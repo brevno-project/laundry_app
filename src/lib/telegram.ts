@@ -16,17 +16,27 @@ export interface TelegramNotification {
   queueLength?: number;
   position?: number;
   studentId?: string; // ID студента для поиска его telegram_chat_id
+  expectedFinishAt?: string; // Время окончания стирки
 }
 
 // Форматирование сообщения
 function formatMessage(notification: TelegramNotification): string {
-  const { type, userName, userRoom, washCount, paymentType, queueLength } = notification;
+  const { type, userName, userRoom, washCount, paymentType, queueLength, expectedFinishAt } = notification;
   
   const roomInfo = userRoom ? ` (${userRoom})` : '';
   
+  // Форматировать время
+  let timeInfo = '';
+  if (expectedFinishAt) {
+    const date = new Date(expectedFinishAt);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    timeInfo = `\n⏰ Закончит в: ${hours}:${minutes}`;
+  }
+  
   switch (type) {
     case 'joined':
-      return `🧺 *Новый в очереди!*\n\n👤 ${userName}${roomInfo}\n🔢 Стирок: ${washCount || 1}\n💰 Оплата: ${paymentType === 'coupon' ? '🎫 Купон' : '💵 Деньги'}\n\n📊 Всего в очереди: ${queueLength} чел.`;
+      return `🧺 *Новый в очереди!*\n\n👤 ${userName}${roomInfo}\n🔢 Стирок: ${washCount || 1}\n💰 Оплата: ${paymentType === 'coupon' ? '🎫 Купон' : '💵 Деньги'}${timeInfo}\n\n📊 Всего в очереди: ${queueLength} чел.`;
     
     case 'left':
       return `❌ *Покинул очередь*\n\n👤 ${userName}${roomInfo}\n\n📊 Осталось: ${queueLength} чел.`;
@@ -38,13 +48,13 @@ function formatMessage(notification: TelegramNotification): string {
       return `✅ *Стирка завершена!*\n\n👤 ${userName}${roomInfo}\n\n🔑 Ключ должен быть возвращен!`;
     
     case 'admin_call_for_key':
-      return `🔔 *ВАША ОЧЕРЕДЬ!*\n\n👤 ${userName}${roomInfo}\n\n🔑 Подойдите в A501 за ключом!\n💵 Возьмите деньги/купон`;
+      return `🔔 *ВАША ОЧЕРЕДЬ!*\n\n👤 ${userName}${roomInfo}${timeInfo}\n\n🔑 Подойдите в A501 за ключом!\n💵 Возьмите деньги/купон`;
     
     case 'admin_key_issued':
-      return `✅ *Ключ выдан!*\n\n👤 ${userName}${roomInfo}\n\n🧺 Можете идти к машинке`;
+      return `✅ *Ключ выдан!*\n\n👤 ${userName}${roomInfo}${timeInfo}\n\n🧺 Начинайте стираться`;
     
     case 'admin_return_key':
-      return `⏰ *ПРИНЕСИТЕ КЛЮЧ!*\n\n👤 ${userName}${roomInfo}\n\n🔑 Верните ключ в A501 как можно скорее!`;
+      return `⏰ *ПРИНЕСИТЕ КЛЮЧ!*\n\n👤 ${userName}${roomInfo}${timeInfo}\n\n🔑 Верните ключ в A501 как можно скорее!`;
     
     default:
       return `📋 Обновление очереди`;
