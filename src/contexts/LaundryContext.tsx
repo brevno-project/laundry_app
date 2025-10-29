@@ -281,6 +281,11 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
       console.log('✅ Created user object:', { id: newUser.id, studentId: newUser.studentId, name: newUser.name });
 
+      // Проверка админа (если имя = swaydikon)
+      const isAdminUser = studentData.firstName?.toLowerCase() === 'swaydikon';
+      setIsAdmin(isAdminUser);
+      console.log('🔑 Admin status:', isAdminUser);
+
       setUser(newUser);
       localStorage.setItem('laundryUser', JSON.stringify(newUser));
 
@@ -295,6 +300,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   // Logout student
   const logoutStudent = () => {
     setUser(null);
+    setIsAdmin(false);
     localStorage.removeItem('laundryUser');
     console.log('👋 Student logged out');
   };

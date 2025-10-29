@@ -7,14 +7,12 @@ import StudentAuth from '@/components/StudentAuth';
 import UserForm from '@/components/UserForm';
 import MachineStatus from '@/components/MachineStatus';
 import QueueList from '@/components/QueueList';
-import AdminPanel from '@/components/AdminPanel';
 import TelegramSetup from '@/components/TelegramSetup';
-import HistoryList from '@/components/HistoryList';
 
 export default function Home() {
   const { user, isLoading, logoutStudent } = useLaundry();
   const isSupabaseConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-  const [activeTab, setActiveTab] = React.useState('main'); // main, admin, history, notifications
+  const [activeTab, setActiveTab] = React.useState('main'); // main, settings
 
   if (isLoading) {
     return (
@@ -31,55 +29,33 @@ export default function Home() {
         <h1 className="text-2xl font-bold text-white text-center">🧺 Очередь на стирку</h1>
       </header>
 
-      {/* Боковое меню */}
-      <nav className="bg-white border-b shadow-sm sticky top-14 z-10">
-        <div className="flex overflow-x-auto">
-          <button
-            onClick={() => setActiveTab('main')}
-            className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
-              activeTab === 'main'
-                ? 'border-blue-600 text-blue-600 bg-blue-50'
-                : 'border-transparent text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            🏠 Главная
-          </button>
-          {user && (
-            <>
-              <button
-                onClick={() => setActiveTab('admin')}
-                className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
-                  activeTab === 'admin'
-                    ? 'border-blue-600 text-blue-600 bg-blue-50'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                ⚙️ Админ
-              </button>
-              <button
-                onClick={() => setActiveTab('history')}
-                className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
-                  activeTab === 'history'
-                    ? 'border-blue-600 text-blue-600 bg-blue-50'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                📜 История
-              </button>
-              <button
-                onClick={() => setActiveTab('settings')}
-                className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
-                  activeTab === 'settings'
-                    ? 'border-blue-600 text-blue-600 bg-blue-50'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                ⚙️ Настройки
-              </button>
-            </>
-          )}
-        </div>
-      </nav>
+      {/* Табы */}
+      {user && (
+        <nav className="bg-white border-b shadow-sm sticky top-14 z-10">
+          <div className="flex">
+            <button
+              onClick={() => setActiveTab('main')}
+              className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
+                activeTab === 'main'
+                  ? 'border-blue-600 text-blue-600 bg-blue-50'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              🏠 Главная
+            </button>
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
+                activeTab === 'settings'
+                  ? 'border-blue-600 text-blue-600 bg-blue-50'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              ⚙️ Настройки
+            </button>
+          </div>
+        </nav>
+      )}
 
       {/* Основной контент */}
       <div className="w-full p-3">
@@ -96,22 +72,9 @@ export default function Home() {
             
             {/* Статус машинки */}
             <MachineStatus />
-          </div>
-        )}
-
-        {activeTab === 'admin' && user && (
-          <div className="space-y-4">
+            
             {/* Очередь */}
             <QueueList />
-            
-            {/* Админ панель */}
-            <AdminPanel />
-          </div>
-        )}
-
-        {activeTab === 'history' && user && (
-          <div className="space-y-4">
-            <HistoryList />
           </div>
         )}
 
