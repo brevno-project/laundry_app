@@ -6,7 +6,6 @@ import TimeBanner from '@/components/TimeBanner';
 import StudentAuth from '@/components/StudentAuth';
 import AdminLogin from '@/components/AdminLogin';
 import UserForm from '@/components/UserForm';
-import MachineStatus from '@/components/MachineStatus';
 import QueueList from '@/components/QueueList';
 import AdminPanel from '@/components/AdminPanel';
 import TelegramSetup from '@/components/TelegramSetup';
@@ -91,10 +90,7 @@ export default function Home() {
               </>
             )}
             
-            {/* Статус машинки - только для вошедших */}
-            {user && <MachineStatus />}
-            
-            {/* Очередь - только для вошедших */}
+            {/* Очередь (со встроенным статусом машины) - только для вошедших */}
             {user && <QueueList />}
             
             {/* Админ панель - только для админа */}

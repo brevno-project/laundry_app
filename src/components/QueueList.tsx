@@ -18,7 +18,8 @@ export default function QueueList() {
     startWashing,
     cancelWashing,
     markDone,
-    isAdmin 
+    isAdmin,
+    machineState
   } = useLaundry();
   
   // Функция для получения цвета и текста статуса
@@ -59,6 +60,27 @@ export default function QueueList() {
   return (
     <div className="bg-white rounded-lg shadow-lg border border-gray-200">
       <h2 className="text-xl font-bold p-3 bg-gray-50 rounded-t-lg text-gray-800">📋 Очередь ({queuedItems.length})</h2>
+      
+      {/* Статус машины */}
+      <div className="p-3 border-b border-gray-200">
+        {machineState.status === 'idle' ? (
+          <div className="bg-green-50 border-2 border-green-500 rounded-lg p-3 text-center">
+            <div className="text-3xl mb-1">✅</div>
+            <div className="text-lg font-bold text-green-900">Машина свободна</div>
+          </div>
+        ) : (
+          <div className="bg-red-50 border-2 border-red-500 rounded-lg p-3 text-center">
+            <div className="text-3xl mb-1">🔴</div>
+            <div className="text-lg font-bold text-red-900">Машина занята</div>
+            {machineState.expectedFinishAt && (
+              <div className="text-sm text-red-700 mt-1">
+                Закончит: {new Date(machineState.expectedFinishAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      
       <div className="p-2 space-y-3">
         {queuedItems.map((item, index) => {
             const isCurrentUser = user && item.studentId === user.studentId;
@@ -183,15 +205,22 @@ export default function QueueList() {
                         <button
                           className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm"
                           onClick={async () => {
-                            const success = await sendTelegramNotification({
-                              type: 'admin_return_key',
-                              userName: item.userName,
-                              userRoom: item.userRoom,
-                              studentId: item.studentId,
-                              expectedFinishAt: item.expectedFinishAt
-                            });
-                            if (success) {
-                              alert(`✅ ${item.userName} попросили вернуть!`);
+                            try {
+                              const success = await sendTelegramNotification({
+                                type: 'admin_return_key',
+                                userName: item.userName,
+                                userRoom: item.userRoom,
+                                studentId: item.studentId,
+                                expectedFinishAt: item.expectedFinishAt
+                              });
+                              if (success) {
+                                alert(`✅ ${item.userName} попросили вернуть ключ!`);
+                              } else {
+                                alert(`⚠️ ${item.userName} не подключил Telegram`);
+                              }
+                            } catch (error) {
+                              console.error('Error sending notification:', error);
+                              alert('❌ Ошибка отправки уведомления');
                             }
                           }}
                         >
@@ -210,8 +239,13 @@ export default function QueueList() {
                         <button
                           className="bg-gray-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-gray-600 shadow-sm"
                           onClick={async () => {
-                            await updateQueueItem(item.id, { returnKeyAlert: false });
-                            alert(`✅ Уведомление отменено!`);
+                            try {
+                              await updateQueueItem(item.id, { returnKeyAlert: false });
+                              alert(`✅ Уведомление отменено!`);
+                            } catch (error) {
+                              console.error('Error updating queue item:', error);
+                              alert('❌ Ошибка отмены');
+                            }
                           }}
                         >
                           ❌ Отмена
