@@ -87,22 +87,22 @@ export default function StudentAuth() {
               <button
                 key={student.id}
                 onClick={() => handleStudentSelect(student)}
-                className="w-full bg-white hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-400 rounded-lg p-4 text-left transition-all shadow-sm hover:shadow-md"
+                className="w-full bg-white hover:bg-blue-100 border-3 border-gray-400 hover:border-blue-600 rounded-lg p-4 text-left transition-all shadow-md hover:shadow-xl"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-black text-lg text-gray-900">{student.fullName}</div>
+                    <div className="font-black text-xl text-gray-900">{student.fullName}</div>
                     {student.room && (
-                      <div className="text-sm text-gray-600 font-medium">🚪 Комната {student.room}</div>
+                      <div className="text-base text-gray-700 font-bold">🚪 Комната {student.room}</div>
                     )}
                   </div>
                   <div>
                     {student.isRegistered ? (
-                      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
+                      <span className="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-black shadow-md">
                         ✅ Зарегистрирован
                       </span>
                     ) : (
-                      <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold">
+                      <span className="bg-yellow-500 text-white px-4 py-2 rounded-full text-sm font-black shadow-md">
                         🆕 Новый
                       </span>
                     )}
