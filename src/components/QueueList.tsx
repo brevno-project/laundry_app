@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import { QueueStatus } from '@/types';
 import { formatDate } from '@/contexts/LaundryContext';
+import { sendTelegramNotification } from '@/lib/telegram';
 
 export default function QueueList() {
   const { 
@@ -122,22 +123,31 @@ export default function QueueList() {
                         {/* WAITING → Позвать за ключом */}
                         {item.status === QueueStatus.WAITING && (
                           <button
-                            className="bg-yellow-500 text-white font-semibold py-2 px-3 rounded text-sm hover:bg-yellow-600 shadow-md"
+                            className="bg-yellow-500 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-yellow-600 shadow-lg w-full"
                             onClick={async () => {
-                              await sendAdminMessage(item.id, '🔑 Подойди в A501 за ключом!');
+                              await sendTelegramNotification({
+                                type: 'admin_call_for_key',
+                                userName: item.userName,
+                                userRoom: item.userRoom,
+                                position: index + 1
+                              });
                               await setQueueStatus(item.id, QueueStatus.READY);
                             }}
                           >
-                            📢 Позвать за ключом
+                            🔔 Позвать за ключом
                           </button>
                         )}
                         
                         {/* READY → Выдать ключ */}
                         {item.status === QueueStatus.READY && (
                           <button
-                            className="bg-blue-600 text-white font-semibold py-2 px-3 rounded text-sm hover:bg-blue-700 shadow-md"
+                            className="bg-blue-600 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-blue-700 shadow-lg w-full"
                             onClick={async () => {
-                              await sendAdminMessage(item.id, '✅ Ключ выдан! Иди к машинке');
+                              await sendTelegramNotification({
+                                type: 'admin_key_issued',
+                                userName: item.userName,
+                                userRoom: item.userRoom
+                              });
                               await setQueueStatus(item.id, QueueStatus.KEY_ISSUED);
                             }}
                           >
@@ -148,7 +158,7 @@ export default function QueueList() {
                         {/* KEY_ISSUED → Начать стирку */}
                         {item.status === QueueStatus.KEY_ISSUED && (
                           <button
-                            className="bg-green-600 text-white font-semibold py-2 px-3 rounded text-sm hover:bg-green-700 shadow-md"
+                            className="bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-green-700 shadow-lg w-full"
                             onClick={() => startWashing(item.id)}
                           >
                             ▶️ Начать стирку
@@ -159,19 +169,23 @@ export default function QueueList() {
                         {item.status === QueueStatus.WASHING && (
                           <>
                             <button
-                              className="bg-yellow-500 text-white font-semibold py-2 px-3 rounded text-sm hover:bg-yellow-600 shadow-md"
-                              onClick={() => sendAdminMessage(item.id, '⏰ Принеси ключ обратно в A501!')}
+                              className="bg-yellow-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-yellow-600 shadow-md flex-1"
+                              onClick={() => sendTelegramNotification({
+                                type: 'admin_return_key',
+                                userName: item.userName,
+                                userRoom: item.userRoom
+                              })}
                             >
-                              📢 Принеси ключ
+                              🔔 Принеси ключ
                             </button>
                             <button
-                              className="bg-emerald-600 text-white font-semibold py-2 px-3 rounded text-sm hover:bg-emerald-700 shadow-md"
+                              className="bg-emerald-600 text-white font-bold py-2 px-3 rounded-lg hover:bg-emerald-700 shadow-md flex-1"
                               onClick={() => markDone(item.id)}
                             >
                               ✅ Готово
                             </button>
                             <button
-                              className="bg-orange-600 text-white font-semibold py-2 px-3 rounded text-sm hover:bg-orange-700 shadow-md"
+                              className="bg-orange-600 text-white font-bold py-2 px-3 rounded-lg hover:bg-orange-700 shadow-md flex-1"
                               onClick={() => cancelWashing(item.id)}
                             >
                               ⏹️ Остановить

@@ -4,12 +4,13 @@ const TELEGRAM_BOT_TOKEN = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN || '';
 const TELEGRAM_CHAT_ID = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID || '';
 
 export interface TelegramNotification {
-  type: 'joined' | 'left' | 'washing_started' | 'washing_done';
+  type: 'joined' | 'left' | 'washing_started' | 'washing_done' | 'admin_call_for_key' | 'admin_key_issued' | 'admin_return_key';
   userName: string;
   userRoom?: string;
   washCount?: number;
   paymentType?: string;
   queueLength?: number;
+  position?: number;
 }
 
 // Форматирование сообщения
@@ -30,6 +31,15 @@ function formatMessage(notification: TelegramNotification): string {
     
     case 'washing_done':
       return `✅ *Стирка завершена!*\n\n👤 ${userName}${roomInfo}\n\n🔑 Ключ должен быть возвращен!`;
+    
+    case 'admin_call_for_key':
+      return `🔔 *ВАША ОЧЕРЕДЬ!*\n\n👤 ${userName}${roomInfo}\n\n🔑 Подойдите в A501 за ключом!\n💵 Возьмите деньги/купон`;
+    
+    case 'admin_key_issued':
+      return `✅ *Ключ выдан!*\n\n👤 ${userName}${roomInfo}\n\n🧺 Можете идти к машинке`;
+    
+    case 'admin_return_key':
+      return `⏰ *ПРИНЕСИТЕ КЛЮЧ!*\n\n👤 ${userName}${roomInfo}\n\n🔑 Верните ключ в A501 как можно скорее!`;
     
     default:
       return `📋 Обновление очереди`;

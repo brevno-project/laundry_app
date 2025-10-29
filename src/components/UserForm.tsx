@@ -7,6 +7,7 @@ export default function UserForm() {
   const { user, joinQueue, logoutStudent, getUserQueueItem } = useLaundry();
   const [washCount, setWashCount] = useState<number>(1);
   const [paymentType, setPaymentType] = useState<string>('money');
+  const [expectedTime, setExpectedTime] = useState<string>('');
   
   // Проверка есть ли уже в очереди
   const existingQueueItem = getUserQueueItem();
@@ -85,6 +86,20 @@ export default function UserForm() {
                 <option value="coupon">🎫 Купон</option>
                 <option value="both">💵+🎫 Купон + Деньги</option>
               </select>
+            </div>
+
+            <div className="mb-4">
+              <label htmlFor="expectedTime" className="block text-sm font-bold mb-2 text-gray-700">
+                До какого времени закончу стирать
+              </label>
+              <input
+                id="expectedTime"
+                type="time"
+                value={expectedTime}
+                onChange={(e) => setExpectedTime(e.target.value)}
+                className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              />
+              <p className="text-xs text-gray-500 mt-1">Например: 20:00</p>
             </div>
 
             <button
