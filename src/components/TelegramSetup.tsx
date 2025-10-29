@@ -67,16 +67,17 @@ export default function TelegramSetup() {
               1
             </div>
             <div className="flex-1">
-              <p className="font-bold text-gray-900 mb-1">Откройте бота в Telegram</p>
-              <a 
-                href="https://t.me/keiin_dorm_laundry_bot"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-blue-500 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center gap-2 hover:bg-blue-600 shadow-md"
-              >
-                <span className="text-xl">✈️</span>
-                Открыть @keiin_dorm_laundry_bot
-              </a>
+              <p className="font-bold text-gray-900 mb-1">
+                <span className="font-bold">Шаг 1:</span> Откройте Telegram бота{' '}
+                <a
+                  href="https://t.me/userinfobot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 underline font-semibold"
+                >
+                  @userinfobot
+                </a>
+              </p>
             </div>
           </div>
         </div>
@@ -87,8 +88,9 @@ export default function TelegramSetup() {
               2
             </div>
             <div className="flex-1">
-              <p className="font-bold text-gray-900 mb-1">Нажмите START</p>
-              <p className="text-sm text-gray-700">Или напишите команду <code className="bg-gray-200 px-2 py-1 rounded">/start</code></p>
+              <p className="text-gray-700">
+                <span className="font-bold">Шаг 2:</span> Напишите боту <span className="font-semibold">/start</span>
+              </p>
             </div>
           </div>
         </div>
@@ -99,8 +101,10 @@ export default function TelegramSetup() {
               3
             </div>
             <div className="flex-1">
-              <p className="font-bold text-gray-900 mb-1">Скопируйте ваш Chat ID</p>
-              <p className="text-sm text-gray-700">Бот пришлет вам число (например: 123456789)</p>
+              <p className="text-gray-700">
+                <span className="font-bold">Шаг 3:</span> Бот сразу пришлет ваш{' '}
+                <span className="font-semibold">Id:</span> (это и есть Chat ID!)
+              </p>
             </div>
           </div>
         </div>
