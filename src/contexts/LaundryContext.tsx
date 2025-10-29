@@ -724,10 +724,14 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       
       if (historyError) throw historyError;
       
-      // Update queue item status to 'done' instead of deleting
+      // Update queue item status to 'done' and save finishedAt
+      const finishedAt = new Date().toISOString();
       const { error: updateError } = await supabase
         .from('queue')
-        .update({ status: QueueStatus.DONE })
+        .update({ 
+          status: QueueStatus.DONE,
+          finishedAt: finishedAt
+        })
         .eq('id', queueItemId);
       
       if (updateError) throw updateError;

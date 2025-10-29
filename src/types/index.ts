@@ -45,7 +45,8 @@ export type QueueItem = {
   paymentType?: string;       // 'money' или 'coupon'
   joinedAt: string;
   plannedStartAt?: string;
-  expectedFinishAt?: string;
+  expectedFinishAt?: string;  // Планируемое время окончания
+  finishedAt?: string;        // Фактическое время окончания
   note?: string;
   adminMessage?: string;      // Сообщение от админа
   status: QueueStatus;

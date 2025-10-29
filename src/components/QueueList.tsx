@@ -32,7 +32,7 @@ export default function QueueList() {
       case QueueStatus.WASHING:
         return { bg: 'bg-green-50', text: 'text-green-900', badge: '🟢 СТИРАЕТ', badgeColor: 'bg-green-400 text-green-900' };
       case QueueStatus.DONE:
-        return { bg: 'bg-emerald-50', text: 'text-emerald-900', badge: '✅ ГОТОВО', badgeColor: 'bg-emerald-400 text-emerald-900' };
+        return { bg: 'bg-emerald-50', text: 'text-emerald-900', badge: '✅ ПОСТИРАЛСЯ', badgeColor: 'bg-emerald-400 text-emerald-900' };
       default:
         return { bg: 'bg-white', text: 'text-gray-700', badge: status, badgeColor: 'bg-gray-200' };
     }
@@ -96,7 +96,19 @@ export default function QueueList() {
                     </span>
                   </div>
                   {/* Время окончания стирки */}
-                  {item.expectedFinishAt && (
+                  {item.status === QueueStatus.DONE && item.finishedAt ? (
+                    <div className="flex items-center gap-1">
+                      <span className="font-bold text-gray-900">Закончил в:</span>
+                      <span className="text-lg font-bold text-emerald-700">
+                        {(() => {
+                          const date = new Date(item.finishedAt);
+                          const hours = date.getHours().toString().padStart(2, '0');
+                          const minutes = date.getMinutes().toString().padStart(2, '0');
+                          return `${hours}:${minutes}`;
+                        })()}
+                      </span>
+                    </div>
+                  ) : item.expectedFinishAt ? (
                     <div className="flex items-center gap-1">
                       <span className="font-bold text-gray-900">Закончит в:</span>
                       <span className="text-lg font-bold text-blue-700">
@@ -108,7 +120,7 @@ export default function QueueList() {
                         })()}
                       </span>
                     </div>
-                  )}
+                  ) : null}
                 </div>
                 
                 {/* Действия */}
@@ -134,35 +146,8 @@ export default function QueueList() {
                     {/* Кнопки админа */}
                     {isAdmin && (
                       <div className="flex flex-wrap gap-2">
-                        {/* WAITING или READY → Позвать за ключом */}
-                        {(item.status === QueueStatus.WAITING || item.status === QueueStatus.READY) && (
-                          <button
-                            className="bg-yellow-500 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-yellow-600 shadow-lg w-full"
-                            onClick={async () => {
-                              const success = await sendTelegramNotification({
-                                type: 'admin_call_for_key',
-                                userName: item.userName,
-                                userRoom: item.userRoom,
-                                studentId: item.studentId,
-                                position: index + 1,
-                                expectedFinishAt: item.expectedFinishAt
-                              });
-                              await setQueueStatus(item.id, QueueStatus.READY);
-                              
-                              // Уведомить админа
-                              if (success) {
-                                alert(`✅ Сообщение отправлено ${item.userName}!`);
-                              } else {
-                                alert(`⚠️ ${item.userName} не подключил Telegram`);
-                              }
-                            }}
-                          >
-                            🔔 Позвать за ключом
-                          </button>
-                        )}
-                        
-                        {/* READY → Ключ выдан */}
-                        {item.status === QueueStatus.READY && (
+                        {/* WAITING → Ключ выдан (автоматически WASHING) */}
+                        {item.status === QueueStatus.WAITING && (
                           <button
                             className="bg-blue-600 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-blue-700 shadow-lg w-full"
                             onClick={async () => {
@@ -173,7 +158,8 @@ export default function QueueList() {
                                 studentId: item.studentId,
                                 expectedFinishAt: item.expectedFinishAt
                               });
-                              await setQueueStatus(item.id, QueueStatus.KEY_ISSUED);
+                              // Сразу ставим WASHING
+                              await setQueueStatus(item.id, QueueStatus.WASHING);
                               
                               // Уведомить админа
                               if (success) {
@@ -187,52 +173,14 @@ export default function QueueList() {
                           </button>
                         )}
                         
-                        {/* KEY_ISSUED → Начать стирку */}
-                        {item.status === QueueStatus.KEY_ISSUED && (
-                          <button
-                            className="bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-green-700 shadow-lg w-full"
-                            onClick={() => startWashing(item.id)}
-                          >
-                            ▶️ Начать стирку
-                          </button>
-                        )}
-                        
-                        {/* WASHING → Принеси ключ + Готово + Остановить */}
+                        {/* WASHING → Постирался */}
                         {item.status === QueueStatus.WASHING && (
-                          <>
-                            <button
-                              className="bg-yellow-500 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-yellow-600 shadow-lg w-full"
-                              onClick={async () => {
-                                const success = await sendTelegramNotification({
-                                  type: 'admin_return_key',
-                                  userName: item.userName,
-                                  userRoom: item.userRoom,
-                                  studentId: item.studentId,
-                                  expectedFinishAt: item.expectedFinishAt
-                                });
-                                // Уведомить админа
-                                if (success) {
-                                  alert(`✅ Сообщение отправлено ${item.userName}!`);
-                                } else {
-                                  alert(`⚠️ ${item.userName} не подключил Telegram`);
-                                }
-                              }}
-                            >
-                              🔔 Принеси ключ
-                            </button>
-                            <button
-                              className="bg-emerald-600 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-emerald-700 shadow-lg w-full"
-                              onClick={() => markDone(item.id)}
-                            >
-                              ✅ Готово
-                            </button>
-                            <button
-                              className="bg-orange-600 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-orange-700 shadow-lg w-full"
-                              onClick={() => cancelWashing(item.id)}
-                            >
-                              ⏹️ Остановить
-                            </button>
-                          </>
+                          <button
+                            className="bg-emerald-600 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-emerald-700 shadow-lg w-full"
+                            onClick={() => markDone(item.id)}
+                          >
+                            ✅ Постирался
+                          </button>
                         )}
                       </div>
                     )}
