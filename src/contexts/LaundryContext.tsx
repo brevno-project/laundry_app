@@ -702,6 +702,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       
       // Обновить локальный state немедленно
       setMachineState(newMachineState);
+      saveLocalMachineState(newMachineState);
       console.log('✅ Local machine state updated:', newMachineState);
     } catch (error) {
       console.error('Error starting washing:', error);
@@ -755,16 +756,20 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       if (deleteError) throw deleteError;
       
       // Reset machine state
+      const idleMachineState: MachineState = {
+        status: MachineStatus.IDLE,
+        currentQueueItemId: undefined,
+        startedAt: undefined,
+        expectedFinishAt: undefined,
+      };
       const { error: machineError } = await supabase
         .from('machine_state')
-        .upsert({
-          status: MachineStatus.IDLE,
-          currentQueueItemId: null,
-          startedAt: null,
-          expectedFinishAt: null,
-        });
+        .upsert(idleMachineState);
       
       if (machineError) throw machineError;
+      
+      setMachineState(idleMachineState);
+      saveLocalMachineState(idleMachineState);
     } catch (error) {
       console.error('Error marking done:', error);
       // Fallback to local storage on error

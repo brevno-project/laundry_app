@@ -23,14 +23,6 @@ export default function FullScreenAlert({ status, needsToReturnKey, onClose }: F
           <p className="text-2xl font-semibold text-yellow-700">
             💵 Возьмите деньги/купон
           </p>
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="mt-12 bg-white text-yellow-900 font-bold py-4 px-8 rounded-full text-xl shadow-2xl hover:bg-yellow-50"
-            >
-              Понятно
-            </button>
-          )}
         </div>
       </div>
     );
@@ -50,14 +42,6 @@ export default function FullScreenAlert({ status, needsToReturnKey, onClose }: F
           <p className="text-2xl font-semibold text-orange-700">
             ⚡ Как можно скорее!
           </p>
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="mt-12 bg-white text-orange-900 font-bold py-4 px-8 rounded-full text-xl shadow-2xl hover:bg-orange-50"
-            >
-              Понятно
-            </button>
-          )}
         </div>
       </div>
     );
