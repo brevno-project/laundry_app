@@ -355,15 +355,18 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       const data = await response.json();
 
       if (!response.ok) {
+        console.error('❌ Error from API:', data.error);
         return { success: false, error: data.error || 'Ошибка подключения' };
       }
+
+      console.log('✅ API response:', data);
 
       // Обновить локального user
       const updatedUser = { ...user, telegram_chat_id: telegramCode };
       setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      localStorage.setItem('laundryUser', JSON.stringify(updatedUser)); // ✅ Правильный ключ
 
-      console.log('✅ Telegram успешно подключен');
+      console.log('✅ Telegram успешно подключен, Chat ID:', telegramCode);
       return { success: true };
     } catch (error: any) {
       console.error('❌ Error linking Telegram:', error);
