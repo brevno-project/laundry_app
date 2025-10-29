@@ -238,15 +238,19 @@ export default function QueueList() {
                           ✅ Готово
                         </button>
                         
-                        {/* Отменить стирку */}
+                        {/* Отменить и вернуть в ожидание */}
                         <button
                           className="bg-gray-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-gray-600 shadow-sm"
                           onClick={async () => {
                             try {
-                              // Отменить стирку и вернуть в ожидание
-                              await cancelWashing(item.id);
+                              // Вернуть в ожидание, отменить стирку, убрать уведомления
+                              if (item.status === QueueStatus.WASHING) {
+                                await cancelWashing(item.id);
+                              } else {
+                                await setQueueStatus(item.id, QueueStatus.WAITING);
+                              }
                               await updateQueueItem(item.id, { returnKeyAlert: false });
-                              alert(`✅ Стирка отменена, ${item.userName} в ожидании!`);
+                              alert(`✅ ${item.userName} вернулся в ожидание!`);
                             } catch (error) {
                               console.error('Error canceling:', error);
                               alert('❌ Ошибка отмены');
