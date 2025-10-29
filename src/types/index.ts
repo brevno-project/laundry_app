@@ -49,6 +49,7 @@ export type QueueItem = {
   finishedAt?: string;        // Фактическое время окончания
   note?: string;
   adminMessage?: string;      // Сообщение от админа
+  returnKeyAlert?: boolean;   // Полноэкранное уведомление "Принеси ключ"
   status: QueueStatus;
 };
 

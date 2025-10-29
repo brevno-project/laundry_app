@@ -200,6 +200,9 @@ export default function QueueList() {
                             <button
                               className="bg-orange-500 text-white font-semibold py-2 px-3 rounded-lg text-sm hover:bg-orange-600 shadow-sm w-full"
                               onClick={async () => {
+                                // Установить флаг для полноэкранного уведомления
+                                await updateQueueItem(item.id, { returnKeyAlert: true });
+                                
                                 const success = await sendTelegramNotification({
                                   type: 'admin_return_key',
                                   userName: item.userName,

@@ -5,7 +5,7 @@ import { useLaundry } from '@/contexts/LaundryContext';
 import FullScreenAlert from './FullScreenAlert';
 
 export default function UserForm() {
-  const { user, joinQueue, logoutStudent, getUserQueueItem, queue } = useLaundry();
+  const { user, joinQueue, logoutStudent, getUserQueueItem, queue, updateQueueItem } = useLaundry();
   const [washCount, setWashCount] = useState<number>(1);
   const [paymentType, setPaymentType] = useState<string>('money');
   const [selectedHour, setSelectedHour] = useState<string>('20');
@@ -38,6 +38,20 @@ export default function UserForm() {
   // Полноэкранное уведомление когда зовут
   if (existingQueueItem?.status === 'ready') {
     return <FullScreenAlert status={existingQueueItem.status} />;
+  }
+
+  // Полноэкранное уведомление "Принеси ключ"
+  if (existingQueueItem?.status === 'washing' && existingQueueItem?.returnKeyAlert) {
+    return (
+      <FullScreenAlert 
+        status={existingQueueItem.status} 
+        needsToReturnKey={true}
+        onClose={async () => {
+          // Сбросить флаг
+          await updateQueueItem(existingQueueItem.id, { returnKeyAlert: false });
+        }}
+      />
+    );
   }
 
   return (
