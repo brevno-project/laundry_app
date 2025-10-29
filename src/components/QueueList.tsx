@@ -206,8 +206,11 @@ export default function QueueList() {
                           className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm"
                           onClick={async () => {
                             try {
+                              console.log('🔔 Нажата кнопка Вернуть для:', item.userName, item.id);
                               // Установить флаг для полноэкранного уведомления
+                              console.log('⚙️ Устанавливаем returnKeyAlert = true');
                               await updateQueueItem(item.id, { returnKeyAlert: true });
+                              console.log('✅ returnKeyAlert установлен!');
                               
                               const success = await sendTelegramNotification({
                                 type: 'admin_return_key',

@@ -39,7 +39,7 @@ export function getLaundryTimeStatus(): TimeStatus {
   let warningLevel: 'none' | 'warning' | 'danger' = 'none';
   
   if (isClosed) {
-    message = `⏰ Прачечная работает с ${LAUNDRY_OPEN_HOUR}:00 до ${LAUNDRY_CLOSE_HOUR}:00`;
+    message = `⏰ Прачечная работает до ${LAUNDRY_CLOSE_HOUR}:00`;
     warningLevel = 'danger';
   } else if (isWarningTime) {
     const hours = Math.floor(minutesUntilClose / 60);

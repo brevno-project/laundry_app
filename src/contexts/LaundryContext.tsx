@@ -647,6 +647,8 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   const startWashing = async (queueItemId: string) => {
     if (!isAdmin) return;
     
+    console.log('🎽 Starting washing for:', queueItemId);
+    
     if (!isSupabaseConfigured || !supabase) {
       // Use local storage fallback
       startLocalWashing(queueItemId);
@@ -657,8 +659,12 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     
     try {
       const queueItem = queue.find(item => item.id === queueItemId);
-      if (!queueItem) return;
+      if (!queueItem) {
+        console.error('❌ Queue item not found!');
+        return;
+      }
       
+      console.log('🔄 Updating queue item status to WASHING...');
       // Update queue item status
       const { error: queueError } = await supabase
         .from('queue')
@@ -666,6 +672,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         .eq('id', queueItemId);
       
       if (queueError) throw queueError;
+      console.log('✅ Queue item status updated!');
       
       // Update machine state
       const newMachineState: MachineState = {
@@ -675,11 +682,13 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         expectedFinishAt: queueItem.expectedFinishAt,
       };
       
+      console.log('🎰 Updating machine state:', newMachineState);
       const { error: machineError } = await supabase
         .from('machine_state')
         .upsert(newMachineState);
       
       if (machineError) throw machineError;
+      console.log('✅ Machine state updated!');
     } catch (error) {
       console.error('Error starting washing:', error);
       // Fallback to local storage on error
