@@ -53,40 +53,60 @@ function formatMessage(notification: TelegramNotification): string {
 
 // Получить telegram_chat_id студента из базы
 async function getStudentTelegramChatId(studentId?: string, userRoom?: string): Promise<string | null> {
-  if (!supabaseUrl || !supabaseKey) return null;
+  console.log(`🔍 Searching telegram_chat_id for:`, { studentId, userRoom });
+  
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('❌ Supabase not configured!');
+    return null;
+  }
   
   const supabase = createClient(supabaseUrl, supabaseKey);
   
   // Сначала попробовать найти по studentId
   if (studentId) {
+    console.log(`🔍 Searching by studentId: ${studentId}`);
     const { data, error } = await supabase
       .from('students')
-      .select('telegram_chat_id')
+      .select('id, fullName, room, telegram_chat_id')
       .eq('id', studentId)
       .single();
     
-    if (!error && data?.telegram_chat_id) {
-      console.log(`✅ Found telegram_chat_id by studentId: ${studentId}`);
-      return data.telegram_chat_id;
+    if (error) {
+      console.error(`❌ Error searching by studentId:`, error);
+    } else {
+      console.log(`📊 Found student:`, data);
+      if (data?.telegram_chat_id) {
+        console.log(`✅ Found telegram_chat_id: ${data.telegram_chat_id}`);
+        return data.telegram_chat_id;
+      } else {
+        console.warn(`⚠️ Student found but telegram_chat_id is empty!`);
+      }
     }
   }
   
   // Если не нашли по ID, попробовать по комнате
   if (userRoom) {
+    console.log(`🔍 Searching by room: ${userRoom}`);
     const { data, error } = await supabase
       .from('students')
-      .select('telegram_chat_id')
+      .select('id, fullName, room, telegram_chat_id')
       .eq('room', userRoom)
       .single();
     
-    if (!error && data?.telegram_chat_id) {
-      console.log(`✅ Found telegram_chat_id by room: ${userRoom}`);
-      return data.telegram_chat_id;
+    if (error) {
+      console.error(`❌ Error searching by room:`, error);
+    } else {
+      console.log(`📊 Found student by room:`, data);
+      if (data?.telegram_chat_id) {
+        console.log(`✅ Found telegram_chat_id: ${data.telegram_chat_id}`);
+        return data.telegram_chat_id;
+      } else {
+        console.warn(`⚠️ Student found but telegram_chat_id is empty!`);
+      }
     }
-    
-    console.warn(`⚠️ telegram_chat_id not found for room: ${userRoom}, studentId: ${studentId}`);
   }
   
+  console.error(`❌ telegram_chat_id NOT FOUND for studentId: ${studentId}, room: ${userRoom}`);
   return null;
 }
 
