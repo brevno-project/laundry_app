@@ -391,6 +391,19 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       
       if (error) throw error;
       console.log('✅ Queue fetched:', data);
+      
+      // Проверка expectedFinishAt
+      if (data && data.length > 0) {
+        data.forEach((item, index) => {
+          console.log(`📊 Item ${index + 1}:`, {
+            userName: item.userName,
+            status: item.status,
+            expectedFinishAt: item.expectedFinishAt,
+            hasExpectedFinishAt: !!item.expectedFinishAt
+          });
+        });
+      }
+      
       setQueue(data || []);
       // Also update local storage as backup
       saveLocalQueue(data || []);
