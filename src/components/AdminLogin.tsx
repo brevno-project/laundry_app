@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function AdminLogin() {
-  const { students, loginStudent } = useLaundry();
+  const { setUser, setIsAdmin } = useLaundry();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,19 +21,24 @@ export default function AdminLogin() {
     setLoading(true);
     setError('');
 
-    try {
-      // Найти студента swaydikon
-      const adminStudent = students.find(s => s.firstName?.toLowerCase() === 'swaydikon');
+    // Простая проверка пароля
+    if (password === 'hesoyam') {
+      // Создать админского юзера
+      const adminUser = {
+        id: uuidv4(),
+        studentId: 'admin',
+        name: 'Admin',
+        room: 'A501'
+      };
       
-      if (!adminStudent) {
-        setError('Админ аккаунт не найден в базе');
-        setLoading(false);
-        return;
-      }
-
-      await loginStudent(adminStudent.id, password);
-    } catch (err: any) {
-      setError(err.message || 'Ошибка входа');
+      setUser(adminUser);
+      setIsAdmin(true);
+      localStorage.setItem('laundryUser', JSON.stringify(adminUser));
+      localStorage.setItem('laundryIsAdmin', 'true');
+      
+      setLoading(false);
+    } else {
+      setError('Неверный пароль');
       setLoading(false);
     }
   };
