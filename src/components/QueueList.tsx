@@ -70,10 +70,10 @@ export default function QueueList() {
                 {/* Заголовок карточки */}
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-gray-700">#{index + 1}</span>
+                    <span className="text-2xl font-black text-gray-900">#{index + 1}</span>
                     <div>
-                      <div className="font-bold text-lg">{item.userName}</div>
-                      {item.userRoom && <div className="text-sm text-gray-600">Комната {item.userRoom}</div>}
+                      <div className="font-black text-xl text-gray-900">{item.userName}</div>
+                      {item.userRoom && <div className="text-sm font-bold text-gray-700">Комната {item.userRoom}</div>}
                     </div>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusDisplay.badgeColor} whitespace-nowrap`}>
@@ -82,14 +82,14 @@ export default function QueueList() {
                 </div>
                 
                 {/* Инфо */}
-                <div className="flex gap-4 mb-3 text-sm">
+                <div className="flex gap-4 mb-3 text-base">
                   <div className="flex items-center gap-1">
-                    <span className="font-bold">Стирок:</span>
-                    <span className="text-xl font-bold text-blue-600">{item.washCount || 1}</span>
+                    <span className="font-bold text-gray-900">Стирок:</span>
+                    <span className="text-2xl font-black text-blue-700">{item.washCount || 1}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="font-bold">Оплата:</span>
-                    <span>
+                    <span className="font-bold text-gray-900">Оплата:</span>
+                    <span className="font-bold text-gray-900">
                       {item.paymentType === 'coupon' ? '🎫 Купон' : 
                        item.paymentType === 'both' ? '💵+🎫 Оба' : 
                        '💵 Деньги'}
