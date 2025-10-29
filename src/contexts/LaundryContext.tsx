@@ -63,8 +63,12 @@ type LaundryContextType = {
   markDone: (queueItemId: string) => void;
   startNext: () => void;
   clearQueue: () => void;
+  removeFromQueue: (queueItemId: string) => Promise<void>;
+  clearCompletedQueue: () => Promise<void>;
+  banStudent: (studentId: string, reason?: string) => Promise<void>;
+  unbanStudent: (studentId: string) => Promise<void>;
   isAdmin: boolean;
-  setIsAdmin: (value: boolean) => void;
+  setIsAdmin: (isAdmin: boolean) => void;
   verifyAdminKey: (key: string) => boolean;
   getUserQueueItem: () => QueueItem | undefined;
   isLoading: boolean;
@@ -830,6 +834,124 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Удалить конкретного человека из очереди
+  const removeFromQueue = async (queueItemId: string) => {
+    if (!isAdmin) return;
+
+    if (!isSupabaseConfigured || !supabase) {
+      // Local storage fallback
+      const localQueue = getLocalQueue();
+      const updatedQueue = localQueue.filter(item => item.id !== queueItemId);
+      saveLocalQueue(updatedQueue);
+      fetchQueue();
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('queue')
+        .delete()
+        .eq('id', queueItemId);
+
+      if (error) throw error;
+
+      console.log('✅ Queue item removed:', queueItemId);
+      await fetchQueue();
+    } catch (error) {
+      console.error('❌ Error removing from queue:', error);
+    }
+  };
+
+  // Очистить завершенных из очереди
+  const clearCompletedQueue = async () => {
+    if (!isAdmin) return;
+
+    if (!isSupabaseConfigured || !supabase) {
+      // Local storage fallback
+      const localQueue = getLocalQueue();
+      const updatedQueue = localQueue.filter(item => item.status !== QueueStatus.DONE);
+      saveLocalQueue(updatedQueue);
+      fetchQueue();
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('queue')
+        .delete()
+        .eq('status', QueueStatus.DONE);
+
+      if (error) throw error;
+
+      console.log('✅ Completed queue items cleared');
+      await fetchQueue();
+    } catch (error) {
+      console.error('❌ Error clearing completed queue:', error);
+    }
+  };
+
+  // Забанить студента
+  const banStudent = async (studentId: string, reason?: string) => {
+    if (!isAdmin) return;
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase не настроен');
+    }
+
+    try {
+      // Убрать из очереди
+      await supabase
+        .from('queue')
+        .delete()
+        .eq('userId', studentId);
+
+      // Забанить
+      const { error } = await supabase
+        .from('students')
+        .update({
+          is_banned: true,
+          banned_at: new Date().toISOString(),
+          ban_reason: reason || 'Не указано',
+        })
+        .eq('id', studentId);
+
+      if (error) throw error;
+
+      console.log('✅ Student banned:', studentId);
+      await loadStudents();
+      await fetchQueue();
+    } catch (error) {
+      console.error('❌ Error banning student:', error);
+      throw error;
+    }
+  };
+
+  // Разбанить студента
+  const unbanStudent = async (studentId: string) => {
+    if (!isAdmin) return;
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase не настроен');
+    }
+
+    try {
+      const { error } = await supabase
+        .from('students')
+        .update({
+          is_banned: false,
+          banned_at: null,
+          ban_reason: null,
+        })
+        .eq('id', studentId);
+
+      if (error) throw error;
+
+      console.log('✅ Student unbanned:', studentId);
+      await loadStudents();
+    } catch (error) {
+      console.error('❌ Error unbanning student:', error);
+      throw error;
+    }
+  };
+
   // Verify admin key
   const verifyAdminKey = (key: string): boolean => {
     const isValid = key === ADMIN_KEY;
@@ -868,6 +990,10 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     markDone,
     startNext,
     clearQueue,
+    removeFromQueue,
+    clearCompletedQueue,
+    banStudent,
+    unbanStudent,
     isAdmin,
     setIsAdmin,
     verifyAdminKey,

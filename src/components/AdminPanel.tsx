@@ -15,6 +15,7 @@ export default function AdminPanel() {
     markDone, 
     startNext, 
     clearQueue,
+    clearCompletedQueue,
     resetStudentRegistration 
   } = useLaundry();
   
@@ -152,6 +153,13 @@ export default function AdminPanel() {
             </div>
           </div>
         )}
+
+        <button
+          onClick={() => clearCompletedQueue()}
+          className="w-full bg-orange-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-orange-700 transition-colors shadow-md"
+        >
+          🧹 Удалить завершенных
+        </button>
 
         {/* Students Management */}
         <button
