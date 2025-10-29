@@ -8,10 +8,11 @@ import UserForm from '@/components/UserForm';
 import MachineStatus from '@/components/MachineStatus';
 import QueueList from '@/components/QueueList';
 import AdminPanel from '@/components/AdminPanel';
+import TelegramSetup from '@/components/TelegramSetup';
 import HistoryList from '@/components/HistoryList';
 
 export default function Home() {
-  const { user, isLoading } = useLaundry();
+  const { user, isLoading, logoutStudent } = useLaundry();
   const isSupabaseConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   const [activeTab, setActiveTab] = React.useState('main'); // main, admin, history, notifications
 
@@ -65,6 +66,16 @@ export default function Home() {
               >
                 📜 История
               </button>
+              <button
+                onClick={() => setActiveTab('settings')}
+                className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
+                  activeTab === 'settings'
+                    ? 'border-blue-600 text-blue-600 bg-blue-50'
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                ⚙️ Настройки
+              </button>
             </>
           )}
         </div>
@@ -85,14 +96,15 @@ export default function Home() {
             
             {/* Статус машинки */}
             <MachineStatus />
-            
-            {/* Очередь */}
-            <QueueList />
           </div>
         )}
 
         {activeTab === 'admin' && user && (
           <div className="space-y-4">
+            {/* Очередь */}
+            <QueueList />
+            
+            {/* Админ панель */}
             <AdminPanel />
           </div>
         )}
@@ -100,6 +112,24 @@ export default function Home() {
         {activeTab === 'history' && user && (
           <div className="space-y-4">
             <HistoryList />
+          </div>
+        )}
+
+        {activeTab === 'settings' && user && (
+          <div className="space-y-4">
+            {/* Telegram */}
+            <TelegramSetup />
+            
+            {/* Выход */}
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <h3 className="font-bold text-lg text-gray-800 mb-3">Аккаунт</h3>
+              <button
+                onClick={logoutStudent}
+                className="w-full bg-red-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-red-600 shadow-sm"
+              >
+                🚪 Выйти из аккаунта
+              </button>
+            </div>
           </div>
         )}
       </div>

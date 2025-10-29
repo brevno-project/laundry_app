@@ -2,7 +2,7 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
-import TelegramSetup from './TelegramSetup';
+import FullScreenAlert from './FullScreenAlert';
 
 export default function UserForm() {
   const { user, joinQueue, logoutStudent, getUserQueueItem, queue } = useLaundry();
@@ -35,10 +35,13 @@ export default function UserForm() {
     logoutStudent();
   };
 
+  // Полноэкранное уведомление когда зовут
+  if (existingQueueItem?.status === 'ready') {
+    return <FullScreenAlert status={existingQueueItem.status} />;
+  }
+
   return (
     <div className="space-y-4">
-      {/* Telegram Setup - первым делом! */}
-      <TelegramSetup />
       
       <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
         <h2 className="text-2xl font-bold mb-4 text-gray-800">Встать в очередь</h2>
@@ -172,25 +175,9 @@ export default function UserForm() {
               <p className="text-blue-600 font-black text-center mt-2 text-3xl">
                 Позиция #{queuePosition}
               </p>
-              {existingQueueItem?.status === 'ready' && (
-                <div className="mt-3 bg-yellow-100 border-2 border-yellow-500 rounded-lg p-3">
-                  <p className="text-yellow-900 font-bold text-center text-lg">
-                    🔔 ВАС ЗОВУТ ЗА КЛЮЧОМ!
-                  </p>
-                  <p className="text-yellow-800 text-sm text-center mt-1">
-                    Подойдите в A501
-                  </p>
-                </div>
-              )}
+
             </div>
           )}
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="w-full bg-red-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-600 transition-colors mt-2"
-          >
-            🚪 Выйти
-          </button>
         </form>
       </div>
     </div>
