@@ -100,7 +100,12 @@ export default function QueueList() {
                     <div className="flex items-center gap-1">
                       <span className="font-bold text-gray-900">Закончит в:</span>
                       <span className="text-lg font-bold text-blue-700">
-                        {new Date(item.expectedFinishAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                        {(() => {
+                          const date = new Date(item.expectedFinishAt);
+                          const hours = date.getHours().toString().padStart(2, '0');
+                          const minutes = date.getMinutes().toString().padStart(2, '0');
+                          return `${hours}:${minutes}`;
+                        })()}
                       </span>
                     </div>
                   )}

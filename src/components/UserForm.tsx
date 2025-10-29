@@ -113,7 +113,7 @@ export default function UserForm() {
 
               <div className="mb-4">
                 <label htmlFor="expectedTime" className="block text-sm font-bold mb-2 text-gray-700">
-                  До какого времени закончу стирать *
+До какого времени закончу стирать
                 </label>
                 <input
                   id="expectedTime"

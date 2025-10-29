@@ -104,9 +104,17 @@ export default function TelegramSetup() {
             </div>
             <div className="flex-1">
               <p className="text-gray-700 mb-1">
-                <span className="font-bold">Шаг 3:</span> Скопируйте ваш <span className="font-semibold">Chat ID</span> и вставьте ниже
+                <span className="font-bold">Шаг 3:</span> Откройте нашего бота:{' '}
+                <a
+                  href="https://t.me/keiin_dorm_laundry_bot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 underline font-semibold"
+                >
+                  @keiin_dorm_laundry_bot
+                </a>
               </p>
-              <p className="text-sm text-gray-600">✅ Уведомления от <span className="font-semibold">@keiin_dorm_laundry_bot</span> будут приходить на этот ID!</p>
+              <p className="text-sm text-gray-600">⚠️ Обязательно напишите <span className="font-semibold">/start</span> боту, чтобы он мог отправлять уведомления!</p>
             </div>
           </div>
         </div>
@@ -117,7 +125,9 @@ export default function TelegramSetup() {
               4
             </div>
             <div className="flex-1">
-              <p className="font-bold text-gray-900 mb-2">Вставьте Chat ID сюда:</p>
+              <p className="text-gray-700 mb-1">
+                <span className="font-bold">Шаг 4:</span> Скопируйте ваш <span className="font-semibold">Chat ID</span> и вставьте сюда:
+              </p>
               <input
                 type="text"
                 value={chatId}

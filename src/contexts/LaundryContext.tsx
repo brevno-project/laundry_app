@@ -530,15 +530,20 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     }
     
     try {
+      console.log('❌ Leaving queue:', { queueItemId, studentId: user.studentId });
       const { error } = await supabase
         .from('queue')
         .delete()
         .eq('id', queueItemId)
-        .eq('userId', user.id); // Only allow users to remove their own entries
+        .eq('studentId', user.studentId); // ✅ Используем studentId для проверки
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error from Supabase:', error);
+        throw error;
+      }
+      console.log('✅ Successfully left queue');
     } catch (error) {
-      console.error('Error leaving queue:', error);
+      console.error('❌ Error leaving queue:', error);
       // Fallback to local storage on error
       removeFromLocalQueue(queueItemId, user.id);
       fetchQueue(); // Refresh queue from local storage
