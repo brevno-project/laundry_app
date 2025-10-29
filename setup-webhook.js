@@ -4,13 +4,12 @@
  */
 
 const BOT_TOKEN = '8008452513:AAFFoaZm8PGPHIllv8DG9Oirtmm1Aq-LidY';
-const WEBHOOK_URL = process.env.WEBHOOK_URL || 'YOUR_VERCEL_URL_HERE';
 
-async function setWebhook() {
+async function setWebhook(webhookUrl) {
   const url = `https://api.telegram.org/bot${BOT_TOKEN}/setWebhook`;
   
   console.log('🔧 Настройка webhook...');
-  console.log('📍 Webhook URL:', WEBHOOK_URL);
+  console.log('📍 Webhook URL:', webhookUrl);
   
   try {
     const response = await fetch(url, {
@@ -19,7 +18,7 @@ async function setWebhook() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        url: `${WEBHOOK_URL}/api/telegram/webhook`,
+        url: webhookUrl,
         allowed_updates: ['message'],
       }),
     });
@@ -86,20 +85,21 @@ async function main() {
   } else if (command === 'info') {
     await getWebhookInfo();
   } else if (command === 'set') {
-    const customUrl = args[1];
-    if (customUrl) {
-      process.env.WEBHOOK_URL = customUrl;
-    }
+    let webhookUrl = args[1];
     
-    if (!process.env.WEBHOOK_URL || process.env.WEBHOOK_URL === 'YOUR_VERCEL_URL_HERE') {
-      console.error('❌ Ошибка: укажите WEBHOOK_URL');
+    if (!webhookUrl) {
+      console.error('❌ Ошибка: укажите URL');
       console.log('\nИспользование:');
       console.log('  node setup-webhook.js set https://your-app.vercel.app');
-      console.log('  WEBHOOK_URL=https://your-app.vercel.app node setup-webhook.js set');
       process.exit(1);
     }
     
-    await setWebhook();
+    // Добавить /api/telegram/webhook если не указано
+    if (!webhookUrl.includes('/api/telegram/webhook')) {
+      webhookUrl = `${webhookUrl}/api/telegram/webhook`;
+    }
+    
+    await setWebhook(webhookUrl);
     await getWebhookInfo();
   } else {
     console.log('📋 Использование:');
