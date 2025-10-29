@@ -699,6 +699,10 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       
       if (machineError) throw machineError;
       console.log('✅ Machine state updated!');
+      
+      // Обновить локальный state немедленно
+      setMachineState(newMachineState);
+      console.log('✅ Local machine state updated:', newMachineState);
     } catch (error) {
       console.error('Error starting washing:', error);
       // Fallback to local storage on error

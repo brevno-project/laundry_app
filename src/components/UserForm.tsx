@@ -40,16 +40,12 @@ export default function UserForm() {
     return <FullScreenAlert status={existingQueueItem.status} />;
   }
 
-  // Полноэкранное уведомление "Принеси ключ"
-  if (existingQueueItem?.status === 'washing' && existingQueueItem?.returnKeyAlert) {
+  // Полноэкранное уведомление "Принеси ключ" - БЕЗ кнопки закрытия
+  if (existingQueueItem?.returnKeyAlert) {
     return (
       <FullScreenAlert 
         status={existingQueueItem.status} 
         needsToReturnKey={true}
-        onClose={async () => {
-          // Сбросить флаг
-          await updateQueueItem(existingQueueItem.id, { returnKeyAlert: false });
-        }}
       />
     );
   }

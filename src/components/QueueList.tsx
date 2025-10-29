@@ -57,6 +57,8 @@ export default function QueueList() {
     );
   }
 
+  console.log('🎰 Machine State:', machineState);
+  
   return (
     <div className="bg-white rounded-lg shadow-lg border border-gray-200">
       <h2 className="text-xl font-bold p-3 bg-gray-50 rounded-t-lg text-gray-800">📋 Очередь ({queuedItems.length})</h2>
@@ -72,6 +74,16 @@ export default function QueueList() {
           <div className="bg-red-50 border-2 border-red-500 rounded-lg p-3 text-center">
             <div className="text-3xl mb-1">🔴</div>
             <div className="text-lg font-bold text-red-900">Машина занята</div>
+            {machineState.currentQueueItemId && (() => {
+              const currentItem = queue.find(item => item.id === machineState.currentQueueItemId);
+              if (currentItem) {
+                return (
+                  <div className="text-sm text-red-700 mt-1 font-bold">
+                    🧑 Стирает: {currentItem.userName}
+                  </div>
+                );
+              }
+            })()}
             {machineState.expectedFinishAt && (
               <div className="text-sm text-red-700 mt-1">
                 Закончит: {new Date(machineState.expectedFinishAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
