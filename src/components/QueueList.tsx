@@ -194,7 +194,9 @@ export default function QueueList() {
                         <button
                           className="bg-green-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-green-700 shadow-sm"
                           onClick={async () => {
+                            console.log('🔑 Нажата кнопка Забрал для:', item.userName, item.id);
                             await startWashing(item.id);
+                            console.log('✅ startWashing завершен');
                             alert(`✅ ${item.userName} забрал ключ и начал стирку!`);
                           }}
                         >

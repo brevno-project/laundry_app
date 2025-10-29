@@ -576,6 +576,8 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>) => {
     if (!user) return;
     
+    console.log('📦 updateQueueItem called:', { queueItemId, updates, isAdmin });
+    
     if (!isSupabaseConfigured || !supabase) {
       // Use local storage fallback
       updateLocalQueueItem(queueItemId, user.id, updates);
@@ -584,13 +586,21 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     }
     
     try {
-      const { error } = await supabase
+      // Админ может обновлять любые записи
+      let query = supabase
         .from('queue')
         .update(updates)
-        .eq('id', queueItemId)
-        .eq('userId', user.id); // Only allow users to update their own entries
+        .eq('id', queueItemId);
+      
+      // Обычный пользователь только свои записи
+      if (!isAdmin) {
+        query = query.eq('userId', user.id);
+      }
+      
+      const { error } = await query;
       
       if (error) throw error;
+      console.log('✅ Queue item updated successfully!');
     } catch (error) {
       console.error('Error updating queue item:', error);
       // Fallback to local storage on error
