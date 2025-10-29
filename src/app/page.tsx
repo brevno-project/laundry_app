@@ -10,6 +10,7 @@ import MachineStatus from '@/components/MachineStatus';
 import QueueList from '@/components/QueueList';
 import AdminPanel from '@/components/AdminPanel';
 import TelegramSetup from '@/components/TelegramSetup';
+import HistoryList from '@/components/HistoryList';
 
 export default function Home() {
   const { user, isLoading, logoutStudent, isAdmin } = useLaundry();
@@ -45,6 +46,18 @@ export default function Home() {
             >
               🏠 Главная
             </button>
+            {isAdmin && (
+              <button
+                onClick={() => setActiveTab('history')}
+                className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
+                  activeTab === 'history'
+                    ? 'border-blue-600 text-blue-600 bg-blue-50'
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                📜 История
+              </button>
+            )}
             <button
               onClick={() => setActiveTab('settings')}
               className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
@@ -75,9 +88,6 @@ export default function Home() {
               <>
                 {/* Форма для обычных пользователей */}
                 {!isAdmin && <UserForm />}
-                
-                {/* Админ панель для админа */}
-                {isAdmin && <AdminPanel />}
               </>
             )}
             
@@ -86,6 +96,15 @@ export default function Home() {
             
             {/* Очередь - только для вошедших */}
             {user && <QueueList />}
+            
+            {/* Админ панель - только для админа */}
+            {isAdmin && <AdminPanel />}
+          </div>
+        )}
+
+        {activeTab === 'history' && isAdmin && (
+          <div className="space-y-4">
+            <HistoryList />
           </div>
         )}
 

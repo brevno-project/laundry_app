@@ -146,7 +146,20 @@ export default function QueueList() {
                     {/* Кнопки админа */}
                     {isAdmin && (
                       <div className="flex flex-col gap-2">
-                        {/* WAITING → Позвать за ключом + Ключ выдан */}
+                        {/* READY → Забрал ключ */}
+                        {item.status === QueueStatus.READY && (
+                          <button
+                            className="bg-green-600 text-white font-semibold py-2 px-3 rounded-lg text-sm hover:bg-green-700 shadow-sm w-full"
+                            onClick={async () => {
+                              await setQueueStatus(item.id, QueueStatus.WASHING);
+                              alert(`✅ ${item.userName} забрал ключ и начал стирку!`);
+                            }}
+                          >
+                            🔑 Забрал ключ
+                          </button>
+                        )}
+                        
+                        {/* WAITING → Позвать за ключом */}
                         {item.status === QueueStatus.WAITING && (
                           <>
                             <button
@@ -172,27 +185,6 @@ export default function QueueList() {
                               }}
                             >
                               🔔 Позвать за ключом
-                            </button>
-                            <button
-                              className="bg-blue-600 text-white font-semibold py-2 px-3 rounded-lg text-sm hover:bg-blue-700 shadow-sm w-full"
-                              onClick={async () => {
-                                const success = await sendTelegramNotification({
-                                  type: 'admin_key_issued',
-                                  userName: item.userName,
-                                  userRoom: item.userRoom,
-                                  studentId: item.studentId,
-                                  expectedFinishAt: item.expectedFinishAt
-                                });
-                                await setQueueStatus(item.id, QueueStatus.WASHING);
-                                
-                                if (success) {
-                                  alert(`✅ Сообщение отправлено ${item.userName}!`);
-                                } else {
-                                  alert(`⚠️ ${item.userName} не подключил Telegram`);
-                                }
-                              }}
-                            >
-                              ✅ Ключ выдан
                             </button>
                           </>
                         )}
