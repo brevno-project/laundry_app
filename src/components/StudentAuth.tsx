@@ -73,7 +73,7 @@ export default function StudentAuth() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="🔍 Поиск по имени или комнате..."
-          className="w-full p-4 rounded-lg border-2 border-blue-300 text-lg mb-4 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+          className="w-full p-4 rounded-lg border-2 border-blue-300 text-xl font-semibold mb-4 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
         />
 
         {/* Список студентов */}

@@ -4,6 +4,7 @@ import React from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import TimeBanner from '@/components/TimeBanner';
 import StudentAuth from '@/components/StudentAuth';
+import AdminLogin from '@/components/AdminLogin';
 import UserForm from '@/components/UserForm';
 import MachineStatus from '@/components/MachineStatus';
 import QueueList from '@/components/QueueList';
@@ -65,7 +66,10 @@ export default function Home() {
             
             {/* Форма входа/регистрации */}
             {!user ? (
-              <StudentAuth />
+              <>
+                <StudentAuth />
+                <AdminLogin />
+              </>
             ) : (
               <UserForm />
             )}
@@ -87,7 +91,10 @@ export default function Home() {
             <div className="bg-white p-4 rounded-lg shadow-sm">
               <h3 className="font-bold text-lg text-gray-800 mb-3">Аккаунт</h3>
               <button
-                onClick={logoutStudent}
+                onClick={() => {
+                  logoutStudent();
+                  setActiveTab('main'); // Сброс на главную
+                }}
                 className="w-full bg-red-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-red-600 shadow-sm"
               >
                 🚪 Выйти из аккаунта
