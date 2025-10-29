@@ -5,7 +5,7 @@ import { useLaundry } from '@/contexts/LaundryContext';
 import TelegramSetup from './TelegramSetup';
 
 export default function UserForm() {
-  const { user, joinQueue, logoutStudent, getUserQueueItem } = useLaundry();
+  const { user, joinQueue, logoutStudent, getUserQueueItem, queue } = useLaundry();
   const [washCount, setWashCount] = useState<number>(1);
   const [paymentType, setPaymentType] = useState<string>('money');
   const [expectedTime, setExpectedTime] = useState<string>('');
@@ -13,6 +13,9 @@ export default function UserForm() {
   // Проверка есть ли уже в очереди
   const existingQueueItem = getUserQueueItem();
   const isInQueue = !!existingQueueItem;
+  
+  // Найти позицию в очереди
+  const queuePosition = existingQueueItem ? queue.findIndex(item => item.id === existingQueueItem.id) + 1 : 0;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -116,12 +119,22 @@ export default function UserForm() {
             </>
           ) : (
             <div className="bg-blue-50 border-2 border-blue-300 rounded-md p-4">
-              <p className="text-blue-800 font-bold text-center">
-                ✅ Вы уже в очереди!
+              <p className="text-blue-800 font-bold text-center text-lg">
+                ✅ Вы в очереди!
               </p>
-              <p className="text-blue-600 text-sm text-center mt-2">
-                Позиция #{existingQueueItem?.id || '?'}
+              <p className="text-blue-600 font-black text-center mt-2 text-3xl">
+                Позиция #{queuePosition}
               </p>
+              {existingQueueItem?.status === 'ready' && (
+                <div className="mt-3 bg-yellow-100 border-2 border-yellow-500 rounded-lg p-3">
+                  <p className="text-yellow-900 font-bold text-center text-lg">
+                    🔔 ВАС ЗОВУТ ЗА КЛЮЧОМ!
+                  </p>
+                  <p className="text-yellow-800 text-sm text-center mt-1">
+                    Подойдите в A501
+                  </p>
+                </div>
+              )}
             </div>
           )}
           <button
