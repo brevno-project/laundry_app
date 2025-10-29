@@ -28,7 +28,7 @@ export default function QueueList() {
       case QueueStatus.READY:
         return { bg: 'bg-yellow-50', text: 'text-yellow-900', badge: '🟡 СЛЕДУЮЩИЙ!', badgeColor: 'bg-yellow-400 text-yellow-900' };
       case QueueStatus.KEY_ISSUED:
-        return { bg: 'bg-blue-50', text: 'text-blue-900', badge: '🔑 Ключ выдан', badgeColor: 'bg-blue-400 text-blue-900' };
+        return { bg: 'bg-blue-50', text: 'text-blue-900', badge: '🔑 Начинайте стираться', badgeColor: 'bg-blue-400 text-blue-900' };
       case QueueStatus.WASHING:
         return { bg: 'bg-green-50', text: 'text-green-900', badge: '🟢 СТИРАЕТ', badgeColor: 'bg-green-400 text-green-900' };
       case QueueStatus.DONE:
@@ -94,6 +94,10 @@ export default function QueueList() {
                        item.paymentType === 'both' ? '💵+🎫 Оба' : 
                        '💵 Деньги'}
                     </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="font-bold text-gray-900">Время стирки:</span>
+                    <span className="text-sm text-gray-700">{item.expectedFinishAt ? new Date(item.expectedFinishAt).toLocaleString() : 'Не указано'}</span>
                   </div>
                 </div>
                 
@@ -185,24 +189,32 @@ export default function QueueList() {
                         {item.status === QueueStatus.WASHING && (
                           <>
                             <button
-                              className="bg-yellow-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-yellow-600 shadow-md flex-1"
-                              onClick={() => sendTelegramNotification({
-                                type: 'admin_return_key',
-                                userName: item.userName,
-                                userRoom: item.userRoom,
-                                studentId: item.studentId
-                              })}
+                              className="bg-yellow-500 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-yellow-600 shadow-lg w-full"
+                              onClick={async () => {
+                                const success = await sendTelegramNotification({
+                                  type: 'admin_return_key',
+                                  userName: item.userName,
+                                  userRoom: item.userRoom,
+                                  studentId: item.studentId
+                                });
+                                // Уведомить админа
+                                if (success) {
+                                  alert(`✅ Сообщение отправлено ${item.userName}!`);
+                                } else {
+                                  alert(`⚠️ ${item.userName} не подключил Telegram`);
+                                }
+                              }}
                             >
                               🔔 Принеси ключ
                             </button>
                             <button
-                              className="bg-emerald-600 text-white font-bold py-2 px-3 rounded-lg hover:bg-emerald-700 shadow-md flex-1"
+                              className="bg-emerald-600 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-emerald-700 shadow-lg w-full"
                               onClick={() => markDone(item.id)}
                             >
                               ✅ Готово
                             </button>
                             <button
-                              className="bg-orange-600 text-white font-bold py-2 px-3 rounded-lg hover:bg-orange-700 shadow-md flex-1"
+                              className="bg-orange-600 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-orange-700 shadow-lg w-full"
                               onClick={() => cancelWashing(item.id)}
                             >
                               ⏹️ Остановить
