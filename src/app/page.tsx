@@ -22,33 +22,35 @@ export default function Home() {
   }
 
   return (
-    <div className="container mx-auto max-w-4xl px-4 py-8">
-      <header className="mb-8 text-center bg-gradient-to-r from-blue-600 to-blue-700 p-6 rounded-lg shadow-lg">
-        <h1 className="text-4xl font-bold text-white">🧺 Очередь на стирку</h1>
+    <div className="min-h-screen w-full bg-gray-50">
+      {/* Заголовок */}
+      <header className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 shadow-lg sticky top-0 z-10">
+        <h1 className="text-2xl font-bold text-white text-center">🧺 Очередь на стирку</h1>
       </header>
 
-      <TimeBanner />
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-6">
-          <MachineStatus />
-          <QueueList />
-          <HistoryList />
-        </div>
+      {/* Основной контент */}
+      <div className="w-full space-y-4 p-3">
+        <TimeBanner />
         
-        <div className="space-y-6">
-          {!user ? (
-            <StudentAuth />
-          ) : (
-            <UserForm />
-          )}
-          <AdminPanel />
-        </div>
+        {/* Форма входа/регистрации */}
+        {!user ? (
+          <StudentAuth />
+        ) : (
+          <UserForm />
+        )}
+        
+        {/* Статус машинки */}
+        <MachineStatus />
+        
+        {/* Очередь */}
+        <QueueList />
+        
+        {/* Админ панель */}
+        <AdminPanel />
+        
+        {/* История (скрыта по умолчанию) */}
+        {/* <HistoryList /> */}
       </div>
-      
-      <footer className="mt-12 text-center text-gray-600 text-sm bg-white p-4 rounded-lg shadow">
-        <p className="font-medium">Приложение очереди на стирку &copy; {new Date().getFullYear()}</p>
-      </footer>
     </div>
   );
 }

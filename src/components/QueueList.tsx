@@ -48,17 +48,17 @@ export default function QueueList() {
 
   if (queuedItems.length === 0) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow-lg mb-6 border border-gray-200">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">📋 Очередь</h2>
-        <p className="text-gray-700 text-lg">Никого в очереди. Встаньте первым!</p>
+      <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
+        <h2 className="text-xl font-bold mb-2 text-gray-800">📋 Очередь</h2>
       </div>
     );
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-lg mb-6 overflow-x-auto border border-gray-200">
-      <h2 className="text-2xl font-bold mb-4 text-gray-800">📋 Очередь</h2>
-      <table className="min-w-full divide-y-2 divide-gray-300">
+    <div className="bg-white rounded-lg shadow-lg border border-gray-200">
+      <h2 className="text-xl font-bold p-3 bg-gray-50 rounded-t-lg text-gray-800">📋 Очередь ({queuedItems.length})</h2>
+      <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-100">
           <tr>
             <th scope="col" className="px-4 py-3 text-left text-sm font-bold text-gray-800 uppercase tracking-wider">
@@ -209,6 +209,7 @@ export default function QueueList() {
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
