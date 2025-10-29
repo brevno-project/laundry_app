@@ -647,13 +647,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   const startWashing = async (queueItemId: string) => {
     if (!isAdmin) return;
     
-    // Проверка времени - нельзя начать стирку ночью
-    const timeStatus = getLaundryTimeStatus();
-    if (timeStatus.isClosed) {
-      alert('⚠️ Стирка закрыта с 22:00 до 09:00. Нельзя начать стирку.');
-      return;
-    }
-    
     if (!isSupabaseConfigured || !supabase) {
       // Use local storage fallback
       startLocalWashing(queueItemId);
