@@ -6,6 +6,7 @@ export type Student = {
   room: string | null;
   isRegistered: boolean;
   registeredAt?: string;
+  telegram_chat_id?: string; // Telegram Chat ID для персональных уведомлений
   createdAt: string;
 };
 

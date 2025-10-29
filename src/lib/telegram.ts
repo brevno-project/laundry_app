@@ -1,7 +1,11 @@
 // Telegram Bot API для отправки уведомлений
+import { createClient } from '@supabase/supabase-js';
 
 const TELEGRAM_BOT_TOKEN = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN || '';
-const TELEGRAM_CHAT_ID = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID || '';
+const ADMIN_TELEGRAM_CHAT_ID = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID || ''; // ID админа
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 export interface TelegramNotification {
   type: 'joined' | 'left' | 'washing_started' | 'washing_done' | 'admin_call_for_key' | 'admin_key_issued' | 'admin_return_key';
@@ -11,6 +15,7 @@ export interface TelegramNotification {
   paymentType?: string;
   queueLength?: number;
   position?: number;
+  studentId?: string; // ID студента для поиска его telegram_chat_id
 }
 
 // Форматирование сообщения
@@ -46,16 +51,39 @@ function formatMessage(notification: TelegramNotification): string {
   }
 }
 
-// Отправка уведомления в Telegram
-export async function sendTelegramNotification(notification: TelegramNotification): Promise<boolean> {
-  // Проверка наличия токена и chat ID
-  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-    console.warn('⚠️ Telegram bot not configured. Set NEXT_PUBLIC_TELEGRAM_BOT_TOKEN and NEXT_PUBLIC_TELEGRAM_CHAT_ID');
+// Получить telegram_chat_id студента из базы
+async function getStudentTelegramChatId(studentId?: string, userRoom?: string): Promise<string | null> {
+  if (!supabaseUrl || !supabaseKey) return null;
+  
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  
+  let query = supabase.from('students').select('telegram_chat_id');
+  
+  if (studentId) {
+    query = query.eq('id', studentId);
+  } else if (userRoom) {
+    query = query.eq('room', userRoom);
+  } else {
+    return null;
+  }
+  
+  const { data, error } = await query.single();
+  
+  if (error || !data || !data.telegram_chat_id) {
+    return null;
+  }
+  
+  return data.telegram_chat_id;
+}
+
+// Отправка сообщения в Telegram (базовая функция)
+async function sendTelegramMessage(chatId: string, message: string): Promise<boolean> {
+  if (!TELEGRAM_BOT_TOKEN) {
+    console.warn('⚠️ Telegram bot token not configured');
     return false;
   }
 
   try {
-    const message = formatMessage(notification);
     const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
     
     const response = await fetch(url, {
@@ -64,7 +92,7 @@ export async function sendTelegramNotification(notification: TelegramNotificatio
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
+        chat_id: chatId,
         text: message,
         parse_mode: 'Markdown',
       }),
@@ -76,12 +104,56 @@ export async function sendTelegramNotification(notification: TelegramNotificatio
       return false;
     }
 
-    console.log('✅ Telegram notification sent:', notification.type);
     return true;
   } catch (error) {
-    console.error('❌ Error sending Telegram notification:', error);
+    console.error('❌ Error sending Telegram message:', error);
     return false;
   }
+}
+
+// Отправка уведомления в Telegram
+export async function sendTelegramNotification(notification: TelegramNotification): Promise<boolean> {
+  const message = formatMessage(notification);
+  
+  // Типы уведомлений для СТУДЕНТА (персональные)
+  const studentNotifications = ['admin_call_for_key', 'admin_key_issued', 'admin_return_key'];
+  
+  // Типы уведомлений для АДМИНА
+  const adminNotifications = ['joined', 'left', 'washing_started', 'washing_done'];
+  
+  let success = false;
+  
+  // Если это уведомление для студента - найти его chat_id и отправить ЕМУ
+  if (studentNotifications.includes(notification.type)) {
+    const studentChatId = await getStudentTelegramChatId(notification.studentId, notification.userRoom);
+    
+    if (studentChatId) {
+      success = await sendTelegramMessage(studentChatId, message);
+      if (success) {
+        console.log(`✅ Telegram notification sent to student (${notification.type})`);
+      } else {
+        console.warn('⚠️ Failed to send notification to student');
+      }
+    } else {
+      console.warn(`⚠️ Student Telegram not linked (room: ${notification.userRoom})`);
+      // Все равно отправить админу как fallback
+      if (ADMIN_TELEGRAM_CHAT_ID) {
+        await sendTelegramMessage(ADMIN_TELEGRAM_CHAT_ID, `⚠️ Студент не подключил Telegram!\n\n${message}`);
+      }
+    }
+  }
+  
+  // Если это уведомление для админа - отправить АДМИНУ
+  if (adminNotifications.includes(notification.type)) {
+    if (ADMIN_TELEGRAM_CHAT_ID) {
+      success = await sendTelegramMessage(ADMIN_TELEGRAM_CHAT_ID, message);
+      if (success) {
+        console.log(`✅ Telegram notification sent to admin (${notification.type})`);
+      }
+    }
+  }
+  
+  return success;
 }
 
 // Тестовое уведомление (для проверки настройки)

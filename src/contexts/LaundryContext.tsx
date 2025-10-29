@@ -48,10 +48,11 @@ type LaundryContextType = {
   queue: QueueItem[];
   machineState: MachineState;
   history: HistoryItem[];
-  registerStudent: (studentId: string, password: string) => Promise<void>;
-  loginStudent: (studentId: string, password: string) => Promise<void>;
+  registerStudent: (studentId: string, password: string) => Promise<User | null>;
+  loginStudent: (studentId: string, password: string) => Promise<User | null>;
   logoutStudent: () => void;
   resetStudentRegistration: (studentId: string) => Promise<void>;
+  linkTelegram: (telegramCode: string) => Promise<{ success: boolean; error?: string }>;
   joinQueue: (name: string, room?: string, washCount?: number, paymentType?: string) => void;
   leaveQueue: (queueItemId: string) => void;
   updateQueueItem: (queueItemId: string, updates: Partial<QueueItem>) => void;
@@ -320,6 +321,43 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error('❌ Error resetting registration:', error);
       throw error;
+    }
+  };
+
+  // Связать Telegram с аккаунтом студента
+  const linkTelegram = async (telegramCode: string): Promise<{ success: boolean; error?: string }> => {
+    if (!user) {
+      return { success: false, error: 'Не авторизован' };
+    }
+
+    try {
+      const response = await fetch('/api/telegram/link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          studentId: user.id,
+          telegramChatId: telegramCode,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: data.error || 'Ошибка подключения' };
+      }
+
+      // Обновить локального user
+      const updatedUser = { ...user, telegram_chat_id: telegramCode };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+
+      console.log('✅ Telegram успешно подключен');
+      return { success: true };
+    } catch (error: any) {
+      console.error('❌ Error linking Telegram:', error);
+      return { success: false, error: 'Ошибка сети' };
     }
   };
 
@@ -817,6 +855,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     loginStudent,
     logoutStudent,
     resetStudentRegistration,
+    linkTelegram,
     joinQueue,
     leaveQueue,
     updateQueueItem,
