@@ -460,7 +460,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     }
     
     // Check if user is already in queue
-    // Проверка на дубли - один студент может быть только один раз в очереди
     const existingItem = queue.find(item => 
       item.userId === user.id && 
       (item.status === QueueStatus.WAITING || item.status === QueueStatus.READY || item.status === QueueStatus.KEY_ISSUED || item.status === QueueStatus.WASHING)
@@ -471,6 +470,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     const newItem: QueueItem = {
       id: uuidv4(),
       userId: user.id,
+      studentId: user.studentId, // Добавляем studentId для поиска telegram_chat_id
       userName: name,
       userRoom: room,
       washCount: washCount,
@@ -482,12 +482,12 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured || !supabase) {
       // Use local storage fallback
       addToLocalQueue(user);
-      fetchQueue(); // Refresh queue from local storage
+      fetchQueue();
       return;
     }
     
     try {
-      console.log('➥ Adding to queue:', newItem);
+      console.log('➜ Adding to queue:', newItem);
       const { error } = await supabase.from('queue').insert(newItem);
       if (error) throw error;
       console.log('✅ Successfully added to queue');
@@ -506,7 +506,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       console.error('Error details:', error?.message, error?.details, error?.hint, error?.code);
       // Fallback to local storage on error
       addToLocalQueue(user);
-      fetchQueue(); // Refresh queue from local storage
+      fetchQueue();
     }
   };
 

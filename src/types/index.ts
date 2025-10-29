@@ -38,6 +38,7 @@ export enum QueueStatus {
 export type QueueItem = {
   id: string;
   userId: string;
+  studentId?: string;         // ID студента из таблицы students (для поиска telegram_chat_id)
   userName: string;
   userRoom?: string;
   washCount: number;          // Количество стирок

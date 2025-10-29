@@ -129,7 +129,7 @@ export default function QueueList() {
                                 type: 'admin_call_for_key',
                                 userName: item.userName,
                                 userRoom: item.userRoom,
-                                studentId: item.userId,
+                                studentId: item.studentId,
                                 position: index + 1
                               });
                               await setQueueStatus(item.id, QueueStatus.READY);
@@ -148,7 +148,7 @@ export default function QueueList() {
                                 type: 'admin_key_issued',
                                 userName: item.userName,
                                 userRoom: item.userRoom,
-                                studentId: item.userId
+                                studentId: item.studentId
                               });
                               await setQueueStatus(item.id, QueueStatus.KEY_ISSUED);
                             }}
@@ -175,7 +175,8 @@ export default function QueueList() {
                               onClick={() => sendTelegramNotification({
                                 type: 'admin_return_key',
                                 userName: item.userName,
-                                userRoom: item.userRoom
+                                userRoom: item.userRoom,
+                                studentId: item.studentId
                               })}
                             >
                               🔔 Принеси ключ
