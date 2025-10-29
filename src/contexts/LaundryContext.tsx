@@ -273,10 +273,13 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       // Create user object
       const newUser: User = {
         id: uuidv4(),
-        studentId: studentData.id,
+        studentId: studentData.id, // ✅ ТОЧНЫЙ ID из базы данных
         name: studentData.fullName,
         room: studentData.room || undefined,
+        telegram_chat_id: studentData.telegram_chat_id || undefined,
       };
+
+      console.log('✅ Created user object:', { id: newUser.id, studentId: newUser.studentId, name: newUser.name });
 
       setUser(newUser);
       localStorage.setItem('laundryUser', JSON.stringify(newUser));
