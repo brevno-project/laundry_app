@@ -337,13 +337,14 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     }
 
     try {
+      console.log('📤 Sending telegram link request:', { studentId: user.studentId, telegramChatId: telegramCode });
       const response = await fetch('/api/telegram/link', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          studentId: user.id,
+          studentId: user.studentId, // ✅ Используем правильный ID из таблицы students
           telegramChatId: telegramCode,
         }),
       });
