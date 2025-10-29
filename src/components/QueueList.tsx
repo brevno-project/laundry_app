@@ -57,61 +57,47 @@ export default function QueueList() {
   return (
     <div className="bg-white rounded-lg shadow-lg border border-gray-200">
       <h2 className="text-xl font-bold p-3 bg-gray-50 rounded-t-lg text-gray-800">📋 Очередь ({queuedItems.length})</h2>
-      <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-100">
-          <tr>
-            <th scope="col" className="px-4 py-3 text-left text-sm font-bold text-gray-800 uppercase tracking-wider">
-              #
-            </th>
-            <th scope="col" className="px-4 py-3 text-left text-sm font-bold text-gray-800 uppercase tracking-wider">
-              Студент
-            </th>
-            <th scope="col" className="px-4 py-3 text-left text-sm font-bold text-gray-800 uppercase tracking-wider">
-              Стирок
-            </th>
-            <th scope="col" className="px-4 py-3 text-left text-sm font-bold text-gray-800 uppercase tracking-wider">
-              Оплата
-            </th>
-            <th scope="col" className="px-4 py-3 text-left text-sm font-bold text-gray-800 uppercase tracking-wider">
-              Статус
-            </th>
-            <th scope="col" className="px-4 py-3 text-left text-sm font-bold text-gray-800 uppercase tracking-wider">
-              Действия
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {queuedItems.map((item, index) => {
+      <div className="p-2 space-y-3">
+        {queuedItems.map((item, index) => {
             const isCurrentUser = user && item.userId === user.id;
             const statusDisplay = getStatusDisplay(item.status);
             
             const rowClass = `${statusDisplay.bg} border-l-4 ${isCurrentUser ? 'border-blue-600' : 'border-gray-300'}`;
             
             return (
-              <tr key={item.id} className={rowClass}>
-                <td className="px-4 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                  {index + 1}
-                </td>
-                <td className="px-4 py-4 text-base font-medium text-gray-900">
-                  <div className="font-bold">{item.userName}</div>
-                  {item.userRoom && <div className="text-sm text-gray-600">Комната {item.userRoom}</div>}
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap text-center">
-                  <span className="text-lg font-bold text-blue-600">{item.washCount || 1}</span>
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm">
-                  {item.paymentType === 'coupon' ? '🎫 Купон' : 
-                   item.paymentType === 'both' ? '💵+🎫 Оба' : 
-                   '💵 Деньги'}
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap">
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusDisplay.badgeColor}`}>
+              <div key={item.id} className={`${statusDisplay.bg} border-l-4 ${isCurrentUser ? 'border-blue-600' : 'border-gray-300'} rounded-lg p-3 shadow`}>
+                {/* Заголовок карточки */}
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-gray-700">#{index + 1}</span>
+                    <div>
+                      <div className="font-bold text-lg">{item.userName}</div>
+                      {item.userRoom && <div className="text-sm text-gray-600">Комната {item.userRoom}</div>}
+                    </div>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusDisplay.badgeColor} whitespace-nowrap`}>
                     {statusDisplay.badge}
                   </span>
-                </td>
-
-                <td className="px-4 py-4 text-sm font-medium">
+                </div>
+                
+                {/* Инфо */}
+                <div className="flex gap-4 mb-3 text-sm">
+                  <div className="flex items-center gap-1">
+                    <span className="font-bold">Стирок:</span>
+                    <span className="text-xl font-bold text-blue-600">{item.washCount || 1}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="font-bold">Оплата:</span>
+                    <span>
+                      {item.paymentType === 'coupon' ? '🎫 Купон' : 
+                       item.paymentType === 'both' ? '💵+🎫 Оба' : 
+                       '💵 Деньги'}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Действия */}
+                <div>
                   <div className="flex flex-col gap-2">
                     {/* Сообщение от админа */}
                     {item.adminMessage && (
@@ -203,12 +189,10 @@ export default function QueueList() {
                       <span className="text-emerald-700 font-bold text-sm">✅ Готово</span>
                     )}
                   </div>
-                </td>
-              </tr>
+                </div>
+              </div>
             );
           })}
-        </tbody>
-      </table>
       </div>
     </div>
   );
