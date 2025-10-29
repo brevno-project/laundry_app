@@ -23,6 +23,8 @@ export type User = {
   name: string;
   room?: string;
   isAdmin?: boolean;
+  fullName?: string;
+  telegram_chat_id?: string; // Telegram Chat ID для персональных уведомлений
 };
 
 export enum QueueStatus {
