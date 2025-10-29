@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "webhook": "node webhook-server.js",
     "lint": "eslint"
   },
   "dependencies": {
@@ -13,6 +14,7 @@
     "@vercel/node": "^5.5.2",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
+    "express": "^4.21.2",
     "next": "^15.0.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",

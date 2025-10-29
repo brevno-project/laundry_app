@@ -1,1 +1,1 @@
-worker: python telegram_bot.py
+web: node webhook-server.js
