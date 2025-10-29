@@ -63,7 +63,7 @@ export default function TelegramSetup() {
       <div className="space-y-3 mb-4">
         <div className="bg-white p-3 rounded-lg border border-yellow-300">
           <div className="flex items-start gap-3">
-            <div className="bg-yellow-500 text-white font-black rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
+            <div className="bg-blue-600 text-white font-black rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
               1
             </div>
             <div className="flex-1">
@@ -85,7 +85,7 @@ export default function TelegramSetup() {
 
         <div className="bg-white p-3 rounded-lg border border-yellow-300">
           <div className="flex items-start gap-3">
-            <div className="bg-yellow-500 text-white font-black rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
+            <div className="bg-blue-600 text-white font-black rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
               2
             </div>
             <div className="flex-1">
@@ -99,7 +99,7 @@ export default function TelegramSetup() {
 
         <div className="bg-white p-3 rounded-lg border border-yellow-300">
           <div className="flex items-start gap-3">
-            <div className="bg-yellow-500 text-white font-black rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
+            <div className="bg-blue-600 text-white font-black rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
               3
             </div>
             <div className="flex-1">
@@ -113,7 +113,7 @@ export default function TelegramSetup() {
 
         <div className="bg-white p-3 rounded-lg border border-yellow-300">
           <div className="flex items-start gap-3">
-            <div className="bg-yellow-500 text-white font-black rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
+            <div className="bg-blue-600 text-white font-black rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
               4
             </div>
             <div className="flex-1">
@@ -123,7 +123,7 @@ export default function TelegramSetup() {
                 value={chatId}
                 onChange={(e) => setChatId(e.target.value)}
                 placeholder="Например: 123456789"
-                className="w-full border-2 border-gray-300 rounded-lg p-3 text-lg font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                className="w-full border-2 border-gray-300 rounded-lg p-3 text-lg font-mono text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
               />
             </div>
           </div>
