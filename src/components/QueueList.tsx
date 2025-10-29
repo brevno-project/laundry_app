@@ -14,6 +14,7 @@ export default function QueueList() {
     updateQueueItem, 
     sendAdminMessage,
     setQueueStatus,
+    removeFromQueue,
     startWashing,
     cancelWashing,
     markDone,
@@ -143,86 +144,91 @@ export default function QueueList() {
                       </button>
                     )}
                     
-                    {/* Кнопки админа */}
+                    {/* Кнопки админа - ВСЕ ОДНОВРЕМЕННО */}
                     {isAdmin && (
-                      <div className="flex flex-col gap-2">
-                        {/* READY → Забрал ключ */}
-                        {item.status === QueueStatus.READY && (
-                          <button
-                            className="bg-green-600 text-white font-semibold py-2 px-3 rounded-lg text-sm hover:bg-green-700 shadow-sm w-full"
-                            onClick={async () => {
-                              await setQueueStatus(item.id, QueueStatus.WASHING);
-                              alert(`✅ ${item.userName} забрал ключ и начал стирку!`);
-                            }}
-                          >
-                            🔑 Забрал ключ
-                          </button>
-                        )}
+                      <div className="grid grid-cols-2 gap-2">
+                        {/* Позвать за ключом */}
+                        <button
+                          className="bg-yellow-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-yellow-600 shadow-sm"
+                          onClick={async () => {
+                            await setQueueStatus(item.id, QueueStatus.READY);
+                            const success = await sendTelegramNotification({
+                              type: 'admin_call_for_key',
+                              userName: item.userName,
+                              userRoom: item.userRoom,
+                              studentId: item.studentId,
+                              position: index + 1,
+                              expectedFinishAt: item.expectedFinishAt
+                            });
+                            if (success) {
+                              alert(`✅ ${item.userName} позван!`);
+                            }
+                          }}
+                        >
+                          🔔 Позвать
+                        </button>
                         
-                        {/* WAITING → Позвать за ключом */}
-                        {item.status === QueueStatus.WAITING && (
-                          <>
-                            <button
-                              className="bg-yellow-500 text-white font-semibold py-2 px-3 rounded-lg text-sm hover:bg-yellow-600 shadow-sm w-full"
-                              onClick={async () => {
-                                // Изменить статус на READY
-                                await setQueueStatus(item.id, QueueStatus.READY);
-                                
-                                const success = await sendTelegramNotification({
-                                  type: 'admin_call_for_key',
-                                  userName: item.userName,
-                                  userRoom: item.userRoom,
-                                  studentId: item.studentId,
-                                  position: index + 1,
-                                  expectedFinishAt: item.expectedFinishAt
-                                });
-                                
-                                if (success) {
-                                  alert(`✅ Сообщение отправлено ${item.userName}!`);
-                                } else {
-                                  alert(`⚠️ ${item.userName} не подключил Telegram`);
-                                }
-                              }}
-                            >
-                              🔔 Позвать за ключом
-                            </button>
-                          </>
-                        )}
+                        {/* Забрал ключ */}
+                        <button
+                          className="bg-green-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-green-700 shadow-sm"
+                          onClick={async () => {
+                            await setQueueStatus(item.id, QueueStatus.WASHING);
+                            alert(`✅ ${item.userName} забрал ключ!`);
+                          }}
+                        >
+                          🔑 Забрал
+                        </button>
                         
-                        {/* WASHING → Принеси ключ + Постирался */}
-                        {item.status === QueueStatus.WASHING && (
-                          <>
-                            <button
-                              className="bg-orange-500 text-white font-semibold py-2 px-3 rounded-lg text-sm hover:bg-orange-600 shadow-sm w-full"
-                              onClick={async () => {
-                                // Установить флаг для полноэкранного уведомления
-                                await updateQueueItem(item.id, { returnKeyAlert: true });
-                                
-                                const success = await sendTelegramNotification({
-                                  type: 'admin_return_key',
-                                  userName: item.userName,
-                                  userRoom: item.userRoom,
-                                  studentId: item.studentId,
-                                  expectedFinishAt: item.expectedFinishAt
-                                });
-                                
-                                if (success) {
-                                  alert(`✅ Сообщение отправлено ${item.userName}!`);
-                                } else {
-                                  alert(`⚠️ ${item.userName} не подключил Telegram`);
-                                }
-                              }}
-                            >
-                              🔔 Принеси ключ
-                            </button>
-                            <button
-                              className="bg-emerald-600 text-white font-semibold py-2 px-3 rounded-lg text-sm hover:bg-emerald-700 shadow-sm w-full"
-                              onClick={() => markDone(item.id)}
-                            >
-                              ✅ Постирался
-                            </button>
-                          </>
-                        )}
+                        {/* Принеси ключ */}
+                        <button
+                          className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm"
+                          onClick={async () => {
+                            const success = await sendTelegramNotification({
+                              type: 'admin_return_key',
+                              userName: item.userName,
+                              userRoom: item.userRoom,
+                              studentId: item.studentId,
+                              expectedFinishAt: item.expectedFinishAt
+                            });
+                            if (success) {
+                              alert(`✅ ${item.userName} попросили вернуть!`);
+                            }
+                          }}
+                        >
+                          🔔 Верни
+                        </button>
+                        
+                        {/* Постирался */}
+                        <button
+                          className="bg-emerald-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-emerald-700 shadow-sm"
+                          onClick={() => markDone(item.id)}
+                        >
+                          ✅ Готово
+                        </button>
+                        
+                        {/* Отменить уведомление */}
+                        <button
+                          className="bg-gray-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-gray-600 shadow-sm"
+                          onClick={async () => {
+                            await updateQueueItem(item.id, { returnKeyAlert: false });
+                            alert(`✅ Уведомление отменено!`);
+                          }}
+                        >
+                          ❌ Отмена
+                        </button>
+                        
+                        {/* Удалить из очереди */}
+                        <button
+                          className="bg-red-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-red-700 shadow-sm col-span-2"
+                          onClick={async () => {
+                            if (confirm(`Удалить ${item.userName} из очереди?`)) {
+                              await removeFromQueue(item.id);
+                              alert(`✅ ${item.userName} удален!`);
+                            }
+                          }}
+                        >
+                          🗑️ Удалить
+                        </button>
                       </div>
                     )}
                     
