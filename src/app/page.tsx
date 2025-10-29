@@ -74,11 +74,11 @@ export default function Home() {
               <UserForm />
             )}
             
-            {/* Статус машинки */}
-            <MachineStatus />
+            {/* Статус машинки - только для вошедших */}
+            {user && <MachineStatus />}
             
-            {/* Очередь */}
-            <QueueList />
+            {/* Очередь - только для вошедших */}
+            {user && <QueueList />}
           </div>
         )}
 

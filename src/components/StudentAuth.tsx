@@ -63,8 +63,8 @@ export default function StudentAuth() {
     return (
       <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg shadow-xl border-2 border-blue-200">
         <div className="text-center mb-6">
-          <h2 className="text-3xl font-black text-blue-900 mb-2">🏛️ Очередь на стирку</h2>
-          <p className="text-blue-700 font-medium">Выберите себя из списка</p>
+          <h2 className="text-2xl font-bold mb-4 text-gray-800">Очередь на стирку</h2>
+          <h3 className="text-lg font-bold mb-4 text-gray-900">Выберите себя из списка</h3>
         </div>
 
         {/* Поиск */}
