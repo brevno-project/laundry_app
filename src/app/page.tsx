@@ -32,6 +32,17 @@ export default function Home() {
       <div className="w-full space-y-4 p-3">
         <TimeBanner />
         
+        {/* Объявление про 22:00 */}
+        <div className="bg-red-50 border-2 border-red-300 rounded-lg p-3 shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">⚠️</span>
+            <div className="flex-1">
+              <p className="font-bold text-red-900 text-sm">ВАЖНО! ВЕЩИ ЗАБРАТЬ ДО 22:00</p>
+              <p className="text-red-700 text-xs mt-1">После 22:00 доступ к стиральной комнате закрыт</p>
+            </div>
+          </div>
+        </div>
+        
         {/* Форма входа/регистрации */}
         {!user ? (
           <StudentAuth />
