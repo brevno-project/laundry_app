@@ -81,7 +81,7 @@ export default function Home() {
             
             {/* Статус машины - виден всем */}
             <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4">
-              <h3 className="text-lg font-bold mb-3 text-gray-800">📍 Статус машины</h3>
+              <h3 className="text-lg font-bold mb-3 text-gray-800">Статус машины</h3>
               {machineState.status === 'idle' ? (
                 <div className="bg-green-50 border-2 border-green-500 rounded-lg p-3 text-center">
                   <div className="text-3xl mb-1">✅</div>

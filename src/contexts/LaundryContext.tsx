@@ -428,18 +428,31 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    try {
+try {
       const { data, error } = await supabase
         .from('machine_state')
         .select('*')
-        .single();
+        .order('id', { ascending: false })
+        .limit(1);
       
-      if (error && error.code !== 'PGRST116') throw error; // PGRST116 is for no rows returned
+      if (error) throw error;
       
-      if (data) {
-        setMachineState(data);
+      if (data && data.length > 0) {
+        const latestState = data[0];
+        console.log('🎰 Fetched latest machine state:', latestState);
+        setMachineState(latestState);
         // Also update local storage as backup
-        saveLocalMachineState(data);
+        saveLocalMachineState(latestState);
+      } else {
+        // No records, set to idle
+        const idleState: MachineState = {
+          status: MachineStatus.IDLE,
+          currentQueueItemId: undefined,
+          startedAt: undefined,
+          expectedFinishAt: undefined,
+        };
+        setMachineState(idleState);
+        saveLocalMachineState(idleState);
       }
     } catch (error: any) {
       console.error('Error fetching machine state:', error);
