@@ -194,8 +194,8 @@ export default function QueueList() {
                         <button
                           className="bg-green-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-green-700 shadow-sm"
                           onClick={async () => {
-                            await setQueueStatus(item.id, QueueStatus.WASHING);
-                            alert(`✅ ${item.userName} забрал ключ!`);
+                            await startWashing(item.id);
+                            alert(`✅ ${item.userName} забрал ключ и начал стирку!`);
                           }}
                         >
                           🔑 Забрал
@@ -206,6 +206,9 @@ export default function QueueList() {
                           className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm"
                           onClick={async () => {
                             try {
+                              // Установить флаг для полноэкранного уведомления
+                              await updateQueueItem(item.id, { returnKeyAlert: true });
+                              
                               const success = await sendTelegramNotification({
                                 type: 'admin_return_key',
                                 userName: item.userName,
