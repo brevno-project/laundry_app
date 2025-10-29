@@ -57,23 +57,37 @@ async function getStudentTelegramChatId(studentId?: string, userRoom?: string): 
   
   const supabase = createClient(supabaseUrl, supabaseKey);
   
-  let query = supabase.from('students').select('telegram_chat_id');
-  
+  // Сначала попробовать найти по studentId
   if (studentId) {
-    query = query.eq('id', studentId);
-  } else if (userRoom) {
-    query = query.eq('room', userRoom);
-  } else {
-    return null;
+    const { data, error } = await supabase
+      .from('students')
+      .select('telegram_chat_id')
+      .eq('id', studentId)
+      .single();
+    
+    if (!error && data?.telegram_chat_id) {
+      console.log(`✅ Found telegram_chat_id by studentId: ${studentId}`);
+      return data.telegram_chat_id;
+    }
   }
   
-  const { data, error } = await query.single();
-  
-  if (error || !data || !data.telegram_chat_id) {
-    return null;
+  // Если не нашли по ID, попробовать по комнате
+  if (userRoom) {
+    const { data, error } = await supabase
+      .from('students')
+      .select('telegram_chat_id')
+      .eq('room', userRoom)
+      .single();
+    
+    if (!error && data?.telegram_chat_id) {
+      console.log(`✅ Found telegram_chat_id by room: ${userRoom}`);
+      return data.telegram_chat_id;
+    }
+    
+    console.warn(`⚠️ telegram_chat_id not found for room: ${userRoom}, studentId: ${studentId}`);
   }
   
-  return data.telegram_chat_id;
+  return null;
 }
 
 // Отправка сообщения в Telegram (базовая функция)

@@ -120,8 +120,8 @@ export default function QueueList() {
                     {/* Кнопки админа */}
                     {isAdmin && (
                       <div className="flex flex-wrap gap-2">
-                        {/* WAITING → Позвать за ключом */}
-                        {item.status === QueueStatus.WAITING && (
+                        {/* WAITING или READY → Позвать за ключом */}
+                        {(item.status === QueueStatus.WAITING || item.status === QueueStatus.READY) && (
                           <button
                             className="bg-yellow-500 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-yellow-600 shadow-lg w-full"
                             onClick={async () => {
@@ -129,6 +129,7 @@ export default function QueueList() {
                                 type: 'admin_call_for_key',
                                 userName: item.userName,
                                 userRoom: item.userRoom,
+                                studentId: item.userId,
                                 position: index + 1
                               });
                               await setQueueStatus(item.id, QueueStatus.READY);
@@ -146,7 +147,8 @@ export default function QueueList() {
                               await sendTelegramNotification({
                                 type: 'admin_key_issued',
                                 userName: item.userName,
-                                userRoom: item.userRoom
+                                userRoom: item.userRoom,
+                                studentId: item.userId
                               });
                               await setQueueStatus(item.id, QueueStatus.KEY_ISSUED);
                             }}
