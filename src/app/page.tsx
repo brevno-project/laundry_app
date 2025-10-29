@@ -12,9 +12,11 @@ import TelegramSetup from '@/components/TelegramSetup';
 import HistoryList from '@/components/HistoryList';
 
 export default function Home() {
-  const { user, isLoading, logoutStudent, isAdmin } = useLaundry();
+  const { user, isLoading, logoutStudent, isAdmin, machineState, queue } = useLaundry();
   const isSupabaseConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   const [activeTab, setActiveTab] = React.useState('main'); // main, settings
+
+  console.log('🎰 Machine State for all users:', machineState);
 
   if (isLoading) {
     return (
@@ -76,6 +78,38 @@ export default function Home() {
         {activeTab === 'main' && (
           <div className="space-y-4">
             <TimeBanner />
+            
+            {/* Статус машины - виден всем */}
+            <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4">
+              <h3 className="text-lg font-bold mb-3 text-gray-800">📍 Статус машины</h3>
+              {machineState.status === 'idle' ? (
+                <div className="bg-green-50 border-2 border-green-500 rounded-lg p-3 text-center">
+                  <div className="text-3xl mb-1">✅</div>
+                  <div className="text-lg font-bold text-green-900">Машина свободна</div>
+                </div>
+              ) : (
+                <div className="bg-red-50 border-2 border-red-500 rounded-lg p-3 text-center">
+                  <div className="text-3xl mb-1">🔴</div>
+                  <div className="text-lg font-bold text-red-900">Машина занята</div>
+                  {machineState.currentQueueItemId && (() => {
+                    const currentItem = queue.find(item => item.id === machineState.currentQueueItemId);
+                    if (currentItem) {
+                      return (
+                        <div className="text-sm text-red-700 mt-1 font-bold">
+                          🧑 Стирает: {currentItem.userName}
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                  {machineState.expectedFinishAt && (
+                    <div className="text-sm text-red-700 mt-1">
+                      Закончит: {new Date(machineState.expectedFinishAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
             
             {/* Форма входа/регистрации */}
             {!user ? (
