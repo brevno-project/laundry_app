@@ -121,9 +121,11 @@ export default function UserForm() {
                   value={expectedTime}
                   onChange={(e) => setExpectedTime(e.target.value)}
                   required
-                  className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  step="60"
+                  className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                  style={{ colorScheme: 'light' }}
                 />
-                <p className="text-xs text-gray-500 mt-1">Например: 20:00</p>
+                <p className="text-xs text-gray-500 mt-1">⚠️ Используйте 24-часовой формат (например: 20:00)</p>
               </div>
 
               <button

@@ -468,10 +468,13 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     
     // Check if user is already in queue
     const existingItem = queue.find(item => 
-      item.userId === user.id && 
+      item.studentId === user.studentId && 
       (item.status === QueueStatus.WAITING || item.status === QueueStatus.READY || item.status === QueueStatus.KEY_ISSUED || item.status === QueueStatus.WASHING)
     );
-    if (existingItem) return;
+    if (existingItem) {
+      console.log('⚠️ User already in queue:', existingItem);
+      return;
+    }
     
     // Create new queue item
     const newItem: QueueItem = {
@@ -977,8 +980,8 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   // Get current user's queue item if it exists
   const getUserQueueItem = (): QueueItem | undefined => {
     if (!user) return undefined;
-    return queue.find(item => item.userId === user.id && 
-                     (item.status === QueueStatus.WAITING || item.status === QueueStatus.READY || item.status === QueueStatus.WASHING));
+    return queue.find(item => item.studentId === user.studentId && 
+                     (item.status === QueueStatus.WAITING || item.status === QueueStatus.READY || item.status === QueueStatus.KEY_ISSUED || item.status === QueueStatus.WASHING));
   };
 
   const value = {
