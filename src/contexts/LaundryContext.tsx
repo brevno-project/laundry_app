@@ -193,7 +193,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   };
 
   // Register a new student
-  const registerStudent = async (studentId: string, password: string) => {
+  const registerStudent = async (studentId: string, password: string): Promise<User | null> => {
     if (!isSupabaseConfigured || !supabase) {
       throw new Error('Supabase не настроен');
     }
@@ -223,12 +223,13 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       if (updateError) throw updateError;
 
       // Auto-login after registration
-      await loginStudent(studentId, password);
+      const user = await loginStudent(studentId, password);
       
       // Reload students list
       await loadStudents();
 
       console.log('✅ Student registered successfully');
+      return user;
     } catch (error: any) {
       console.error('❌ Error registering student:', error);
       throw error;
@@ -236,7 +237,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   };
 
   // Login student
-  const loginStudent = async (studentId: string, password: string) => {
+  const loginStudent = async (studentId: string, password: string): Promise<User | null> => {
     if (!isSupabaseConfigured || !supabase) {
       throw new Error('Supabase не настроен');
     }
@@ -277,6 +278,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('laundryUser', JSON.stringify(newUser));
 
       console.log('✅ Student logged in:', newUser.name);
+      return newUser;
     } catch (error: any) {
       console.error('❌ Error logging in:', error);
       throw error;
