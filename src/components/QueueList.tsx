@@ -66,39 +66,39 @@ export default function QueueList() {
             const rowClass = `${statusDisplay.bg} border-l-4 ${isCurrentUser ? 'border-blue-600' : 'border-gray-300'}`;
             
             return (
-              <div key={item.id} className={`${statusDisplay.bg} border-l-4 ${isCurrentUser ? 'border-blue-600' : 'border-gray-300'} rounded-lg p-3 shadow`}>
-                {/* Заголовок карточки */}
-                <div className="flex items-start justify-between mb-2">
+              <div key={item.id} className={`${statusDisplay.bg} border-l-4 ${isCurrentUser ? 'border-blue-600' : 'border-gray-300'} rounded-lg p-3 shadow-sm`}>
+                {/* Заголовок */}
+                <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl font-black text-gray-900">#{index + 1}</span>
+                    <span className="text-xl font-black text-gray-900">#{index + 1}</span>
                     <div>
-                      <div className="font-black text-xl text-gray-900">{item.userName}</div>
-                      {item.userRoom && <div className="text-sm font-bold text-gray-700">Комната {item.userRoom}</div>}
+                      <div className="font-bold text-lg text-gray-900">{item.userName}</div>
+                      {item.userRoom && <div className="text-xs text-gray-600">Комната {item.userRoom}</div>}
                     </div>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusDisplay.badgeColor} whitespace-nowrap`}>
+                  <span className={`px-2 py-1 rounded-full text-xs font-bold ${statusDisplay.badgeColor} whitespace-nowrap`}>
                     {statusDisplay.badge}
                   </span>
                 </div>
                 
-                {/* Инфо */}
-                <div className="flex gap-4 mb-3 text-base">
-                  <div className="flex items-center gap-1">
-                    <span className="font-bold text-gray-900">Стирок:</span>
-                    <span className="text-2xl font-black text-blue-700">{item.washCount || 1}</span>
+                {/* Инфо - компактная сетка */}
+                <div className="grid grid-cols-3 gap-2 mb-2 text-sm">
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-600">Стирок</span>
+                    <span className="text-lg font-bold text-blue-700">{item.washCount || 1}</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <span className="font-bold text-gray-900">Оплата:</span>
-                    <span className="font-bold text-gray-900">
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-600">Оплата</span>
+                    <span className="text-sm font-bold text-gray-900">
                       {item.paymentType === 'coupon' ? '🎫 Купон' : 
-                       item.paymentType === 'both' ? '💵+🎫 Оба' : 
+                       item.paymentType === 'both' ? '💵+🎫' : 
                        '💵 Деньги'}
                     </span>
                   </div>
-                  {/* Время окончания стирки */}
+                  {/* Время */}
                   {item.status === QueueStatus.DONE && item.finishedAt ? (
-                    <div className="flex items-center gap-1">
-                      <span className="font-bold text-gray-900">Закончил в:</span>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-gray-600">Закончил</span>
                       <span className="text-lg font-bold text-emerald-700">
                         {(() => {
                           const date = new Date(item.finishedAt);
@@ -109,8 +109,8 @@ export default function QueueList() {
                       </span>
                     </div>
                   ) : item.expectedFinishAt ? (
-                    <div className="flex items-center gap-1">
-                      <span className="font-bold text-gray-900">Закончит в:</span>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-gray-600">Закончит</span>
                       <span className="text-lg font-bold text-blue-700">
                         {(() => {
                           const date = new Date(item.expectedFinishAt);
@@ -133,11 +133,11 @@ export default function QueueList() {
                       </div>
                     )}
                     
-                    {/* Кнопки для пользователя */}
+                    {/* Кнопки пользователя */}
                     {isCurrentUser && item.status === QueueStatus.WAITING && (
                       <button
-                        className="text-red-700 font-semibold hover:text-red-900 bg-red-100 px-3 py-2 rounded"
                         onClick={() => leaveQueue(item.id)}
+                        className="bg-red-500 text-white font-semibold py-2 px-3 rounded-lg hover:bg-red-600 shadow-sm text-sm w-full"
                       >
                         ❌ Покинуть очередь
                       </button>
@@ -150,7 +150,7 @@ export default function QueueList() {
                         {item.status === QueueStatus.WAITING && (
                           <>
                             <button
-                              className="bg-yellow-500 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-yellow-600 shadow-lg w-full"
+                              className="bg-yellow-500 text-white font-semibold py-2 px-3 rounded-lg text-sm hover:bg-yellow-600 shadow-sm w-full"
                               onClick={async () => {
                                 const success = await sendTelegramNotification({
                                   type: 'admin_call_for_key',
@@ -171,7 +171,7 @@ export default function QueueList() {
                               🔔 Позвать за ключом
                             </button>
                             <button
-                              className="bg-blue-600 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-blue-700 shadow-lg w-full"
+                              className="bg-blue-600 text-white font-semibold py-2 px-3 rounded-lg text-sm hover:bg-blue-700 shadow-sm w-full"
                               onClick={async () => {
                                 const success = await sendTelegramNotification({
                                   type: 'admin_key_issued',
@@ -198,7 +198,7 @@ export default function QueueList() {
                         {item.status === QueueStatus.WASHING && (
                           <>
                             <button
-                              className="bg-orange-500 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-orange-600 shadow-lg w-full"
+                              className="bg-orange-500 text-white font-semibold py-2 px-3 rounded-lg text-sm hover:bg-orange-600 shadow-sm w-full"
                               onClick={async () => {
                                 const success = await sendTelegramNotification({
                                   type: 'admin_return_key',
@@ -218,7 +218,7 @@ export default function QueueList() {
                               🔔 Принеси ключ
                             </button>
                             <button
-                              className="bg-emerald-600 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-emerald-700 shadow-lg w-full"
+                              className="bg-emerald-600 text-white font-semibold py-2 px-3 rounded-lg text-sm hover:bg-emerald-700 shadow-sm w-full"
                               onClick={() => markDone(item.id)}
                             >
                               ✅ Постирался
