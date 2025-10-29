@@ -31,9 +31,11 @@ export default function MachineStatus() {
       }, 1000);
       
       return () => clearInterval(intervalId);
-    } else {
-      setTimeRemaining(null);
     }
+    
+    // Reset when not washing
+    setTimeRemaining(null);
+    return undefined;
   }, [machineState]);
 
   // Find current washing user from queue (not just machineState)
