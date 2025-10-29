@@ -145,42 +145,85 @@ export default function QueueList() {
                     
                     {/* Кнопки админа */}
                     {isAdmin && (
-                      <div className="flex flex-wrap gap-2">
-                        {/* WAITING → Ключ выдан (автоматически WASHING) */}
+                      <div className="flex flex-col gap-2">
+                        {/* WAITING → Позвать за ключом + Ключ выдан */}
                         {item.status === QueueStatus.WAITING && (
-                          <button
-                            className="bg-blue-600 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-blue-700 shadow-lg w-full"
-                            onClick={async () => {
-                              const success = await sendTelegramNotification({
-                                type: 'admin_key_issued',
-                                userName: item.userName,
-                                userRoom: item.userRoom,
-                                studentId: item.studentId,
-                                expectedFinishAt: item.expectedFinishAt
-                              });
-                              // Сразу ставим WASHING
-                              await setQueueStatus(item.id, QueueStatus.WASHING);
-                              
-                              // Уведомить админа
-                              if (success) {
-                                alert(`✅ Сообщение отправлено ${item.userName}!`);
-                              } else {
-                                alert(`⚠️ ${item.userName} не подключил Telegram`);
-                              }
-                            }}
-                          >
-                            ✅ Ключ выдан
-                          </button>
+                          <>
+                            <button
+                              className="bg-yellow-500 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-yellow-600 shadow-lg w-full"
+                              onClick={async () => {
+                                const success = await sendTelegramNotification({
+                                  type: 'admin_call_for_key',
+                                  userName: item.userName,
+                                  userRoom: item.userRoom,
+                                  studentId: item.studentId,
+                                  position: index + 1,
+                                  expectedFinishAt: item.expectedFinishAt
+                                });
+                                
+                                if (success) {
+                                  alert(`✅ Сообщение отправлено ${item.userName}!`);
+                                } else {
+                                  alert(`⚠️ ${item.userName} не подключил Telegram`);
+                                }
+                              }}
+                            >
+                              🔔 Позвать за ключом
+                            </button>
+                            <button
+                              className="bg-blue-600 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-blue-700 shadow-lg w-full"
+                              onClick={async () => {
+                                const success = await sendTelegramNotification({
+                                  type: 'admin_key_issued',
+                                  userName: item.userName,
+                                  userRoom: item.userRoom,
+                                  studentId: item.studentId,
+                                  expectedFinishAt: item.expectedFinishAt
+                                });
+                                await setQueueStatus(item.id, QueueStatus.WASHING);
+                                
+                                if (success) {
+                                  alert(`✅ Сообщение отправлено ${item.userName}!`);
+                                } else {
+                                  alert(`⚠️ ${item.userName} не подключил Telegram`);
+                                }
+                              }}
+                            >
+                              ✅ Ключ выдан
+                            </button>
+                          </>
                         )}
                         
-                        {/* WASHING → Постирался */}
+                        {/* WASHING → Принеси ключ + Постирался */}
                         {item.status === QueueStatus.WASHING && (
-                          <button
-                            className="bg-emerald-600 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-emerald-700 shadow-lg w-full"
-                            onClick={() => markDone(item.id)}
-                          >
-                            ✅ Постирался
-                          </button>
+                          <>
+                            <button
+                              className="bg-orange-500 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-orange-600 shadow-lg w-full"
+                              onClick={async () => {
+                                const success = await sendTelegramNotification({
+                                  type: 'admin_return_key',
+                                  userName: item.userName,
+                                  userRoom: item.userRoom,
+                                  studentId: item.studentId,
+                                  expectedFinishAt: item.expectedFinishAt
+                                });
+                                
+                                if (success) {
+                                  alert(`✅ Сообщение отправлено ${item.userName}!`);
+                                } else {
+                                  alert(`⚠️ ${item.userName} не подключил Telegram`);
+                                }
+                              }}
+                            >
+                              🔔 Принеси ключ
+                            </button>
+                            <button
+                              className="bg-emerald-600 text-white font-bold py-3 px-4 rounded-lg text-base hover:bg-emerald-700 shadow-lg w-full"
+                              onClick={() => markDone(item.id)}
+                            >
+                              ✅ Постирался
+                            </button>
+                          </>
                         )}
                       </div>
                     )}
