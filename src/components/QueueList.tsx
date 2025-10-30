@@ -162,7 +162,6 @@ export default function QueueList() {
                               userName: item.userName,
                               userRoom: item.userRoom,
                               studentId: item.studentId,
-                              position: index + 1,
                               expectedFinishAt: item.expectedFinishAt
                             });
                             if (success) {
