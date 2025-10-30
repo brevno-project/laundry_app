@@ -61,23 +61,23 @@ export default function StudentAuth() {
     return (
       <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg shadow-xl border-2 border-blue-200">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold mb-4 text-gray-800">Очередь на стирку</h2>
+          <h2 className="text-2xl font-bold mb-4 text-gray-900">Очередь на стирку</h2>
           <h3 className="text-lg font-bold mb-4 text-gray-900">Выберите себя из списка</h3>
         </div>
 
-        {/* ✅ Улучшенный поиск с темным текстом */}
+        {/* ✅ Поиск с темным текстом и placeholder */}
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="🔍 Поиск по имени или комнате..."
-          className="w-full p-4 rounded-lg border-2 border-blue-400 bg-white text-gray-900 text-xl font-semibold mb-4 focus:border-blue-600 focus:ring-2 focus:ring-blue-300 placeholder:text-gray-500"
+          className="w-full p-4 rounded-lg border-2 border-blue-400 bg-white text-gray-900 text-xl font-semibold mb-4 focus:border-blue-600 focus:ring-2 focus:ring-blue-300 placeholder:text-gray-600"
         />
 
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {filteredStudents.length === 0 ? (
-            <div className="text-center py-8 text-gray-600">
-              <p className="text-xl">🔍 Ничего не найдено</p>
+            <div className="text-center py-8 text-gray-900">
+              <p className="text-xl font-bold">🔍 Ничего не найдено</p>
             </div>
           ) : (
             filteredStudents.map((student) => (
@@ -134,7 +134,7 @@ export default function StudentAuth() {
           <div>
             <div className="font-black text-xl text-gray-900">{selectedStudent?.fullName}</div>
             {selectedStudent?.room && (
-              <div className="text-sm text-gray-600 font-medium">🚪 Комната {selectedStudent.room}</div>
+              <div className="text-sm text-gray-900 font-medium">🚪 Комната {selectedStudent.room}</div>
             )}
           </div>
         </div>
@@ -143,7 +143,7 @@ export default function StudentAuth() {
       <h2 className="text-2xl font-black mb-2 text-gray-900">
         {selectedStudent?.isRegistered ? '🔐 Вход' : '🆕 Первый раз?'}
       </h2>
-      <p className="text-gray-600 mb-6">
+      <p className="text-gray-900 mb-6 font-medium">
         {selectedStudent?.isRegistered 
           ? 'Введите ваш пароль' 
           : 'Придумайте пароль для регистрации'}
@@ -151,10 +151,10 @@ export default function StudentAuth() {
 
       <div className="space-y-4">
         <div>
-          <label htmlFor="password" className="block text-sm font-bold mb-2 text-gray-700">
+          <label htmlFor="password" className="block text-sm font-bold mb-2 text-gray-900">
             Пароль
           </label>
-          {/* ✅ Улучшенное поле пароля с темным текстом */}
+          {/* ✅ Поле пароля с темным текстом */}
           <input
             id="password"
             type="password"
@@ -164,12 +164,12 @@ export default function StudentAuth() {
               setError('');
             }}
             onKeyPress={(e) => e.key === 'Enter' && handleAuth()}
-            className="w-full rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-4 text-lg font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200 placeholder:text-gray-500"
+            className="w-full rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-4 text-lg font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200 placeholder:text-gray-600"
             placeholder="Введите пароль"
             autoFocus
           />
           {!selectedStudent?.isRegistered && (
-            <p className="text-xs text-gray-500 mt-1">Минимум 4 символа</p>
+            <p className="text-xs text-gray-700 mt-1 font-medium">Минимум 4 символа</p>
           )}
         </div>
 
