@@ -28,7 +28,8 @@ export default function FullScreenAlert({ status, needsToReturnKey, onClose }: F
     );
   }
 
-  if (status === QueueStatus.WASHING && needsToReturnKey) {
+  // ✅ Показывать уведомление "Принеси ключ" для ЛЮБОГО статуса, если установлен флаг
+  if (needsToReturnKey) {
     return (
       <div className="fixed inset-0 bg-orange-500 z-50 flex items-center justify-center p-4 animate-pulse">
         <div className="text-center">
