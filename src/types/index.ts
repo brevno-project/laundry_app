@@ -38,7 +38,7 @@ export enum QueueStatus {
 export type QueueItem = {
   id: string;
   userId: string;
-  studentId?: string;         // ID студента из таблицы students (для поиска telegram_chat_id)
+  studentId: string;         // ID студента из таблицы students (для поиска telegram_chat_id)
   userName: string;
   userRoom?: string;
   washCount: number;          // Количество стирок
@@ -73,3 +73,12 @@ export type HistoryItem = {
   startedAt: string;
   finishedAt: string;
 };
+
+export type TelegramNotification = 
+  | { type: 'joined'; userName: string; userRoom?: string; washCount: number; paymentType: string; queueLength: number }
+  | { type: 'left'; userName: string }
+  | { type: 'washing_started'; userName: string; queueItemId: string }
+  | { type: 'washing_done'; userName: string }
+  | { type: 'admin_call_for_key'; message: string }
+  | { type: 'admin_key_issued'; message: string }
+  | { type: 'admin_return_key'; message: string };

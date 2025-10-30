@@ -48,36 +48,41 @@ export default function MachineStatus() {
   if (isWashing && currentWashingItem) {
     return (
       <div className="bg-blue-600 p-6 rounded-lg shadow-lg mb-6 border-2 border-blue-700">
-        <h2 className="text-2xl font-bold text-white mb-3">🧺 Машина занята</h2>
+        <h2 className="text-2xl font-bold text-white mb-3"> Машина занята</h2>
         <p className="text-blue-100 text-lg mb-2">Сейчас стирает:</p>
-        <p className="text-lg">
-          <span className="font-bold">Текущий пользователь:</span> {currentWashingItem.userName}
-          {currentWashingItem.userRoom && ` (Комната ${currentWashingItem.userRoom})`}
-        </p>
-        {machineState.startedAt && (
-          <p className="text-white text-xl mb-1">
-            <strong>Начало:</strong> {formatDate(currentWashingItem.joinedAt)}
+        <div>
+          <div className="text-sm text-red-700 mt-1 font-bold">
+            Стирает: {currentWashingItem.userName} (Квартира: {currentWashingItem.userRoom || 'Не указана'})
+          </div>
+          <p className="text-lg">
+            <span className="font-bold">Текущий пользователь:</span> {currentWashingItem.userName}
+            {currentWashingItem.userRoom && ` (Комната ${currentWashingItem.userRoom})`}
           </p>
-        )}
-        {currentWashingItem.expectedFinishAt && (
-          <>
-            <p className="text-white text-xl">
-              <strong>Предполагаемое окончание:</strong> {formatDate(currentWashingItem.expectedFinishAt)}
+          {machineState.startedAt && (
+            <p className="text-white text-xl mb-1">
+              <strong>Начало:</strong> {formatDate(currentWashingItem.joinedAt)}
             </p>
-            {timeRemaining && (
-              <p className="text-2xl font-bold text-yellow-300 mt-2 bg-blue-700 p-3 rounded-md">
-                <strong>Осталось времени:</strong> {timeRemaining}
+          )}
+          {currentWashingItem.expectedFinishAt && (
+            <>
+              <p className="text-white text-xl">
+                <strong>Предполагаемое окончание:</strong> {formatDate(currentWashingItem.expectedFinishAt)}
               </p>
-            )}
-          </>
-        )}
+              {timeRemaining && (
+                <p className="text-2xl font-bold text-yellow-300 mt-2 bg-blue-700 p-3 rounded-md">
+                  <strong>Осталось времени:</strong> {timeRemaining}
+                </p>
+              )}
+            </>
+          )}
+        </div>
       </div>
     );
   }
 
   return (
     <div className="bg-green-600 p-6 rounded-lg shadow-lg mb-6 border-2 border-green-700">
-      <h2 className="text-2xl font-bold text-white mb-2">✅ Машина свободна</h2>
+      <h2 className="text-2xl font-bold text-white mb-2"> Машина свободна</h2>
       <p className="text-green-100 text-lg">Стиральная машина сейчас доступна для использования.</p>
     </div>
   );

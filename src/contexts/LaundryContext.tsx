@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/lib/supabase';
-import { User, Student, QueueItem, MachineStatus, QueueStatus, MachineState, HistoryItem } from '@/types';
+import { User, Student, QueueItem, MachineStatus, QueueStatus, MachineState, HistoryItem, TelegramNotification } from '../types/index';
 import { hashPassword, verifyPassword } from '@/lib/auth';
 import { getLaundryTimeStatus } from '@/lib/timeHelper';
 import { sendTelegramNotification } from '@/lib/telegram';
@@ -23,7 +23,10 @@ import {
   markLocalDone,
   startLocalNext,
   clearLocalQueue,
+  
 } from '@/lib/localStorageFallback';
+  
+
 
 const TIMEZONE = 'Asia/Bishkek';
 const ADMIN_KEY = process.env.NEXT_PUBLIC_ADMIN_KEY || 'admin';
@@ -58,6 +61,7 @@ type LaundryContextType = {
   updateQueueItem: (queueItemId: string, updates: Partial<QueueItem>) => void;
   sendAdminMessage: (queueItemId: string, message: string) => Promise<void>;
   setQueueStatus: (queueItemId: string, status: QueueStatus) => Promise<void>;
+  setReturnKeyAlert: (queueItemId: string, alert: boolean) => Promise<void>;
   startWashing: (queueItemId: string) => void;
   cancelWashing: (queueItemId: string) => void;
   markDone: (queueItemId: string) => void;
@@ -678,6 +682,33 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Admin: Set return key alert
+  const setReturnKeyAlert = async (queueItemId: string, alert: boolean) => {
+    if (!isAdmin) return;
+    
+    if (!isSupabaseConfigured || !supabase) {
+      console.warn('Supabase not configured');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('queue')
+        .update({ returnKeyAlert: alert })
+        .eq('id', queueItemId);
+      
+      if (error) throw error;
+      console.log('✅ Return key alert updated:', alert);
+      
+      if (alert) {
+        // Trigger alert and Telegram notification
+        sendTelegramNotification({ type: 'admin_return_key', message: 'ПРИНЕСИТЕ КЛЮЧ!' });
+      }
+    } catch (error) {
+      console.error('❌ Error updating return key alert:', error);
+    }
+  };
+
   // Admin: Start washing for a queue item
   const startWashing = async (queueItemId: string) => {
     if (!isAdmin) return;
@@ -1069,6 +1100,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     updateQueueItem,
     sendAdminMessage,
     setQueueStatus,
+    setReturnKeyAlert,
     startWashing,
     cancelWashing,
     markDone,
