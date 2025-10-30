@@ -12,7 +12,7 @@ import TelegramSetup from '@/components/TelegramSetup';
 import HistoryList from '@/components/HistoryList';
 
 export default function Home() {
-  const { user, isLoading, logoutStudent, isAdmin, machineState, queue } = useLaundry();
+  const { user, isLoading, logoutStudent, isAdmin, machineState, queue, isNewUser, setIsNewUser } = useLaundry();
   const [activeTab, setActiveTab] = React.useState('main');
   const [showTelegramModal, setShowTelegramModal] = React.useState(false);
 
@@ -23,25 +23,14 @@ export default function Home() {
       userName: user?.name,
       isAdmin, 
       telegram_chat_id: user?.telegram_chat_id,
-      needsSetup: localStorage.getItem('needsTelegramSetup')
+      isNewUser
     });
     
-    if (user && !isAdmin) {
-      const needsSetup = localStorage.getItem('needsTelegramSetup');
-      const hasTelegram = user.telegram_chat_id;
-      
-      console.log('📱 Check details:', { 
-        needsSetup, 
-        hasTelegram,
-        shouldShow: needsSetup === 'true' && !hasTelegram
-      });
-      
-      if (needsSetup === 'true' && !hasTelegram) {
-        console.log('✅ Showing Telegram modal!');
-        setShowTelegramModal(true);
-      }
+    if (user && !isAdmin && isNewUser && !user.telegram_chat_id) {
+      console.log('✅ Showing Telegram modal for new user!');
+      setShowTelegramModal(true);
     }
-  }, [user, isAdmin, user?.telegram_chat_id]); // ✅ Добавили зависимость
+  }, [user, isAdmin, isNewUser]);
 
   // ✅ Функция закрытия модалки (переход в настройки)
   const handleTelegramSetup = () => {
@@ -89,6 +78,7 @@ export default function Home() {
                 onClick={() => {
                   console.log('⏭️ Skipping telegram setup...');
                   setShowTelegramModal(false);
+                  setIsNewUser(false);
                   localStorage.setItem('needsTelegramSetup', 'false');
                 }}
                 className="w-full bg-gray-400 text-white font-bold py-3 px-6 rounded-xl hover:bg-gray-500 transition-all"
@@ -195,7 +185,6 @@ export default function Home() {
               </>
             ) : (
               <>
-                {/* Форма для обычных пользователей */}
                 {!isAdmin && <UserForm />}
               </>
             )}
@@ -218,16 +207,15 @@ export default function Home() {
         {/* Настройки */}
         {activeTab === 'settings' && user && (
           <div className="space-y-4">
-            {/* Telegram - только для обычных пользователей */}
             {!isAdmin && <TelegramSetup />}
             
-            {/* Выход */}
             <div className="bg-white p-4 rounded-lg shadow-sm">
               <h3 className="font-bold text-lg text-gray-800 mb-3">Аккаунт</h3>
               <button
                 onClick={() => {
                   logoutStudent();
                   setActiveTab('main');
+                  setIsNewUser(false);
                   localStorage.removeItem('needsTelegramSetup');
                 }}
                 className="w-full bg-red-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-red-600 shadow-sm"

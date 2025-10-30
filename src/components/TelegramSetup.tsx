@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 
 export default function TelegramSetup() {
-  const { user, linkTelegram } = useLaundry();
+  const { user, linkTelegram, setIsNewUser } = useLaundry();
   const [chatId, setChatId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -26,6 +26,8 @@ export default function TelegramSetup() {
       setSuccess(true);
       setShowGuide(false);
       setChatId('');
+      setIsNewUser(false);
+      localStorage.setItem('needsTelegramSetup', 'false');
     } else {
       setError(result.error || 'Ошибка подключения');
     }
@@ -33,7 +35,6 @@ export default function TelegramSetup() {
     setLoading(false);
   };
 
-  // Если уже подключен
   if (user?.telegram_chat_id && !showGuide) {
     return (
       <div className="bg-green-50 border-2 border-green-500 rounded-lg p-4">
@@ -42,10 +43,7 @@ export default function TelegramSetup() {
           <h3 className="font-bold text-lg text-green-900">Telegram подключен!</h3>
         </div>
         <p className="text-green-800 mb-3">Вы будете получать уведомления в Telegram</p>
-        <button
-          onClick={() => setShowGuide(true)}
-          className="text-sm text-green-700 underline hover:text-green-900"
-        >
+        <button onClick={() => setShowGuide(true)} className="text-sm text-green-700 underline hover:text-green-900">
           Переподключить
         </button>
       </div>
@@ -59,39 +57,24 @@ export default function TelegramSetup() {
         <h3 className="font-bold text-xl text-yellow-900">Подключите уведомления</h3>
       </div>
 
-      {/* Пошаговая инструкция */}
       <div className="space-y-3 mb-4">
         <div className="bg-white p-3 rounded-lg border border-yellow-300">
           <div className="flex items-start gap-3">
-            <div className="bg-blue-600 text-white font-black rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
-              1
-            </div>
+            <div className="bg-blue-600 text-white font-black rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">1</div>
             <div className="flex-1">
               <p className="font-bold text-gray-900 mb-2">
-                <span className="font-bold">Шаг 1:</span> Откройте бота для получения ID:{' '}
-                <a
-                  href="https://t.me/userinfobot"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 underline font-semibold"
-                >
-                  @userinfobot
-                </a>
+                Шаг 1: Откройте бота <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline font-semibold">@userinfobot</a>
               </p>
-              <p className="text-sm text-gray-600 italic">💡 Chat ID один для всех ботов! Получите здесь, используйте везде.</p>
+              <p className="text-sm text-gray-600 italic">💡 Chat ID один для всех ботов!</p>
             </div>
           </div>
         </div>
 
         <div className="bg-white p-3 rounded-lg border border-yellow-300">
           <div className="flex items-start gap-3">
-            <div className="bg-blue-600 text-white font-black rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
-              2
-            </div>
+            <div className="bg-blue-600 text-white font-black rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">2</div>
             <div className="flex-1">
-              <p className="text-gray-700 mb-1">
-                <span className="font-bold">Шаг 2:</span> Напишите боту <span className="font-semibold">/start</span>
-              </p>
+              <p className="text-gray-700 mb-1">Шаг 2: Напишите боту /start</p>
               <p className="text-sm text-gray-600">Бот сразу ответит вашим Chat ID</p>
             </div>
           </div>
@@ -99,35 +82,21 @@ export default function TelegramSetup() {
 
         <div className="bg-white p-3 rounded-lg border border-yellow-300">
           <div className="flex items-start gap-3">
-            <div className="bg-blue-600 text-white font-black rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
-              3
-            </div>
+            <div className="bg-blue-600 text-white font-black rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">3</div>
             <div className="flex-1">
               <p className="text-gray-700 mb-1">
-                <span className="font-bold">Шаг 3:</span> Откройте нашего бота:{' '}
-                <a
-                  href="https://t.me/keiin_dorm_laundry_bot"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 underline font-semibold"
-                >
-                  @keiin_dorm_laundry_bot
-                </a>
+                Шаг 3: Откройте нашего бота <a href="https://t.me/keiin_dorm_laundry_bot" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline font-semibold">@keiin_dorm_laundry_bot</a>
               </p>
-              <p className="text-sm text-gray-600">⚠️ Обязательно напишите <span className="font-semibold">/start</span> боту, чтобы он мог отправлять уведомления!</p>
+              <p className="text-sm text-gray-600">⚠️ Напишите боту /start!</p>
             </div>
           </div>
         </div>
 
         <div className="bg-white p-3 rounded-lg border border-yellow-300">
           <div className="flex items-start gap-3">
-            <div className="bg-blue-600 text-white font-black rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
-              4
-            </div>
+            <div className="bg-blue-600 text-white font-black rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">4</div>
             <div className="flex-1">
-              <p className="text-gray-700 mb-1">
-                <span className="font-bold">Шаг 4:</span> Скопируйте ваш <span className="font-semibold">Chat ID</span> и вставьте сюда:
-              </p>
+              <p className="text-gray-700 mb-1">Шаг 4: Скопируйте ваш Chat ID и вставьте сюда:</p>
               <input
                 type="text"
                 value={chatId}
@@ -140,7 +109,6 @@ export default function TelegramSetup() {
         </div>
       </div>
 
-      {/* Сообщения */}
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-3">
           ❌ {error}
@@ -149,11 +117,10 @@ export default function TelegramSetup() {
 
       {success && (
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-3">
-          ✅ Telegram успешно подключен! Теперь вы будете получать уведомления.
+          ✅ Telegram успешно подключен!
         </div>
       )}
 
-      {/* Кнопка */}
       <button
         onClick={handleConnect}
         disabled={loading || !chatId.trim()}
@@ -163,7 +130,7 @@ export default function TelegramSetup() {
       </button>
 
       <p className="text-xs text-gray-600 mt-3 text-center">
-        💡 Подключите Telegram чтобы получать уведомления о вашей очереди
+        💡 Подключите Telegram для уведомлений
       </p>
     </div>
   );

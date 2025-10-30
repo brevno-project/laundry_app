@@ -76,6 +76,8 @@ type LaundryContextType = {
   verifyAdminKey: (key: string) => boolean;
   getUserQueueItem: () => QueueItem | undefined;
   isLoading: boolean;
+  isNewUser: boolean; // ✅ ДОБАВИТЬ ЭТО
+  setIsNewUser: (isNewUser: boolean) => void; // ✅ ДОБАВИТЬ ЭТО
 };
 
 const LaundryContext = createContext<LaundryContextType | undefined>(undefined);
@@ -90,6 +92,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   });
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isNewUser, setIsNewUser] = useState(false);
 
   // Initialize user from localStorage
   useEffect(() => {
@@ -213,54 +216,55 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   };
 
   // Register a new student
-const registerStudent = async (studentId: string, password: string): Promise<User | null> => {
-  if (!isSupabaseConfigured || !supabase) {
-    throw new Error('Supabase не настроен');
-  }
-
-  try {
-    // Check if student exists and is not registered
-    const student = students.find(s => s.id === studentId);
-    if (!student) throw new Error('Студент не найден');
-    if (student.isRegistered) throw new Error('Этот студент уже зарегистрирован');
-
-    // Hash password
-    const passwordHash = await hashPassword(password);
-
-    // Save password
-    const { error: authError } = await supabase
-      .from('student_auth')
-      .insert({ studentId, passwordHash });
-
-    if (authError) throw authError;
-
-    // Mark student as registered
-    const { error: updateError } = await supabase
-      .from('students')
-      .update({ isRegistered: true, registeredAt: new Date().toISOString() })
-      .eq('id', studentId);
-
-    if (updateError) throw updateError;
-
-    // Auto-login after registration
-    const user = await loginStudent(studentId, password);
-    
-    // ✅ Установить флаг для показа модалки Telegram
-    if (user && !user.telegram_chat_id) {
-      console.log('🆕 New user registered, setting needsTelegramSetup flag');
-      localStorage.setItem('needsTelegramSetup', 'true');
+  const registerStudent = async (studentId: string, password: string): Promise<User | null> => {
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase не настроен');
     }
-    
-    // Reload students list
-    await loadStudents();
 
-    console.log('✅ Student registered successfully');
-    return user;
-  } catch (error: any) {
-    console.error('❌ Error registering student:', error);
-    throw error;
-  }
-};
+    try {
+      // Check if student exists and is not registered
+      const student = students.find(s => s.id === studentId);
+      if (!student) throw new Error('Студент не найден');
+      if (student.isRegistered) throw new Error('Этот студент уже зарегистрирован');
+
+      // Hash password
+      const passwordHash = await hashPassword(password);
+
+      // Save password
+      const { error: authError } = await supabase
+        .from('student_auth')
+        .insert({ studentId, passwordHash });
+
+      if (authError) throw authError;
+
+      // Mark student as registered
+      const { error: updateError } = await supabase
+        .from('students')
+        .update({ isRegistered: true, registeredAt: new Date().toISOString() })
+        .eq('id', studentId);
+
+      if (updateError) throw updateError;
+
+      // Auto-login after registration
+      const user = await loginStudent(studentId, password);
+      
+      // ✅ Установить флаг для нового пользователя
+      if (user && !user.telegram_chat_id) {
+        console.log('🆕 New user registered, setting isNewUser flag');
+        setIsNewUser(true);
+        localStorage.setItem('needsTelegramSetup', 'true');
+      }
+      
+      // Reload students list
+      await loadStudents();
+
+      console.log('✅ Student registered successfully');
+      return user;
+    } catch (error: any) {
+      console.error('❌ Error registering student:', error);
+      throw error;
+    }
+  };
   // Login student
   const loginStudent = async (studentId: string, password: string): Promise<User | null> => {
     if (!isSupabaseConfigured || !supabase) {
@@ -1143,6 +1147,8 @@ const startWashing = async (queueItemId: string) => {
     verifyAdminKey,
     getUserQueueItem,
     isLoading,
+    isNewUser, // ✅ ДОБАВИТЬ ЭТО
+    setIsNewUser, // ✅ ДОБАВИТЬ ЭТО
   };
 
   return <LaundryContext.Provider value={value}>{children}</LaundryContext.Provider>;
