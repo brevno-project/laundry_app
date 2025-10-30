@@ -14,7 +14,6 @@ export default function StudentAuth() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Фильтрация студентов по поиску
   const filteredStudents = students.filter(s => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
@@ -46,9 +45,7 @@ export default function StudentAuth() {
       if (selectedStudent.isRegistered) {
         await loginStudent(selectedStudent.id, password);
       } else {
-        // ✅ При регистрации нового пользователя - установить флаг
         await registerStudent(selectedStudent.id, password);
-        
       }
       setError('');
     } catch (err: any) {
@@ -60,7 +57,6 @@ export default function StudentAuth() {
     }
   };
 
-  // Шаг 1: Выбор студента
   if (step === 'select') {
     return (
       <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg shadow-xl border-2 border-blue-200">
@@ -69,16 +65,15 @@ export default function StudentAuth() {
           <h3 className="text-lg font-bold mb-4 text-gray-900">Выберите себя из списка</h3>
         </div>
 
-        {/* Поиск */}
+        {/* ✅ Улучшенный поиск с темным текстом */}
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="🔍 Поиск по имени или комнате..."
-          className="w-full p-4 rounded-lg border-2 border-blue-300 text-xl font-semibold mb-4 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 placeholder:text-gray-600"
+          className="w-full p-4 rounded-lg border-2 border-blue-400 bg-white text-gray-900 text-xl font-semibold mb-4 focus:border-blue-600 focus:ring-2 focus:ring-blue-300 placeholder:text-gray-500"
         />
 
-        {/* Список студентов */}
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {filteredStudents.length === 0 ? (
             <div className="text-center py-8 text-gray-600">
@@ -118,10 +113,8 @@ export default function StudentAuth() {
     );
   }
 
-  // Шаг 2: Ввод пароля
   return (
     <div className="bg-white p-6 rounded-lg shadow-xl border-2 border-gray-200">
-      {/* Кнопка назад */}
       <button
         onClick={() => {
           setStep('select');
@@ -133,7 +126,6 @@ export default function StudentAuth() {
         ← Назад
       </button>
 
-      {/* Инфо о студенте */}
       <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="bg-blue-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-2xl">
@@ -162,6 +154,7 @@ export default function StudentAuth() {
           <label htmlFor="password" className="block text-sm font-bold mb-2 text-gray-700">
             Пароль
           </label>
+          {/* ✅ Улучшенное поле пароля с темным текстом */}
           <input
             id="password"
             type="password"
@@ -171,7 +164,7 @@ export default function StudentAuth() {
               setError('');
             }}
             onKeyPress={(e) => e.key === 'Enter' && handleAuth()}
-            className="w-full rounded-lg border-2 border-gray-300 p-4 text-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+            className="w-full rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-4 text-lg font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200 placeholder:text-gray-500"
             placeholder="Введите пароль"
             autoFocus
           />

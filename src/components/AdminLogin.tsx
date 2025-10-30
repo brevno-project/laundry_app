@@ -21,9 +21,7 @@ export default function AdminLogin() {
     setLoading(true);
     setError('');
 
-    // Простая проверка пароля
     if (password === 'hesoyam') {
-      // Создать админского юзера
       const adminUser = {
         id: uuidv4(),
         studentId: 'admin',
@@ -48,12 +46,13 @@ export default function AdminLogin() {
       <h3 className="text-lg font-bold text-white mb-3 text-center">🔑 Вход для админа</h3>
       <form onSubmit={handleAdminLogin} className="space-y-3">
         <div>
+          {/* ✅ Улучшенное поле пароля с белым текстом */}
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Пароль"
-            className="w-full rounded-md border-2 border-gray-600 bg-gray-700 text-white shadow-sm p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+            className="w-full rounded-md border-2 border-gray-600 bg-gray-900 text-white text-lg font-bold shadow-sm p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 placeholder:text-gray-400"
             disabled={loading}
           />
         </div>

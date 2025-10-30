@@ -98,12 +98,12 @@ export default function TelegramSetup() {
             <div className="flex-1">
               <p className="text-gray-700 mb-1">Шаг 4: Скопируйте ваш Chat ID и вставьте сюда:</p>
               <input
-                type="text"
-                value={chatId}
-                onChange={(e) => setChatId(e.target.value)}
-                placeholder="Например: 123456789"
-                className="w-full border-2 border-gray-300 rounded-lg p-3 text-lg font-mono text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-              />
+                  type="text"
+                  value={chatId}
+                  onChange={(e) => setChatId(e.target.value)}
+                  placeholder="Например: 123456789"
+                  className="w-full border-2 border-gray-400 rounded-lg p-3 text-lg font-mono text-gray-900 bg-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                />
             </div>
           </div>
         </div>
