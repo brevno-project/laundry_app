@@ -91,11 +91,9 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const storedUser = localStorage.getItem('laundryUser');
     const storedIsAdmin = localStorage.getItem('laundryIsAdmin') === 'true';
-    
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
-    
     setIsAdmin(storedIsAdmin);
 
     // Initial data fetch
@@ -149,10 +147,24 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
             console.log('History subscription status:', status);
           });
         
+        // Subscribe to machine state updates
+        const machineStateChannel = supabase
+          .channel('machine_state_updates')
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'machine_state'
+          }, (payload) => {
+            console.log('🔔 Real-time machine state update:', payload);
+            setMachineState(payload.new as MachineState);
+          })
+          .subscribe();
+        
         return () => {
           queueSubscription.unsubscribe();
           machineStateSubscription.unsubscribe();
           historySubscription.unsubscribe();
+          machineStateChannel.unsubscribe();
         };
       } catch (error) {
         console.error('Error setting up Supabase subscriptions:', error);
@@ -428,7 +440,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-try {
+    try {
       const { data, error } = await supabase
         .from('machine_state')
         .select('*')
@@ -717,6 +729,9 @@ try {
       setMachineState(newMachineState);
       saveLocalMachineState(newMachineState);
       console.log('✅ Local machine state updated:', newMachineState);
+      
+      // Обновить состояние для всех клиентов
+      fetchMachineState();
     } catch (error) {
       console.error('Error starting washing:', error);
       // Fallback to local storage on error
