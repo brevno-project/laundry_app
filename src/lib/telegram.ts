@@ -1,23 +1,12 @@
 // Telegram Bot API для отправки уведомлений
 import { createClient } from '@supabase/supabase-js';
+import { TelegramNotification } from '../types/index';
 
 const TELEGRAM_BOT_TOKEN = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN || '';
 const ADMIN_TELEGRAM_CHAT_ID = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID || ''; // ID админа
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
-export interface TelegramNotification {
-  type: 'joined' | 'left' | 'washing_started' | 'washing_done' | 'admin_call_for_key' | 'admin_key_issued' | 'admin_return_key';
-  userName: string;
-  userRoom?: string;
-  washCount?: number;
-  paymentType?: string;
-  queueLength?: number;
-  position?: number;
-  studentId?: string; // ID студента для поиска его telegram_chat_id
-  expectedFinishAt?: string; // Время окончания стирки
-}
 
 // Форматирование сообщения
 function formatMessage(notification: TelegramNotification): string {

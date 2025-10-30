@@ -74,11 +74,23 @@ export type HistoryItem = {
   finishedAt: string;
 };
 
-export type TelegramNotification = 
-  | { type: 'joined'; userName: string; userRoom?: string; washCount: number; paymentType: string; queueLength: number }
-  | { type: 'left'; userName: string }
-  | { type: 'washing_started'; userName: string; queueItemId: string }
-  | { type: 'washing_done'; userName: string }
-  | { type: 'admin_call_for_key'; message: string }
-  | { type: 'admin_key_issued'; message: string }
-  | { type: 'admin_return_key'; message: string };
+export type TelegramNotification = {
+  type:
+    | 'joined'
+    | 'left'
+    | 'washing_started'
+    | 'washing_done'
+    | 'admin_call_for_key'
+    | 'admin_key_issued'
+    | 'admin_return_key';
+
+  userName?: string;
+  userRoom?: string;
+  washCount?: number;
+  paymentType?: string;
+  queueLength?: number;
+  expectedFinishAt?: string;
+  studentId?: string;
+  queueItemId?: string;
+  message?: string;
+};
