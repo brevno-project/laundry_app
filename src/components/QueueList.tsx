@@ -155,23 +155,35 @@ export default function QueueList() {
                           <button
                             className="bg-yellow-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-yellow-600 shadow-sm"
                             onClick={async () => {
-                              const success = await sendTelegramNotification({
-                                type: 'admin_call_for_key',
-                                userName: item.userName,
-                                userRoom: item.userRoom,
-                                studentId: item.studentId,
-                                expectedFinishAt: item.expectedFinishAt
-                              });
-                              if (success) {
-                                alert(`✅ ${item.userName} позван!`);
-                              } else {
-                                alert(`⚠️ ${item.userName} не подключил Telegram`);
+                              try {
+                                console.log('🔔 Позвать нажата для:', item.userName, item.id);
+                                
+                                // ✅ ВАЖНО: Сначала меняем статус на READY
+                                await setQueueStatus(item.id, QueueStatus.READY);
+                                console.log('✅ Статус изменен на READY');
+                                
+                                // Затем отправляем уведомление в Telegram
+                                const success = await sendTelegramNotification({
+                                  type: 'admin_call_for_key',
+                                  userName: item.userName,
+                                  userRoom: item.userRoom,
+                                  studentId: item.studentId,
+                                  expectedFinishAt: item.expectedFinishAt
+                                });
+                                
+                                if (success) {
+                                  alert(`✅ ${item.userName} позван!`);
+                                } else {
+                                  alert(`⚠️ ${item.userName} не подключил Telegram`);
+                                }
+                              } catch (error) {
+                                console.error('❌ Ошибка при вызове:', error);
+                                alert('❌ Ошибка при вызове студента');
                               }
                             }}
                           >
                             🔔 Позвать
                           </button>
-                          
                           {/* Вернуть ключ */}
                           <button
                             className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm"
