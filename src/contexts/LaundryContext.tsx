@@ -602,41 +602,53 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   };
 
   // Update queue item details
-  const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>) => {
-    if (!user) return;
-    
-    console.log('📦 updateQueueItem called:', { queueItemId, updates, isAdmin });
-    
-    if (!isSupabaseConfigured || !supabase) {
-      // Use local storage fallback
+const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>) => {
+  console.log('📦 updateQueueItem called:', { queueItemId, updates, isAdmin, user });
+  
+  if (!isSupabaseConfigured || !supabase) {
+    // Use local storage fallback
+    if (user) {
       updateLocalQueueItem(queueItemId, user.id, updates);
-      fetchQueue(); // Refresh queue from local storage
-      return;
     }
+    fetchQueue();
+    return;
+  }
+  
+  try {
+    // Для админа - обновляем без проверки владельца
+    // Для обычного пользователя - проверяем studentId
+    let query = supabase
+      .from('queue')
+      .update(updates)
+      .eq('id', queueItemId);
     
-    try {
-      // Админ может обновлять любые записи
-      let query = supabase
-        .from('queue')
-        .update(updates)
-        .eq('id', queueItemId);
-      
-      // Обычный пользователь только свои записи
-      if (!isAdmin) {
-        query = query.eq('userId', user.id);
+    // Только для НЕ-админа проверяем владельца
+    if (!isAdmin) {
+      if (!user) {
+        console.error('❌ User not found for non-admin update');
+        return;
       }
-      
-      const { error } = await query;
-      
-      if (error) throw error;
-      console.log('✅ Queue item updated successfully!');
-    } catch (error) {
-      console.error('Error updating queue item:', error);
-      // Fallback to local storage on error
-      updateLocalQueueItem(queueItemId, user.id, updates);
-      fetchQueue(); // Refresh queue from local storage
+      query = query.eq('studentId', user.studentId);
     }
-  };
+    
+    const { error } = await query;
+    
+    if (error) {
+      console.error('❌ Error from Supabase:', error);
+      throw error;
+    }
+    
+    console.log('✅ Queue item updated successfully!');
+    await fetchQueue(); // Обновить очередь после изменения
+  } catch (error) {
+    console.error('❌ Error updating queue item:', error);
+    // Fallback to local storage on error
+    if (user) {
+      updateLocalQueueItem(queueItemId, user.id, updates);
+    }
+    fetchQueue();
+  }
+};
 
   // Admin: Отправить сообщение студенту
   const sendAdminMessage = async (queueItemId: string, message: string) => {
