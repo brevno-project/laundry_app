@@ -721,69 +721,80 @@ const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>)
     }
   };
 
-  // Admin: Start washing for a queue item
-  const startWashing = async (queueItemId: string) => {
-    if (!isAdmin) return;
-    
-    console.log('🎽 Starting washing for:', queueItemId);
-    
-    if (!isSupabaseConfigured || !supabase) {
-      // Use local storage fallback
-      startLocalWashing(queueItemId);
-      fetchQueue(); // Refresh queue from local storage
-      fetchMachineState(); // Refresh machine state from local storage
+ // Admin: Start washing for a queue item
+const startWashing = async (queueItemId: string) => {
+  if (!isAdmin) {
+    console.error('❌ Not admin!');
+    return;
+  }
+  
+  console.log('🎽 Starting washing for:', queueItemId);
+  
+  if (!isSupabaseConfigured || !supabase) {
+    // Use local storage fallback
+    startLocalWashing(queueItemId);
+    fetchQueue();
+    fetchMachineState();
+    return;
+  }
+  
+  try {
+    const queueItem = queue.find(item => item.id === queueItemId);
+    if (!queueItem) {
+      console.error('❌ Queue item not found!');
       return;
     }
     
-    try {
-      const queueItem = queue.find(item => item.id === queueItemId);
-      if (!queueItem) {
-        console.error('❌ Queue item not found!');
-        return;
-      }
-      
-      console.log('🔄 Updating queue item status to WASHING...');
-      // Update queue item status
-      const { error: queueError } = await supabase
-        .from('queue')
-        .update({ status: QueueStatus.WASHING })
-        .eq('id', queueItemId);
-      
-      if (queueError) throw queueError;
-      console.log('✅ Queue item status updated!');
-      
-      // Update machine state
-      const newMachineState: MachineState = {
-        status: MachineStatus.WASHING,
-        currentQueueItemId: queueItemId,
-        startedAt: new Date().toISOString(),
-        expectedFinishAt: queueItem.expectedFinishAt,
-      };
-      
-      console.log('🎰 Updating machine state:', newMachineState);
-      const { error: machineError } = await supabase
-        .from('machine_state')
-        .upsert(newMachineState);
-      
-      if (machineError) throw machineError;
-      console.log('✅ Machine state updated!');
-      
-      // Обновить локальный state немедленно
-      setMachineState(newMachineState);
-      saveLocalMachineState(newMachineState);
-      console.log('✅ Local machine state updated:', newMachineState);
-      
-      // Обновить состояние для всех клиентов
-      fetchMachineState();
-    } catch (error) {
-      console.error('Error starting washing:', error);
-      // Fallback to local storage on error
-      startLocalWashing(queueItemId);
-      fetchQueue(); // Refresh queue from local storage
-      fetchMachineState(); // Refresh machine state from local storage
+    console.log('🔄 Updating queue item status to WASHING...');
+    // Update queue item status
+    const { error: queueError } = await supabase
+      .from('queue')
+      .update({ status: QueueStatus.WASHING })
+      .eq('id', queueItemId);
+    
+    if (queueError) {
+      console.error('❌ Queue error:', queueError);
+      throw queueError;
     }
-  };
-
+    console.log('✅ Queue item status updated!');
+    
+    // Update machine state
+    const newMachineState: MachineState = {
+      status: MachineStatus.WASHING,
+      currentQueueItemId: queueItemId,
+      startedAt: new Date().toISOString(),
+      expectedFinishAt: queueItem.expectedFinishAt,
+    };
+    
+    console.log('🎰 Updating machine state:', newMachineState);
+    const { error: machineError } = await supabase
+      .from('machine_state')
+      .upsert(newMachineState, { onConflict: 'id' });
+    
+    if (machineError) {
+      console.error('❌ Machine error:', machineError);
+      throw machineError;
+    }
+    console.log('✅ Machine state updated!');
+    
+    // Обновить локальный state немедленно
+    setMachineState(newMachineState);
+    saveLocalMachineState(newMachineState);
+    console.log('✅ Local machine state updated:', newMachineState);
+    
+    // Обновить состояние для всех клиентов
+    await fetchQueue();
+    await fetchMachineState();
+    
+    console.log('✅✅✅ startWashing completed successfully!');
+  } catch (error) {
+    console.error('❌ Error starting washing:', error);
+    // Fallback to local storage on error
+    startLocalWashing(queueItemId);
+    fetchQueue();
+    fetchMachineState();
+  }
+};
   // Admin: Mark washing as done
   const markDone = async (queueItemId: string) => {
     if (!isAdmin) return;
