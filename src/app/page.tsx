@@ -20,6 +20,7 @@ export default function Home() {
   React.useEffect(() => {
     console.log('🔍 Checking telegram setup:', { 
       user: !!user, 
+      userName: user?.name,
       isAdmin, 
       telegram_chat_id: user?.telegram_chat_id,
       needsSetup: localStorage.getItem('needsTelegramSetup')
@@ -27,13 +28,20 @@ export default function Home() {
     
     if (user && !isAdmin) {
       const needsSetup = localStorage.getItem('needsTelegramSetup');
-      console.log('📱 needsSetup:', needsSetup, 'telegram_chat_id:', user.telegram_chat_id);
-      if (needsSetup === 'true' && !user.telegram_chat_id) {
+      const hasTelegram = user.telegram_chat_id;
+      
+      console.log('📱 Check details:', { 
+        needsSetup, 
+        hasTelegram,
+        shouldShow: needsSetup === 'true' && !hasTelegram
+      });
+      
+      if (needsSetup === 'true' && !hasTelegram) {
         console.log('✅ Showing Telegram modal!');
         setShowTelegramModal(true);
       }
     }
-  }, [user, isAdmin]);
+  }, [user, isAdmin, user?.telegram_chat_id]); // ✅ Добавили зависимость
 
   // ✅ Функция закрытия модалки (переход в настройки)
   const handleTelegramSetup = () => {
@@ -42,7 +50,7 @@ export default function Home() {
     setActiveTab('settings');
   };
 
-  console.log('🎰 Machine State for all users:', machineState);
+  console.log('🎰 Machine State:', machineState);
   console.log('🚨 showTelegramModal:', showTelegramModal);
 
   if (isLoading) {
@@ -57,8 +65,8 @@ export default function Home() {
     <div className="min-h-screen w-full bg-gray-50">
       {/* ✅ МОДАЛЬНОЕ ОКНО - Подключите Telegram */}
       {showTelegramModal && user && !user.telegram_chat_id && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl shadow-2xl max-w-lg w-full p-8 border-4 border-yellow-400">
+        <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
+          <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl shadow-2xl max-w-lg w-full p-8 border-4 border-yellow-400 animate-pulse">
             <div className="text-center mb-6">
               <div className="text-8xl mb-4 animate-bounce">📱</div>
               <h2 className="text-3xl font-black text-gray-900 mb-3">

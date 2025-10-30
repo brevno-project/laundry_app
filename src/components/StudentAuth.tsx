@@ -48,7 +48,7 @@ export default function StudentAuth() {
       } else {
         // ✅ При регистрации нового пользователя - установить флаг
         await registerStudent(selectedStudent.id, password);
-        localStorage.setItem('needsTelegramSetup', 'true');
+        
       }
       setError('');
     } catch (err: any) {
