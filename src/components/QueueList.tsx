@@ -149,175 +149,133 @@ export default function QueueList() {
                     {/* Кнопки админа */}
                     {isAdmin && (
                       <div className="space-y-2">
-                        {/* БЛОК 1: Уведомления (не меняют статус) */}
-                        <div className="bg-blue-50 p-2 rounded border border-blue-200">
-                          <div className="text-xs font-bold text-blue-800 mb-1">📢 Уведомления:</div>
-                          <div className="grid grid-cols-2 gap-2">
-                            {/* Позвать за ключом */}
-                            <button
-                              className="bg-yellow-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-yellow-600 shadow-sm"
-                              onClick={async () => {
+                        {/* БЛОК: Уведомления */}
+                        <div className="grid grid-cols-3 gap-2">
+                          {/* Позвать */}
+                          <button
+                            className="bg-yellow-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-yellow-600 shadow-sm"
+                            onClick={async () => {
+                              const success = await sendTelegramNotification({
+                                type: 'admin_call_for_key',
+                                userName: item.userName,
+                                userRoom: item.userRoom,
+                                studentId: item.studentId,
+                                expectedFinishAt: item.expectedFinishAt
+                              });
+                              if (success) {
+                                alert(`✅ ${item.userName} позван!`);
+                              } else {
+                                alert(`⚠️ ${item.userName} не подключил Telegram`);
+                              }
+                            }}
+                          >
+                            🔔 Позвать
+                          </button>
+                          
+                          {/* Вернуть ключ */}
+                          <button
+                            className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm"
+                            onClick={async () => {
+                              try {
+                                await updateQueueItem(item.id, { returnKeyAlert: true });
+                                
                                 const success = await sendTelegramNotification({
-                                  type: 'admin_call_for_key',
+                                  type: 'admin_return_key',
                                   userName: item.userName,
                                   userRoom: item.userRoom,
                                   studentId: item.studentId,
                                   expectedFinishAt: item.expectedFinishAt
                                 });
                                 if (success) {
-                                  alert(`✅ ${item.userName} позван!`);
+                                  alert(`✅ ${item.userName} попросили вернуть ключ!`);
                                 } else {
                                   alert(`⚠️ ${item.userName} не подключил Telegram`);
                                 }
-                              }}
-                            >
-                              🔔 Позвать
-                            </button>
-                            
-                            {/* Вернуть ключ */}
-                            <button
-                              className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm"
-                              onClick={async () => {
-                                try {
-                                  console.log('🔔 Нажата кнопка Вернуть для:', item.userName, item.id);
-                                  await updateQueueItem(item.id, { returnKeyAlert: true });
-                                  console.log('✅ returnKeyAlert установлен!');
-                                  
-                                  const success = await sendTelegramNotification({
-                                    type: 'admin_return_key',
-                                    userName: item.userName,
-                                    userRoom: item.userRoom,
-                                    studentId: item.studentId,
-                                    expectedFinishAt: item.expectedFinishAt
-                                  });
-                                  if (success) {
-                                    alert(`✅ ${item.userName} попросили вернуть ключ!`);
-                                  } else {
-                                    alert(`⚠️ ${item.userName} не подключил Telegram`);
-                                  }
-                                } catch (error) {
-                                  console.error('Error sending notification:', error);
-                                  alert('❌ Ошибка отправки уведомления');
-                                }
-                              }}
-                            >
-                              🔔 Вернуть
-                            </button>
-                            
-                            {/* Убрать уведомления */}
-                            <button
-                              className="bg-gray-400 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-gray-500 shadow-sm col-span-2"
-                              onClick={async () => {
-                                await updateQueueItem(item.id, { returnKeyAlert: false });
-                                alert(`✅ Уведомления отменены для ${item.userName}`);
-                              }}
-                            >
-                              🔕 Убрать уведомления
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* БЛОК 2: Изменение статуса */}
-                        <div className="bg-purple-50 p-2 rounded border border-purple-200">
-                          <div className="text-xs font-bold text-purple-800 mb-1">🎯 Статус:</div>
-                          <div className="grid grid-cols-3 gap-1">
-                            {/* Ожидает */}
-                            <button
-                              className={`py-1 px-1 rounded text-xs font-bold ${
-                                item.status === QueueStatus.WAITING 
-                                  ? 'bg-gray-600 text-white' 
-                                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                              }`}
-                              onClick={async () => {
-                                if (item.status === QueueStatus.WASHING) {
-                                  await cancelWashing(item.id);
-                                } else {
-                                  await setQueueStatus(item.id, QueueStatus.WAITING);
-                                }
-                                alert(`${item.userName} → Ожидает`);
-                              }}
-                            >
-                              ⏳
-                            </button>
-                            
-                            {/* Следующий */}
-                            <button
-                              className={`py-1 px-1 rounded text-xs font-bold ${
-                                item.status === QueueStatus.READY 
-                                  ? 'bg-yellow-600 text-white' 
-                                  : 'bg-yellow-200 text-yellow-800 hover:bg-yellow-300'
-                              }`}
-                              onClick={async () => {
-                                await setQueueStatus(item.id, QueueStatus.READY);
-                                alert(`${item.userName} → Следующий!`);
-                              }}
-                            >
-                              🟡
-                            </button>
-                            
-                            {/* Ключ выдан */}
-                            <button
-                              className={`py-1 px-1 rounded text-xs font-bold ${
-                                item.status === QueueStatus.KEY_ISSUED 
-                                  ? 'bg-blue-600 text-white' 
-                                  : 'bg-blue-200 text-blue-800 hover:bg-blue-300'
-                              }`}
-                              onClick={async () => {
-                                await setQueueStatus(item.id, QueueStatus.KEY_ISSUED);
-                                alert(`${item.userName} → Ключ выдан`);
-                              }}
-                            >
-                              🔑
-                            </button>
-                            
-                            {/* Стирает */}
-                            <button
-                              className={`py-1 px-1 rounded text-xs font-bold ${
-                                item.status === QueueStatus.WASHING 
-                                  ? 'bg-green-600 text-white' 
-                                  : 'bg-green-200 text-green-800 hover:bg-green-300'
-                              }`}
-                              onClick={async () => {
-                                console.log('🔑 Начать стирку для:', item.userName, item.id);
-                                await startWashing(item.id);
-                                alert(`${item.userName} → Стирает`);
-                              }}
-                            >
-                              🟢
-                            </button>
-                            
-                            {/* Готово */}
-                            <button
-                              className={`py-1 px-1 rounded text-xs font-bold col-span-2 ${
-                                item.status === QueueStatus.DONE 
-                                  ? 'bg-emerald-600 text-white' 
-                                  : 'bg-emerald-200 text-emerald-800 hover:bg-emerald-300'
-                              }`}
-                              onClick={async () => {
-                                await markDone(item.id);
-                                alert(`${item.userName} → Готово!`);
-                              }}
-                            >
-                              ✅ Завершить
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* БЛОК 3: Управление */}
-                        <div className="grid grid-cols-1 gap-2">
-                          {/* Удалить из очереди */}
-                          <button
-                            className="bg-red-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-red-700 shadow-sm"
-                            onClick={async () => {
-                              if (confirm(`Удалить ${item.userName} из очереди?`)) {
-                                await removeFromQueue(item.id);
-                                alert(`✅ ${item.userName} удален!`);
+                              } catch (error) {
+                                console.error('Error sending notification:', error);
+                                alert('❌ Ошибка отправки уведомления');
                               }
                             }}
                           >
-                            🗑️ Удалить из очереди
+                            🔔 Вернуть
+                          </button>
+                          
+                          {/* Отменить уведомления */}
+                          <button
+                            className="bg-gray-400 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-gray-500 shadow-sm"
+                            onClick={async () => {
+                              await updateQueueItem(item.id, { returnKeyAlert: false });
+                              alert(`✅ Уведомления отменены`);
+                            }}
+                          >
+                            🔕 Отменить
                           </button>
                         </div>
+
+                        {/* БЛОК: Действия со статусом */}
+                        <div className="grid grid-cols-2 gap-2">
+                          {/* Ключ выдан (автоматически стирает) */}
+                          <button
+                            className="bg-blue-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-blue-700 shadow-sm"
+                            onClick={async () => {
+                              await startWashing(item.id);
+                              alert(`✅ ${item.userName} забрал ключ и начал стирку!`);
+                            }}
+                          >
+                            🔑 Ключ выдан
+                          </button>
+                          
+                          {/* Просто стирает (без ключа) */}
+                          <button
+                            className="bg-green-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-green-700 shadow-sm"
+                            onClick={async () => {
+                              await startWashing(item.id);
+                              alert(`✅ ${item.userName} стирает!`);
+                            }}
+                          >
+                            🟢 Стирает
+                          </button>
+                          
+                          {/* Завершить */}
+                          <button
+                            className="bg-emerald-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-emerald-700 shadow-sm"
+                            onClick={async () => {
+                              await markDone(item.id);
+                              alert(`✅ ${item.userName} закончил!`);
+                            }}
+                          >
+                            ✅ Завершить
+                          </button>
+                          
+                          {/* Вернуть в ожидание */}
+                          <button
+                            className="bg-purple-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-purple-600 shadow-sm"
+                            onClick={async () => {
+                              if (item.status === QueueStatus.WASHING) {
+                                await cancelWashing(item.id);
+                              } else {
+                                await setQueueStatus(item.id, QueueStatus.WAITING);
+                              }
+                              await updateQueueItem(item.id, { returnKeyAlert: false });
+                              alert(`✅ ${item.userName} в ожидании`);
+                            }}
+                          >
+                            ⏳ В ожидание
+                          </button>
+                        </div>
+
+                        {/* БЛОК: Удалить */}
+                        <button
+                          className="bg-red-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-red-700 shadow-sm w-full"
+                          onClick={async () => {
+                            if (confirm(`Удалить ${item.userName} из очереди?`)) {
+                              await removeFromQueue(item.id);
+                              alert(`✅ ${item.userName} удален!`);
+                            }
+                          }}
+                        >
+                          🗑️ Удалить из очереди
+                        </button>
                       </div>
                     )}
                     
