@@ -13,15 +13,23 @@ import HistoryList from '@/components/HistoryList';
 
 export default function Home() {
   const { user, isLoading, logoutStudent, isAdmin, machineState, queue } = useLaundry();
-  const isSupabaseConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-  const [activeTab, setActiveTab] = React.useState('main'); // main, settings
+  const [activeTab, setActiveTab] = React.useState('main');
   const [showTelegramModal, setShowTelegramModal] = React.useState(false);
 
   // ✅ Проверка: нужно ли показать модалку Telegram
   React.useEffect(() => {
+    console.log('🔍 Checking telegram setup:', { 
+      user: !!user, 
+      isAdmin, 
+      telegram_chat_id: user?.telegram_chat_id,
+      needsSetup: localStorage.getItem('needsTelegramSetup')
+    });
+    
     if (user && !isAdmin) {
       const needsSetup = localStorage.getItem('needsTelegramSetup');
+      console.log('📱 needsSetup:', needsSetup, 'telegram_chat_id:', user.telegram_chat_id);
       if (needsSetup === 'true' && !user.telegram_chat_id) {
+        console.log('✅ Showing Telegram modal!');
         setShowTelegramModal(true);
       }
     }
@@ -29,11 +37,13 @@ export default function Home() {
 
   // ✅ Функция закрытия модалки (переход в настройки)
   const handleTelegramSetup = () => {
+    console.log('📱 Redirecting to settings...');
     setShowTelegramModal(false);
     setActiveTab('settings');
   };
 
   console.log('🎰 Machine State for all users:', machineState);
+  console.log('🚨 showTelegramModal:', showTelegramModal);
 
   if (isLoading) {
     return (
@@ -48,9 +58,9 @@ export default function Home() {
       {/* ✅ МОДАЛЬНОЕ ОКНО - Подключите Telegram */}
       {showTelegramModal && user && !user.telegram_chat_id && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl shadow-2xl max-w-lg w-full p-8 border-4 border-yellow-400 animate-pulse">
+          <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl shadow-2xl max-w-lg w-full p-8 border-4 border-yellow-400">
             <div className="text-center mb-6">
-              <div className="text-8xl mb-4">📱</div>
+              <div className="text-8xl mb-4 animate-bounce">📱</div>
               <h2 className="text-3xl font-black text-gray-900 mb-3">
                 Подключите уведомления!
               </h2>
@@ -69,6 +79,7 @@ export default function Home() {
               
               <button
                 onClick={() => {
+                  console.log('⏭️ Skipping telegram setup...');
                   setShowTelegramModal(false);
                   localStorage.setItem('needsTelegramSetup', 'false');
                 }}
@@ -132,60 +143,62 @@ export default function Home() {
 
       {/* Основной контент */}
       <div className="w-full p-3">
-        <div className="space-y-4">
-          <TimeBanner />
-          
-          {/* Статус машины */}
-          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4">
-            <h3 className="text-lg font-bold mb-3 text-gray-800">Статус машины</h3>
-            {machineState.status === 'idle' ? (
-              <div className="bg-green-50 border-2 border-green-500 rounded-lg p-3 text-center">
-                <div className="text-3xl mb-1">✅</div>
-                <div className="text-lg font-bold text-green-900">Машина свободна</div>
-              </div>
+        {activeTab === 'main' && (
+          <div className="space-y-4">
+            <TimeBanner />
+            
+            {/* Статус машины */}
+            <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4">
+              <h3 className="text-lg font-bold mb-3 text-gray-800">Статус машины</h3>
+              {machineState.status === 'idle' ? (
+                <div className="bg-green-50 border-2 border-green-500 rounded-lg p-3 text-center">
+                  <div className="text-3xl mb-1">✅</div>
+                  <div className="text-lg font-bold text-green-900">Машина свободна</div>
+                </div>
+              ) : (
+                <div className="bg-red-50 border-2 border-red-500 rounded-lg p-3 text-center">
+                  <div className="text-3xl mb-1">🔴</div>
+                  <div className="text-lg font-bold text-red-900">Машина занята</div>
+                  {machineState.currentQueueItemId && (() => {
+                    const currentItem = queue.find(item => item.id === machineState.currentQueueItemId);
+                    if (currentItem) {
+                      return (
+                        <div className="text-sm text-red-700 mt-1 font-bold">
+                          🧑 Стирает: {currentItem.userName}
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                  {machineState.expectedFinishAt && (
+                    <div className="text-sm text-red-700 mt-1">
+                      Закончит: {new Date(machineState.expectedFinishAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {/* Форма входа/регистрации */}
+            {!user ? (
+              <>
+                <StudentAuth />
+                <AdminLogin />
+              </>
             ) : (
-              <div className="bg-red-50 border-2 border-red-500 rounded-lg p-3 text-center">
-                <div className="text-3xl mb-1">🔴</div>
-                <div className="text-lg font-bold text-red-900">Машина занята</div>
-                {machineState.currentQueueItemId && (() => {
-                  const currentItem = queue.find(item => item.id === machineState.currentQueueItemId);
-                  if (currentItem) {
-                    return (
-                      <div className="text-sm text-red-700 mt-1 font-bold">
-                        🧑 Стирает: {currentItem.userName}
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
-                {machineState.expectedFinishAt && (
-                  <div className="text-sm text-red-700 mt-1">
-                    Закончит: {new Date(machineState.expectedFinishAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
-                  </div>
-                )}
-              </div>
+              <>
+                {/* Форма для обычных пользователей */}
+                {!isAdmin && <UserForm />}
+              </>
             )}
+            
+            {/* Очередь */}
+            {user && <QueueList />}
+            
+            {/* Админ панель */}
+            {isAdmin && <AdminPanel />}
           </div>
-          
-          {/* Форма входа/регистрации */}
-          {!user ? (
-            <>
-              <StudentAuth />
-              <AdminLogin />
-            </>
-          ) : (
-            <>
-              {/* Форма для обычных пользователей */}
-              {!isAdmin && <UserForm />}
-            </>
-          )}
-          
-          {/* Очередь */}
-          {user && <QueueList />}
-          
-          {/* Админ панель */}
-          {isAdmin && <AdminPanel />}
-        </div>
+        )}
         
         {/* История */}
         {activeTab === 'history' && isAdmin && (
