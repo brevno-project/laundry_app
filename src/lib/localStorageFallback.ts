@@ -66,9 +66,8 @@ export const saveLocalHistory = (history: HistoryItem[]) => {
   }
 };
 
-// Queue operations
 export const addToLocalQueue = (
-  user: { id: string; name: string; room?: string },
+  user: { id: string; name: string; room?: string; studentId?: string }, // Добавили studentId
 ): QueueItem => {
   const queue = getLocalQueue();
   
@@ -84,6 +83,7 @@ export const addToLocalQueue = (
   const newItem: QueueItem = {
     id: uuidv4(),
     userId: user.id,
+    studentId: user.studentId || user.id, // Используем studentId или id как fallback
     userName: user.name,
     userRoom: user.room,
     joinedAt: new Date().toISOString(),
