@@ -15,6 +15,23 @@ export default function Home() {
   const { user, isLoading, logoutStudent, isAdmin, machineState, queue } = useLaundry();
   const isSupabaseConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   const [activeTab, setActiveTab] = React.useState('main'); // main, settings
+  const [showTelegramModal, setShowTelegramModal] = React.useState(false);
+
+  // ✅ Проверка: нужно ли показать модалку Telegram
+  React.useEffect(() => {
+    if (user && !isAdmin) {
+      const needsSetup = localStorage.getItem('needsTelegramSetup');
+      if (needsSetup === 'true' && !user.telegram_chat_id) {
+        setShowTelegramModal(true);
+      }
+    }
+  }, [user, isAdmin]);
+
+  // ✅ Функция закрытия модалки (переход в настройки)
+  const handleTelegramSetup = () => {
+    setShowTelegramModal(false);
+    setActiveTab('settings');
+  };
 
   console.log('🎰 Machine State for all users:', machineState);
 
@@ -28,6 +45,46 @@ export default function Home() {
 
   return (
     <div className="min-h-screen w-full bg-gray-50">
+      {/* ✅ МОДАЛЬНОЕ ОКНО - Подключите Telegram */}
+      {showTelegramModal && user && !user.telegram_chat_id && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl shadow-2xl max-w-lg w-full p-8 border-4 border-yellow-400 animate-pulse">
+            <div className="text-center mb-6">
+              <div className="text-8xl mb-4">📱</div>
+              <h2 className="text-3xl font-black text-gray-900 mb-3">
+                Подключите уведомления!
+              </h2>
+              <p className="text-lg text-gray-700 font-semibold">
+                Чтобы получать уведомления когда вас позовут, нужно подключить Telegram
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <button
+                onClick={handleTelegramSetup}
+                className="w-full bg-green-600 text-white font-black py-4 px-6 rounded-xl hover:bg-green-700 transition-all shadow-lg text-xl"
+              >
+                ✅ Подключить сейчас
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowTelegramModal(false);
+                  localStorage.setItem('needsTelegramSetup', 'false');
+                }}
+                className="w-full bg-gray-400 text-white font-bold py-3 px-6 rounded-xl hover:bg-gray-500 transition-all"
+              >
+                Пропустить (не рекомендуется)
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-600 mt-4 text-center">
+              💡 Вы всегда можете подключить позже в настройках
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Заголовок */}
       <header className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 shadow-lg sticky top-0 z-10">
         <h1 className="text-2xl font-bold text-white text-center">🧺 Очередь на стирку</h1>
@@ -73,12 +130,12 @@ export default function Home() {
         </nav>
       )}
 
-      {/* Основной контент - всегда виден всем пользователям, включая неавторизованных */}
+      {/* Основной контент */}
       <div className="w-full p-3">
         <div className="space-y-4">
           <TimeBanner />
           
-          {/* Статус машины - виден всем */}
+          {/* Статус машины */}
           <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4">
             <h3 className="text-lg font-bold mb-3 text-gray-800">Статус машины</h3>
             {machineState.status === 'idle' ? (
@@ -123,20 +180,21 @@ export default function Home() {
             </>
           )}
           
-          {/* Очередь (со встроенным статусом машины) - только для вошедших */}
+          {/* Очередь */}
           {user && <QueueList />}
           
-          {/* Админ панель - только для админа */}
+          {/* Админ панель */}
           {isAdmin && <AdminPanel />}
         </div>
         
-        {/* Дополнительные вкладки для авторизованных пользователей */}
+        {/* История */}
         {activeTab === 'history' && isAdmin && (
           <div className="space-y-4">
             <HistoryList />
           </div>
         )}
 
+        {/* Настройки */}
         {activeTab === 'settings' && user && (
           <div className="space-y-4">
             {/* Telegram - только для обычных пользователей */}
@@ -148,7 +206,8 @@ export default function Home() {
               <button
                 onClick={() => {
                   logoutStudent();
-                  setActiveTab('main'); // Сброс на главную
+                  setActiveTab('main');
+                  localStorage.removeItem('needsTelegramSetup');
                 }}
                 className="w-full bg-red-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-red-600 shadow-sm"
               >
