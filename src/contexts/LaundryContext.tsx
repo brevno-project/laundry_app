@@ -514,70 +514,92 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   };
 
   /// Join the queue
-const joinQueue = async (name: string, room?: string, washCount: number = 1, paymentType: string = 'money', expectedFinishAt?: string) => {
-  if (!user) return;
+  const joinQueue = async (
+    name: string,
+    room?: string,
+    washCount: number = 1,
+    paymentType: string = 'money',
+    expectedFinishAt?: string
+  ) => {
+    if (!user) return;
   
-  // Update user name if it changed
-  if (name !== user.name || room !== user.room) {
-    const updatedUser = { ...user, name, room };
-    setUser(updatedUser);
-  }
+    // локальная проверка (мгновенная)
+    const existingLocal = queue.find(item =>
+      item.studentId === user.studentId &&
+      ['WAITING', 'READY', 'KEY_ISSUED', 'WASHING'].includes(item.status)
+    );
+    if (existingLocal) {
+      alert('Вы уже в очереди!');
+      return;
+    }
   
-  // ✅ ЗАЩИТА ОТ ДУБЛИРОВАНИЯ - проверяем ДО отправки запроса
-  const existingItem = queue.find(item => 
-    item.studentId === user.studentId && 
-    (item.status === QueueStatus.WAITING || item.status === QueueStatus.READY || item.status === QueueStatus.KEY_ISSUED || item.status === QueueStatus.WASHING)
-  );
-  if (existingItem) {
-    console.log('⚠️ User already in queue:', existingItem);
-    alert('Вы уже в очереди!');
-    return;
-  }
-    
-    // Create new queue item
+    // синхронизируем имя/комнату
+    if (name !== user.name || room !== user.room) {
+      const updatedUser = { ...user, name, room };
+      setUser(updatedUser);
+    }
+  
+    // формируем запись
     const newItem: QueueItem = {
       id: uuidv4(),
       userId: user.id,
-      studentId: user.studentId, // Добавляем studentId для поиска telegram_chat_id
+      studentId: user.studentId,
       userName: name,
       userRoom: room,
-      washCount: washCount,
-      paymentType: paymentType,
+      washCount,
+      paymentType,
       joinedAt: new Date().toISOString(),
-      expectedFinishAt: expectedFinishAt,
+      expectedFinishAt,
       status: QueueStatus.WAITING,
     };
-    
+  
+    // оффлайн режим (без supabase)
     if (!isSupabaseConfigured || !supabase) {
-      // Use local storage fallback
       addToLocalQueue(user);
       fetchQueue();
       return;
     }
-    
+  
     try {
-      console.log('➜ Adding to queue:', newItem);
       const { error } = await supabase.from('queue').insert(newItem);
-      if (error) throw error;
-      console.log('✅ Successfully added to queue');
-      
-      // Отправить уведомление в Telegram
+  
+      if (error) {
+        // это то, что база кинет, если студент уже имеет активную запись
+        if (
+          error.code === '23505' ||
+          (error.message && error.message.includes('unique_active_queue_per_student'))
+        ) {
+          alert('Вы уже в очереди!');
+          return;
+        }
+  
+        console.error('❌ Error from Supabase INSERT:', error);
+        throw error;
+      }
+  
+      // уведомляем админа
       sendTelegramNotification({
         type: 'joined',
+        studentId: user.studentId, // ВАЖНО: теперь мы шлём id студента
         userName: name,
         userRoom: room,
-        washCount: washCount,
-        paymentType: paymentType,
+        washCount,
+        paymentType,
         queueLength: queue.length + 1,
+        expectedFinishAt,
       });
-    } catch (error: any) {
-      console.error('❌ Error joining queue:', error);
-      console.error('Error details:', error?.message, error?.details, error?.hint, error?.code);
-      // Fallback to local storage on error
+  
+      console.log('✅ Successfully added to queue');
+    } catch (err) {
+      console.error('❌ Error joining queue (catch):', err);
+  
+      // fallback чтобы человек всё равно ощущал, что он "встал" (локально)
       addToLocalQueue(user);
       fetchQueue();
     }
   };
+  
+  
 
   // Leave the queue
   const leaveQueue = async (queueItemId: string) => {

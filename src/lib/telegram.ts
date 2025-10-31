@@ -147,47 +147,75 @@ async function sendTelegramMessage(chatId: string, message: string): Promise<boo
 // Отправка уведомления в Telegram
 export async function sendTelegramNotification(notification: TelegramNotification): Promise<boolean> {
   const message = formatMessage(notification);
-  
-  // Типы уведомлений для СТУДЕНТА (персональные)
-  const studentNotifications = ['admin_call_for_key', 'admin_key_issued', 'admin_return_key'];
-  
-  // Типы уведомлений для АДМИНА
-  const adminNotifications = ['joined', 'left', 'washing_started', 'washing_done'];
-  
+
+  const studentNotifications = [
+    'admin_call_for_key',
+    'admin_key_issued',
+    'admin_return_key',
+  ];
+
+  const adminNotifications = [
+    'joined',
+    'left',
+    'washing_started',
+    'washing_done',
+  ];
+
   let success = false;
-  
-  // Если это уведомление для студента - найти его chat_id и отправить ЕМУ
+
+  // 1) личные уведомления студенту
   if (studentNotifications.includes(notification.type)) {
-    const studentChatId = await getStudentTelegramChatId(notification.studentId, notification.userRoom);
-    
+    const studentChatId = await getStudentTelegramChatId(
+      notification.studentId,
+      notification.userRoom
+    );
+
     if (studentChatId) {
       success = await sendTelegramMessage(studentChatId, message);
-      if (success) {
-        console.log(`✅ Telegram notification sent to student (${notification.type})`);
-      } else {
-        console.warn('⚠️ Failed to send notification to student');
-      }
+      console.log(`✅ sent to student (${notification.type})`);
     } else {
-      console.warn(`⚠️ Student Telegram not linked (room: ${notification.userRoom})`);
-      // Все равно отправить админу как fallback
+      console.warn(`⚠️ No Telegram for ${notification.userRoom}`);
+
+      // fallback: сообщить админу, что у студента нет телеги
       if (ADMIN_TELEGRAM_CHAT_ID) {
-        await sendTelegramMessage(ADMIN_TELEGRAM_CHAT_ID, `⚠️ Студент не подключил Telegram!\n\n${message}`);
+        await sendTelegramMessage(
+          ADMIN_TELEGRAM_CHAT_ID,
+          `⚠️ Студент не подключил Telegram!\n\n${message}`
+        );
       }
     }
   }
-  
-  // Если это уведомление для админа - отправить АДМИНУ
+
+  // 2) админские уведомления
   if (adminNotifications.includes(notification.type)) {
     if (ADMIN_TELEGRAM_CHAT_ID) {
-      success = await sendTelegramMessage(ADMIN_TELEGRAM_CHAT_ID, message);
-      if (success) {
-        console.log(`✅ Telegram notification sent to admin (${notification.type})`);
+      let prefix = '';
+
+      // спецлогика для "joined":
+      // сразу говорим админу, есть ли у студента телега
+      if (notification.type === 'joined') {
+        const studentChatId = await getStudentTelegramChatId(
+          notification.studentId,
+          notification.userRoom
+        );
+        if (!studentChatId) {
+          prefix = '⚠️ У него НЕТ Telegram подключения!\n\n';
+        }
       }
+
+      success = await sendTelegramMessage(
+        ADMIN_TELEGRAM_CHAT_ID,
+        `${prefix}${message}`
+      );
+
+      console.log(`✅ sent to admin (${notification.type})`);
     }
   }
-  
+
   return success;
 }
+
+
 
 // Тестовое уведомление (для проверки настройки)
 export async function sendTestNotification(): Promise<boolean> {
