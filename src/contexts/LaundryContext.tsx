@@ -93,6 +93,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isNewUser, setIsNewUser] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
 
   // Initialize user from localStorage
   useEffect(() => {
@@ -513,7 +514,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  /// Join the queue
+  // Join the queue
   const joinQueue = async (
     name: string,
     room?: string,
@@ -522,8 +523,14 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     expectedFinishAt?: string
   ) => {
     if (!user) return;
-  
-    // локальная проверка (мгновенная)
+
+    // ✅ ЗАЩИТА #1: Блокировка повторных вызовов
+    if (isJoining) {
+      console.log('⚠️ Already joining queue, please wait...');
+      return;
+    }
+
+    // ✅ ЗАЩИТА #2: Локальная проверка очереди
     const existingLocal = queue.find(item =>
       item.studentId === user.studentId &&
       ['WAITING', 'READY', 'KEY_ISSUED', 'WASHING'].includes(item.status)
@@ -532,14 +539,14 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       alert('Вы уже в очереди!');
       return;
     }
-  
-    // синхронизируем имя/комнату
+
+    // Синхронизируем имя/комнату
     if (name !== user.name || room !== user.room) {
       const updatedUser = { ...user, name, room };
       setUser(updatedUser);
     }
-  
-    // формируем запись
+
+    // Формируем запись
     const newItem: QueueItem = {
       id: uuidv4(),
       userId: user.id,
@@ -552,35 +559,42 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       expectedFinishAt,
       status: QueueStatus.WAITING,
     };
-  
-    // оффлайн режим (без supabase)
+
+    // Оффлайн режим (без supabase)
     if (!isSupabaseConfigured || !supabase) {
       addToLocalQueue(user);
       fetchQueue();
       return;
     }
-  
+
+    // ✅ Устанавливаем флаг "идёт добавление"
+    setIsJoining(true);
+
     try {
+      console.log('➜ Adding to queue:', newItem);
       const { error } = await supabase.from('queue').insert(newItem);
-  
+
       if (error) {
-        // это то, что база кинет, если студент уже имеет активную запись
+        // ✅ ЗАЩИТА #3: Отлавливаем ошибку уникального индекса
         if (
           error.code === '23505' ||
           (error.message && error.message.includes('unique_active_queue_per_student'))
         ) {
+          console.warn('⚠️ Duplicate queue entry blocked by database');
           alert('Вы уже в очереди!');
           return;
         }
-  
+
         console.error('❌ Error from Supabase INSERT:', error);
         throw error;
       }
-  
-      // уведомляем админа
-      sendTelegramNotification({
+
+      console.log('✅ Successfully added to queue');
+
+      // ✅ Уведомляем админа (с передачей studentId)
+      await sendTelegramNotification({
         type: 'joined',
-        studentId: user.studentId, // ВАЖНО: теперь мы шлём id студента
+        studentId: user.studentId,
         userName: name,
         userRoom: room,
         washCount,
@@ -588,14 +602,18 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         queueLength: queue.length + 1,
         expectedFinishAt,
       });
-  
-      console.log('✅ Successfully added to queue');
-    } catch (err) {
+
+    } catch (err: any) {
       console.error('❌ Error joining queue (catch):', err);
-  
-      // fallback чтобы человек всё равно ощущал, что он "встал" (локально)
+
+      // Fallback: добавляем локально
       addToLocalQueue(user);
       fetchQueue();
+    } finally {
+      // ✅ Снимаем блокировку через небольшую задержку
+      setTimeout(() => {
+        setIsJoining(false);
+      }, 1000);
     }
   };
   
@@ -1170,8 +1188,8 @@ const startWashing = async (queueItemId: string) => {
     verifyAdminKey,
     getUserQueueItem,
     isLoading,
-    isNewUser, // ✅ ДОБАВИТЬ ЭТО
-    setIsNewUser, // ✅ ДОБАВИТЬ ЭТО
+    isNewUser,
+    setIsNewUser,
   };
 
   return <LaundryContext.Provider value={value}>{children}</LaundryContext.Provider>;

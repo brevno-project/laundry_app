@@ -10,24 +10,31 @@ export default function UserForm() {
   const [paymentType, setPaymentType] = useState<string>('money');
   const [selectedHour, setSelectedHour] = useState<string>('20');
   const [selectedMinute, setSelectedMinute] = useState<string>('00');
+  const [isSubmitting, setIsSubmitting] = useState(false); // ✅ Добавить состояние загрузки
   
-  // Проверка есть ли уже в очереди
   const existingQueueItem = getUserQueueItem();
   const isInQueue = !!existingQueueItem;
   
-  // Найти позицию в очереди
   const queuePosition = existingQueueItem ? queue.findIndex(item => item.id === existingQueueItem.id) + 1 : 0;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (user?.name && !isInQueue) {
-      // Рассчитать время окончания
+    
+    if (user?.name && !isInQueue && !isSubmitting) { // ✅ Проверяем флаг
+      setIsSubmitting(true); // ✅ Блокируем кнопку
+      
       const today = new Date();
       today.setHours(parseInt(selectedHour), parseInt(selectedMinute), 0, 0);
       const expectedFinishAt = today.toISOString();
       
       console.log('Joining queue with:', user.name, user.room, washCount, paymentType, expectedFinishAt);
+      
       await joinQueue(user.name, user.room, washCount, paymentType, expectedFinishAt);
+      
+      // ✅ Задержка перед разблокировкой
+      setTimeout(() => {
+        setIsSubmitting(false);
+      }, 2000);
     }
   };
 
@@ -172,9 +179,10 @@ export default function UserForm() {
 
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-blue-700 transition-colors shadow-md"
+                disabled={isSubmitting} // ✅ Блокируем при отправке
+                className="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-blue-700 transition-colors shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                Встать в очередь
+                {isSubmitting ? '⏳ Добавление...' : 'Встать в очередь'} {/* ✅ Показываем статус */}
               </button>
             </>
           ) : (
@@ -185,7 +193,6 @@ export default function UserForm() {
               <p className="text-blue-600 font-black text-center mt-2 text-3xl">
                 Позиция #{queuePosition}
               </p>
-
             </div>
           )}
         </form>
