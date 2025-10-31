@@ -513,25 +513,26 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Join the queue
-  const joinQueue = async (name: string, room?: string, washCount: number = 1, paymentType: string = 'money', expectedFinishAt?: string) => {
-    if (!user) return;
-    
-    // Update user name if it changed
-    if (name !== user.name || room !== user.room) {
-      const updatedUser = { ...user, name, room };
-      setUser(updatedUser);
-    }
-    
-    // Check if user is already in queue
-    const existingItem = queue.find(item => 
-      item.studentId === user.studentId && 
-      (item.status === QueueStatus.WAITING || item.status === QueueStatus.READY || item.status === QueueStatus.KEY_ISSUED || item.status === QueueStatus.WASHING)
-    );
-    if (existingItem) {
-      console.log('⚠️ User already in queue:', existingItem);
-      return;
-    }
+  /// Join the queue
+const joinQueue = async (name: string, room?: string, washCount: number = 1, paymentType: string = 'money', expectedFinishAt?: string) => {
+  if (!user) return;
+  
+  // Update user name if it changed
+  if (name !== user.name || room !== user.room) {
+    const updatedUser = { ...user, name, room };
+    setUser(updatedUser);
+  }
+  
+  // ✅ ЗАЩИТА ОТ ДУБЛИРОВАНИЯ - проверяем ДО отправки запроса
+  const existingItem = queue.find(item => 
+    item.studentId === user.studentId && 
+    (item.status === QueueStatus.WAITING || item.status === QueueStatus.READY || item.status === QueueStatus.KEY_ISSUED || item.status === QueueStatus.WASHING)
+  );
+  if (existingItem) {
+    console.log('⚠️ User already in queue:', existingItem);
+    alert('Вы уже в очереди!');
+    return;
+  }
     
     // Create new queue item
     const newItem: QueueItem = {
