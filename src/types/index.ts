@@ -6,8 +6,11 @@ export type Student = {
   room: string | null;
   isRegistered: boolean;
   registeredAt?: string;
-  telegram_chat_id?: string; // Telegram Chat ID для персональных уведомлений
+  telegram_chat_id?: string;
   createdAt: string;
+  is_banned?: boolean;
+  banned_at?: string | null;
+  ban_reason?: string | null;
 };
 
 export type StudentAuth = {

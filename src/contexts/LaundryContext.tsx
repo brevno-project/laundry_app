@@ -78,6 +78,10 @@ type LaundryContextType = {
   isLoading: boolean;
   isNewUser: boolean; // ✅ ДОБАВИТЬ ЭТО
   setIsNewUser: (isNewUser: boolean) => void; // ✅ ДОБАВИТЬ ЭТО
+  addStudent: (firstName: string, lastName: string, room?: string) => Promise<void>;
+  updateStudent: (studentId: string, updates: { firstName?: string; lastName?: string; room?: string }) => Promise<void>;
+  deleteStudent: (studentId: string) => Promise<void>;
+  updateAdminKey: (newKey: string) => Promise<void>;
 };
 
 const LaundryContext = createContext<LaundryContextType | undefined>(undefined);
@@ -1140,6 +1144,133 @@ const startWashing = async (queueItemId: string) => {
     }
   };
 
+  // Добавить нового студента
+const addStudent = async (firstName: string, lastName: string, room?: string) => {
+  if (!isAdmin) throw new Error('Требуются права администратора');
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase не настроен');
+  }
+
+  try {
+    const fullName = `${firstName} ${lastName}`;
+    const { error } = await supabase
+      .from('students')
+      .insert({
+        id: uuidv4(),
+        firstName,
+        lastName,
+        fullName,
+        room: room || null,
+        isRegistered: false,
+        createdAt: new Date().toISOString(),
+      });
+
+    if (error) throw error;
+
+    console.log('✅ Student added:', fullName);
+    await loadStudents();
+  } catch (error: any) {
+    console.error('❌ Error adding student:', error);
+    throw error;
+  }
+};
+
+// Обновить данные студента
+const updateStudent = async (
+  studentId: string,
+  updates: { firstName?: string; lastName?: string; room?: string }
+) => {
+  if (!isAdmin) throw new Error('Требуются права администратора');
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase не настроен');
+  }
+
+  try {
+    const updateData: any = { ...updates };
+    
+    // Если изменяются имя или фамилия, обновляем fullName
+    if (updates.firstName || updates.lastName) {
+      const student = students.find(s => s.id === studentId);
+      if (student) {
+        const firstName = updates.firstName || student.firstName;
+        const lastName = updates.lastName || student.lastName;
+        updateData.fullName = `${firstName} ${lastName}`;
+      }
+    }
+
+    const { error } = await supabase
+      .from('students')
+      .update(updateData)
+      .eq('id', studentId);
+
+    if (error) throw error;
+
+    console.log('✅ Student updated:', studentId);
+    await loadStudents();
+  } catch (error: any) {
+    console.error('❌ Error updating student:', error);
+    throw error;
+  }
+};
+
+// Удалить студента
+const deleteStudent = async (studentId: string) => {
+  if (!isAdmin) throw new Error('Требуются права администратора');
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase не настроен');
+  }
+
+  try {
+    // Удалить из очереди
+    await supabase
+      .from('queue')
+      .delete()
+      .eq('studentId', studentId);
+
+    // Удалить аутентификацию
+    await supabase
+      .from('student_auth')
+      .delete()
+      .eq('studentId', studentId);
+
+    // Удалить студента
+    const { error } = await supabase
+      .from('students')
+      .delete()
+      .eq('id', studentId);
+
+    if (error) throw error;
+
+    console.log('✅ Student deleted:', studentId);
+    await loadStudents();
+    await fetchQueue();
+  } catch (error: any) {
+    console.error('❌ Error deleting student:', error);
+    throw error;
+  }
+};
+
+// Обновить админ-ключ
+const updateAdminKey = async (newKey: string) => {
+  if (!isAdmin) throw new Error('Требуются права администратора');
+  
+  try {
+    const response = await fetch('/api/admin/update-key', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newKey }),
+    });
+
+    if (!response.ok) throw new Error('Ошибка обновления ключа');
+
+    console.log('✅ Admin key updated');
+    alert('Админ-ключ обновлён! Перезагрузите страницу.');
+  } catch (error: any) {
+    console.error('❌ Error updating admin key:', error);
+    throw error;
+  }
+};
+
   // Verify admin key
   const verifyAdminKey = (key: string): boolean => {
     const isValid = key === ADMIN_KEY;
@@ -1190,6 +1321,10 @@ const startWashing = async (queueItemId: string) => {
     isLoading,
     isNewUser,
     setIsNewUser,
+    addStudent,
+  updateStudent,
+  deleteStudent,
+  updateAdminKey,
   };
 
   return <LaundryContext.Provider value={value}>{children}</LaundryContext.Provider>;
