@@ -54,6 +54,9 @@ export type QueueItem = {
   adminMessage?: string;      // Сообщение от админа
   returnKeyAlert?: boolean;   // Полноэкранное уведомление "Принеси ключ"
   status: QueueStatus;
+  scheduledForDate: string; // '2025-11-02'
+  currentDate: string;      // '2025-11-03' (может отличаться после переноса)
+  position: number;         // 1,2,3...
 };
 
 export enum MachineStatus {

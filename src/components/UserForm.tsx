@@ -10,28 +10,68 @@ export default function UserForm() {
   const [paymentType, setPaymentType] = useState<string>('money');
   const [selectedHour, setSelectedHour] = useState<string>('20');
   const [selectedMinute, setSelectedMinute] = useState<string>('00');
-  const [isSubmitting, setIsSubmitting] = useState(false); // ✅ Добавить состояние загрузки
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string>(''); // ✅ Новое поле для выбора даты
   
   const existingQueueItem = getUserQueueItem();
   const isInQueue = !!existingQueueItem;
   
   const queuePosition = existingQueueItem ? queue.findIndex(item => item.id === existingQueueItem.id) + 1 : 0;
 
+  // ✅ Устанавливаем сегодняшнюю дату по умолчанию
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    setSelectedDate(today);
+  }, []);
+
+  // ✅ Генерируем доступные даты (сегодня + 7 дней вперед)
+  const getAvailableDates = () => {
+    const dates = [];
+    const today = new Date();
+    
+    for (let i = 0; i < 8; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      const dateStr = date.toISOString().slice(0, 10);
+      
+      // Форматируем дату для отображения
+      const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+      const dayName = dayNames[date.getDay()];
+      const day = date.getDate();
+      const month = date.getMonth() + 1;
+      
+      let label = `${dayName}, ${day}.${month.toString().padStart(2, '0')}`;
+      if (i === 0) label += ' (Сегодня)';
+      if (i === 1) label += ' (Завтра)';
+      
+      dates.push({ value: dateStr, label });
+    }
+    
+    return dates;
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
-    if (user?.name && !isInQueue && !isSubmitting) { // ✅ Проверяем флаг
-      setIsSubmitting(true); // ✅ Блокируем кнопку
+    if (user?.name && !isInQueue && !isSubmitting) {
+      setIsSubmitting(true);
       
       const today = new Date();
       today.setHours(parseInt(selectedHour), parseInt(selectedMinute), 0, 0);
       const expectedFinishAt = today.toISOString();
       
-      console.log('Joining queue with:', user.name, user.room, washCount, paymentType, expectedFinishAt);
+      console.log('Joining queue with:', {
+        name: user.name,
+        room: user.room,
+        washCount,
+        paymentType,
+        expectedFinishAt,
+        chosenDate: selectedDate // ✅ Передаем выбранную дату
+      });
       
-      await joinQueue(user.name, user.room, washCount, paymentType, expectedFinishAt);
+      // ✅ Передаем выбранную дату в joinQueue
+      await joinQueue(user.name, user.room, washCount, paymentType, expectedFinishAt, selectedDate);
       
-      // ✅ Задержка перед разблокировкой
       setTimeout(() => {
         setIsSubmitting(false);
       }, 2000);
@@ -90,6 +130,27 @@ export default function UserForm() {
 
           {!isInQueue ? (
             <>
+              {/* ✅ НОВОЕ ПОЛЕ: Выбор даты */}
+              <div className="mb-4">
+                <label htmlFor="selectedDate" className="block text-sm font-bold mb-2 text-gray-700">
+                  📅 Выберите дату стирки
+                </label>
+                <select
+                  id="selectedDate"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  required
+                  className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                >
+                  {getAvailableDates().map(date => (
+                    <option key={date.value} value={date.value}>
+                      {date.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">Вы можете записаться на любой день из списка</p>
+              </div>
+
               <div className="mb-4">
                 <label htmlFor="washCount" className="block text-sm font-bold mb-2 text-gray-700">
                   Количество стирок
@@ -179,10 +240,10 @@ export default function UserForm() {
 
               <button
                 type="submit"
-                disabled={isSubmitting} // ✅ Блокируем при отправке
+                disabled={isSubmitting}
                 className="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-blue-700 transition-colors shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? '⏳ Добавление...' : 'Встать в очередь'} {/* ✅ Показываем статус */}
+                {isSubmitting ? '⏳ Добавление...' : 'Встать в очередь'}
               </button>
             </>
           ) : (
@@ -193,6 +254,16 @@ export default function UserForm() {
               <p className="text-blue-600 font-black text-center mt-2 text-3xl">
                 Позиция #{queuePosition}
               </p>
+              {/* ✅ Показываем дату записи */}
+              {existingQueueItem?.scheduledForDate && (
+                <p className="text-blue-600 text-center mt-2">
+                  📅 Записаны на: {new Date(existingQueueItem.scheduledForDate).toLocaleDateString('ru-RU', {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'numeric'
+                  })}
+                </p>
+              )}
             </div>
           )}
         </form>

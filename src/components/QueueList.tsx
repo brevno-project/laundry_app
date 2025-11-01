@@ -19,9 +19,45 @@ export default function QueueList() {
     cancelWashing,
     markDone,
     isAdmin,
-    machineState
+    machineState,
+    transferUnfinishedToNextDay,   // ← ДОБАВИТЬ
+   changeQueuePosition, 
   } = useLaundry();
   
+  // ✅ Группировка по датам
+const groupQueueByDate = (items: any[]) => {
+  const groups: { [key: string]: any[] } = {};
+  
+  items.forEach(item => {
+    const date = item.currentDate || new Date().toISOString().slice(0, 10);
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(item);
+  });
+  
+  return groups;
+};
+
+// ✅ Форматирование даты для заголовка
+const formatDateHeader = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  
+  const dayNames = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+  
+  if (dateStr === today.toISOString().slice(0, 10)) {
+    return '📅 Сегодня, ' + dayNames[date.getDay()] + ' ' + date.getDate() + '.' + (date.getMonth() + 1);
+  }
+  
+  if (dateStr === tomorrow.toISOString().slice(0, 10)) {
+    return '📅 Завтра, ' + dayNames[date.getDay()] + ' ' + date.getDate() + '.' + (date.getMonth() + 1);
+  }
+  
+  return '📅 ' + dayNames[date.getDay()] + ', ' + date.getDate() + '.' + (date.getMonth() + 1);
+};
   // Функция для получения цвета и текста статуса
   const getStatusDisplay = (status: QueueStatus) => {
     switch(status) {
