@@ -3,11 +3,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/lib/supabase';
-import { User, Student, QueueItem, MachineStatus, QueueStatus, MachineState, HistoryItem, TelegramNotification } from '@/types';
+import { User, Student, QueueItem, MachineStatus, QueueStatus, MachineState, HistoryItem } from '@/types';
 import { hashPassword, verifyPassword } from '@/lib/auth';
-import { getLaundryTimeStatus } from '@/lib/timeHelper';
 import { sendTelegramNotification } from '@/lib/telegram';
-import { parseISO, addMinutes } from 'date-fns';
+import { parseISO, format, addDays } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import {
   getLocalQueue,
@@ -1424,15 +1423,35 @@ const transferUnfinishedToNextDay = async () => {
   }
   
   try {
-    const { error } = await supabase.rpc('transfer_unfinished_to_next_day');
+    // Получить все незавершенные записи (WAITING, READY, KEY_ISSUED)
+    const unfinishedStatuses = [QueueStatus.WAITING, QueueStatus.READY, QueueStatus.KEY_ISSUED];
     
-    if (error) {
-      console.error('Error transferring:', error);
-      alert('Ошибка переноса: ' + error.message);
+    const unfinishedItems = queue.filter(item => 
+      unfinishedStatuses.includes(item.status) && 
+      item.currentDate === format(new Date(), 'yyyy-MM-dd')
+    );
+    
+    if (unfinishedItems.length === 0) {
+      alert('✅ Нет незавершенных записей для переноса');
       return;
     }
     
-    alert('✅ Незавершенные записи перенесены на сегодня!');
+    // Перенести на следующий день
+    const nextDay = addDays(new Date(), 1);
+    const nextDayStr = format(nextDay, 'yyyy-MM-dd');
+    
+    // Обновить каждую запись
+    for (const item of unfinishedItems) {
+      await supabase
+        .from('queue')
+        .update({ 
+          currentDate: nextDayStr,
+          scheduledForDate: nextDayStr 
+        })
+        .eq('id', item.id);
+    }
+    
+    alert(`✅ ${unfinishedItems.length} записей перенесено на ${format(nextDay, 'dd.MM.yyyy')}!`);
     await fetchQueue();
   } catch (err: any) {
     console.error('Exception transferring:', err);

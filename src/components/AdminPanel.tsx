@@ -345,23 +345,8 @@ export default function AdminPanel() {
       </div>
       
       <div className="space-y-4">
+        
         {/* Управление очередью */}
-        {washingItem && (
-          <button
-            onClick={() => markDone(washingItem.id)}
-            className="w-full bg-green-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-green-700 transition-colors shadow-md"
-          >
-            ✅ Отметить стирку завершенной
-          </button>
-        )}
-        
-        <button
-          onClick={startNext}
-          className="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-blue-700 transition-colors shadow-md"
-        >
-          ▶️ Запустить следующего
-        </button>
-        
         {!showConfirmClear ? (
           <button
             onClick={() => setShowConfirmClear(true)}
