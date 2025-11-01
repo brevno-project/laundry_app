@@ -43,7 +43,6 @@ const [queueWashCount, setQueueWashCount] = useState(1);
 const [queuePaymentType, setQueuePaymentType] = useState('money');
 const [queueHour, setQueueHour] = useState('20');
 const [queueMinute, setQueueMinute] = useState('00');
-мод
   
   // Форма добавления студента
   const [newFirstName, setNewFirstName] = useState('');
