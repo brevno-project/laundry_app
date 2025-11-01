@@ -21,7 +21,7 @@ export default function AdminPanel() {
     updateStudent,
     deleteStudent,
     updateAdminKey,
-    joinQueue,
+    adminAddToQueue,
   } = useLaundry();
   
   const [adminKey, setAdminKey] = useState('');
@@ -272,13 +272,13 @@ export default function AdminPanel() {
       today.setHours(parseInt(queueHour), parseInt(queueMinute), 0, 0);
       const expectedFinishAt = today.toISOString();
       
-      await joinQueue(
+      await adminAddToQueue(
         selectedStudent.fullName, 
         selectedStudent.room || undefined,
         queueWashCount,
         queuePaymentType,
         expectedFinishAt,
-        queueDate // ✅ Передаем выбранную дату
+        queueDate
       );
       
       setShowAddToQueue(false);
@@ -287,6 +287,8 @@ export default function AdminPanel() {
       alert('❌ Ошибка: ' + err.message);
     }
   };
+
+
 
   const openAddToQueueModal = (student: Student) => {
     setSelectedStudent(student);

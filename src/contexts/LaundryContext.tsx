@@ -59,6 +59,7 @@ type LaundryContextType = {
   resetStudentRegistration: (studentId: string) => Promise<void>;
   linkTelegram: (telegramCode: string) => Promise<{ success: boolean; error?: string }>;
   joinQueue: (name: string, room?: string, washCount?: number, paymentType?: string, expectedFinishAt?: string, chosenDate?: string) => Promise<void>;
+  adminAddToQueue: (studentName: string, studentRoom?: string, washCount?: number, paymentType?: string, expectedFinishAt?: string, chosenDate?: string) => Promise<void>;
   leaveQueue: (queueItemId: string) => void;
   updateQueueItem: (queueItemId: string, updates: Partial<QueueItem>) => void;
   sendAdminMessage: (queueItemId: string, message: string) => Promise<void>;
@@ -647,6 +648,94 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
       setTimeout(() => setIsJoining(false), 1000);
     }
   };
+
+  // ✅ Функция для админа - добавление студента в очередь без проверки дубликатов по админу
+const adminAddToQueue = async (
+  studentName: string,
+  studentRoom?: string,
+  washCount: number = 1,
+  paymentType: string = 'money',
+  expectedFinishAt?: string,
+  chosenDate?: string
+) => {
+  if (!supabase) {
+    console.error('❌ Supabase not initialized');
+    alert('Ошибка подключения к базе данных');
+    return;
+  }
+
+  // ✅ Определяем целевую дату
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const targetDate = chosenDate || todayISO;
+
+  console.log('📅 Admin adding to queue, target date:', targetDate);
+
+  try {
+    // ✅ Получаем максимальную позицию для выбранной даты
+    const { data: sameDayRows, error: posErr } = await supabase
+      .from('queue')
+      .select('position, scheduledForDate, currentDate')
+      .eq('currentDate', targetDate)
+      .eq('scheduledForDate', targetDate);
+
+    if (posErr) {
+      console.error('Error getting positions:', posErr);
+      alert('Ошибка получения данных очереди');
+      return;
+    }
+
+    let nextPos = 1;
+    if (sameDayRows && sameDayRows.length > 0) {
+      const maxPos = Math.max(...sameDayRows.map(row => row.position || 0));
+      nextPos = maxPos + 1;
+    }
+
+    // ✅ Проверяем дубликат по имени студента на эту дату
+    const { data: existingStudent } = await supabase
+      .from('queue')
+      .select('id')
+      .eq('userName', studentName)
+      .eq('currentDate', targetDate)
+      .in('status', ['WAITING', 'READY', 'KEY_ISSUED', 'WASHING']);
+
+    if (existingStudent && existingStudent.length > 0) {
+      alert(`${studentName} уже в очереди на ${targetDate}!`);
+      return;
+    }
+
+    // ✅ Создаем новую запись
+    const newItem = {
+      id: crypto.randomUUID(),
+      userId: `admin_${Date.now()}`, // Уникальный ID для админских записей
+      studentId: null, // Админ добавляет, studentId может быть null
+      userName: studentName,
+      userRoom: studentRoom || null,
+      washCount,
+      paymentType,
+      joinedAt: new Date().toISOString(),
+      expectedFinishAt: expectedFinishAt || null,
+      status: QueueStatus.WAITING,
+      scheduledForDate: targetDate,
+      currentDate: targetDate,
+      position: nextPos,
+    };
+
+    const { error } = await supabase.from('queue').insert(newItem);
+
+    if (error) {
+      console.error('❌ Error inserting queue item:', error);
+      alert('Ошибка добавления в очередь: ' + error.message);
+      return;
+    }
+
+    console.log('✅ Admin added to queue:', newItem);
+    await fetchQueue(); // Обновляем очередь
+
+  } catch (error: any) {
+    console.error('❌ Exception in adminAddToQueue:', error);
+    alert('Ошибка: ' + error.message);
+  }
+};
 
   // Admin: Изменить статус записи в очереди
   const setQueueStatus = async (queueItemId: string, status: QueueStatus) => {
@@ -1416,8 +1505,9 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
    updateStudent,
    deleteStudent,
    updateAdminKey,
-   transferUnfinishedToNextDay,     // ← ДОБАВИТЬ
-   changeQueuePosition,              // ← ДОБАВИТЬ
+   transferUnfinishedToNextDay,     
+   changeQueuePosition,
+   adminAddToQueue,              
   };
 
   return <LaundryContext.Provider value={value}>{children}</LaundryContext.Provider>;

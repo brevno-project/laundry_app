@@ -175,23 +175,20 @@ export default function Home() {
               )}
             </div>
             
-            {/* Форма входа/регистрации */}
-            {!user ? (
+            {/* Логика входа */}
+            {!user && !isAdmin ? (
               <>
                 <StudentAuth />
                 <AdminLogin />
               </>
+            ) : isAdmin ? (
+              <AdminPanel />
             ) : (
               <>
-                {!isAdmin && <UserForm />}
+                <UserForm />
+                <QueueList />
               </>
             )}
-            
-            {/* Очередь */}
-            {user && <QueueList />}
-            
-            {/* Админ панель */}
-            {isAdmin && <AdminPanel />}
           </div>
         )}
         

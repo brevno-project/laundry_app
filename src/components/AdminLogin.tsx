@@ -9,6 +9,7 @@ export default function AdminLogin() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { verifyAdminKey } = useLaundry();
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,20 +22,10 @@ export default function AdminLogin() {
     setLoading(true);
     setError('');
 
-    if (password === 'hesoyam') {
-      const adminUser = {
-        id: uuidv4(),
-        studentId: 'admin',
-        name: 'Admin',
-        room: 'A501'
-      };
-      
-      setUser(adminUser);
-      setIsAdmin(true);
-      localStorage.setItem('laundryUser', JSON.stringify(adminUser));
+    if (verifyAdminKey(password)) {
+      setIsAdmin(true);  // Только это!
       localStorage.setItem('laundryIsAdmin', 'true');
       
-      setLoading(false);
     } else {
       setError('Неверный пароль');
       setLoading(false);
