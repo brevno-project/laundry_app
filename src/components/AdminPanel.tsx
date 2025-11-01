@@ -27,7 +27,6 @@ export default function AdminPanel() {
   const [adminKey, setAdminKey] = useState('');
   const [showConfirmClear, setShowConfirmClear] = useState(false);
   const [showStudents, setShowStudents] = useState(false);
-  const [resetingStudentId, setResetingStudentId] = useState<string | null>(null);
   const [error, setError] = useState('');
   
   // Модальные окна
@@ -39,10 +38,13 @@ export default function AdminPanel() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showAddToQueue, setShowAddToQueue] = useState(false);
-const [queueWashCount, setQueueWashCount] = useState(1);
-const [queuePaymentType, setQueuePaymentType] = useState('money');
-const [queueHour, setQueueHour] = useState('20');
-const [queueMinute, setQueueMinute] = useState('00');
+  
+  // ✅ Параметры записи в очередь (включая дату)
+  const [queueWashCount, setQueueWashCount] = useState(1);
+  const [queuePaymentType, setQueuePaymentType] = useState('money');
+  const [queueHour, setQueueHour] = useState('20');
+  const [queueMinute, setQueueMinute] = useState('00');
+  const [queueDate, setQueueDate] = useState(''); // ✅ НОВОЕ ПОЛЕ
   
   // Форма добавления студента
   const [newFirstName, setNewFirstName] = useState('');
@@ -66,6 +68,31 @@ const [queueMinute, setQueueMinute] = useState('00');
   const [filterStatus, setFilterStatus] = useState<'all' | 'registered' | 'unregistered' | 'banned'>('all');
   
   const washingItem = queue.find(item => item.status === 'washing');
+
+  // ✅ Генерация доступных дат (сегодня + 7 дней)
+  const getAvailableDates = () => {
+    const dates = [];
+    const today = new Date();
+    
+    for (let i = 0; i < 8; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      const dateStr = date.toISOString().slice(0, 10);
+      
+      const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+      const dayName = dayNames[date.getDay()];
+      const day = date.getDate();
+      const month = date.getMonth() + 1;
+      
+      let label = `${dayName}, ${day}.${month.toString().padStart(2, '0')}`;
+      if (i === 0) label += ' (Сегодня)';
+      if (i === 1) label += ' (Завтра)';
+      
+      dates.push({ value: dateStr, label });
+    }
+    
+    return dates;
+  };
 
   // Фильтрация студентов
   const filteredStudents = students.filter(student => {
@@ -236,37 +263,41 @@ const [queueMinute, setQueueMinute] = useState('00');
     setShowDeleteConfirm(true);
   };
 
-  // Функция добавления в очередь
-const handleAddToQueue = async () => {
-  if (!selectedStudent) return;
-  
-  try {
-    const today = new Date();
-    today.setHours(parseInt(queueHour), parseInt(queueMinute), 0, 0);
-    const expectedFinishAt = today.toISOString();
+  // ✅ ОБНОВЛЕННАЯ функция добавления в очередь С ВЫБОРОМ ДАТЫ
+  const handleAddToQueue = async () => {
+    if (!selectedStudent) return;
     
-    await joinQueue(
-      selectedStudent.fullName, 
-      selectedStudent.room || undefined,
-      queueWashCount,
-      queuePaymentType,
-      expectedFinishAt
-    );
-    
-    setShowAddToQueue(false);
-    alert('✅ Студент добавлен в очередь!');
-  } catch (err: any) {
-    alert('❌ Ошибка: ' + err.message);
-  }
-};
-const openAddToQueueModal = (student: Student) => {
-  setSelectedStudent(student);
-  setQueueWashCount(1);
-  setQueuePaymentType('money');
-  setQueueHour('20');
-  setQueueMinute('00');
-  setShowAddToQueue(true);
-};
+    try {
+      const today = new Date();
+      today.setHours(parseInt(queueHour), parseInt(queueMinute), 0, 0);
+      const expectedFinishAt = today.toISOString();
+      
+      await joinQueue(
+        selectedStudent.fullName, 
+        selectedStudent.room || undefined,
+        queueWashCount,
+        queuePaymentType,
+        expectedFinishAt,
+        queueDate // ✅ Передаем выбранную дату
+      );
+      
+      setShowAddToQueue(false);
+      alert('✅ Студент добавлен в очередь!');
+    } catch (err: any) {
+      alert('❌ Ошибка: ' + err.message);
+    }
+  };
+
+  const openAddToQueueModal = (student: Student) => {
+    setSelectedStudent(student);
+    setQueueWashCount(1);
+    setQueuePaymentType('money');
+    setQueueHour('20');
+    setQueueMinute('00');
+    const today = new Date().toISOString().slice(0, 10);
+    setQueueDate(today); // ✅ Устанавливаем сегодняшнюю дату по умолчанию
+    setShowAddToQueue(true);
+  };
 
   if (!isAdmin) {
     return (
@@ -470,12 +501,13 @@ const openAddToQueueModal = (student: Student) => {
                         🚫 Забанить
                       </button>
                     )}
+                    
                     <button
-  onClick={() => openAddToQueueModal(student)}
-  className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-1 col-span-2"
->
-  ➕ Поставить в очередь
-</button>
+                      onClick={() => openAddToQueueModal(student)}
+                      className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-1 col-span-2"
+                    >
+                      ➕ Поставить в очередь
+                    </button>
                     
                     <button
                       onClick={() => openDeleteModal(student)}
@@ -498,6 +530,8 @@ const openAddToQueueModal = (student: Student) => {
           🔑 Сменить пароль
         </button>
       </div>
+
+      {/* ========== ВСЕ МОДАЛЬНЫЕ ОКНА ========== */}
 
       {/* Модальное окно: Добавить студента */}
       {showAddStudent && (
@@ -721,91 +755,104 @@ const openAddToQueueModal = (student: Student) => {
         </div>
       )}
       
-    {/* Модальное окно: Поставить в очередь */}
-{showAddToQueue && selectedStudent && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-lg p-6 max-w-md w-full">
-      <h3 className="text-xl font-bold text-gray-900 mb-4">➕ Поставить в очередь</h3>
-      <p className="text-gray-700 mb-3">
-        Студент: <span className="font-bold">{selectedStudent.fullName}</span>
-      </p>
-      
-      <div className="space-y-3">
-        <div>
-          <label className="block text-sm font-bold mb-2">Количество стирок</label>
-          <input
-            type="number"
-            min="1"
-            max="10"
-            value={queueWashCount}
-            onChange={(e) => setQueueWashCount(Number(e.target.value))}
-            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-bold mb-2">Способ оплаты</label>
-          <select
-            value={queuePaymentType}
-            onChange={(e) => setQueuePaymentType(e.target.value)}
-            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
-          >
-            <option value="money">💵 Деньги</option>
-            <option value="coupon">🎫 Купон</option>
-            <option value="both">💵+🎫 Оба</option>
-          </select>
-        </div>
-        
-        <div>
-          <label className="block text-sm font-bold mb-2">Закончит в</label>
-          <div className="flex gap-2">
-            <select
-              value={queueHour}
-              onChange={(e) => setQueueHour(e.target.value)}
-              className="flex-1 border-2 border-gray-300 rounded-lg p-2 text-gray-900"
-            >
-              {Array.from({ length: 23 }, (_, i) => i).map(hour => (
-                <option key={hour} value={hour.toString().padStart(2, '0')}>
-                  {hour.toString().padStart(2, '0')}
-                </option>
-              ))}
-            </select>
-            <span className="text-2xl">:</span>
-            <select
-              value={queueMinute}
-              onChange={(e) => setQueueMinute(e.target.value)}
-              className="flex-1 border-2 border-gray-300 rounded-lg p-2 text-gray-900"
-            >
-              {Array.from({ length: 60 }, (_, i) => i).map(minute => (
-                <option key={minute} value={minute.toString().padStart(2, '0')}>
-                  {minute.toString().padStart(2, '0')}
-                </option>
-              ))}
-            </select>
+      {/* ✅ ГЛАВНОЕ МОДАЛЬНОЕ ОКНО: Поставить в очередь С ВЫБОРОМ ДАТЫ */}
+      {showAddToQueue && selectedStudent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">➕ Поставить в очередь</h3>
+            <p className="text-gray-700 mb-3">
+              Студент: <span className="font-bold">{selectedStudent.fullName}</span>
+            </p>
+            
+            <div className="space-y-3">
+              {/* ✅ НОВОЕ ПОЛЕ: Выбор даты стирки */}
+              <div>
+                <label className="block text-sm font-bold mb-2 text-gray-900">📅 Дата стирки</label>
+                <select
+                  value={queueDate}
+                  onChange={(e) => setQueueDate(e.target.value)}
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+                >
+                  {getAvailableDates().map(date => (
+                    <option key={date.value} value={date.value}>
+                      {date.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold mb-2 text-gray-900">Количество стирок</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={queueWashCount}
+                  onChange={(e) => setQueueWashCount(Number(e.target.value))}
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-bold mb-2 text-gray-900">Способ оплаты</label>
+                <select
+                  value={queuePaymentType}
+                  onChange={(e) => setQueuePaymentType(e.target.value)}
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+                >
+                  <option value="money">💵 Деньги</option>
+                  <option value="coupon">🎫 Купон</option>
+                  <option value="both">💵+🎫 Оба</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-bold mb-2 text-gray-900">Закончит в</label>
+                <div className="flex gap-2">
+                  <select
+                    value={queueHour}
+                    onChange={(e) => setQueueHour(e.target.value)}
+                    className="flex-1 border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+                  >
+                    {Array.from({ length: 24 }, (_, i) => i).map(hour => (
+                      <option key={hour} value={hour.toString().padStart(2, '0')}>
+                        {hour.toString().padStart(2, '0')}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-2xl text-gray-900">:</span>
+                  <select
+                    value={queueMinute}
+                    onChange={(e) => setQueueMinute(e.target.value)}
+                    className="flex-1 border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+                  >
+                    {Array.from({ length: 60 }, (_, i) => i).map(minute => (
+                      <option key={minute} value={minute.toString().padStart(2, '0')}>
+                        {minute.toString().padStart(2, '0')}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => setShowAddToQueue(false)}
+                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handleAddToQueue}
+                className="flex-1 bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-purple-700"
+              >
+                Добавить
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-      
-      <div className="flex gap-2 mt-4">
-        <button
-          onClick={() => setShowAddToQueue(false)}
-          className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
-        >
-          Отмена
-        </button>
-        <button
-          onClick={handleAddToQueue}
-          className="flex-1 bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-purple-700"
-        >
-          Добавить
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+      )}
     </div>
   );
-
-  
-
 }
