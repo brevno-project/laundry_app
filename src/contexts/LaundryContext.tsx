@@ -101,6 +101,26 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
   // Initialize user from localStorage
   useEffect(() => {
+    if (!user || !isSupabaseConfigured || !supabase) return;
+
+  const checkBanStatus = async () => {
+    if (!supabase) return;
+    try {
+      const { data: studentData } = await supabase
+        .from('students')
+        .select('is_banned, ban_reason')
+        .eq('id', user.studentId)
+        .single();
+
+      if (studentData?.is_banned) {
+        const banReason = studentData.ban_reason || 'Не указана';
+        alert(`❌ Вы были заблокированы!\n\nПричина: ${banReason}\n\nОбратитесь к администратору.`);
+        logoutStudent();
+      }
+    } catch (err) {
+      console.error('Error checking ban status:', err);
+    }
+  };
     const storedUser = localStorage.getItem('laundryUser');
     const storedIsAdmin = localStorage.getItem('laundryIsAdmin') === 'true';
     if (storedUser) {
@@ -271,61 +291,67 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     }
   };
   // Login student
-  const loginStudent = async (studentId: string, password: string): Promise<User | null> => {
-    if (!isSupabaseConfigured || !supabase) {
-      throw new Error('Supabase не настроен');
+const loginStudent = async (studentId: string, password: string): Promise<User | null> => {
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase не настроен');
+  }
+
+  try {
+    // Get student info
+    const { data: studentData, error: studentError } = await supabase
+      .from('students')
+      .select('*')
+      .eq('id', studentId)
+      .single();
+
+    if (studentError) throw studentError;
+    if (!studentData.isRegistered) throw new Error('Студент не зарегистрирован');
+
+    // ✅ ПРОВЕРКА БАНА
+    if (studentData.is_banned) {
+      const banReason = studentData.ban_reason || 'Не указана';
+      throw new Error(`❌ Вы заблокированы!\n\nПричина: ${banReason}\n\nОбратитесь к администратору.`);
     }
 
-    try {
-      // Get student info
-      const { data: studentData, error: studentError } = await supabase
-        .from('students')
-        .select('*')
-        .eq('id', studentId)
-        .single();
+    // Get password hash
+    const { data: authData, error: authError } = await supabase
+      .from('student_auth')
+      .select('passwordHash')
+      .eq('studentId', studentId)
+      .single();
 
-      if (studentError) throw studentError;
-      if (!studentData.isRegistered) throw new Error('Студент не зарегистрирован');
+    if (authError) throw authError;
 
-      // Get password hash
-      const { data: authData, error: authError } = await supabase
-        .from('student_auth')
-        .select('passwordHash')
-        .eq('studentId', studentId)
-        .single();
+    // Verify password
+    const isValid = await verifyPassword(password, authData.passwordHash);
+    if (!isValid) throw new Error('Неверный пароль');
 
-      if (authError) throw authError;
+    // Create user object
+    const newUser: User = {
+      id: uuidv4(),
+      studentId: studentData.id,
+      name: studentData.fullName,
+      room: studentData.room || undefined,
+      telegram_chat_id: studentData.telegram_chat_id || undefined,
+    };
 
-      // Verify password
-      const isValid = await verifyPassword(password, authData.passwordHash);
-      if (!isValid) throw new Error('Неверный пароль');
+    console.log('✅ Created user object:', { id: newUser.id, studentId: newUser.studentId, name: newUser.name });
 
-      // Create user object
-      const newUser: User = {
-        id: uuidv4(),
-        studentId: studentData.id, // ✅ ТОЧНЫЙ ID из базы данных
-        name: studentData.fullName,
-        room: studentData.room || undefined,
-        telegram_chat_id: studentData.telegram_chat_id || undefined,
-      };
+    // Проверка админа (если имя = swaydikon)
+    const isAdminUser = studentData.firstName?.toLowerCase() === 'swaydikon';
+    setIsAdmin(isAdminUser);
+    console.log('🔑 Admin status:', isAdminUser);
 
-      console.log('✅ Created user object:', { id: newUser.id, studentId: newUser.studentId, name: newUser.name });
+    setUser(newUser);
+    localStorage.setItem('laundryUser', JSON.stringify(newUser));
 
-      // Проверка админа (если имя = swaydikon)
-      const isAdminUser = studentData.firstName?.toLowerCase() === 'swaydikon';
-      setIsAdmin(isAdminUser);
-      console.log('🔑 Admin status:', isAdminUser);
-
-      setUser(newUser);
-      localStorage.setItem('laundryUser', JSON.stringify(newUser));
-
-      console.log('✅ Student logged in:', newUser.name);
-      return newUser;
-    } catch (error: any) {
-      console.error('❌ Error logging in:', error);
-      throw error;
-    }
-  };
+    console.log('✅ Student logged in:', newUser.name);
+    return newUser;
+  } catch (error: any) {
+    console.error('❌ Error logging in:', error);
+    throw error;
+  }
+};
 
   // Logout student
   const logoutStudent = () => {
@@ -527,6 +553,26 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     expectedFinishAt?: string
   ) => {
     if (!user) return;
+
+    // ✅ ПРОВЕРКА БАНА - добавьте это СРАЗУ после проверки user
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data: studentData } = await supabase
+        .from('students')
+        .select('is_banned, ban_reason')
+        .eq('id', user.studentId)
+        .single();
+
+      if (studentData?.is_banned) {
+        const banReason = studentData.ban_reason || 'Не указана';
+        alert(`❌ Вы заблокированы!\n\nПричина: ${banReason}\n\nОбратитесь к администратору.`);
+        logoutStudent(); // Выкинуть из аккаунта
+        return;
+      }
+    } catch (err) {
+      console.error('Error checking ban status:', err);
+    }
+  }
 
     // ✅ ЗАЩИТА #1: Блокировка повторных вызовов
     if (isJoining) {
@@ -1083,39 +1129,39 @@ const startWashing = async (queueItemId: string) => {
   };
 
   // Забанить студента
-  const banStudent = async (studentId: string, reason?: string) => {
-    if (!isAdmin) return;
-    if (!isSupabaseConfigured || !supabase) {
-      throw new Error('Supabase не настроен');
-    }
+const banStudent = async (studentId: string, reason?: string) => {
+  if (!isAdmin) return;
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase не настроен');
+  }
 
-    try {
-      // Убрать из очереди
-      await supabase
-        .from('queue')
-        .delete()
-        .eq('userId', studentId);
+  try {
+    // Убрать из очереди
+    await supabase
+      .from('queue')
+      .delete()
+      .eq('studentId', studentId); // ✅ Используем studentId вместо userId
 
-      // Забанить
-      const { error } = await supabase
-        .from('students')
-        .update({
-          is_banned: true,
-          banned_at: new Date().toISOString(),
-          ban_reason: reason || 'Не указано',
-        })
-        .eq('id', studentId);
+    // Забанить
+    const { error } = await supabase
+      .from('students')
+      .update({
+        is_banned: true,
+        banned_at: new Date().toISOString(),
+        ban_reason: reason || 'Не указано',
+      })
+      .eq('id', studentId);
 
-      if (error) throw error;
+    if (error) throw error;
 
-      console.log('✅ Student banned:', studentId);
-      await loadStudents();
-      await fetchQueue();
-    } catch (error) {
-      console.error('❌ Error banning student:', error);
-      throw error;
-    }
-  };
+    console.log('✅ Student banned:', studentId);
+    await loadStudents();
+    await fetchQueue();
+  } catch (error) {
+    console.error('❌ Error banning student:', error);
+    throw error;
+  }
+};
 
   // Разбанить студента
   const unbanStudent = async (studentId: string) => {
