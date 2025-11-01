@@ -86,14 +86,9 @@ export const addToLocalQueue = (
     studentId: user.studentId || user.id, // Используем studentId или id как fallback
     userName: user.name,
     userRoom: user.room,
-    washCount: 1,
-    paymentType: 'money',  // ← ДОБАВИТЬ
     joinedAt: new Date().toISOString(),
-    expectedFinishAt: undefined,  // ← ДОБАВИТЬ
     status: QueueStatus.WAITING,
-    scheduledForDate: new Date().toISOString().slice(0, 10),  // ← ДОБАВИТЬ
-    currentDate: new Date().toISOString().slice(0, 10),  // ← ДОБАВИТЬ
-    position: 1,  // ← ДОБАВИТЬ
+    washCount: 1,
   };
   
   queue.push(newItem);
