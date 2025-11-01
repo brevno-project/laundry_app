@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/lib/supabase';
-import { User, Student, QueueItem, MachineStatus, QueueStatus, MachineState, HistoryItem, TelegramNotification } from '../types/index';
+import { User, Student, QueueItem, MachineStatus, QueueStatus, MachineState, HistoryItem, TelegramNotification } from '@/types';
 import { hashPassword, verifyPassword } from '@/lib/auth';
 import { getLaundryTimeStatus } from '@/lib/timeHelper';
 import { sendTelegramNotification } from '@/lib/telegram';
