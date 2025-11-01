@@ -1440,7 +1440,7 @@ const transferUnfinishedToNextDay = async () => {
   }
 };
 
-// ✅ Изменение позиции в очереди (вверх/вниз)
+// ✅ Изменение позиции в очереди (вверх/вниз) - ТОЛЬКО ВНУТРИ ОДНОЙ ДАТЫ
 const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') => {
   if (!supabase) {
     alert('❌ Supabase не подключен');
@@ -1448,15 +1448,35 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
   }
   
   try {
-    const { error } = await supabase.rpc('change_queue_position', {
-      p_queue_id: queueId,
-      p_direction: direction
-    });
-    
-    if (error) {
-      console.error('Error changing position:', error);
-      alert('Ошибка: ' + error.message);
+    // Найдем элемент для перемещения
+    const itemToMove = queue.find(item => item.id === queueId);
+    if (!itemToMove) {
+      alert('❌ Запись не найдена');
       return;
+    }
+    
+    // Получим все элементы за эту дату
+    const sameDayItems = queue
+      .filter(item => item.currentDate === itemToMove.currentDate && item.scheduledForDate === itemToMove.scheduledForDate)
+      .sort((a, b) => a.position - b.position);
+    
+    const currentIndex = sameDayItems.findIndex(item => item.id === queueId);
+    
+    if (direction === 'up' && currentIndex > 0) {
+      // Меняем с предыдущим элементом
+      const prevItem = sameDayItems[currentIndex - 1];
+      
+      // Обновляем позиции в базе данных
+      await supabase.from('queue').update({ position: prevItem.position }).eq('id', queueId);
+      await supabase.from('queue').update({ position: itemToMove.position }).eq('id', prevItem.id);
+      
+    } else if (direction === 'down' && currentIndex < sameDayItems.length - 1) {
+      // Меняем со следующим элементом
+      const nextItem = sameDayItems[currentIndex + 1];
+      
+      // Обновляем позиции в базе данных
+      await supabase.from('queue').update({ position: nextItem.position }).eq('id', queueId);
+      await supabase.from('queue').update({ position: itemToMove.position }).eq('id', nextItem.id);
     }
     
     await fetchQueue();
