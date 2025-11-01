@@ -101,26 +101,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
   // Initialize user from localStorage
   useEffect(() => {
-    if (!user || !isSupabaseConfigured || !supabase) return;
-
-  const checkBanStatus = async () => {
-    if (!supabase) return;
-    try {
-      const { data: studentData } = await supabase
-        .from('students')
-        .select('is_banned, ban_reason')
-        .eq('id', user.studentId)
-        .single();
-
-      if (studentData?.is_banned) {
-        const banReason = studentData.ban_reason || 'Не указана';
-        alert(`❌ Вы были заблокированы!\n\nПричина: ${banReason}\n\nОбратитесь к администратору.`);
-        logoutStudent();
-      }
-    } catch (err) {
-      console.error('Error checking ban status:', err);
-    }
-  };
+    
     const storedUser = localStorage.getItem('laundryUser');
     const storedIsAdmin = localStorage.getItem('laundryIsAdmin') === 'true';
     if (storedUser) {
@@ -445,15 +426,13 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
     }
     
     try {
-      console.log('🔄 Fetching queue from Supabase...');
       const { data, error } = await supabase
         .from('queue')
         .select('*')
         .order('joinedAt', { ascending: true });
       
       if (error) throw error;
-      console.log('✅ Queue fetched:', data);
-      
+            
       // Проверка expectedFinishAt
       if (data && data.length > 0) {
         data.forEach((item, index) => {
@@ -1129,39 +1108,48 @@ const startWashing = async (queueItemId: string) => {
   };
 
   // Забанить студента
-const banStudent = async (studentId: string, reason?: string) => {
-  if (!isAdmin) return;
-  if (!isSupabaseConfigured || !supabase) {
-    throw new Error('Supabase не настроен');
-  }
-
-  try {
-    // Убрать из очереди
-    await supabase
-      .from('queue')
-      .delete()
-      .eq('studentId', studentId); // ✅ Используем studentId вместо userId
-
-    // Забанить
-    const { error } = await supabase
-      .from('students')
-      .update({
-        is_banned: true,
-        banned_at: new Date().toISOString(),
-        ban_reason: reason || 'Не указано',
-      })
-      .eq('id', studentId);
-
-    if (error) throw error;
-
-    console.log('✅ Student banned:', studentId);
-    await loadStudents();
-    await fetchQueue();
-  } catch (error) {
-    console.error('❌ Error banning student:', error);
-    throw error;
-  }
-};
+  const banStudent = async (studentId: string, reason?: string) => {
+    if (!isAdmin) return;
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase не настроен');
+    }
+  
+    try {
+      console.log('🚫 Banning student:', studentId, 'Reason:', reason);
+  
+      // Убрать из очереди
+      const { error: queueError } = await supabase
+        .from('queue')
+        .delete()
+        .eq('studentId', studentId);
+  
+      if (queueError) {
+        console.error('Error removing from queue:', queueError);
+      }
+  
+      // Забанить
+      const { error } = await supabase
+        .from('students')
+        .update({
+          is_banned: true,
+          banned_at: new Date().toISOString(),
+          ban_reason: reason || 'Не указано',
+        })
+        .eq('id', studentId);
+  
+      if (error) {
+        console.error('Ban error:', error);
+        throw error;
+      }
+  
+      console.log('✅ Student banned successfully');
+      await loadStudents();
+      await fetchQueue();
+    } catch (error) {
+      console.error('❌ Error banning student:', error);
+      throw error;
+    }
+  };
 
   // Разбанить студента
   const unbanStudent = async (studentId: string) => {
