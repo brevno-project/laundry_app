@@ -176,50 +176,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
           })
           .subscribe();
 
-          // ✅ Перенос незавершенных на следующий день
-        const transferUnfinishedToNextDay = async () => {
-  if (!supabase) return;
-  
-  try {
-    const { error } = await supabase.rpc('transfer_unfinished_to_next_day');
-    
-    if (error) {
-      console.error('Error transferring:', error);
-      alert('Ошибка переноса: ' + error.message);
-      return;
-    }
-    
-    alert('✅ Незавершенные записи перенесены на сегодня!');
-    await fetchQueue();
-  } catch (err: any) {
-    console.error('Exception transferring:', err);
-    alert('Ошибка: ' + err.message);
-  }
-};
-
-// ✅ Изменение позиции в очереди (вверх/вниз)
-        const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') => {
-  if (!supabase) return;
-  
-  try {
-    const { error } = await supabase.rpc('change_queue_position', {
-      p_queue_id: queueId,
-      p_direction: direction
-    });
-    
-    if (error) {
-      console.error('Error changing position:', error);
-      alert('Ошибка: ' + error.message);
-      return;
-    }
-    
-    await fetchQueue();
-  } catch (err: any) {
-    console.error('Exception changing position:', err);
-    alert('Ошибка: ' + err.message);
-  }
-};
-        
         return () => {
           queueSubscription.unsubscribe();
           machineStateSubscription.unsubscribe();
