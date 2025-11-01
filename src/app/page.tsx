@@ -181,14 +181,20 @@ export default function Home() {
                 <StudentAuth />
                 <AdminLogin />
               </>
-            ) : isAdmin ? (
-              <AdminPanel />
             ) : (
               <>
-                <UserForm />
-                <QueueList />
-              </>
-            )}
+                {/* Всегда показываем основные компоненты */}
+                {isAdmin && <AdminPanel />}
+                
+                {/* Показываем пользовательские компоненты если есть пользователь ИЛИ админ */}
+                {(user || isAdmin) && (
+        <>
+        {!isAdmin && <UserForm />} {/* UserForm только для обычных пользователей */}
+        <QueueList />
+      </>
+    )}
+  </>
+)}
           </div>
         )}
         

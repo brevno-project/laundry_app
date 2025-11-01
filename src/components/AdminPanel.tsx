@@ -470,50 +470,62 @@ export default function AdminPanel() {
                     </div>
                   </div>
                   
-                  {/* Кнопки действий */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => openEditModal(student)}
-                      className="bg-blue-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-blue-600 flex items-center justify-center gap-1"
-                    >
-                      ✏️ Редактировать
-                    </button>
-                    
-                    {student.isRegistered && (
+                  {/* ПЕРВАЯ КНОПКА - ПОСТАВИТЬ В ОЧЕРЕДЬ */}
+                  <button
+                    onClick={() => openAddToQueueModal(student)}
+                    className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-1 w-full"
+                  >
+                    ➕ Поставить в очередь
+                  </button>
+
+                  {/* ГРУППА ОПАСНЫХ ДЕЙСТВИЙ */}
+                  <div className="flex flex-col gap-1 mt-2">
+                    {/* Первая строка: Сброс + Редактирование */}
+                    <div className="grid grid-cols-2 gap-1">
+                  {student.isRegistered && (
                       <button
                         onClick={() => openResetConfirm(student)}
-                        className="bg-orange-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-orange-600 flex items-center justify-center gap-1"
+                        className="bg-orange-500 text-white text-xs font-semibold py-1 px-2 rounded hover:bg-orange-600"
+                        title="Сбросить регистрацию"
                       >
                         🔄 Сбросить
                       </button>
                     )}
-                    
-                    {student.is_banned ? (
-                      <button
-                        onClick={() => handleUnbanStudent(student.id)}
-                        className="bg-green-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-green-600 flex items-center justify-center gap-1"
-                      >
-                        ✅ Разбанить
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => openBanModal(student)}
-                        className="bg-red-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-red-600 flex items-center justify-center gap-1"
-                      >
-                        🚫 Забанить
-                      </button>
-                    )}
-                    
                     <button
-                      onClick={() => openAddToQueueModal(student)}
-                      className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-1 col-span-2"
+                      onClick={() => openEditModal(student)}
+                      className="bg-blue-500 text-white text-xs font-semibold py-1 px-2 rounded hover:bg-blue-600"
+                      title="Редактировать"
                     >
-                      ➕ Поставить в очередь
+                      ✏️ Редакт.
                     </button>
+                    </div>
                     
+                    {/* Вторая строка: Бан */}
+                    <div className="w-full">
+                      {student.is_banned ? (
+                        <button
+                          onClick={() => handleUnbanStudent(student.id)}
+                          className="bg-green-500 text-white text-xs font-semibold py-1 px-2 rounded hover:bg-green-600 w-full"
+                          title="Разбанить"
+                        >
+                          ✅ Разбанить
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => openBanModal(student)}
+                          className="bg-red-500 text-white text-xs font-semibold py-1 px-2 rounded hover:bg-red-600 w-full"
+                          title="Забанить"
+                        >
+                          🚫 Забанить
+                        </button>
+                      )}
+                    </div>
+                    
+                    {/* Третья строка: Удаление */}
                     <button
                       onClick={() => openDeleteModal(student)}
-                      className="bg-gray-700 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-gray-800 flex items-center justify-center gap-1 col-span-2"
+                      className="bg-gray-700 text-white text-xs font-semibold py-1 px-2 rounded hover:bg-gray-800 w-full"
+                      title="Удалить студента"
                     >
                       🗑️ Удалить
                     </button>
@@ -523,15 +535,9 @@ export default function AdminPanel() {
             </div>
           </div>
         )}
-
-        {/* Кнопка смены админ-ключа */}
-        <button
-          onClick={() => setShowUpdateKey(true)}
-          className="w-full bg-yellow-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-yellow-700 transition-colors shadow-md"
-        >
-          🔑 Сменить пароль
-        </button>
       </div>
+
+
 
       {/* ========== ВСЕ МОДАЛЬНЫЕ ОКНА ========== */}
 
