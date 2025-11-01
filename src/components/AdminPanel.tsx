@@ -9,13 +9,11 @@ export default function AdminPanel() {
     isAdmin, 
     setIsAdmin, 
     verifyAdminKey, 
-    machineState,
     queue,
     students,
     markDone, 
     startNext, 
     clearQueue,
-    clearCompletedQueue,
     resetStudentRegistration,
     banStudent,
     unbanStudent,
@@ -23,6 +21,7 @@ export default function AdminPanel() {
     updateStudent,
     deleteStudent,
     updateAdminKey,
+    joinQueue,
   } = useLaundry();
   
   const [adminKey, setAdminKey] = useState('');
@@ -39,6 +38,12 @@ export default function AdminPanel() {
   const [showUpdateKey, setShowUpdateKey] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [showAddToQueue, setShowAddToQueue] = useState(false);
+const [queueWashCount, setQueueWashCount] = useState(1);
+const [queuePaymentType, setQueuePaymentType] = useState('money');
+const [queueHour, setQueueHour] = useState('20');
+const [queueMinute, setQueueMinute] = useState('00');
+мод
   
   // Форма добавления студента
   const [newFirstName, setNewFirstName] = useState('');
@@ -232,6 +237,38 @@ export default function AdminPanel() {
     setShowDeleteConfirm(true);
   };
 
+  // Функция добавления в очередь
+const handleAddToQueue = async () => {
+  if (!selectedStudent) return;
+  
+  try {
+    const today = new Date();
+    today.setHours(parseInt(queueHour), parseInt(queueMinute), 0, 0);
+    const expectedFinishAt = today.toISOString();
+    
+    await joinQueue(
+      selectedStudent.fullName, 
+      selectedStudent.room || undefined,
+      queueWashCount,
+      queuePaymentType,
+      expectedFinishAt
+    );
+    
+    setShowAddToQueue(false);
+    alert('✅ Студент добавлен в очередь!');
+  } catch (err: any) {
+    alert('❌ Ошибка: ' + err.message);
+  }
+};
+const openAddToQueueModal = (student: Student) => {
+  setSelectedStudent(student);
+  setQueueWashCount(1);
+  setQueuePaymentType('money');
+  setQueueHour('20');
+  setQueueMinute('00');
+  setShowAddToQueue(true);
+};
+
   if (!isAdmin) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
@@ -319,13 +356,6 @@ export default function AdminPanel() {
             </div>
           </div>
         )}
-
-        <button
-          onClick={() => clearCompletedQueue()}
-          className="w-full bg-orange-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-orange-700 transition-colors shadow-md"
-        >
-          🧹 Удалить завершенных
-        </button>
 
         {/* Управление студентами */}
         <button
@@ -441,6 +471,12 @@ export default function AdminPanel() {
                         🚫 Забанить
                       </button>
                     )}
+                    <button
+  onClick={() => openAddToQueueModal(student)}
+  className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-1 col-span-2"
+>
+  ➕ Поставить в очередь
+</button>
                     
                     <button
                       onClick={() => openDeleteModal(student)}
@@ -460,7 +496,7 @@ export default function AdminPanel() {
           onClick={() => setShowUpdateKey(true)}
           className="w-full bg-yellow-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-yellow-700 transition-colors shadow-md"
         >
-          🔑 Сменить админ-ключ
+          🔑 Сменить пароль
         </button>
       </div>
 
@@ -685,6 +721,92 @@ export default function AdminPanel() {
           </div>
         </div>
       )}
+      
+    {/* Модальное окно: Поставить в очередь */}
+{showAddToQueue && selectedStudent && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-lg p-6 max-w-md w-full">
+      <h3 className="text-xl font-bold text-gray-900 mb-4">➕ Поставить в очередь</h3>
+      <p className="text-gray-700 mb-3">
+        Студент: <span className="font-bold">{selectedStudent.fullName}</span>
+      </p>
+      
+      <div className="space-y-3">
+        <div>
+          <label className="block text-sm font-bold mb-2">Количество стирок</label>
+          <input
+            type="number"
+            min="1"
+            max="10"
+            value={queueWashCount}
+            onChange={(e) => setQueueWashCount(Number(e.target.value))}
+            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-bold mb-2">Способ оплаты</label>
+          <select
+            value={queuePaymentType}
+            onChange={(e) => setQueuePaymentType(e.target.value)}
+            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+          >
+            <option value="money">💵 Деньги</option>
+            <option value="coupon">🎫 Купон</option>
+            <option value="both">💵+🎫 Оба</option>
+          </select>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-bold mb-2">Закончит в</label>
+          <div className="flex gap-2">
+            <select
+              value={queueHour}
+              onChange={(e) => setQueueHour(e.target.value)}
+              className="flex-1 border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+            >
+              {Array.from({ length: 23 }, (_, i) => i).map(hour => (
+                <option key={hour} value={hour.toString().padStart(2, '0')}>
+                  {hour.toString().padStart(2, '0')}
+                </option>
+              ))}
+            </select>
+            <span className="text-2xl">:</span>
+            <select
+              value={queueMinute}
+              onChange={(e) => setQueueMinute(e.target.value)}
+              className="flex-1 border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+            >
+              {Array.from({ length: 60 }, (_, i) => i).map(minute => (
+                <option key={minute} value={minute.toString().padStart(2, '0')}>
+                  {minute.toString().padStart(2, '0')}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div className="flex gap-2 mt-4">
+        <button
+          onClick={() => setShowAddToQueue(false)}
+          className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
+        >
+          Отмена
+        </button>
+        <button
+          onClick={handleAddToQueue}
+          className="flex-1 bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-purple-700"
+        >
+          Добавить
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
+
+  
+
 }

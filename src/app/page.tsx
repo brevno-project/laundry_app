@@ -113,7 +113,6 @@ export default function Home() {
             >
               🏠 Главная
             </button>
-            {isAdmin && (
               <button
                 onClick={() => setActiveTab('history')}
                 className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
@@ -124,7 +123,6 @@ export default function Home() {
               >
                 📜 История
               </button>
-            )}
             <button
               onClick={() => setActiveTab('settings')}
               className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
@@ -198,7 +196,7 @@ export default function Home() {
         )}
         
         {/* История */}
-        {activeTab === 'history' && isAdmin && (
+        {activeTab === 'history' && (
           <div className="space-y-4">
             <HistoryList />
           </div>
