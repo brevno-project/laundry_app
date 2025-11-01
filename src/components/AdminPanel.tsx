@@ -37,6 +37,7 @@ export default function AdminPanel() {
   const [showBanStudent, setShowBanStudent] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showUpdateKey, setShowUpdateKey] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   
   // Форма добавления студента
@@ -101,15 +102,22 @@ export default function AdminPanel() {
     setShowConfirmClear(false);
   };
 
-  const handleResetStudent = async (studentId: string) => {
-    setResetingStudentId(studentId);
+  const openResetConfirm = (student: Student) => {
+    setSelectedStudent(student);
+    setShowResetConfirm(true);
+  };
+
+  const handleResetStudent = async () => {
+    if (!selectedStudent) return;
+    
     try {
-      await resetStudentRegistration(studentId);
+      await resetStudentRegistration(selectedStudent.id);
+      setShowResetConfirm(false);
+      setSelectedStudent(null);
+      alert('✅ Регистрация сброшена!');
     } catch (err: any) {
       console.error('Error resetting student:', err);
-      alert('Ошибка сброса регистрации');
-    } finally {
-      setResetingStudentId(null);
+      alert('❌ Ошибка сброса регистрации');
     }
   };
 
@@ -335,7 +343,7 @@ export default function AdminPanel() {
                 onClick={() => setShowAddStudent(true)}
                 className="bg-green-600 text-white text-sm font-semibold py-2 px-4 rounded hover:bg-green-700"
               >
-                ➕ Добавить студента
+                ➕ Добавить
               </button>
             </div>
 
@@ -345,32 +353,32 @@ export default function AdminPanel() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="🔍 Поиск по имени или комнате..."
+                placeholder="🔍 Поиск..."
                 className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
               />
               
-              <div className="flex gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 <button
                   onClick={() => setFilterStatus('all')}
-                  className={`flex-1 py-2 px-3 rounded text-sm font-semibold ${filterStatus === 'all' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                  className={`py-2 px-2 rounded text-xs font-semibold ${filterStatus === 'all' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'}`}
                 >
                   Все
                 </button>
                 <button
                   onClick={() => setFilterStatus('registered')}
-                  className={`flex-1 py-2 px-3 rounded text-sm font-semibold ${filterStatus === 'registered' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                  className={`py-2 px-2 rounded text-xs font-semibold ${filterStatus === 'registered' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}
                 >
                   Зарег.
                 </button>
                 <button
                   onClick={() => setFilterStatus('unregistered')}
-                  className={`flex-1 py-2 px-3 rounded text-sm font-semibold ${filterStatus === 'unregistered' ? 'bg-yellow-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                  className={`py-2 px-2 rounded text-xs font-semibold ${filterStatus === 'unregistered' ? 'bg-yellow-600 text-white' : 'bg-gray-200 text-gray-700'}`}
                 >
-                  Не зарег.
+                  Не зар.
                 </button>
                 <button
                   onClick={() => setFilterStatus('banned')}
-                  className={`flex-1 py-2 px-3 rounded text-sm font-semibold ${filterStatus === 'banned' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                  className={`py-2 px-2 rounded text-xs font-semibold ${filterStatus === 'banned' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-700'}`}
                 >
                   Баны
                 </button>
@@ -378,71 +386,67 @@ export default function AdminPanel() {
             </div>
 
             {/* Список студентов */}
-            <div className="max-h-96 overflow-y-auto space-y-2">
+            <div className="max-h-96 overflow-y-auto space-y-3">
               {filteredStudents.map((student) => (
-                <div key={student.id} className="flex justify-between items-center p-3 border-2 border-gray-200 rounded-lg bg-gray-50">
-                  <div className="flex-1">
-                    <p className="font-bold text-gray-900">
+                <div key={student.id} className="border-2 border-gray-200 rounded-lg bg-gray-50 p-3 space-y-2">
+                  {/* Имя и значки */}
+                  <div>
+                    <p className="font-bold text-gray-900 text-base">
                       {student.fullName}
                       {student.room && <span className="text-gray-600 text-sm ml-2">({student.room})</span>}
                     </p>
-                    <div className="flex gap-2 mt-1">
+                    <div className="flex gap-1 mt-1 flex-wrap">
                       {student.isRegistered && (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded font-semibold">✅ Зарегистрирован</span>
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded font-semibold">✅ Зарег.</span>
                       )}
                       {student.is_banned && (
-                        <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded font-semibold">🚫 Забанен</span>
+                        <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded font-semibold">🚫 Бан</span>
                       )}
                       {student.telegram_chat_id && (
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded font-semibold">📱 Telegram</span>
+                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-semibold">📱 TG</span>
                       )}
                     </div>
                   </div>
                   
-                  <div className="flex gap-1">
+                  {/* Кнопки действий */}
+                  <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => openEditModal(student)}
-                      className="bg-blue-500 text-white text-xs font-semibold py-1 px-2 rounded hover:bg-blue-600"
-                      title="Редактировать"
+                      className="bg-blue-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-blue-600 flex items-center justify-center gap-1"
                     >
-                      ✏️
+                      ✏️ Редактировать
                     </button>
                     
                     {student.isRegistered && (
                       <button
-                        onClick={() => handleResetStudent(student.id)}
-                        disabled={resetingStudentId === student.id}
-                        className="bg-orange-500 text-white text-xs font-semibold py-1 px-2 rounded hover:bg-orange-600 disabled:opacity-50"
-                        title="Сбросить регистрацию"
+                        onClick={() => openResetConfirm(student)}
+                        className="bg-orange-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-orange-600 flex items-center justify-center gap-1"
                       >
-                        {resetingStudentId === student.id ? '⏳' : '🔄'}
+                        🔄 Сбросить
                       </button>
                     )}
                     
                     {student.is_banned ? (
                       <button
                         onClick={() => handleUnbanStudent(student.id)}
-                        className="bg-green-500 text-white text-xs font-semibold py-1 px-2 rounded hover:bg-green-600"
-                        title="Разбанить"
+                        className="bg-green-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-green-600 flex items-center justify-center gap-1"
                       >
-                        ✅
+                        ✅ Разбанить
                       </button>
                     ) : (
                       <button
                         onClick={() => openBanModal(student)}
-                        className="bg-red-500 text-white text-xs font-semibold py-1 px-2 rounded hover:bg-red-600"
-                        title="Забанить"
+                        className="bg-red-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-red-600 flex items-center justify-center gap-1"
                       >
-                        🚫
+                        🚫 Забанить
                       </button>
                     )}
                     
                     <button
                       onClick={() => openDeleteModal(student)}
-                      className="bg-gray-700 text-white text-xs font-semibold py-1 px-2 rounded hover:bg-gray-800"
-                      title="Удалить"
+                      className="bg-gray-700 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-gray-800 flex items-center justify-center gap-1 col-span-2"
                     >
-                      🗑️
+                      🗑️ Удалить
                     </button>
                   </div>
                 </div>
@@ -510,7 +514,7 @@ export default function AdminPanel() {
       {showEditStudent && selectedStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">✏️ Редактировать студента</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-4">✏️ Редактировать</h3>
             <div className="space-y-3">
               <input
                 type="text"
@@ -546,6 +550,35 @@ export default function AdminPanel() {
                 className="flex-1 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700"
               >
                 Сохранить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно: Подтверждение сброса */}
+      {showResetConfirm && selectedStudent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold text-orange-700 mb-4">⚠️ Сбросить регистрацию?</h3>
+            <p className="text-gray-700 mb-4">
+              Сбросить регистрацию для <span className="font-bold">{selectedStudent.fullName}</span>?
+            </p>
+            <p className="text-orange-600 text-sm font-semibold mb-4">
+              Студент сможет заново зарегистрироваться.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handleResetStudent}
+                className="flex-1 bg-orange-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-orange-700"
+              >
+                Сбросить
               </button>
             </div>
           </div>
@@ -606,7 +639,7 @@ export default function AdminPanel() {
                 onClick={handleDeleteStudent}
                 className="flex-1 bg-red-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-700"
               >
-                Да, удалить
+                Удалить
               </button>
             </div>
           </div>
