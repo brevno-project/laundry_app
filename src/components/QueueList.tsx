@@ -29,12 +29,6 @@ export default function QueueList() {
     );
   };
   
-  const selectAllUnfinished = () => {
-    const unfinishedIds = queuedItems
-      .filter(item => [QueueStatus.WAITING, QueueStatus.READY, QueueStatus.KEY_ISSUED].includes(item.status))
-      .map(item => item.id);
-    setSelectedItems(unfinishedIds);
-  };
   // ✅ Группировка по датам
   const groupQueueByDate = (items: any[]) => {
     const groups: { [key: string]: any[] } = {};
@@ -127,12 +121,6 @@ export default function QueueList() {
         {/* Кнопки переноса для админа */}
         {isAdmin && (
           <div className="flex space-x-2">
-            <button
-              onClick={selectAllUnfinished}
-              className="px-3 py-1 bg-gray-600 text-white text-sm font-bold rounded hover:bg-gray-700"
-            >
-              Выбрать все незавершенные
-            </button>
             <button
               onClick={() => transferSelectedToNextDay(selectedItems)}
               disabled={selectedItems.length === 0}
