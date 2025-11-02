@@ -88,7 +88,8 @@ export type TelegramNotification = {
     | 'washing_done'
     | 'admin_call_for_key'
     | 'admin_key_issued'
-    | 'admin_return_key';
+    | 'admin_return_key'
+    | 'updated';
 
   userName?: string;
   userRoom?: string;

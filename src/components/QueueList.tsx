@@ -22,14 +22,65 @@ export default function QueueList() {
     transferSelectedToPreviousDay,
     transferSelectedToToday,  
     changeQueuePosition, 
+    updateQueueEndTime,
+    updateQueueItemDetails,
   } = useLaundry();
+  const [tempTimes, setTempTimes] = useState<{ [key: string]: string }>({});
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const setTempTime = (id: string, time: string) => {
+    setTempTimes(prev => ({ ...prev, [id]: time }));
+  };
+  const [showEditModal, setShowEditModal] = useState(false);
+const [editingItem, setEditingItem] = useState<any>(null);
+const [editWashCount, setEditWashCount] = useState(1);
+const [editPaymentType, setEditPaymentType] = useState('money');
+const [editHour, setEditHour] = useState('20');
+const [editMinute, setEditMinute] = useState('00');
+const [editDate, setEditDate] = useState('');
+
   const toggleSelect = (id: string) => {
     setSelectedItems(prev => 
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
+  const openEditModal = (item: any) => {
+    setEditingItem(item);
+    setEditWashCount(item.washCount || 1);
+    setEditPaymentType(item.paymentType || 'money');
+    
+    // Парсим expectedFinishAt
+    if (item.expectedFinishAt) {
+      const date = new Date(item.expectedFinishAt);
+      setEditHour(date.getHours().toString().padStart(2, '0'));
+      setEditMinute(date.getMinutes().toString().padStart(2, '0'));
+    } else {
+      setEditHour('20');
+      setEditMinute('00');
+    }
+    
+    setEditDate(item.currentDate || new Date().toISOString().slice(0, 10));
+    setShowEditModal(true);
+  };
+
+  // Функция сохранения изменений:
+const handleSaveEdit = async () => {
+  if (!editingItem) return;
   
+  const today = new Date();
+  today.setHours(parseInt(editHour), parseInt(editMinute), 0, 0);
+  const expectedFinishAt = today.toISOString();
+  
+  await updateQueueItemDetails(editingItem.id, {
+    washCount: editWashCount,
+    paymentType: editPaymentType,
+    expectedFinishAt,
+    chosenDate: editDate,
+  });
+  
+  setShowEditModal(false);
+  setEditingItem(null);
+};
+
   // ✅ Группировка по датам
   const groupQueueByDate = (items: any[]) => {
     const groups: { [key: string]: any[] } = {};
@@ -69,6 +120,30 @@ export default function QueueList() {
     return '📅 ' + dayNames[date.getDay()] + ', ' + date.getDate() + '.' + (date.getMonth() + 1);
   };
 
+  // Добавь эту функцию в начало компонента QueueList:
+  const getAvailableDates = () => {
+    const dates = [];
+    const today = new Date();
+    
+    for (let i = 0; i < 8; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      const dateStr = date.toISOString().slice(0, 10);
+      
+      const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+    const dayName = dayNames[date.getDay()];
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    
+    let label = `${dayName}, ${day}.${month.toString().padStart(2, '0')}`;
+    if (i === 0) label += ' (Сегодня)';
+    if (i === 1) label += ' (Завтра)';
+    
+    dates.push({ value: dateStr, label });
+  }
+  
+  return dates;
+};
   // Функция для получения цвета и текста статуса
   const getStatusDisplay = (status: QueueStatus) => {
     switch(status) {
@@ -174,6 +249,22 @@ export default function QueueList() {
                         onChange={() => toggleSelect(item.id)}
                         className="mr-2 mb-2"
                       />
+                    )}
+                    {isAdmin && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <input
+                          type="datetime-local"
+                          className="px-2 py-1 border rounded text-sm"
+                          onChange={(e) => setTempTime(item.id, e.target.value)}
+                          value={tempTimes[item.id] || ''}
+                        />
+                        <button
+                          onClick={() => updateQueueEndTime(item.id, tempTimes[item.id])}
+                          className="px-2 py-1 bg-purple-600 text-white text-xs rounded hover:bg-purple-700"
+                        >
+                          Установить время
+                        </button>
+                      </div>
                     )}
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
@@ -452,11 +543,23 @@ export default function QueueList() {
                             </button>
                           </div>
                         )}
+
+                        {/* БЛОК: Редактировать */}
                         
+                        {(isAdmin) && item.status === QueueStatus.WAITING && (
+  <button
+    onClick={() => openEditModal(item)}
+    className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+    title="Редактировать параметры"
+  >
+    ✏️
+  </button>
+                        )}
+                            
                         {/* Статус для не-админа */}
                         {!isAdmin && item.status === QueueStatus.WASHING && (
                           <span className="text-green-700 font-bold text-sm">🟢 Стирает...</span>
-                        )}
+                          )}
                         {!isAdmin && item.status === QueueStatus.DONE && (
                           <span className="text-emerald-700 font-bold text-sm">✅ Готово</span>
                         )}
@@ -469,6 +572,107 @@ export default function QueueList() {
           </div>
         ))}
       </div>
+      {/* Модальное окно редактирования */}
+{showEditModal && editingItem && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-lg p-6 max-w-md w-full">
+      <h3 className="text-xl font-bold text-gray-900 mb-4">✏️ Редактировать запись</h3>
+      <p className="text-gray-700 mb-3">
+        Студент: <span className="font-bold">{editingItem.userName}</span>
+      </p>
+      
+      <div className="space-y-3">
+        {/* Дата стирки */}
+        <div>
+          <label className="block text-sm font-bold mb-2 text-gray-900">📅 Дата стирки</label>
+          <select
+            value={editDate}
+            onChange={(e) => setEditDate(e.target.value)}
+            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+          >
+            {getAvailableDates().map(date => (
+              <option key={date.value} value={date.value}>
+                {date.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Количество стирок */}
+        <div>
+          <label className="block text-sm font-bold mb-2 text-gray-900">Количество стирок</label>
+          <input
+            type="number"
+            min="1"
+            max="10"
+            value={editWashCount}
+            onChange={(e) => setEditWashCount(Number(e.target.value))}
+            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+          />
+        </div>
+        
+        {/* Способ оплаты */}
+        <div>
+          <label className="block text-sm font-bold mb-2 text-gray-900">Способ оплаты</label>
+          <select
+            value={editPaymentType}
+            onChange={(e) => setEditPaymentType(e.target.value)}
+            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+          >
+            <option value="money">💵 Деньги</option>
+            <option value="coupon">🎫 Купон</option>
+            <option value="both">💵+🎫 Оба</option>
+          </select>
+        </div>
+        
+        {/* Время окончания */}
+        <div>
+          <label className="block text-sm font-bold mb-2 text-gray-900">Закончит в</label>
+          <div className="flex gap-2">
+            <select
+              value={editHour}
+              onChange={(e) => setEditHour(e.target.value)}
+              className="flex-1 border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+            >
+              {Array.from({ length: 24 }, (_, i) => i).map(hour => (
+                <option key={hour} value={hour.toString().padStart(2, '0')}>
+                  {hour.toString().padStart(2, '0')}
+                </option>
+              ))}
+            </select>
+            <span className="text-2xl text-gray-900">:</span>
+            <select
+              value={editMinute}
+              onChange={(e) => setEditMinute(e.target.value)}
+              className="flex-1 border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+            >
+              {Array.from({ length: 60 }, (_, i) => i).map(minute => (
+                <option key={minute} value={minute.toString().padStart(2, '0')}>
+                  {minute.toString().padStart(2, '0')}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div className="flex gap-2 mt-4">
+        <button
+          onClick={() => setShowEditModal(false)}
+          className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
+        >
+          Отмена
+        </button>
+        <button
+          onClick={handleSaveEdit}
+          className="flex-1 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700"
+        >
+          Сохранить
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }

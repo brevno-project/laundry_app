@@ -86,6 +86,8 @@ type LaundryContextType = {
   updateStudent: (studentId: string, updates: { firstName?: string; lastName?: string; room?: string }) => Promise<void>;
   deleteStudent: (studentId: string) => Promise<void>;
   updateAdminKey: (newKey: string) => Promise<void>;
+  updateQueueItemDetails: (queueId: string, updates: { washCount?: number; paymentType?: string; expectedFinishAt?: string; chosenDate?: string }) => Promise<void>;
+  updateQueueEndTime: (queueId: string, endTime: string) => Promise<void>;
   
 };
 
@@ -1388,6 +1390,25 @@ const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>)
   }
 };
 
+const updateQueueEndTime = async (queueId: string, endTime: string) => {
+  if (!supabase) return;
+  
+  const item = queue.find(q => q.id === queueId);
+  if (!item) return;
+  
+  const updateData: any = {};
+  if (item.status === QueueStatus.WASHING) {
+    updateData.washEndTime = endTime;
+  } else if (item.status === QueueStatus.DONE) {
+    updateData.paymentEndTime = endTime;
+  } else {
+    return;  // Только для WASHING или DONE
+  }
+  
+  await supabase.from('queue').update(updateData).eq('id', queueId);
+  await fetchQueue();
+};
+
 // Admin: Send message to queue item
 const sendAdminMessage = async (queueItemId: string, message: string) => {
   if (!isAdmin) return;
@@ -1704,6 +1725,76 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
   }
 };
 
+// ✅ Функция для редактирования параметров очереди
+const updateQueueItemDetails = async (
+  queueId: string, 
+  updates: {
+    washCount?: number;
+    paymentType?: string;
+    expectedFinishAt?: string;
+    chosenDate?: string;
+  }
+) => {
+  if (!supabase) {
+    console.error('❌ Supabase not initialized');
+    return;
+  }
+
+  try {
+    const item = queue.find(q => q.id === queueId);
+    if (!item) {
+      alert('❌ Запись не найдена');
+      return;
+    }
+
+    // ✅ Проверяем, можно ли редактировать
+    if (item.status !== QueueStatus.WAITING) {
+      alert('❌ Можно редактировать только записи в ожидании');
+      return;
+    }
+
+    const updateData: any = {};
+    if (updates.washCount !== undefined) updateData.washCount = updates.washCount;
+    if (updates.paymentType !== undefined) updateData.paymentType = updates.paymentType;
+    if (updates.expectedFinishAt !== undefined) updateData.expectedFinishAt = updates.expectedFinishAt;
+    if (updates.chosenDate !== undefined) {
+      updateData.scheduledForDate = updates.chosenDate;
+      updateData.currentDate = updates.chosenDate;
+    }
+
+    const { error } = await supabase
+      .from('queue')
+      .update(updateData)
+      .eq('id', queueId);
+
+    if (error) {
+      console.error('❌ Error updating queue item:', error);
+      alert('Ошибка обновления: ' + error.message);
+      return;
+    }
+
+    console.log('✅ Queue item updated:', updateData);
+    await fetchQueue(); // Обновляем очередь
+    
+    // ✅ Уведомление админа если изменилось время окончания
+    if (updates.expectedFinishAt && user) {
+      await sendTelegramNotification({
+        type: 'updated',
+        studentId: user.studentId,
+        userName: item.userName,
+        userRoom: item.userRoom,
+        washCount: updates.washCount || item.washCount,
+        paymentType: updates.paymentType || item.paymentType,
+        expectedFinishAt: updates.expectedFinishAt,
+      });
+    }
+
+  } catch (error: any) {
+    console.error('❌ Exception in updateQueueItemDetails:', error);
+    alert('Ошибка: ' + error.message);
+  }
+};
+
 // ✅ Изменение позиции в очереди (вверх/вниз) - ТОЛЬКО ВНУТРИ ОДНОЙ ДАТЫ
 const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') => {
   if (!supabase) {
@@ -1793,7 +1884,9 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
    transferSelectedToPreviousDay,
    transferSelectedToToday,  
    changeQueuePosition,
-   adminAddToQueue,              
+   adminAddToQueue,
+   updateQueueItemDetails,
+   updateQueueEndTime,              
   };
 
   return <LaundryContext.Provider value={value}>{children}</LaundryContext.Provider>;
