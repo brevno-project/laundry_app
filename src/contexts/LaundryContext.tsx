@@ -1423,7 +1423,7 @@ const transferUnfinishedToNextDay = async () => {
     
     const unfinishedItems = queue.filter(item => 
       unfinishedStatuses.includes(item.status) && 
-      item.currentDate === format(new Date(), 'yyyy-MM-dd')
+      item.currentDate <= format(new Date(), 'yyyy-MM-dd')
     );
     
     if (unfinishedItems.length === 0) {
