@@ -1417,11 +1417,6 @@ const sendAdminMessage = async (queueItemId: string, message: string) => {
 
 // ✅ Перенос незавершенных на следующий день
 const transferUnfinishedToNextDay = async () => {
-  if (!supabase) {
-    alert('❌ Supabase не подключен');
-    return;
-  }
-  
   try {
     // Получить все незавершенные записи (WAITING, READY, KEY_ISSUED)
     const unfinishedStatuses = [QueueStatus.WAITING, QueueStatus.READY, QueueStatus.KEY_ISSUED];
@@ -1440,19 +1435,33 @@ const transferUnfinishedToNextDay = async () => {
     const nextDay = addDays(new Date(), 1);
     const nextDayStr = format(nextDay, 'yyyy-MM-dd');
     
-    // Обновить каждую запись
-    for (const item of unfinishedItems) {
-      await supabase
-        .from('queue')
-        .update({ 
-          currentDate: nextDayStr,
-          scheduledForDate: nextDayStr 
-        })
-        .eq('id', item.id);
+    if (!isSupabaseConfigured) {
+      // Локальный режим
+      const updatedQueue = queue.map(item => 
+        unfinishedItems.find(u => u.id === item.id) 
+          ? { ...item, currentDate: nextDayStr, scheduledForDate: nextDayStr } 
+          : item
+      );
+      setQueue(updatedQueue);
+      saveLocalQueue(updatedQueue);
+      alert(`✅ ${unfinishedItems.length} записей перенесено на ${format(nextDay, 'dd.MM.yyyy')}!`);
+    } else {
+      if (supabase) {
+        // Supabase режим
+        for (const item of unfinishedItems) {
+          await supabase
+            .from('queue')
+            .update({ 
+              currentDate: nextDayStr,
+              scheduledForDate: nextDayStr 
+            })
+            .eq('id', item.id);
+        }
+        
+        alert(`✅ ${unfinishedItems.length} записей перенесено на ${format(nextDay, 'dd.MM.yyyy')}!`);
+        await fetchQueue();
+      }
     }
-    
-    alert(`✅ ${unfinishedItems.length} записей перенесено на ${format(nextDay, 'dd.MM.yyyy')}!`);
-    await fetchQueue();
   } catch (err: any) {
     console.error('Exception transferring:', err);
     alert('Ошибка: ' + err.message);
