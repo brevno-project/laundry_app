@@ -19,7 +19,8 @@ export default function QueueList() {
     isAdmin,
     machineState,
     transferSelectedToNextDay,
-    transferSelectedToPreviousDay,  
+    transferSelectedToPreviousDay,
+    transferSelectedToToday,  
     changeQueuePosition, 
   } = useLaundry();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -125,8 +126,15 @@ export default function QueueList() {
               onClick={() => transferSelectedToNextDay(selectedItems)}
               disabled={selectedItems.length === 0}
               className="px-3 py-1 bg-blue-600 text-white text-sm font-bold rounded hover:bg-blue-700 disabled:opacity-50"
-            >
+            > 
               🔄 Перенести вперед ({selectedItems.length})
+            </button>
+            <button
+              onClick={() => transferSelectedToToday(selectedItems)}
+              disabled={selectedItems.length === 0}
+              className="px-3 py-1 bg-green-600 text-white text-sm font-bold rounded hover:bg-green-700 disabled:opacity-50"
+            >
+              🔄 Перенести на сегодня ({selectedItems.length})
             </button>
             <button
               onClick={() => transferSelectedToPreviousDay(selectedItems)}
@@ -135,6 +143,7 @@ export default function QueueList() {
             >
               🔄 Перенести назад ({selectedItems.length})
             </button>
+            
           </div>
         )}
       </div>

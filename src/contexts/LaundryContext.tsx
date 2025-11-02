@@ -52,6 +52,7 @@ type LaundryContextType = {
   history: HistoryItem[];
   transferSelectedToNextDay: (selectedIds: string[]) => Promise<void>;
   transferSelectedToPreviousDay: (selectedIds: string[]) => Promise<void>;
+  transferSelectedToToday: (selectedIds: string[]) => Promise<void>;
   changeQueuePosition: (queueId: string, direction: 'up' | 'down') => Promise<void>;
   registerStudent: (studentId: string, password: string) => Promise<User | null>;
   loginStudent: (studentId: string, password: string) => Promise<User | null>;
@@ -1483,7 +1484,37 @@ const transferSelectedToNextDay = async (selectedIds: string[]) => {
         }
         
         alert(`✅ ${unfinishedItems.length} записей перенесено на ${format(nextDay, 'dd.MM.yyyy')}!`);
-        await fetchQueue();
+        
+        // Пересчитать позиции на новой дате
+        const targetDate = nextDayStr;  // или prevDayStr
+        const { data: allOnDate } = await supabase
+          .from('queue')
+          .select('*')
+          .eq('currentDate', targetDate);
+
+        if (allOnDate) {
+          const transferred = allOnDate.filter(item => unfinishedItems.some(u => u.id === item.id));
+          const existing = allOnDate.filter(item => !unfinishedItems.some(u => u.id === item.id));
+          
+          // Сортировать transferred по порядку в unfinishedItems (сохраняет порядок переноса)
+          transferred.sort((a, b) => unfinishedItems.findIndex(u => u.id === a.id) - unfinishedItems.findIndex(u => u.id === b.id));
+          
+          // existing сортировать по текущей position
+          existing.sort((a, b) => a.position - b.position);
+          
+          // Новый порядок: transferred + existing
+          const newOrder = [...transferred, ...existing];
+          
+          // Присвоить position 1, 2, 3...
+          for (let k = 0; k < newOrder.length; k++) {
+            await supabase
+              .from('queue')
+              .update({ position: k + 1 })
+              .eq('id', newOrder[k].id);
+          }
+        }
+
+        await fetchQueue();  // Обновить после пересчета
       }
     }
   } catch (err: any) {
@@ -1560,6 +1591,111 @@ const transferSelectedToPreviousDay = async (selectedIds: string[]) => {
         
         alert(`✅ ${unfinishedItems.length} записей перенесено на ${format(prevDay, 'dd.MM.yyyy')}!`);
         await fetchQueue();
+      }
+    }
+  } catch (err: any) {
+    console.error('Exception transferring:', err);
+    alert('Ошибка: ' + err.message);
+  }
+};
+
+// ✅ Перенос незавершенных на сегодняшний день
+const transferSelectedToToday = async (selectedIds: string[]) => {
+  try {
+    // Получить все незавершенные записи (WAITING, READY, KEY_ISSUED)
+    const unfinishedStatuses = [QueueStatus.WAITING, QueueStatus.READY, QueueStatus.KEY_ISSUED];
+    
+    const unfinishedItems = queue.filter(item => 
+      selectedIds.includes(item.id) && unfinishedStatuses.includes(item.status)
+    );
+    
+    if (unfinishedItems.length === 0) {
+      alert('✅ Нет незавершенных записей для переноса');
+      return;
+    }
+    
+    // Перенести на сегодняшний день
+    const today = new Date();
+    const todayStr = format(today, 'yyyy-MM-dd');
+    
+    if (!isSupabaseConfigured) {
+      // Локальный режим
+      // Найти минимальную позицию на целевой дате в текущем queue
+      const targetDate = todayStr;
+      const existingOnDate = queue.filter(item => item.currentDate === targetDate);
+      const minPosition = existingOnDate.length > 0 ? Math.min(...existingOnDate.map(item => item.position)) : 0;
+
+      const updatedQueue = queue.map(item => {
+        const index = unfinishedItems.findIndex(u => u.id === item.id);
+        if (index !== -1) {
+          return { 
+            ...item, 
+            currentDate: targetDate, 
+            scheduledForDate: targetDate,
+            position: minPosition - 10000 - index  // Перенесенные первыми, порядок сохраняется
+          };
+        }
+        return item;
+      });
+      setQueue(updatedQueue);
+      saveLocalQueue(updatedQueue);
+      alert(`✅ ${unfinishedItems.length} записей перенесено на ${format(today, 'dd.MM.yyyy')}!`);
+    } else {
+      if (supabase) {
+        // Supabase режим
+        // Получить минимальную позицию на целевой дате
+        const { data: minPosData } = await supabase
+          .from('queue')
+          .select('position')
+          .eq('currentDate', todayStr)
+          .order('position', { ascending: true })
+          .limit(1);
+
+        const minPosition = minPosData && minPosData.length > 0 ? minPosData[0].position : 0;
+
+        for (let i = 0; i < unfinishedItems.length; i++) {
+          const item = unfinishedItems[i];
+          await supabase
+            .from('queue')
+            .update({ 
+              currentDate: todayStr,
+              scheduledForDate: todayStr,
+              position: minPosition - 10000 - i  // Перенесенные первыми, порядок сохраняется
+            })
+            .eq('id', item.id);
+        }
+        
+        alert(`✅ ${unfinishedItems.length} записей перенесено на ${format(today, 'dd.MM.yyyy')}!`);
+        
+        // Пересчитать позиции на новой дате
+        const { data: allOnDate } = await supabase
+          .from('queue')
+          .select('*')
+          .eq('currentDate', todayStr);
+
+        if (allOnDate) {
+          const transferred = allOnDate.filter(item => unfinishedItems.some(u => u.id === item.id));
+          const existing = allOnDate.filter(item => !unfinishedItems.some(u => u.id === item.id));
+          
+          // Сортировать transferred по порядку в unfinishedItems (сохраняет порядок переноса)
+          transferred.sort((a, b) => unfinishedItems.findIndex(u => u.id === a.id) - unfinishedItems.findIndex(u => u.id === b.id));
+          
+          // existing сортировать по текущей position
+          existing.sort((a, b) => a.position - b.position);
+          
+          // Новый порядок: transferred + existing
+          const newOrder = [...transferred, ...existing];
+          
+          // Присвоить position 1, 2, 3...
+          for (let k = 0; k < newOrder.length; k++) {
+            await supabase
+              .from('queue')
+              .update({ position: k + 1 })
+              .eq('id', newOrder[k].id);
+          }
+        }
+
+        await fetchQueue();  // Обновить после пересчета
       }
     }
   } catch (err: any) {
@@ -1654,7 +1790,8 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
    deleteStudent,
    updateAdminKey,
    transferSelectedToNextDay,
-   transferSelectedToPreviousDay,  
+   transferSelectedToPreviousDay,
+   transferSelectedToToday,  
    changeQueuePosition,
    adminAddToQueue,              
   };
