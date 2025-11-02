@@ -50,8 +50,8 @@ type LaundryContextType = {
   queue: QueueItem[];
   machineState: MachineState;
   history: HistoryItem[];
-  transferUnfinishedToNextDay: () => Promise<void>;
-  transferUnfinishedToPreviousDay: () => Promise<void>;
+  transferSelectedToNextDay: (selectedIds: string[]) => Promise<void>;
+  transferSelectedToPreviousDay: (selectedIds: string[]) => Promise<void>;
   changeQueuePosition: (queueId: string, direction: 'up' | 'down') => Promise<void>;
   registerStudent: (studentId: string, password: string) => Promise<User | null>;
   loginStudent: (studentId: string, password: string) => Promise<User | null>;
@@ -1417,14 +1417,13 @@ const sendAdminMessage = async (queueItemId: string, message: string) => {
 };
 
 // ✅ Перенос незавершенных на следующий день
-const transferUnfinishedToNextDay = async () => {
+const transferSelectedToNextDay = async (selectedIds: string[]) => {
   try {
     // Получить все незавершенные записи (WAITING, READY, KEY_ISSUED)
     const unfinishedStatuses = [QueueStatus.WAITING, QueueStatus.READY, QueueStatus.KEY_ISSUED];
     
     const unfinishedItems = queue.filter(item => 
-      unfinishedStatuses.includes(item.status) && 
-      item.currentDate <= format(new Date(), 'yyyy-MM-dd')
+      selectedIds.includes(item.id) && unfinishedStatuses.includes(item.status)
     );
     
     if (unfinishedItems.length === 0) {
@@ -1470,14 +1469,13 @@ const transferUnfinishedToNextDay = async () => {
 };
 
 // ✅ Перенос незавершенных на предыдущий день
-const transferUnfinishedToPreviousDay = async () => {
+const transferSelectedToPreviousDay = async (selectedIds: string[]) => {
   try {
     // Получить все незавершенные записи (WAITING, READY, KEY_ISSUED)
     const unfinishedStatuses = [QueueStatus.WAITING, QueueStatus.READY, QueueStatus.KEY_ISSUED];
     
     const unfinishedItems = queue.filter(item => 
-      unfinishedStatuses.includes(item.status) && 
-      item.currentDate <= format(new Date(), 'yyyy-MM-dd')
+      selectedIds.includes(item.id) && unfinishedStatuses.includes(item.status)
     );
     
     if (unfinishedItems.length === 0) {
@@ -1607,8 +1605,8 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
    updateStudent,
    deleteStudent,
    updateAdminKey,
-   transferUnfinishedToNextDay,   
-   transferUnfinishedToPreviousDay,  
+   transferSelectedToNextDay,
+   transferSelectedToPreviousDay,  
    changeQueuePosition,
    adminAddToQueue,              
   };

@@ -3,6 +3,7 @@
 import { useLaundry } from '@/contexts/LaundryContext';
 import { QueueStatus } from '@/types';
 import { sendTelegramNotification } from '@/lib/telegram';
+import { useState } from 'react';
 
 export default function QueueList() {
   const { 
@@ -17,11 +18,23 @@ export default function QueueList() {
     markDone,
     isAdmin,
     machineState,
-    transferUnfinishedToNextDay,
-    transferUnfinishedToPreviousDay,
+    transferSelectedToNextDay,
+    transferSelectedToPreviousDay,  
     changeQueuePosition, 
   } = useLaundry();
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const toggleSelect = (id: string) => {
+    setSelectedItems(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
   
+  const selectAllUnfinished = () => {
+    const unfinishedIds = queuedItems
+      .filter(item => [QueueStatus.WAITING, QueueStatus.READY, QueueStatus.KEY_ISSUED].includes(item.status))
+      .map(item => item.id);
+    setSelectedItems(unfinishedIds);
+  };
   // ✅ Группировка по датам
   const groupQueueByDate = (items: any[]) => {
     const groups: { [key: string]: any[] } = {};
@@ -97,16 +110,6 @@ export default function QueueList() {
       <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-gray-800">📋 Очередь</h2>
-          
-          {/* Кнопка переноса для админа */}
-          {isAdmin && (
-            <button
-              onClick={transferUnfinishedToNextDay}
-              className="px-3 py-1 bg-blue-600 text-white text-sm font-bold rounded hover:bg-blue-700"
-            >
-              🔄 Перенести незавершенные
-            </button>
-          )}
         </div>
       </div>
     );
@@ -125,16 +128,24 @@ export default function QueueList() {
         {isAdmin && (
           <div className="flex space-x-2">
             <button
-              onClick={transferUnfinishedToNextDay}
-              className="px-3 py-1 bg-blue-600 text-white text-sm font-bold rounded hover:bg-blue-700"
+              onClick={selectAllUnfinished}
+              className="px-3 py-1 bg-gray-600 text-white text-sm font-bold rounded hover:bg-gray-700"
             >
-              🔄 Перенести вперед
+              Выбрать все незавершенные
             </button>
             <button
-              onClick={transferUnfinishedToPreviousDay}
-              className="px-3 py-1 bg-red-600 text-white text-sm font-bold rounded hover:bg-red-700"
+              onClick={() => transferSelectedToNextDay(selectedItems)}
+              disabled={selectedItems.length === 0}
+              className="px-3 py-1 bg-blue-600 text-white text-sm font-bold rounded hover:bg-blue-700 disabled:opacity-50"
             >
-              🔄 Перенести назад
+              🔄 Перенести вперед ({selectedItems.length})
+            </button>
+            <button
+              onClick={() => transferSelectedToPreviousDay(selectedItems)}
+              disabled={selectedItems.length === 0}
+              className="px-3 py-1 bg-red-600 text-white text-sm font-bold rounded hover:bg-red-700 disabled:opacity-50"
+            >
+              🔄 Перенести назад ({selectedItems.length})
             </button>
           </div>
         )}
@@ -158,6 +169,15 @@ export default function QueueList() {
                 return (
                   <div key={item.id} className={`${statusDisplay.bg} border-l-4 ${isCurrentUser ? 'border-blue-600' : 'border-gray-300'} rounded-lg p-3 shadow-sm`}>
                     {/* Заголовок с кнопками управления */}
+                    {/* Чекбокс для выбора */}
+                    {isAdmin && (
+                      <input
+                        type="checkbox"
+                        checked={selectedItems.includes(item.id)}
+                        onChange={() => toggleSelect(item.id)}
+                        className="mr-2 mb-2"
+                      />
+                    )}
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         {/* ✅ Кнопки перемещения для админа */}
