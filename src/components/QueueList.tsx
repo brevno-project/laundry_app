@@ -250,22 +250,7 @@ const handleSaveEdit = async () => {
                         className="mr-2 mb-2"
                       />
                     )}
-                    {isAdmin && (
-                      <div className="flex items-center gap-2 mb-2">
-                        <input
-                          type="datetime-local"
-                          className="px-2 py-1 border rounded text-sm"
-                          onChange={(e) => setTempTime(item.id, e.target.value)}
-                          value={tempTimes[item.id] || ''}
-                        />
-                        <button
-                          onClick={() => updateQueueEndTime(item.id, tempTimes[item.id])}
-                          className="px-2 py-1 bg-purple-600 text-white text-xs rounded hover:bg-purple-700"
-                        >
-                          Установить время
-                        </button>
-                      </div>
-                    )}
+
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         {/* ✅ Кнопки перемещения для админа */}
