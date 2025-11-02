@@ -18,6 +18,7 @@ export default function QueueList() {
     isAdmin,
     machineState,
     transferUnfinishedToNextDay,
+    transferUnfinishedToPreviousDay,
     changeQueuePosition, 
   } = useLaundry();
   
@@ -120,14 +121,22 @@ export default function QueueList() {
           📋 Очередь ({queuedItems.length})
         </h2>
         
-        {/* ✅ Кнопка переноса для админа */}
+        {/* Кнопки переноса для админа */}
         {isAdmin && (
-          <button
-            onClick={transferUnfinishedToNextDay}
-            className="px-3 py-1 bg-blue-600 text-white text-sm font-bold rounded hover:bg-blue-700"
-          >
-            🔄 Перенести
-          </button>
+          <div className="flex space-x-2">
+            <button
+              onClick={transferUnfinishedToNextDay}
+              className="px-3 py-1 bg-blue-600 text-white text-sm font-bold rounded hover:bg-blue-700"
+            >
+              🔄 Перенести вперед
+            </button>
+            <button
+              onClick={transferUnfinishedToPreviousDay}
+              className="px-3 py-1 bg-red-600 text-white text-sm font-bold rounded hover:bg-red-700"
+            >
+              🔄 Перенести назад
+            </button>
+          </div>
         )}
       </div>
       

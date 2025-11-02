@@ -51,6 +51,7 @@ type LaundryContextType = {
   machineState: MachineState;
   history: HistoryItem[];
   transferUnfinishedToNextDay: () => Promise<void>;
+  transferUnfinishedToPreviousDay: () => Promise<void>;
   changeQueuePosition: (queueId: string, direction: 'up' | 'down') => Promise<void>;
   registerStudent: (studentId: string, password: string) => Promise<User | null>;
   loginStudent: (studentId: string, password: string) => Promise<User | null>;
@@ -1468,6 +1469,59 @@ const transferUnfinishedToNextDay = async () => {
   }
 };
 
+// ✅ Перенос незавершенных на предыдущий день
+const transferUnfinishedToPreviousDay = async () => {
+  try {
+    // Получить все незавершенные записи (WAITING, READY, KEY_ISSUED)
+    const unfinishedStatuses = [QueueStatus.WAITING, QueueStatus.READY, QueueStatus.KEY_ISSUED];
+    
+    const unfinishedItems = queue.filter(item => 
+      unfinishedStatuses.includes(item.status) && 
+      item.currentDate <= format(new Date(), 'yyyy-MM-dd')
+    );
+    
+    if (unfinishedItems.length === 0) {
+      alert('✅ Нет незавершенных записей для переноса');
+      return;
+    }
+    
+    // Перенести на предыдущий день
+    const prevDay = addDays(new Date(), -1);
+    const prevDayStr = format(prevDay, 'yyyy-MM-dd');
+    
+    if (!isSupabaseConfigured) {
+      // Локальный режим
+      const updatedQueue = queue.map(item => 
+        unfinishedItems.find(u => u.id === item.id) 
+          ? { ...item, currentDate: prevDayStr, scheduledForDate: prevDayStr } 
+          : item
+      );
+      setQueue(updatedQueue);
+      saveLocalQueue(updatedQueue);
+      alert(`✅ ${unfinishedItems.length} записей перенесено на ${format(prevDay, 'dd.MM.yyyy')}!`);
+    } else {
+      if (supabase) {
+        // Supabase режим
+        for (const item of unfinishedItems) {
+          await supabase
+            .from('queue')
+            .update({ 
+              currentDate: prevDayStr,
+              scheduledForDate: prevDayStr 
+            })
+            .eq('id', item.id);
+        }
+        
+        alert(`✅ ${unfinishedItems.length} записей перенесено на ${format(prevDay, 'dd.MM.yyyy')}!`);
+        await fetchQueue();
+      }
+    }
+  } catch (err: any) {
+    console.error('Exception transferring:', err);
+    alert('Ошибка: ' + err.message);
+  }
+};
+
 // ✅ Изменение позиции в очереди (вверх/вниз) - ТОЛЬКО ВНУТРИ ОДНОЙ ДАТЫ
 const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') => {
   if (!supabase) {
@@ -1553,7 +1607,8 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
    updateStudent,
    deleteStudent,
    updateAdminKey,
-   transferUnfinishedToNextDay,     
+   transferUnfinishedToNextDay,   
+   transferUnfinishedToPreviousDay,  
    changeQueuePosition,
    adminAddToQueue,              
   };
