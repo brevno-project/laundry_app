@@ -194,31 +194,35 @@ const handleSaveEdit = async () => {
           📋 Очередь ({queuedItems.length})
         </h2>
         
-        {/* Кнопки переноса для админа */}
+                        {/* Кнопки переноса для админа */}
         {isAdmin && (
-          <div className="flex space-x-2">
-            <button
-              onClick={() => transferSelectedToNextDay(selectedItems)}
-              disabled={selectedItems.length === 0}
-              className="px-3 py-1 bg-blue-600 text-white text-sm font-bold rounded hover:bg-blue-700 disabled:opacity-50"
-            > 
-              🔄 Перенести вперед ({selectedItems.length})
-            </button>
-            <button
-              onClick={() => transferSelectedToToday(selectedItems)}
-              disabled={selectedItems.length === 0}
-              className="px-3 py-1 bg-green-600 text-white text-sm font-bold rounded hover:bg-green-700 disabled:opacity-50"
-            >
-              🔄 Перенести на сегодня ({selectedItems.length})
-            </button>
-            <button
-              onClick={() => transferSelectedToPreviousDay(selectedItems)}
-              disabled={selectedItems.length === 0}
-              className="px-3 py-1 bg-red-600 text-white text-sm font-bold rounded hover:bg-red-700 disabled:opacity-50"
-            >
-              🔄 Перенести назад ({selectedItems.length})
-            </button>
-            
+          <div className="flex flex-col space-y-1">
+            <div className="flex space-x-1">
+              <button
+                onClick={() => transferSelectedToPreviousDay(selectedItems)}
+                disabled={selectedItems.length === 0}
+                className="px-1 py-0.5 bg-red-600 text-white text-xs font-bold rounded hover:bg-red-700 disabled:opacity-50"
+                title="Перенести назад"
+              >
+                ⬅️ ({selectedItems.length})
+              </button>
+              <button
+                onClick={() => transferSelectedToToday(selectedItems)}
+                disabled={selectedItems.length === 0}
+                className="px-1 py-0.5 bg-green-600 text-white text-xs font-bold rounded hover:bg-green-700 disabled:opacity-50"
+                title="Перенести на сегодня"
+              >
+                🏠 ({selectedItems.length})
+              </button>
+              <button
+                onClick={() => transferSelectedToNextDay(selectedItems)}
+                disabled={selectedItems.length === 0}
+                className="px-1 py-0.5 bg-blue-600 text-white text-xs font-bold rounded hover:bg-blue-700 disabled:opacity-50"
+                title="Перенести вперед"
+              >
+                ➡️ ({selectedItems.length})
+              </button>
+            </div>
           </div>
         )}
       </div>
