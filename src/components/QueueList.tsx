@@ -212,7 +212,7 @@ const handleSaveEdit = async () => {
                 className="px-1 py-0.5 bg-green-600 text-white text-xs font-bold rounded hover:bg-green-700 disabled:opacity-50"
                 title="Перенести на сегодня"
               >
-                🏠 ({selectedItems.length})
+                Сегодня ({selectedItems.length})
               </button>
               <button
                 onClick={() => transferSelectedToNextDay(selectedItems)}
@@ -541,7 +541,7 @@ const handleSaveEdit = async () => {
     className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
     title="Редактировать параметры"
   >
-    ✏️
+    Редактировать
   </button>
                         )}
                             
