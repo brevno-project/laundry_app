@@ -1,19 +1,27 @@
-"use client";
+// Безопасное хеширование паролей для продакшена
+import bcrypt from 'bcrypt';
 
-// Простое хеширование пароля для учебного проекта
-// В продакшене используйте bcrypt или argon2
+// Количество раундов для bcrypt (рекомендуется 12 для продакшена)
+const SALT_ROUNDS = 12;
+
 export async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  return hashHex;
+  try {
+    const salt = await bcrypt.genSalt(SALT_ROUNDS);
+    const hash = await bcrypt.hash(password, salt);
+    return hash;
+  } catch (error) {
+    console.error('Error hashing password:', error);
+    throw new Error('Failed to hash password');
+  }
 }
 
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  const passwordHash = await hashPassword(password);
-  return passwordHash === hash;
+  try {
+    return await bcrypt.compare(password, hash);
+  } catch (error) {
+    console.error('Error verifying password:', error);
+    return false;
+  }
 }
 
 // Генерация случайного ID для пользователя
