@@ -1,5 +1,5 @@
 // Безопасное хеширование паролей для продакшена
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 // Количество раундов для bcrypt (рекомендуется 12 для продакшена)
 const SALT_ROUNDS = 12;
