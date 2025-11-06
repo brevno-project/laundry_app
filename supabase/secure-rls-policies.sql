@@ -29,8 +29,8 @@ FOR SELECT USING (true);
 
 -- Регистрация: неаутентифицированные пользователи могут обновлять незарегистрированных студентов
 CREATE POLICY "Anonymous users can register students" ON public.students
-FOR UPDATE USING (auth.uid() IS NULL AND NOT isRegistered)
-WITH CHECK (auth.uid() IS NULL AND NOT isRegistered);
+FOR UPDATE USING (auth.uid() IS NULL AND NOT "isRegistered")
+WITH CHECK (auth.uid() IS NULL AND NOT "isRegistered");
 
 -- Аутентифицированные пользователи могут обновлять свои записи
 CREATE POLICY "Users can update own student record" ON public.students
