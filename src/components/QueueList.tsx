@@ -163,7 +163,7 @@ const handleSaveEdit = async () => {
   };
   
   // Queue items including washing and done
-  const queuedItems = queue.filter(item => 
+  const queuedItems = queue.filter((item: any) =>  
     item.status === QueueStatus.WAITING || 
     item.status === QueueStatus.READY || 
     item.status === QueueStatus.KEY_ISSUED || 
@@ -237,10 +237,10 @@ const handleSaveEdit = async () => {
             
             {/* ✅ Список записей на эту дату */}
             <div className="space-y-3">
-              {groupedQueue[dateKey].map((item, index) => {
+            {groupedQueue[dateKey].map((item, index) => {
                 const isCurrentUser = user && item.studentId === user.studentId;
                 const statusDisplay = getStatusDisplay(item.status);
-                const globalIndex = queuedItems.findIndex(q => q.id === item.id);
+                const globalIndex = queuedItems.findIndex((q: any) => q.id === item.id);
                 
                 return (
                   <div key={item.id} className={`${statusDisplay.bg} border-l-4 ${isCurrentUser ? 'border-blue-600' : 'border-gray-300'} rounded-lg p-3 shadow-sm`}>

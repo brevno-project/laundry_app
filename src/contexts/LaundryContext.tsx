@@ -228,160 +228,178 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Register a new student
-  const registerStudent = async (studentId: string, password: string): Promise<User | null> => {
+    // Register a new student using Supabase Auth
+    const registerStudent = async (studentId: string, password: string): Promise<User | null> => {
+      if (!isSupabaseConfigured || !supabase) {
+        throw new Error('Supabase не настроен');
+      }
+  
+      try {
+        // Check if student exists and is not registered
+        const student = students.find(s => s.id === studentId);
+        if (!student) throw new Error('Студент не найден');
+        if (student.isRegistered) throw new Error('Этот студент уже зарегистрирован');
+  
+        // Create email from studentId for Supabase Auth
+        const email = `${studentId}@laundry.local`;
+        
+        // Register with Supabase Auth
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              student_id: studentId,
+              full_name: student.fullName,
+              room: student.room
+            }
+          }
+        });
+  
+        if (authError) throw authError;
+        if (!authData.user) throw new Error('Не удалось создать пользователя');
+  
+        // Mark student as registered
+        const { error: updateError } = await supabase
+          .from('students')
+          .update({ 
+            isRegistered: true, 
+            registeredAt: new Date().toISOString(),
+            user_id: authData.user.id // Link to Supabase Auth user
+          })
+          .eq('id', studentId);
+  
+        if (updateError) throw updateError;
+  
+        // Create user object
+        const newUser: User = {
+          id: authData.user.id,
+          studentId: student.id,
+          name: student.fullName,
+          room: student.room || undefined,
+          telegram_chat_id: student.telegram_chat_id || undefined,
+        };
+        setUser(newUser);
+        console.log('✅ Student registered:', newUser.name);
+        return newUser;
+      } catch (error: any) {
+        console.error('❌ Error registering student:', error);
+        throw error;
+      }
+    };
+          // Login student using Supabase Auth
+  const loginStudent = async (studentId: string, password: string): Promise<User | null> => {
     if (!isSupabaseConfigured || !supabase) {
       throw new Error('Supabase не настроен');
     }
 
     try {
-      // Check if student exists and is not registered
-      const student = students.find(s => s.id === studentId);
-      if (!student) throw new Error('Студент не найден');
-      if (student.isRegistered) throw new Error('Этот студент уже зарегистрирован');
-
-      // Hash password
-      const passwordHash = await hashPassword(password);
-
-      // Save password
-      const { error: authError } = await supabase
-        .from('student_auth')
-        .insert({ studentId, passwordHash });
+      // Create email from studentId
+      const email = `${studentId}@laundry.local`;
+      
+      // Sign in with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
 
       if (authError) throw authError;
+      if (!authData.user) throw new Error('Неверные учетные данные');
 
-      // Mark student as registered
-      const { error: updateError } = await supabase
+      // Get student info
+      const { data: studentData, error: studentError } = await supabase
         .from('students')
-        .update({ isRegistered: true, registeredAt: new Date().toISOString() })
-        .eq('id', studentId);
+        .select('*')
+        .eq('id', studentId)
+        .single();
 
-      if (updateError) throw updateError;
+      if (studentError) throw studentError;
+      if (!studentData.isRegistered) throw new Error('Студент не зарегистрирован');
 
-      // Auto-login after registration
-      const user = await loginStudent(studentId, password);
-      
-      // ✅ Установить флаг для нового пользователя
-      if (user && !user.telegram_chat_id) {
-        console.log('🆕 New user registered, setting isNewUser flag');
-        setIsNewUser(true);
-        localStorage.setItem('needsTelegramSetup', 'true');
+      // ✅ ПРОВЕРКА БАНА
+      if (studentData.is_banned) {
+        const banReason = studentData.ban_reason || 'Не указана';
+        throw new Error(`❌ Вы заблокированы!\n\nПричина: ${banReason}\n\nОбратитесь к администратору.`);
       }
-      
-      // Reload students list
-      await loadStudents();
 
-      console.log('✅ Student registered successfully');
-      return user;
+      // Create user object
+      const newUser: User = {
+        id: authData.user.id,
+        studentId: studentData.id,
+        name: studentData.fullName,
+        room: studentData.room || undefined,
+        telegram_chat_id: studentData.telegram_chat_id || undefined,
+      };
+
+      // Check admin status
+      const isAdminUser = studentData.firstName?.toLowerCase() === 'swaydikon';
+      setIsAdmin(isAdminUser);
+      console.log('🔑 Admin status:', isAdminUser);
+
+      setUser(newUser);
+      localStorage.setItem('laundryUser', JSON.stringify(newUser));
+
+      console.log('✅ Student logged in with Supabase Auth:', newUser.name);
+      return newUser;
     } catch (error: any) {
-      console.error('❌ Error registering student:', error);
+      console.error('❌ Error logging in:', error);
       throw error;
     }
   };
-  // Login student
-const loginStudent = async (studentId: string, password: string): Promise<User | null> => {
-  if (!isSupabaseConfigured || !supabase) {
-    throw new Error('Supabase не настроен');
-  }
-
-  try {
-    // Get student info
-    const { data: studentData, error: studentError } = await supabase
-      .from('students')
-      .select('*')
-      .eq('id', studentId)
-      .single();
-
-    if (studentError) throw studentError;
-    if (!studentData.isRegistered) throw new Error('Студент не зарегистрирован');
-
-    // ✅ ПРОВЕРКА БАНА
-    if (studentData.is_banned) {
-      const banReason = studentData.ban_reason || 'Не указана';
-      throw new Error(`❌ Вы заблокированы!\n\nПричина: ${banReason}\n\nОбратитесь к администратору.`);
-    }
-
-    // Get password hash
-    const { data: authData, error: authError } = await supabase
-      .from('student_auth')
-      .select('passwordHash')
-      .eq('studentId', studentId)
-      .single();
-
-    if (authError) throw authError;
-
-    // Verify password
-    const isValid = await verifyPassword(password, authData.passwordHash);
-    if (!isValid) throw new Error('Неверный пароль');
-
-    // Create user object
-    const newUser: User = {
-      id: uuidv4(),
-      studentId: studentData.id,
-      name: studentData.fullName,
-      room: studentData.room || undefined,
-      telegram_chat_id: studentData.telegram_chat_id || undefined,
-    };
-
-    console.log('✅ Created user object:', { id: newUser.id, studentId: newUser.studentId, name: newUser.name });
-
-    // Проверка админа (если имя = swaydikon)
-    const isAdminUser = studentData.firstName?.toLowerCase() === 'swaydikon';
-    setIsAdmin(isAdminUser);
-    console.log('🔑 Admin status:', isAdminUser);
-
-    setUser(newUser);
-    localStorage.setItem('laundryUser', JSON.stringify(newUser));
-
-    console.log('✅ Student logged in:', newUser.name);
-    return newUser;
-  } catch (error: any) {
-    console.error('❌ Error logging in:', error);
-    throw error;
-  }
-};
 
   // Logout student
-  const logoutStudent = () => {
+  const logoutStudent = async () => {
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     setUser(null);
     setIsAdmin(false);
     localStorage.removeItem('laundryUser');
     console.log('👋 Student logged out');
   };
 
-  // Admin: Reset student registration
-  const resetStudentRegistration = async (studentId: string) => {
-    if (!isAdmin) throw new Error('Требуются права администратора');
-    if (!isSupabaseConfigured || !supabase) {
-      throw new Error('Supabase не настроен');
-    }
-
-    try {
-      // Delete password
-      const { error: authError } = await supabase
-        .from('student_auth')
-        .delete()
-        .eq('studentId', studentId);
-
-      if (authError) throw authError;
-
-      // Mark student as not registered
-      const { error: updateError } = await supabase
-        .from('students')
-        .update({ isRegistered: false, registeredAt: null })
-        .eq('id', studentId);
-
-      if (updateError) throw updateError;
-
-      // Reload students list
-      await loadStudents();
-
-      console.log('✅ Student registration reset');
-    } catch (error: any) {
-      console.error('❌ Error resetting registration:', error);
-      throw error;
-    }
-  };
+    // Admin: Reset student registration
+    const resetStudentRegistration = async (studentId: string) => {
+      if (!isAdmin) throw new Error('Требуются права администратора');
+      if (!isSupabaseConfigured || !supabase) {
+        throw new Error('Supabase не настроен');
+      }
+  
+      try {
+        // Get student data
+        const { data: studentData } = await supabase
+          .from('students')
+          .select('user_id')
+          .eq('id', studentId)
+          .single();
+  
+        if (studentData?.user_id) {
+          // Delete from Supabase Auth (admin operation)
+          const { error: authError } = await supabase.auth.admin.deleteUser(studentData.user_id);
+          if (authError) console.warn('Could not delete auth user:', authError);
+        }
+  
+        // Mark student as not registered
+        const { error: updateError } = await supabase
+          .from('students')
+          .update({ 
+            isRegistered: false, 
+            registeredAt: null,
+            user_id: null
+          })
+          .eq('id', studentId);
+  
+        if (updateError) throw updateError;
+  
+        // Reload students list
+        await loadStudents();
+  
+        console.log('✅ Student registration reset');
+      } catch (error: any) {
+        console.error('❌ Error resetting registration:', error);
+        throw error;
+      }
+    };
 
   // Связать Telegram с аккаунтом студента
   const linkTelegram = async (telegramCode: string): Promise<{ success: boolean; error?: string }> => {
@@ -424,99 +442,81 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
     }
   };
 
-  // Fetch queue from Supabase or local storage
-  const fetchQueue = async () => {
-    if (!isSupabaseConfigured || !supabase) {
-      console.log('📱 Using localStorage for queue');
-      setQueue(getLocalQueue());
-      return;
-    }
-    
-    try {
-      // ✅ ПРАВИЛЬНАЯ СОРТИРОВКА ПО ДАТАМ И ПОЗИЦИЯМ
-      const { data, error } = await supabase
-        .from('queue')
-        .select('*')
-        .order('currentDate', { ascending: true })    // ← ДОБАВИТЬ
-        .order('position', { ascending: true })        // ← ДОБАВИТЬ
-        .order('joinedAt', { ascending: true });
-      
-      if (error) throw error;
-      
-      setQueue(data || []);
-      saveLocalQueue(data || []);
-    } catch (error: any) {
-      console.error('❌ Error fetching queue:', error);
-      setQueue(getLocalQueue());
-    }
-  };
-
-  // Fetch machine state from Supabase or local storage
-  const fetchMachineState = async () => {
-    if (!isSupabaseConfigured || !supabase) {
-      setMachineState(getLocalMachineState());
-      return;
-    }
-    
-    try {
-      const { data, error } = await supabase
-        .from('machine_state')
-        .select('*')
-        .order('id', { ascending: false })
-        .limit(1);
-      
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        const latestState = data[0];
-        console.log('🎰 Fetched latest machine state:', latestState);
-        setMachineState(latestState);
-        // Also update local storage as backup
-        saveLocalMachineState(latestState);
-      } else {
-        // No records, set to idle
-        const idleState: MachineState = {
-          status: MachineStatus.IDLE,
-          currentQueueItemId: undefined,
-          startedAt: undefined,
-          expectedFinishAt: undefined,
-        };
-        setMachineState(idleState);
-        saveLocalMachineState(idleState);
+    // Fetch queue from Supabase or local storage
+    const fetchQueue = async () => {
+      if (!isSupabaseConfigured || !supabase) {
+        setQueue(getLocalQueue());
+        return;
       }
-    } catch (error: any) {
-      console.error('Error fetching machine state:', error);
-      console.error('Error details:', error?.message, error?.details, error?.hint);
-      // Fall back to local storage
-      setMachineState(getLocalMachineState());
-    }
-  };
-
-  // Fetch history from Supabase or local storage
-  const fetchHistory = async () => {
-    if (!isSupabaseConfigured || !supabase) {
-      setHistory(getLocalHistory());
-      return;
-    }
-    
-    try {
-      const { data, error } = await supabase
-        .from('history')
-        .select('*')
-        .order('finishedAt', { ascending: false })
-        .limit(5);
       
-      if (error) throw error;
-      setHistory(data || []);
-      // Also update local storage as backup
-      saveLocalHistory(data || []);
-    } catch (error: any) {
-      console.error('Error fetching history:', error);
-      console.error('Error details:', error?.message, error?.details, error?.hint);
-      // Fall back to local storage
-      setHistory(getLocalHistory());
-    }
-  };
+      try {
+        const { data, error } = await supabase
+          .from('queue')
+          .select('*')
+          .order('position', { ascending: true });
+        
+        if (error) throw error;
+        setQueue(data || []);
+        // Also update local storage as backup
+        saveLocalQueue(data || []);
+      } catch (error: any) {
+        console.error('Error fetching queue:', error);
+        console.error('Error details:', error?.message, error?.details, error?.hint);
+        // Fall back to local storage
+        setQueue(getLocalQueue());
+      }
+    };
+  
+    // Fetch machine state from Supabase or local storage
+    const fetchMachineState = async () => {
+      if (!isSupabaseConfigured || !supabase) {
+        setMachineState(getLocalMachineState());
+        return;
+      }
+      
+      try {
+        const { data, error } = await supabase
+          .from('machine_state')
+          .select('*')
+          .single();
+        
+        if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
+        setMachineState(data || { status: MachineStatus.IDLE });
+        // Also update local storage as backup
+        saveLocalMachineState(data || { status: MachineStatus.IDLE });
+      } catch (error: any) {
+        console.error('Error fetching machine state:', error);
+        console.error('Error details:', error?.message, error?.details, error?.hint);
+        // Fall back to local storage
+        setMachineState(getLocalMachineState());
+      }
+    };
+  
+    // Fetch history from Supabase or local storage
+    const fetchHistory = async () => {
+      if (!isSupabaseConfigured || !supabase) {
+        setHistory(getLocalHistory());
+        return;
+      }
+      
+      try {
+        const { data, error } = await supabase
+          .from('history')
+          .select('*')
+          .order('finishedAt', { ascending: false })
+          .limit(5);
+        
+        if (error) throw error;
+        setHistory(data || []);
+        // Also update local storage as backup
+        saveLocalHistory(data || []);
+      } catch (error: any) {
+        console.error('Error fetching history:', error);
+        console.error('Error details:', error?.message, error?.details, error?.hint);
+        // Fall back to local storage
+        setHistory(getLocalHistory());
+      }
+    };
 
   const joinQueue = async (
     name: string,
@@ -1836,7 +1836,6 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
   }
 };
 
-
   const value = {
     user,
     setUser,
@@ -1887,10 +1886,10 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
   return <LaundryContext.Provider value={value}>{children}</LaundryContext.Provider>;
 }
 
-export const useLaundry = () => {
+export function useLaundry() {
   const context = useContext(LaundryContext);
   if (context === undefined) {
     throw new Error('useLaundry must be used within a LaundryProvider');
   }
   return context;
-};
+}
