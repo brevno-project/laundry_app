@@ -2,13 +2,17 @@
 ALTER TABLE public.queue ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id);
 
 -- Обновить существующие записи: связать по studentId через таблицу students
+-- Используем id студентов для связи (в новой схеме studentId - это текстовый код студента)
 UPDATE public.queue
 SET user_id = s.user_id
 FROM public.students s
-WHERE public.queue."studentId" = s.id AND s.user_id IS NOT NULL;
+WHERE public.queue."studentId" = s."studentId" AND s.user_id IS NOT NULL;
 
 -- Создать индекс для user_id
 CREATE INDEX IF NOT EXISTS idx_queue_user_id ON public.queue(user_id);
 
 -- Проверить результат
-SELECT id, "userId", "studentId", user_id FROM public.queue LIMIT 5;
+SELECT q.id, q."userId", q."studentId", q.user_id, s.name
+FROM public.queue q
+LEFT JOIN public.students s ON q."studentId" = s."studentId"
+LIMIT 5;
