@@ -1599,11 +1599,13 @@ const toggleAdminStatus = async (studentId: string, makeAdmin: boolean) => {
     throw new Error('❌ Нельзя снять супер админа!');
   }
     console.log(`🔑 ${makeAdmin ? 'Назначение' : 'Снятие'} админа для студента:`, studentId);
-    
-    const { error } = await supabase
-      .from('students')
-      .update({ is_admin: makeAdmin })
-      .eq('id', studentId);
+    console.log('🔄 Отправляем запрос в Supabase...');
+    console.log('📊 Данные для обновления:', { is_admin: makeAdmin });
+    console.log('🎯 ID студента:', studentId);
+    const { error } = await supabase.rpc('update_student_admin_status', {
+      student_id: studentId,
+      admin_status: makeAdmin
+    });
       
     if (error) {
       console.error('❌ Ошибка изменения статуса админа:', error);
