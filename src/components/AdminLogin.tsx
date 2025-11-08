@@ -5,7 +5,7 @@ import { useLaundry } from '@/contexts/LaundryContext';
 import { v4 as uuidv4 } from 'uuid';
 
 export default function AdminLogin() {
-  const { setUser, setIsAdmin } = useLaundry();
+  const { setUser, setIsAdmin,user, students } = useLaundry();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,16 +18,34 @@ export default function AdminLogin() {
       setError('Введите пароль');
       return;
     }
-
+  
     setLoading(true);
     setError('');
-
-    if (verifyAdminKey(password)) {
-      setIsAdmin(true);  // Только это!
+  
+    // ✅ ПРОВЕРКА: Пользователь должен быть студентом с is_admin
+    if (!user) {
+      setError('Сначала войдите как студент');
+      setLoading(false);
+      return;
+    }
+  
+    const currentStudent = students.find(s => s.id === user.studentId);
+    
+    if (!currentStudent?.is_admin) {
+      setError('У вас нет прав админа');
+      setLoading(false);
+      return;
+    }
+  
+    // ✅ Проверить админ пароль из Vercel
+    const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
+    
+    if (password === adminPassword) {
+      setIsAdmin(true);
       localStorage.setItem('laundryIsAdmin', 'true');
-      
+      setError('');
     } else {
-      setError('Неверный пароль');
+      setError('Неверный пароль админа');
       setLoading(false);
     }
   };

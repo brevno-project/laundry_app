@@ -88,6 +88,7 @@ type LaundryContextType = {
   updateAdminKey: (newKey: string) => Promise<void>;
   updateQueueItemDetails: (queueId: string, updates: { washCount?: number; paymentType?: string; expectedFinishAt?: string; chosenDate?: string }) => Promise<void>;
   updateQueueEndTime: (queueId: string, endTime: string) => Promise<void>;
+  toggleAdminStatus: (studentId: string, isAdmin: boolean) => Promise<void>;
   
 };
 
@@ -1555,6 +1556,56 @@ const updateQueueEndTime = async (queueId: string, endTime: string) => {
   await fetchQueue();
 };
 
+
+
+// ========================================
+// АДМИН ФУНКЦИИ
+// ========================================
+
+const toggleAdminStatus = async (studentId: string, makeAdmin: boolean) => {
+  if (!isAdmin) {
+    throw new Error('Только админ может менять статус админа');
+  }
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase не настроен');
+  }
+  try {
+    // ✅ Проверить уровень доступа
+  const currentStudent = students.find(s => s.id === user?.studentId);
+  const targetStudent = students.find(s => s.id === studentId);
+  
+  // Только супер админ может менять админ статусы
+  if (!currentStudent?.is_super_admin) {
+    throw new Error('Только супер админ может управлять админами');
+  }
+  
+  // Нельзя снять супер админа
+  if (!makeAdmin && targetStudent?.is_super_admin) {
+    throw new Error('❌ Нельзя снять супер админа!');
+  }
+    console.log(`🔑 ${makeAdmin ? 'Назначение' : 'Снятие'} админа для студента:`, studentId);
+    
+    const { error } = await supabase
+      .from('students')
+      .update({ is_admin: makeAdmin })
+      .eq('id', studentId);
+      
+    if (error) {
+      console.error('❌ Ошибка изменения статуса админа:', error);
+      throw error;
+    }
+    
+    console.log('✅ Статус админа изменен');
+    
+    // Перезагрузить список студентов чтобы обновить UI
+    await loadStudents();
+    
+  } catch (error: any) {
+    console.error('❌ Error toggling admin status:', error);
+    throw error;
+  }
+};
+
 // Admin: Send message to queue item
 const sendAdminMessage = async (queueItemId: string, message: string) => {
   if (!isAdmin) return;
@@ -2027,6 +2078,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
    adminAddToQueue,
    updateQueueItemDetails,
    updateQueueEndTime,              
+   toggleAdminStatus,
   };
 
   return <LaundryContext.Provider value={value}>{children}</LaundryContext.Provider>;

@@ -13,7 +13,9 @@ export type Student = {
   is_banned?: boolean;
   banned_at?: string | null;
   ban_reason?: string | null;
-  user_id?: string; // ✅ ДОБАВЛЕНО: UUID из Supabase Auth
+  user_id?: string; // 
+  is_admin?: boolean;
+  is_super_admin?: boolean;
 };
 
 export type StudentAuth = {

@@ -20,8 +20,8 @@ export default function AdminPanel() {
     addStudent,
     updateStudent,
     deleteStudent,
-    updateAdminKey,
     adminAddToQueue,
+    toggleAdminStatus,
   } = useLaundry();
   
   const [adminKey, setAdminKey] = useState('');
@@ -34,7 +34,6 @@ export default function AdminPanel() {
   const [showEditStudent, setShowEditStudent] = useState(false);
   const [showBanStudent, setShowBanStudent] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showUpdateKey, setShowUpdateKey] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showAddToQueue, setShowAddToQueue] = useState(false);
@@ -218,27 +217,6 @@ export default function AdminPanel() {
       setShowDeleteConfirm(false);
       setSelectedStudent(null);
       alert('✅ Студент удалён!');
-    } catch (err: any) {
-      alert('❌ Ошибка: ' + err.message);
-    }
-  };
-
-  const handleUpdateAdminKey = async () => {
-    if (newAdminKey.length < 6) {
-      alert('Ключ должен быть минимум 6 символов');
-      return;
-    }
-    
-    if (newAdminKey !== confirmAdminKey) {
-      alert('Ключи не совпадают');
-      return;
-    }
-    
-    try {
-      await updateAdminKey(newAdminKey);
-      setShowUpdateKey(false);
-      setNewAdminKey('');
-      setConfirmAdminKey('');
     } catch (err: any) {
       alert('❌ Ошибка: ' + err.message);
     }
@@ -455,7 +433,17 @@ export default function AdminPanel() {
                     </div>
                   </div>
                   
-                  {/* ПЕРВАЯ КНОПКА - ПОСТАВИТЬ В ОЧЕРЕДЬ */}
+                  {/* Действия со студентом */}
+                  <button 
+                    onClick={() => toggleAdminStatus(student.id, !student.is_admin)}
+                    className={`px-3 py-1 rounded text-sm font-bold ${
+                      student.is_admin 
+                        ? 'bg-red-500 hover:bg-red-600 text-white' 
+                        : 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                     }`}
+                  >
+                    {student.is_admin ? '❌ Снять админа' : '👑 Сделать админом'}
+                  </button>
                   <button
                     onClick={() => openAddToQueueModal(student)}
                     className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-1 w-full"
@@ -708,45 +696,6 @@ export default function AdminPanel() {
         </div>
       )}
 
-      {/* Модальное окно: Сменить админ-ключ */}
-      {showUpdateKey && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">🔑 Сменить админ-ключ</h3>
-            <div className="space-y-3">
-              <input
-                type="password"
-                value={newAdminKey}
-                onChange={(e) => setNewAdminKey(e.target.value)}
-                placeholder="Новый ключ (мин. 6 символов)"
-                className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900"
-              />
-              <input
-                type="password"
-                value={confirmAdminKey}
-                onChange={(e) => setConfirmAdminKey(e.target.value)}
-                placeholder="Подтвердите ключ"
-                className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900"
-              />
-            </div>
-            <p className="text-red-600 text-sm mt-2">⚠️ После смены потребуется перезагрузка</p>
-            <div className="flex gap-2 mt-4">
-              <button
-                onClick={() => setShowUpdateKey(false)}
-                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
-              >
-                Отмена
-              </button>
-              <button
-                onClick={handleUpdateAdminKey}
-                className="flex-1 bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-yellow-700"
-              >
-                Сменить
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       
       {/* ✅ ГЛАВНОЕ МОДАЛЬНОЕ ОКНО: Поставить в очередь С ВЫБОРОМ ДАТЫ */}
       {showAddToQueue && selectedStudent && (

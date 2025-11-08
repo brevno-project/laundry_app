@@ -6,7 +6,7 @@ BEGIN
   RETURN EXISTS (
     SELECT 1 FROM public.students
     WHERE user_id = auth.uid()
-    AND firstName ILIKE 'swaydikon'
+    AND is_admin = TRUE
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

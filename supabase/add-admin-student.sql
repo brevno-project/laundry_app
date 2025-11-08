@@ -1,11 +1,16 @@
--- Добавить админского студента swaydikon
+-- Добавить админского студента (временное решение)
+-- ВНИМАНИЕ: Потом сделаем полноценную админ систему
 
--- 1. Добавить студента в таблицу students
-INSERT INTO students ("firstName", "lastName", "fullName", room, "isRegistered", "registeredAt")
-VALUES ('swaydikon', 'Admin', 'swaydikon Admin', 'A501', false, null)
-ON CONFLICT ("firstName", "lastName") DO NOTHING;
+-- 1. Добавить поле is_admin в таблицу students
+ALTER TABLE students ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;
 
--- 2. Проверить что студент добавлен
-SELECT id, "firstName", "lastName", "fullName", room, "isRegistered"
-FROM students 
-WHERE "firstName" = 'swaydikon';
+-- 2. Сделать существующего студента админом
+-- ЗАМЕНИТЕ 'ВАШЕ_ИМЯ' на имя реального админа
+UPDATE students
+SET is_admin = TRUE
+WHERE "firstName" = 'ВАШЕ_ИМЯ';  -- ← ИЗМЕНИТЕ ЭТО
+
+-- 3. Проверить админов
+SELECT id, "firstName", "lastName", "fullName", is_admin
+FROM students
+WHERE is_admin = TRUE;
