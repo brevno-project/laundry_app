@@ -437,16 +437,18 @@ export default function AdminPanel() {
                   
                   {/* Действия со студентом */}
                   {isSuperAdmin && (
-                  <button 
-                    onClick={() => toggleAdminStatus(student.id, !student.is_admin)}
-                    className={`px-3 py-1 rounded text-sm font-bold ${
-                      student.is_admin 
-                        ? 'bg-red-500 hover:bg-red-600 text-white' 
-                        : 'bg-yellow-500 hover:bg-yellow-600 text-white'
-                     }`}
-                  >
-                    {student.is_admin ? '❌ Снять админа' : '👑 Сделать админом'}
-                  </button>
+                    <div className="bg-yellow-100 border-2 border-yellow-300 rounded-lg p-3 mb-3">
+                      <button 
+                        onClick={() => toggleAdminStatus(student.id, !student.is_admin)}
+                        className={`w-full px-4 py-2 rounded-lg text-sm font-bold ${
+                          student.is_admin 
+                            ? 'bg-red-500 hover:bg-red-600 text-white' 
+                            : 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                        }`}
+                      >
+                        {student.is_admin ? '❌ Снять админа' : '👑 Сделать админом'}
+                      </button>
+                    </div>
                   )}
                     <button
                     onClick={() => openAddToQueueModal(student)}

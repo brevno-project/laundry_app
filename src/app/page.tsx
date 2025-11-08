@@ -4,7 +4,6 @@ import React from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import TimeBanner from '@/components/TimeBanner';
 import StudentAuth from '@/components/StudentAuth';
-import AdminLogin from '@/components/AdminLogin';
 import UserForm from '@/components/UserForm';
 import QueueList from '@/components/QueueList';
 import AdminPanel from '@/components/AdminPanel';
@@ -179,12 +178,11 @@ export default function Home() {
             {!user && !isAdmin ? (
               <>
                 <StudentAuth />
-                <AdminLogin />
               </>
             ) : (
               <>
                 {/* Всегда показываем основные компоненты */}
-                {isAdmin && <AdminPanel />}
+                <AdminPanel />
                 
                 {/* Показываем пользовательские компоненты если есть пользователь ИЛИ админ */}
                 {(user || isAdmin) && (

@@ -35,7 +35,7 @@ export default function StudentAuth() {
       return;
     }
 
-    if (!selectedStudent.isRegistered && password.length < 4) {
+    if (!selectedStudent.isRegistered && password.length < 6) {
       setError('Пароль должен быть минимум 4 символа');
       return;
     }
