@@ -1,3 +1,5 @@
+// ✅ ИСПРАВЛЕННЫЕ ТИПЫ для работы с RLS политиками
+
 export type Student = {
   id: string;
   firstName: string;
@@ -11,6 +13,7 @@ export type Student = {
   is_banned?: boolean;
   banned_at?: string | null;
   ban_reason?: string | null;
+  user_id?: string; // ✅ ДОБАВЛЕНО: UUID из Supabase Auth
 };
 
 export type StudentAuth = {
@@ -21,42 +24,43 @@ export type StudentAuth = {
 };
 
 export type User = {
-  id: string;
-  studentId: string;
+  id: string; // ✅ Это UUID из Supabase Auth (auth.users.id)
+  studentId: string; // ✅ Это ID из таблицы students
   name: string;
   room?: string;
   isAdmin?: boolean;
   fullName?: string;
-  telegram_chat_id?: string; // Telegram Chat ID для персональных уведомлений
+  telegram_chat_id?: string;
 };
 
 export enum QueueStatus {
-  WAITING = 'waiting',        // Ждет в очереди
-  READY = 'ready',            // Следующий! (выделяется)
-  KEY_ISSUED = 'key_issued',  // Ключ выдан
-  WASHING = 'washing',        // Стирает
-  DONE = 'done',              // Закончил
+  WAITING = 'waiting',
+  READY = 'ready',
+  KEY_ISSUED = 'key_issued',
+  WASHING = 'washing',
+  DONE = 'done',
 }
 
 export type QueueItem = {
   id: string;
-  userId: string;
-  studentId: string;         // ID студента из таблицы students (для поиска telegram_chat_id)
+  userId: string; // ⚠️ УСТАРЕВШЕЕ: старый формат (admin_176...)
+  user_id: string; // ✅ НОВОЕ: UUID из Supabase Auth для RLS
+  studentId: string; // ID студента из таблицы students
   userName: string;
   userRoom?: string;
-  washCount: number;          // Количество стирок
-  paymentType?: string;       // 'money' или 'coupon'
+  washCount: number;
+  paymentType?: string;
   joinedAt: string;
   plannedStartAt?: string;
-  expectedFinishAt?: string;  // Планируемое время окончания
-  finishedAt?: string;        // Фактическое время окончания
+  expectedFinishAt?: string;
+  finishedAt?: string;
   note?: string;
-  adminMessage?: string;      // Сообщение от админа
-  returnKeyAlert?: boolean;   // Полноэкранное уведомление "Принеси ключ"
+  adminMessage?: string;
+  returnKeyAlert?: boolean;
   status: QueueStatus;
   scheduledForDate: string; // '2025-11-02'
-  currentDate: string;      // '2025-11-03' (может отличаться после переноса)
-  position: number;         // 1,2,3...
+  currentDate: string; // '2025-11-03'
+  position: number; // 1,2,3...
 };
 
 export enum MachineStatus {
