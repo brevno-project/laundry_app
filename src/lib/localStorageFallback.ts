@@ -83,17 +83,18 @@ export const addToLocalQueue = (
   const newItem: QueueItem = {
     id: uuidv4(),
     userId: user.id,
-    studentId: user.studentId || user.id, // Используем studentId или id как fallback
+    user_id: user.id, // ✅ ДОБАВИТЬ ЭТУ СТРОКУ
+    studentId: user.studentId || user.id,
     userName: user.name,
     userRoom: user.room,
     washCount: 1,
-    paymentType: 'money',  // ← ДОБАВИТЬ
+    paymentType: 'money',
     joinedAt: new Date().toISOString(),
-    expectedFinishAt: undefined,  // ← ДОБАВИТЬ
+    expectedFinishAt: undefined,
     status: QueueStatus.WAITING,
-    scheduledForDate: new Date().toISOString().slice(0, 10),  // ← ДОБАВИТЬ
-    currentDate: new Date().toISOString().slice(0, 10),  // ← ДОБАВИТЬ
-    position: 1,  // ← ДОБАВИТЬ
+    scheduledForDate: new Date().toISOString().slice(0, 10),
+    currentDate: new Date().toISOString().slice(0, 10),
+    position: 1,
   };
   
   queue.push(newItem);
