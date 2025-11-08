@@ -76,7 +76,9 @@ type LaundryContextType = {
   banStudent: (studentId: string, reason?: string) => Promise<void>;
   unbanStudent: (studentId: string) => Promise<void>;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   setIsAdmin: (isAdmin: boolean) => void;
+  setIsSuperAdmin: (isSuperAdmin: boolean) => void;
   verifyAdminKey: (key: string) => boolean;
   getUserQueueItem: () => QueueItem | undefined;
   isLoading: boolean;
@@ -89,6 +91,8 @@ type LaundryContextType = {
   updateQueueItemDetails: (queueId: string, updates: { washCount?: number; paymentType?: string; expectedFinishAt?: string; chosenDate?: string }) => Promise<void>;
   updateQueueEndTime: (queueId: string, endTime: string) => Promise<void>;
   toggleAdminStatus: (studentId: string, isAdmin: boolean) => Promise<void>;
+  toggleSuperAdminStatus: (studentId: string, isSuperAdmin: boolean) => Promise<void>;
+
   
 };
 
@@ -97,6 +101,7 @@ const LaundryContext = createContext<LaundryContextType | undefined>(undefined);
 export function LaundryProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(false);
   const [students, setStudents] = useState<Student[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [machineState, setMachineState] = useState<MachineState>({
@@ -112,10 +117,12 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     
     const storedUser = localStorage.getItem('laundryUser');
     const storedIsAdmin = localStorage.getItem('laundryIsAdmin') === 'true';
+    const storedIsSuperAdmin = localStorage.getItem('laundryIsSuperAdmin') === 'true';
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
     setIsAdmin(storedIsAdmin);
+    setIsSuperAdmin(storedIsSuperAdmin);
 
     // Initial data fetch
     loadStudents(); // Load students list
@@ -369,8 +376,16 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
     };
 
     // Проверить админские права
-    const isAdminUser = studentData.firstName?.toLowerCase() === 'swaydikon';
+    // ✅ АВТОМАТИЧЕСКИ: Проверить админ статус из БД
+    const isAdminUser = studentData.is_admin || false;
+    const isSuperAdminUser = studentData.is_super_admin || false;
+
     setIsAdmin(isAdminUser);
+    setIsSuperAdmin(isSuperAdminUser);
+
+    // Сохранить в localStorage
+    localStorage.setItem('laundryIsAdmin', isAdminUser.toString());
+    localStorage.setItem('laundryIsSuperAdmin', isSuperAdminUser.toString());
 
     setUser(newUser);
     localStorage.setItem('laundryUser', JSON.stringify(newUser));
@@ -1606,6 +1621,46 @@ const toggleAdminStatus = async (studentId: string, makeAdmin: boolean) => {
   }
 };
 
+const toggleSuperAdminStatus = async (studentId: string, makeSuperAdmin: boolean) => {
+  if (!isAdmin) {
+    throw new Error('Только админ может менять статус супер админа');
+  }
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase не настроен');
+  }
+  try {
+    const currentStudent = students.find(s => s.id === user?.studentId);
+    
+    // Only super admin can manage super admin status
+    if (!currentStudent?.is_super_admin) {
+      throw new Error('Только супер админ может управлять супер админами');
+    }
+    
+    // Cannot remove the last super admin
+    if (!makeSuperAdmin) {
+      const superAdminsCount = students.filter(s => s.is_super_admin).length;
+      if (superAdminsCount <= 1) {
+        throw new Error('❌ Нельзя снять последнего супер админа!');
+      }
+    }
+    
+    const { error } = await supabase
+      .from('students')
+      .update({ is_super_admin: makeSuperAdmin })
+      .eq('id', studentId);
+      
+    if (error) {
+      throw error;
+    }
+    
+    await loadStudents();
+    
+  } catch (error: any) {
+    console.error('❌ Error toggling super admin status:', error);
+    throw error;
+  }
+};
+
 // Admin: Send message to queue item
 const sendAdminMessage = async (queueItemId: string, message: string) => {
   if (!isAdmin) return;
@@ -2061,7 +2116,9 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     banStudent,
     unbanStudent,
     isAdmin,
+    isSuperAdmin,
     setIsAdmin,
+    setIsSuperAdmin,
     verifyAdminKey,
     getUserQueueItem,
     isLoading,
@@ -2079,6 +2136,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
    updateQueueItemDetails,
    updateQueueEndTime,              
    toggleAdminStatus,
+   toggleSuperAdminStatus,
   };
 
   return <LaundryContext.Provider value={value}>{children}</LaundryContext.Provider>;

@@ -22,6 +22,8 @@ export default function AdminPanel() {
     deleteStudent,
     adminAddToQueue,
     toggleAdminStatus,
+    isSuperAdmin,
+    setIsSuperAdmin
   } = useLaundry();
   
   const [adminKey, setAdminKey] = useState('');
@@ -434,6 +436,7 @@ export default function AdminPanel() {
                   </div>
                   
                   {/* Действия со студентом */}
+                  {isSuperAdmin && (
                   <button 
                     onClick={() => toggleAdminStatus(student.id, !student.is_admin)}
                     className={`px-3 py-1 rounded text-sm font-bold ${
@@ -444,7 +447,8 @@ export default function AdminPanel() {
                   >
                     {student.is_admin ? '❌ Снять админа' : '👑 Сделать админом'}
                   </button>
-                  <button
+                  )}
+                    <button
                     onClick={() => openAddToQueueModal(student)}
                     className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-1 w-full"
                   >

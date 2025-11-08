@@ -33,6 +33,7 @@ export type User = {
   isAdmin?: boolean;
   fullName?: string;
   telegram_chat_id?: string;
+  is_super_admin?: boolean;
 };
 
 export enum QueueStatus {
