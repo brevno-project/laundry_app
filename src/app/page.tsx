@@ -7,11 +7,14 @@ import StudentAuth from '@/components/StudentAuth';
 import UserForm from '@/components/UserForm';
 import QueueList from '@/components/QueueList';
 import AdminPanel from '@/components/AdminPanel';
+import AdminLogin from '@/components/AdminLogin';
+
+
 import TelegramSetup from '@/components/TelegramSetup';
 import HistoryList from '@/components/HistoryList';
 
 export default function Home() {
-  const { user, isLoading, logoutStudent, isAdmin, machineState, queue, isNewUser, setIsNewUser } = useLaundry();
+  const { user, isLoading, logoutStudent, isAdmin, machineState, queue, isNewUser, setIsNewUser, students } = useLaundry();
   const [activeTab, setActiveTab] = React.useState('main');
   const [showTelegramModal, setShowTelegramModal] = React.useState(false);
 
@@ -175,24 +178,27 @@ export default function Home() {
             </div>
             
             {/* Логика входа */}
-            {!user && !isAdmin ? (
+            {!user ? (
               <>
                 <StudentAuth />
               </>
             ) : (
               <>
+                {/* AdminLogin показывается только если пользователь супер-админ и уже вошел */}
+                {students.find(s => s.id === user.studentId)?.is_super_admin && !isAdmin && <AdminLogin />}
+                
                 {/* Всегда показываем основные компоненты */}
-                <AdminPanel />
+                {isAdmin && <AdminPanel />}
                 
                 {/* Показываем пользовательские компоненты если есть пользователь ИЛИ админ */}
                 {(user || isAdmin) && (
-        <>
-        {!isAdmin && <UserForm />} {/* UserForm только для обычных пользователей */}
-        <QueueList />
-      </>
-    )}
-  </>
-)}
+                  <>
+                    {!isAdmin && <UserForm />} {/* UserForm только для обычных пользователей */}
+                    <QueueList />
+                  </>
+                )}
+              </>
+            )}
           </div>
         )}
         

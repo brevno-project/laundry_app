@@ -6,6 +6,7 @@ import { Student } from '@/types';
 
 export default function AdminPanel() {
   const { 
+    user,
     isAdmin, 
     setIsAdmin, 
     verifyAdminKey, 
@@ -268,6 +269,20 @@ export default function AdminPanel() {
     }
   };
 
+  const handleToggleAdmin = async (studentId: string, makeAdmin: boolean) => {
+    console.log('🔑 Toggle admin:', studentId, makeAdmin);
+    console.log('👤 Current user:', user);
+    console.log('👑 Is super admin:', isSuperAdmin);
+    
+    try {
+      await toggleAdminStatus(studentId, makeAdmin);
+      alert(makeAdmin ? '✅ Студент стал админом!' : '✅ Админские права сняты!');
+    } catch (error: any) {
+      console.error('❌ Error toggling admin:', error);
+      alert('❌ Ошибка: ' + error.message);
+    }
+  };
+
 
 
   const openAddToQueueModal = (student: Student) => {
@@ -439,7 +454,7 @@ export default function AdminPanel() {
                   {isSuperAdmin && (
                     <div className="bg-yellow-100 border-2 border-yellow-300 rounded-lg p-3 mb-3">
                       <button 
-                        onClick={() => toggleAdminStatus(student.id, !student.is_admin)}
+                        onClick={() => handleToggleAdmin(student.id, !student.is_admin)}
                         className={`w-full px-4 py-2 rounded-lg text-sm font-bold ${
                           student.is_admin 
                             ? 'bg-red-500 hover:bg-red-600 text-white' 
