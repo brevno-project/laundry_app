@@ -169,7 +169,7 @@ export default function StudentAuth() {
             autoFocus
           />
           {!selectedStudent?.isRegistered && (
-            <p className="text-xs text-gray-700 mt-1 font-medium">Минимум 4 символа</p>
+            <p className="text-xs text-gray-700 mt-1 font-medium">Минимум 6 символов</p>
           )}
         </div>
 

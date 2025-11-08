@@ -246,7 +246,8 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
     // ✅ ИСПРАВЛЕНО: Создать правильный email
     // БЫЛО: const email = `${studentId}@laundry.local`;  // UUID - НЕПРАВИЛЬНО!
     // СТАЛО: Использовать firstName или fullName
-    const email = `${student.firstName.toLowerCase()}@laundry.local`;
+    const shortId = studentId.slice(0, 8);
+    const email = `student-${shortId}@example.com`;
     
     console.log('📧 Registering with email:', email);
     
@@ -319,71 +320,6 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
 };
 
 // ========================================
-// АЛЬТЕРНАТИВНЫЙ ВАРИАНТ
-// Если хотите использовать studentId как часть email
-// ========================================
-
-const registerStudentAlt = async (studentId: string, password: string): Promise<User | null> => {
-  if (!isSupabaseConfigured || !supabase) {
-    throw new Error('Supabase не настроен');
-  }
-
-  try {
-    const student = students.find(s => s.id === studentId);
-    if (!student) throw new Error('Студент не найден');
-    if (student.isRegistered) throw new Error('Этот студент уже зарегистрирован');
-
-    // ✅ ВАРИАНТ 2: Использовать короткий ID
-    // Берем первые 8 символов UUID
-    const shortId = studentId.slice(0, 8);
-    const email = `student-${shortId}@laundry.local`;
-    
-    console.log('📧 Registering with email:', email);
-    
-    // Остальной код такой же...
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          student_id: studentId,
-          full_name: student.fullName,
-          room: student.room
-        }
-      }
-    });
-
-    if (authError) throw authError;
-    if (!authData.user) throw new Error('Не удалось создать пользователя');
-
-    const { error: updateError } = await supabase
-      .from('students')
-      .update({ 
-        isRegistered: true, 
-        registeredAt: new Date().toISOString(),
-        user_id: authData.user.id
-      })
-      .eq('id', studentId);
-
-    if (updateError) throw updateError;
-
-    const newUser: User = {
-      id: authData.user.id,
-      studentId: student.id,
-      name: student.fullName,
-      room: student.room || undefined,
-      telegram_chat_id: student.telegram_chat_id || undefined,
-    };
-    
-    setUser(newUser);
-    return newUser;
-  } catch (error: any) {
-    console.error('❌ Error registering student:', error);
-    throw error;
-  }
-};
-
-// ========================================
 // ТАКЖЕ НУЖНО ИСПРАВИТЬ loginStudent
 // ========================================
 
@@ -404,8 +340,7 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
     if (!studentData.isRegistered) throw new Error('Студент не зарегистрирован');
 
     // ✅ ИСПРАВЛЕНО: Использовать тот же email что и при регистрации
-    const email = `${studentData.firstName.toLowerCase()}@laundry.local`;
-    
+    const email = `student-${studentId.slice(0, 8)}@example.com`;
     console.log('🔑 Logging in with email:', email);
     
     // Войти через Supabase Auth
