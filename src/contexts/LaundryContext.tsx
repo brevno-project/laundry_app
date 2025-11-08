@@ -228,124 +228,224 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     }
   };
 
-    // Register a new student using Supabase Auth
-    const registerStudent = async (studentId: string, password: string): Promise<User | null> => {
-      if (!isSupabaseConfigured || !supabase) {
-        throw new Error('Supabase не настроен');
+    // ========================================
+// ИСПРАВЛЕННАЯ ФУНКЦИЯ РЕГИСТРАЦИИ
+// ========================================
+
+const registerStudent = async (studentId: string, password: string): Promise<User | null> => {
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase не настроен');
+  }
+
+  try {
+    // Проверить что студент существует и не зарегистрирован
+    const student = students.find(s => s.id === studentId);
+    if (!student) throw new Error('Студент не найден');
+    if (student.isRegistered) throw new Error('Этот студент уже зарегистрирован');
+
+    // ✅ ИСПРАВЛЕНО: Создать правильный email
+    // БЫЛО: const email = `${studentId}@laundry.local`;  // UUID - НЕПРАВИЛЬНО!
+    // СТАЛО: Использовать firstName или fullName
+    const email = `${student.firstName.toLowerCase()}@laundry.local`;
+    
+    console.log('📧 Registering with email:', email);
+    
+    // Проверить что такой email еще не зарегистрирован
+    const { data: existingUser } = await supabase.auth.admin.listUsers();
+    const emailExists = existingUser?.users.some(u => u.email === email);
+    
+    if (emailExists) {
+      throw new Error('Пользователь с таким именем уже зарегистрирован. Выберите другое имя.');
+    }
+    
+    // Зарегистрировать в Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          student_id: studentId,
+          full_name: student.fullName,
+          room: student.room
+        }
       }
-  
-      try {
-        // Check if student exists and is not registered
-        const student = students.find(s => s.id === studentId);
-        if (!student) throw new Error('Студент не найден');
-        if (student.isRegistered) throw new Error('Этот студент уже зарегистрирован');
-  
-        // Create email from studentId for Supabase Auth
-        const email = `${studentId}@laundry.local`;
-        
-        // Register with Supabase Auth
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              student_id: studentId,
-              full_name: student.fullName,
-              room: student.room
-            }
-          }
-        });
-  
-        if (authError) throw authError;
-        if (!authData.user) throw new Error('Не удалось создать пользователя');
-  
-        // Mark student as registered
-        const { error: updateError } = await supabase
-          .from('students')
-          .update({ 
-            isRegistered: true, 
-            registeredAt: new Date().toISOString(),
-            user_id: authData.user.id // Link to Supabase Auth user
-          })
-          .eq('id', studentId);
-  
-        if (updateError) throw updateError;
-  
-        // Create user object
-        const newUser: User = {
-          id: authData.user.id,
-          studentId: student.id,
-          name: student.fullName,
-          room: student.room || undefined,
-          telegram_chat_id: student.telegram_chat_id || undefined,
-        };
-        setUser(newUser);
-        console.log('✅ Student registered:', newUser.name);
-        return newUser;
-      } catch (error: any) {
-        console.error('❌ Error registering student:', error);
-        throw error;
-      }
+    });
+
+    if (authError) {
+      console.error('❌ Auth error:', authError);
+      throw authError;
+    }
+    
+    if (!authData.user) {
+      throw new Error('Не удалось создать пользователя');
+    }
+
+    console.log('✅ Auth user created:', authData.user.id);
+
+    // ✅ Обновить students: пометить как зарегистрированного + добавить user_id
+    const { error: updateError } = await supabase
+      .from('students')
+      .update({ 
+        isRegistered: true, 
+        registeredAt: new Date().toISOString(),
+        user_id: authData.user.id  // ✅ КРИТИЧНО: Связать с auth.users
+      })
+      .eq('id', studentId);
+
+    if (updateError) {
+      console.error('❌ Update error:', updateError);
+      throw updateError;
+    }
+
+    console.log('✅ Student updated with user_id:', authData.user.id);
+
+    // Создать объект User
+    const newUser: User = {
+      id: authData.user.id,  // ✅ UUID из auth.users
+      studentId: student.id,
+      name: student.fullName,
+      room: student.room || undefined,
+      telegram_chat_id: student.telegram_chat_id || undefined,
     };
-          // Login student using Supabase Auth
-  const loginStudent = async (studentId: string, password: string): Promise<User | null> => {
-    if (!isSupabaseConfigured || !supabase) {
-      throw new Error('Supabase не настроен');
-    }
+    
+    setUser(newUser);
+    console.log('✅ Student registered successfully:', newUser.name);
+    
+    return newUser;
+  } catch (error: any) {
+    console.error('❌ Error registering student:', error);
+    throw error;
+  }
+};
 
-    try {
-      // Create email from studentId
-      const email = `${studentId}@laundry.local`;
-      
-      // Sign in with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+// ========================================
+// АЛЬТЕРНАТИВНЫЙ ВАРИАНТ
+// Если хотите использовать studentId как часть email
+// ========================================
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Неверные учетные данные');
+const registerStudentAlt = async (studentId: string, password: string): Promise<User | null> => {
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase не настроен');
+  }
 
-      // Get student info
-      const { data: studentData, error: studentError } = await supabase
-        .from('students')
-        .select('*')
-        .eq('id', studentId)
-        .single();
+  try {
+    const student = students.find(s => s.id === studentId);
+    if (!student) throw new Error('Студент не найден');
+    if (student.isRegistered) throw new Error('Этот студент уже зарегистрирован');
 
-      if (studentError) throw studentError;
-      if (!studentData.isRegistered) throw new Error('Студент не зарегистрирован');
-
-      // ✅ ПРОВЕРКА БАНА
-      if (studentData.is_banned) {
-        const banReason = studentData.ban_reason || 'Не указана';
-        throw new Error(`❌ Вы заблокированы!\n\nПричина: ${banReason}\n\nОбратитесь к администратору.`);
+    // ✅ ВАРИАНТ 2: Использовать короткий ID
+    // Берем первые 8 символов UUID
+    const shortId = studentId.slice(0, 8);
+    const email = `student-${shortId}@laundry.local`;
+    
+    console.log('📧 Registering with email:', email);
+    
+    // Остальной код такой же...
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          student_id: studentId,
+          full_name: student.fullName,
+          room: student.room
+        }
       }
+    });
 
-      // Create user object
-      const newUser: User = {
-        id: authData.user.id,
-        studentId: studentData.id,
-        name: studentData.fullName,
-        room: studentData.room || undefined,
-        telegram_chat_id: studentData.telegram_chat_id || undefined,
-      };
+    if (authError) throw authError;
+    if (!authData.user) throw new Error('Не удалось создать пользователя');
 
-      // Check admin status
-      const isAdminUser = studentData.firstName?.toLowerCase() === 'swaydikon';
-      setIsAdmin(isAdminUser);
-      console.log('🔑 Admin status:', isAdminUser);
+    const { error: updateError } = await supabase
+      .from('students')
+      .update({ 
+        isRegistered: true, 
+        registeredAt: new Date().toISOString(),
+        user_id: authData.user.id
+      })
+      .eq('id', studentId);
 
-      setUser(newUser);
-      localStorage.setItem('laundryUser', JSON.stringify(newUser));
+    if (updateError) throw updateError;
 
-      console.log('✅ Student logged in with Supabase Auth:', newUser.name);
-      return newUser;
-    } catch (error: any) {
-      console.error('❌ Error logging in:', error);
-      throw error;
+    const newUser: User = {
+      id: authData.user.id,
+      studentId: student.id,
+      name: student.fullName,
+      room: student.room || undefined,
+      telegram_chat_id: student.telegram_chat_id || undefined,
+    };
+    
+    setUser(newUser);
+    return newUser;
+  } catch (error: any) {
+    console.error('❌ Error registering student:', error);
+    throw error;
+  }
+};
+
+// ========================================
+// ТАКЖЕ НУЖНО ИСПРАВИТЬ loginStudent
+// ========================================
+
+const loginStudent = async (studentId: string, password: string): Promise<User | null> => {
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase не настроен');
+  }
+
+  try {
+    // Получить студента
+    const { data: studentData, error: studentError } = await supabase
+      .from('students')
+      .select('*')
+      .eq('id', studentId)
+      .single();
+
+    if (studentError) throw studentError;
+    if (!studentData.isRegistered) throw new Error('Студент не зарегистрирован');
+
+    // ✅ ИСПРАВЛЕНО: Использовать тот же email что и при регистрации
+    const email = `${studentData.firstName.toLowerCase()}@laundry.local`;
+    
+    console.log('🔑 Logging in with email:', email);
+    
+    // Войти через Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (authError) throw authError;
+    if (!authData.user) throw new Error('Неверные учетные данные');
+
+    // Проверка бана
+    if (studentData.is_banned) {
+      const banReason = studentData.ban_reason || 'Не указана';
+      throw new Error(`❌ Вы заблокированы!\n\nПричина: ${banReason}`);
     }
-  };
+
+    // Создать объект User
+    const newUser: User = {
+      id: authData.user.id,
+      studentId: studentData.id,
+      name: studentData.fullName,
+      room: studentData.room || undefined,
+      telegram_chat_id: studentData.telegram_chat_id || undefined,
+    };
+
+    // Проверить админские права
+    const isAdminUser = studentData.firstName?.toLowerCase() === 'swaydikon';
+    setIsAdmin(isAdminUser);
+
+    setUser(newUser);
+    localStorage.setItem('laundryUser', JSON.stringify(newUser));
+
+    console.log('✅ Student logged in:', newUser.name);
+    return newUser;
+  } catch (error: any) {
+    console.error('❌ Error logging in:', error);
+    throw error;
+  }
+};
 
   // Logout student
   const logoutStudent = async () => {
