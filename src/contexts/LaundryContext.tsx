@@ -4,7 +4,6 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/lib/supabase';
 import { User, Student, QueueItem, MachineStatus, QueueStatus, MachineState, HistoryItem } from '@/types';
-import { hashPassword, verifyPassword } from '@/lib/auth';
 import { sendTelegramNotification } from '@/lib/telegram';
 import { parseISO, format, addDays } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
@@ -1938,7 +1937,7 @@ const transferSelectedToPreviousDay = async (selectedIds: string[]) => {
           const newOrder = [...existing, ...transferred];
           
           // Присвоить position 1, 2, 3...
-          for (let k = 0; k < newOrder.length; k++) {
+          for (let k = 0; k <newOrder.length; k++) {
             await supabase
               .from('queue')
               .update({ position: k + 1 })
@@ -2193,7 +2192,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
       // Если не получилось, создать пользователя
       if (authError && authError.message.includes('Invalid login credentials')) {
         console.log('📝 Creating admin user...');
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        const { error: signUpError } = await supabase.auth.signUp({
           email: adminEmail,
           password: adminPassword
         });
