@@ -8,19 +8,19 @@ import { sendTelegramNotification } from '@/lib/telegram';
 import { parseISO, format, addDays } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import {
-  getLocalQueue,
-  getLocalMachineState,
-  getLocalHistory,
-  saveLocalQueue,
-  saveLocalMachineState,
-  saveLocalHistory,
-  addToLocalQueue,
-  removeFromLocalQueue,
-  updateLocalQueueItem,
-  startLocalWashing,
-  markLocalDone,
-  startLocalNext,
-  clearLocalQueue,
+  get_local_queue,
+  get_local_machine_state,
+  get_local_history,
+  save_local_queue,
+  save_local_machine_state,
+  save_local_history,
+  add_to_local_queue,
+  remove_from_local_queue,
+  update_local_queue_item,
+  start_local_washing,
+  mark_local_done,
+  start_local_next,
+  clear_local_queue,
   
 } from '@/lib/localStorageFallback';
   
@@ -504,7 +504,7 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
     // Fetch queue from Supabase or local storage
     const fetchQueue = async () => {
       if (!isSupabaseConfigured || !supabase) {
-        setQueue(getLocalQueue());
+        setQueue(get_local_queue());
         return;
       }
       
@@ -517,19 +517,19 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
         if (error) throw error;
         setQueue(data || []);
         // Also update local storage as backup
-        saveLocalQueue(data || []);
+        save_local_queue(data || []);
       } catch (error: any) {
         console.error('Error fetching queue:', error);
         console.error('Error details:', error?.message, error?.details, error?.hint);
         // Fall back to local storage
-        setQueue(getLocalQueue());
+        setQueue(get_local_queue());
       }
     };
   
     // Fetch machine state from Supabase or local storage
     const fetchMachineState = async () => {
       if (!isSupabaseConfigured || !supabase) {
-        setMachineState(getLocalMachineState());
+        setMachineState(get_local_machine_state());
         return;
       }
       
@@ -542,19 +542,19 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
         if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
         setMachineState(data || { status: MachineStatus.IDLE });
         // Also update local storage as backup
-        saveLocalMachineState(data || { status: MachineStatus.IDLE });
+        save_local_machine_state(data || { status: MachineStatus.IDLE });
       } catch (error: any) {
         console.error('Error fetching machine state:', error);
         console.error('Error details:', error?.message, error?.details, error?.hint);
         // Fall back to local storage
-        setMachineState(getLocalMachineState());
+        setMachineState(get_local_machine_state());
       }
     };
   
     // Fetch history from Supabase or local storage
     const fetchHistory = async () => {
       if (!isSupabaseConfigured || !supabase) {
-        setHistory(getLocalHistory());
+        setHistory(get_local_history());
         return;
       }
       
@@ -568,12 +568,12 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
         if (error) throw error;
         setHistory(data || []);
         // Also update local storage as backup
-        saveLocalHistory(data || []);
+        save_local_history(data || []);
       } catch (error: any) {
         console.error('Error fetching history:', error);
         console.error('Error details:', error?.message, error?.details, error?.hint);
         // Fall back to local storage
-        setHistory(getLocalHistory());
+        setHistory(get_local_history());
       }
     };
 
@@ -967,7 +967,7 @@ const startWashing = async (queueItemId: string) => {
   
   if (!isSupabaseConfigured || !supabase) {
     // Use local storage fallback
-    startLocalWashing(queueItemId);
+    start_local_washing(queueItemId);
     fetchQueue();
     fetchMachineState();
     return;
@@ -1014,7 +1014,7 @@ const startWashing = async (queueItemId: string) => {
     
     // Обновить локальный state немедленно
     setMachineState(newMachineState);
-    saveLocalMachineState(newMachineState);
+    save_local_machine_state(newMachineState);
     console.log(' Local machine state updated:', newMachineState);
     
     // Обновить состояние для всех клиентов
@@ -1025,7 +1025,7 @@ const startWashing = async (queueItemId: string) => {
   } catch (error) {
     console.error(' Error starting washing:', error);
     // Fallback to local storage on error
-    startLocalWashing(queueItemId);
+    start_local_washing(queueItemId);
     fetchQueue();
     fetchMachineState();
   }
@@ -1039,7 +1039,7 @@ const startWashing = async (queueItemId: string) => {
     
     if (!isSupabaseConfigured || !supabase) {
       // Use local storage fallback
-      markLocalDone();
+      mark_local_done();
       fetchQueue(); // Refresh queue from local storage
       fetchMachineState(); // Refresh machine state from local storage
       fetchHistory(); // Refresh history from local storage
@@ -1086,11 +1086,11 @@ const startWashing = async (queueItemId: string) => {
       if (machineError) throw machineError;
       
       setMachineState(idleMachineState);
-      saveLocalMachineState(idleMachineState);
+      save_local_machine_state(idleMachineState);
     } catch (error) {
       console.error('Error marking done:', error);
       // Fallback to local storage on error
-      markLocalDone();
+      mark_local_done();
       fetchQueue(); // Refresh queue from local storage
       fetchMachineState(); // Refresh machine state from local storage
       fetchHistory(); // Refresh history from local storage
@@ -1106,13 +1106,13 @@ const startWashing = async (queueItemId: string) => {
     
     if (!isSupabaseConfigured || !supabase) {
       // Use local storage fallback
-      const queue = getLocalQueue();
+      const queue = get_local_queue();
       const item = queue.find(i => i.id === queueItemId);
       if (item) {
         item.status = QueueStatus.WAITING;
-        saveLocalQueue(queue);
+        save_local_queue(queue);
       }
-      saveLocalMachineState({ status: MachineStatus.IDLE });
+      save_local_machine_state({ status: MachineStatus.IDLE });
       fetchQueue();
       fetchMachineState();
       return;
@@ -1149,7 +1149,7 @@ const startWashing = async (queueItemId: string) => {
     
     if (!isSupabaseConfigured || !supabase) {
       // Use local storage fallback
-      startLocalNext();
+      start_local_next();
       fetchQueue(); // Refresh queue from local storage
       fetchMachineState(); // Refresh machine state from local storage
       return;
@@ -1160,7 +1160,7 @@ const startWashing = async (queueItemId: string) => {
       await startWashing(nextItem.id);
     } else if (!isSupabaseConfigured || !supabase) {
       // Fallback to local storage on error
-      startLocalNext();
+      start_local_next();
       fetchQueue(); // Refresh queue from local storage
       fetchMachineState(); // Refresh machine state from local storage
     }
@@ -1172,7 +1172,7 @@ const startWashing = async (queueItemId: string) => {
     
     if (!isSupabaseConfigured || !supabase) {
       // Use local storage fallback
-      clearLocalQueue();
+      clear_local_queue();
       fetchQueue(); // Refresh queue from local storage
       fetchMachineState(); // Refresh machine state from local storage
       return;
@@ -1201,7 +1201,7 @@ const startWashing = async (queueItemId: string) => {
     } catch (error) {
       console.error('Error clearing queue:', error);
       // Fallback to local storage on error
-      clearLocalQueue();
+      clear_local_queue();
       fetchQueue(); // Refresh queue from local storage
       fetchMachineState(); // Refresh machine state from local storage
     }
@@ -1213,9 +1213,9 @@ const startWashing = async (queueItemId: string) => {
 
     if (!isSupabaseConfigured || !supabase) {
       // Local storage fallback
-      const localQueue = getLocalQueue();
+      const localQueue = get_local_queue();
       const updatedQueue = localQueue.filter(item => item.id !== queueItemId);
-      saveLocalQueue(updatedQueue);
+      save_local_queue(updatedQueue);
       fetchQueue();
       return;
     }
@@ -1241,9 +1241,9 @@ const startWashing = async (queueItemId: string) => {
 
     if (!isSupabaseConfigured || !supabase) {
       // Local storage fallback
-      const localQueue = getLocalQueue();
+      const localQueue = get_local_queue();
       const updatedQueue = localQueue.filter(item => item.status !== QueueStatus.DONE);
-      saveLocalQueue(updatedQueue);
+      save_local_queue(updatedQueue);
       fetchQueue();
       return;
     }
@@ -1276,9 +1276,9 @@ const startWashing = async (queueItemId: string) => {
     if (!isSupabaseConfigured || !supabase) {
       // Local storage fallback
       const today = new Date().toISOString().split('T')[0];
-      const localQueue = getLocalQueue();
+      const localQueue = get_local_queue();
       const updatedQueue = localQueue.filter(item => item.scheduled_for_date >= today);
-      saveLocalQueue(updatedQueue);
+      save_local_queue(updatedQueue);
       fetchQueue();
       return;
     }
@@ -1309,11 +1309,11 @@ const startWashing = async (queueItemId: string) => {
       twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
       const cutoffDate = twoDaysAgo.toISOString().split('T')[0];
       
-      const localQueue = getLocalQueue();
+      const localQueue = get_local_queue();
       const updatedQueue = localQueue.filter(item => 
         item.status === QueueStatus.DONE || item.scheduled_for_date >= cutoffDate
       );
-      saveLocalQueue(updatedQueue);
+      save_local_queue(updatedQueue);
       fetchQueue();
       return;
     }
@@ -1562,7 +1562,7 @@ const leaveQueue = async (queueItemId: string) => {
   
   if (!isSupabaseConfigured || !supabase) {
     // Use local storage fallback
-    removeFromLocalQueue(queueItemId, user.id);
+    remove_from_local_queue(queueItemId, user.id);
     fetchQueue();
     return;
   }
@@ -1583,7 +1583,7 @@ const leaveQueue = async (queueItemId: string) => {
   } catch (error) {
     console.error(' Error leaving queue:', error);
     // Fallback to local storage on error
-    removeFromLocalQueue(queueItemId, user.id);
+    remove_from_local_queue(queueItemId, user.id);
     fetchQueue();
   }
 };
@@ -1595,7 +1595,7 @@ const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>)
   if (!isSupabaseConfigured || !supabase) {
     // Use local storage fallback
     if (user) {
-      updateLocalQueueItem(queueItemId, user.id, updates);
+      update_local_queue_item(queueItemId, user.id, updates);
     }
     fetchQueue();
     return;
@@ -1630,7 +1630,7 @@ const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>)
     console.error(' Error updating queue item:', error);
     // Fallback to local storage on error
     if (user) {
-      updateLocalQueueItem(queueItemId, user.id, updates);
+      update_local_queue_item(queueItemId, user.id, updates);
     }
     fetchQueue();
   }
@@ -1754,11 +1754,11 @@ const sendAdminMessage = async (queueItemId: string, message: string) => {
   
   if (!isSupabaseConfigured || !supabase) {
     // Use local storage fallback
-    const queue = getLocalQueue();
+    const queue = get_local_queue();
     const item = queue.find(i => i.id === queueItemId);
     if (item) {
       item.admin_message = message;
-      saveLocalQueue(queue);
+      save_local_queue(queue);
     }
     fetchQueue();
     return;
@@ -1816,7 +1816,7 @@ const transferSelectedToNextDay = async (selectedIds: string[]) => {
         return item;
       });
       setQueue(updatedQueue);
-      saveLocalQueue(updatedQueue);
+      save_local_queue(updatedQueue);
       alert('');
     } else {
       if (supabase) {
@@ -1910,7 +1910,7 @@ const transferSelectedToPreviousDay = async (selectedIds: string[]) => {
         return item;
       });
       setQueue(updatedQueue);
-      saveLocalQueue(updatedQueue);
+      save_local_queue(updatedQueue);
       alert('');
     } else {
       if (supabase) {
@@ -2004,7 +2004,7 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
         return item;
       });
       setQueue(updatedQueue);
-      saveLocalQueue(updatedQueue);
+      save_local_queue(updatedQueue);
       alert('');
     } else {
       if (supabase) {

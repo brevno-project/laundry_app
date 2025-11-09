@@ -53,7 +53,7 @@ export default function UserForm() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
-    if (user?.name && !isInQueue && !isSubmitting) {
+    if (user?.full_name && !isInQueue && !isSubmitting) {
       setIsSubmitting(true);
       
       const today = new Date();
@@ -61,7 +61,7 @@ export default function UserForm() {
       const expectedFinishAt = today.toISOString();
       
       console.log('Joining queue with:', {
-        name: user.name,
+        full_name: user.full_name,
         room: user.room,
         washCount,
         paymentType,
@@ -70,7 +70,7 @@ export default function UserForm() {
       });
       
       // ✅ Передаем выбранную дату в joinQueue
-      await joinQueue(user.name, user.room, washCount, paymentType, expectedFinishAt, selectedDate);
+      await joinQueue(user.full_name, user.room, washCount, paymentType, expectedFinishAt, selectedDate);
       
       setTimeout(() => {
         setIsSubmitting(false);
@@ -88,7 +88,7 @@ export default function UserForm() {
   }
 
   // Полноэкранное уведомление "Принеси ключ" - БЕЗ кнопки закрытия
-  if (existingQueueItem?.returnKeyAlert) {
+  if (existingQueueItem?.return_key_alert) {
     return (
       <FullScreenAlert 
         status={existingQueueItem.status} 
@@ -110,7 +110,7 @@ export default function UserForm() {
             <input
               id="name"
               type="text"
-              value={user?.name || ''}
+              value={user?.full_name || ''}
               readOnly
               className="mt-1 block w-full rounded-md border-2 border-gray-200 bg-gray-50 shadow-sm p-3 text-gray-700 cursor-not-allowed"
             />
@@ -255,9 +255,9 @@ export default function UserForm() {
                 Позиция #{queuePosition}
               </p>
               {/* ✅ Показываем дату записи */}
-              {existingQueueItem?.scheduledForDate && (
+              {existingQueueItem?.scheduled_for_date && (
                 <p className="text-blue-600 text-center mt-2">
-                  📅 Записаны на: {new Date(existingQueueItem.scheduledForDate).toLocaleDateString('ru-RU', {
+                  📅 Записаны на: {new Date(existingQueueItem.scheduled_for_date).toLocaleDateString('ru-RU', {
                     weekday: 'short',
                     day: 'numeric',
                     month: 'numeric'

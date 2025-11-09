@@ -9,7 +9,7 @@ const MACHINE_STATE_KEY = 'laundry-app-machine-state';
 const HISTORY_KEY = 'laundry-app-history';
 
 // Get data from local storage
-export const getLocalQueue = (): QueueItem[] => {
+export const get_local_queue = (): QueueItem[] => {
   try {
     const storedQueue = localStorage.getItem(QUEUE_KEY);
     return storedQueue ? JSON.parse(storedQueue) : [];
@@ -19,7 +19,7 @@ export const getLocalQueue = (): QueueItem[] => {
   }
 };
 
-export const getLocalMachineState = (): MachineState => {
+export const get_local_machine_state = (): MachineState => {
   try {
     const storedState = localStorage.getItem(MACHINE_STATE_KEY);
     return storedState 
@@ -31,7 +31,7 @@ export const getLocalMachineState = (): MachineState => {
   }
 };
 
-export const getLocalHistory = (): HistoryItem[] => {
+export const get_local_history = (): HistoryItem[] => {
   try {
     const storedHistory = localStorage.getItem(HISTORY_KEY);
     return storedHistory ? JSON.parse(storedHistory) : [];
@@ -42,7 +42,7 @@ export const getLocalHistory = (): HistoryItem[] => {
 };
 
 // Save data to local storage
-export const saveLocalQueue = (queue: QueueItem[]) => {
+export const save_local_queue = (queue: QueueItem[]) => {
   try {
     localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
   } catch (error) {
@@ -50,7 +50,7 @@ export const saveLocalQueue = (queue: QueueItem[]) => {
   }
 };
 
-export const saveLocalMachineState = (state: MachineState) => {
+export const save_local_machine_state = (state: MachineState) => {
   try {
     localStorage.setItem(MACHINE_STATE_KEY, JSON.stringify(state));
   } catch (error) {
@@ -58,7 +58,7 @@ export const saveLocalMachineState = (state: MachineState) => {
   }
 };
 
-export const saveLocalHistory = (history: HistoryItem[]) => {
+export const save_local_history = (history: HistoryItem[]) => {
   try {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
   } catch (error) {
@@ -66,66 +66,72 @@ export const saveLocalHistory = (history: HistoryItem[]) => {
   }
 };
 
-export const addToLocalQueue = (
-  user: { id: string; name: string; room?: string; studentId?: string }, // Добавили studentId
+export const add_to_local_queue = (
+  user: { id: string; full_name: string; room?: string; student_id?: string },
 ): QueueItem => {
-  const queue = getLocalQueue();
+  const queue = get_local_queue();
   
   // Check if user is already in queue
   const existingItem = queue.find(
-    item => item.userId === user.id && (item.status === QueueStatus.WAITING || item.status === QueueStatus.READY || item.status === QueueStatus.WASHING)
+    item => item.user_id === user.id && (item.status === QueueStatus.WAITING || item.status === QueueStatus.READY || item.status === QueueStatus.WASHING)
   );
   
   if (existingItem) {
     return existingItem;
   }
   
+  // Parse full_name to first_name and last_name
+  const nameParts = user.full_name.split(' ');
+  const first_name = nameParts[0] || '';
+  const last_name = nameParts.slice(1).join(' ') || '';
+  
   const newItem: QueueItem = {
     id: uuidv4(),
-    userId: user.id,
-    user_id: user.id, // ✅ ДОБАВИТЬ ЭТУ СТРОКУ
-    studentId: user.studentId || user.id,
-    userName: user.name,
-    userRoom: user.room,
-    washCount: 1,
-    paymentType: 'money',
-    joinedAt: new Date().toISOString(),
-    expectedFinishAt: undefined,
+    user_id: user.id,
+    student_id: user.student_id || user.id,
+    first_name,
+    last_name,
+    full_name: user.full_name,
+    room: user.room,
+    wash_count: 1,
+    payment_type: 'money',
+    joined_at: new Date().toISOString(),
+    expected_finish_at: undefined,
     status: QueueStatus.WAITING,
-    scheduledForDate: new Date().toISOString().slice(0, 10),
-    currentDate: new Date().toISOString().slice(0, 10),
-    position: 1,
+    scheduled_for_date: new Date().toISOString().slice(0, 10),
+    queue_date: new Date().toISOString().slice(0, 10),
+    position: queue.length + 1,
   };
   
   queue.push(newItem);
-  saveLocalQueue(queue);
+  save_local_queue(queue);
   return newItem;
 };
 
-export const removeFromLocalQueue = (queueItemId: string, userId: string): boolean => {
-  const queue = getLocalQueue();
-  const index = queue.findIndex(item => item.id === queueItemId && item.userId === userId);
+export const remove_from_local_queue = (queueItemId: string, userId: string): boolean => {
+  const queue = get_local_queue();
+  const index = queue.findIndex(item => item.id === queueItemId && item.user_id === userId);
   
   if (index !== -1) {
     queue.splice(index, 1);
-    saveLocalQueue(queue);
+    save_local_queue(queue);
     return true;
   }
   
   return false;
 };
 
-export const updateLocalQueueItem = (
+export const update_local_queue_item = (
   queueItemId: string,
   userId: string,
   updates: Partial<QueueItem>
 ): boolean => {
-  const queue = getLocalQueue();
-  const item = queue.find(item => item.id === queueItemId && item.userId === userId);
+  const queue = get_local_queue();
+  const item = queue.find(item => item.id === queueItemId && item.user_id === userId);
   
   if (item) {
     Object.assign(item, updates);
-    saveLocalQueue(queue);
+    save_local_queue(queue);
     return true;
   }
   
@@ -133,36 +139,77 @@ export const updateLocalQueueItem = (
 };
 
 // Machine state operations
-export const startLocalWashing = (queueItemId: string): void => {
-  const queue = getLocalQueue();
-  const queueItem = queue.find(item => item.id === queueItemId);
+export const start_local_washing = (queueItemId: string): boolean => {
+  const queue = get_local_queue();
+  const item = queue.find(item => item.id === queueItemId);
   
-  if (queueItem) {
-    // Update queue item status
-    queueItem.status = QueueStatus.WASHING;
-    saveLocalQueue(queue);
-    
-    // Update machine state
-    const machineState: MachineState = {
-      status: MachineStatus.WASHING,
-      currentQueueItemId: queueItemId,
-      startedAt: new Date().toISOString(),
-      expectedFinishAt: queueItem.expectedFinishAt,
-    };
-    
-    saveLocalMachineState(machineState);
-  }
+  if (!item) return false;
+  
+  // Update queue item status
+  item.status = QueueStatus.WASHING;
+  save_local_queue(queue);
+  
+  // Update machine state
+  const machineState: MachineState = {
+    status: MachineStatus.WASHING,
+    current_queue_item_id: queueItemId,
+    started_at: new Date().toISOString(),
+    expected_finish_at: item.expected_finish_at,
+  };
+  
+  save_local_machine_state(machineState);
+  return true;
 };
 
-export const markLocalDone = (): HistoryItem | null => {
-  const machineState = getLocalMachineState();
-  const queue = getLocalQueue();
+export const add_to_local_history = (queueItemId: string): boolean => {
+  const queue = get_local_queue();
+  const machineState = get_local_machine_state();
   
-  if (machineState.status !== MachineStatus.WASHING || !machineState.currentQueueItemId) {
+  const currentItem = queue.find(item => item.id === queueItemId);
+  if (!currentItem) return false;
+  
+  // Add to history
+  const historyItem: HistoryItem = {
+    id: uuidv4(),
+    user_id: currentItem.user_id,
+    full_name: currentItem.full_name,
+    room: currentItem.room,
+    started_at: machineState.started_at || new Date().toISOString(),
+    finished_at: new Date().toISOString(),
+  };
+  
+  const history = get_local_history();
+  history.push(historyItem);
+  save_local_history(history);
+  
+  // Reset machine state
+  const idleMachineState: MachineState = {
+    status: MachineStatus.IDLE,
+    current_queue_item_id: undefined,
+    started_at: undefined,
+    expected_finish_at: undefined,
+  };
+  save_local_machine_state(idleMachineState);
+  
+  // Remove from queue
+  const index = queue.findIndex(item => item.id === queueItemId);
+  if (index !== -1) {
+    queue.splice(index, 1);
+    save_local_queue(queue);
+  }
+  
+  return true;
+};
+
+export const mark_local_done = (): HistoryItem | null => {
+  const machineState = get_local_machine_state();
+  const queue = get_local_queue();
+  
+  if (machineState.status !== MachineStatus.WASHING || !machineState.current_queue_item_id) {
     return null;
   }
   
-  const currentItem = queue.find(item => item.id === machineState.currentQueueItemId);
+  const currentItem = queue.find(item => item.id === machineState.current_queue_item_id);
   if (!currentItem) {
     return null;
   }
@@ -170,48 +217,48 @@ export const markLocalDone = (): HistoryItem | null => {
   // Add to history
   const historyItem: HistoryItem = {
     id: uuidv4(),
-    userId: currentItem.userId,
-    userName: currentItem.userName,
-    userRoom: currentItem.userRoom,
-    startedAt: machineState.startedAt || new Date().toISOString(),
-    finishedAt: new Date().toISOString(),
+    user_id: currentItem.user_id,
+    full_name: currentItem.full_name,
+    room: currentItem.room,
+    started_at: machineState.started_at || new Date().toISOString(),
+    finished_at: new Date().toISOString(),
   };
   
-  const history = getLocalHistory();
+  const history = get_local_history();
   history.unshift(historyItem); // Add to beginning
   if (history.length > 10) {
     history.pop(); // Limit history size
   }
-  saveLocalHistory(history);
+  save_local_history(history);
   
   // Update queue item status to 'done' instead of removing
   currentItem.status = QueueStatus.DONE;
-  saveLocalQueue(queue);
+  save_local_queue(queue);
   
   // Reset machine state
-  saveLocalMachineState({ status: MachineStatus.IDLE });
+  save_local_machine_state({ status: MachineStatus.IDLE });
   
   return historyItem;
 };
 
-export const startLocalNext = (): boolean => {
-  const queue = getLocalQueue();
+export const start_local_next = (): boolean => {
+  const queue = get_local_queue();
   const nextItem = queue.find(item => item.status === QueueStatus.WAITING || item.status === QueueStatus.READY);
   
   if (nextItem) {
-    startLocalWashing(nextItem.id);
+    start_local_washing(nextItem.id);
     return true;
   }
   
   return false;
 };
 
-export const clearLocalQueue = (): void => {
+export const clear_local_queue = (): void => {
   // Reset machine state
-  saveLocalMachineState({ status: MachineStatus.IDLE });
+  save_local_machine_state({ status: MachineStatus.IDLE });
   
   // Clear queue except currently washing
-  const queue = getLocalQueue();
+  const queue = get_local_queue();
   const updatedQueue = queue.filter(item => item.status === QueueStatus.WASHING);
-  saveLocalQueue(updatedQueue);
+  save_local_queue(updatedQueue);
 };
