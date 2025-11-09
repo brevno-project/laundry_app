@@ -252,10 +252,6 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
     const student = students.find(s => s.id === studentId);
     if (!student) throw new Error('');
     if (student.is_registered) throw new Error('');
-
-    // ИСПРАВЛЕНО: Создать правильный email
-    // БЫЛО: const email = `${studentId}@laundry.local`;  // UUID - НЕПРАВИЛЬНО!
-    // СТАЛО: Использовать firstName или fullName
     const shortId = studentId.slice(0, 8);
     const email = `student-${shortId}@example.com`;
     
@@ -512,7 +508,7 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
         const { data, error } = await supabase
           .from('queue')
           .select('*')
-          .order('position', { ascending: true });
+          .order('queue_position', { ascending: true });
         
         if (error) throw error;
         setQueue(data || []);
@@ -668,7 +664,7 @@ const joinQueue = async (
     // Получаем максимальную позицию для выбранной даты
     const { data: sameDayRows, error: posErr } = await supabase
       .from('queue')
-      .select('position, scheduled_for_date, queue_date')
+      .select('queue_position, scheduled_for_date, queue_date')
       .eq('queue_date', targetDate)
       .eq('scheduled_for_date', targetDate);
 
@@ -679,7 +675,7 @@ const joinQueue = async (
 
     let nextPos = 1;
     if (sameDayRows && sameDayRows.length > 0) {
-      const maxPos = Math.max(...sameDayRows.map((r: any) => r.position ?? 0));
+      const maxPos = Math.max(...sameDayRows.map((r: any) => r.queue_position ?? 0));
       nextPos = maxPos + 1;
     }
 
@@ -699,7 +695,7 @@ const joinQueue = async (
       status: QueueStatus.WAITING,  // ✅
       scheduled_for_date: targetDate,  // ✅
       queue_date: targetDate,  // ✅
-      position: nextPos,  // ✅
+      queue_position: nextPos,  // ✅
     };
 
     console.log(' Inserting new queue item:', newItem);
@@ -801,7 +797,7 @@ const adminAddToQueue = async (
     // Получаем максимальную позицию для выбранной даты
     const { data: sameDayRows, error: posErr } = await supabase
       .from('queue')
-      .select('position, scheduled_for_date, queue_date')
+      .select('queue_position, scheduled_for_date, queue_date')
       .eq('queue_date', targetDate)
       .eq('scheduled_for_date', targetDate);
 
@@ -813,7 +809,7 @@ const adminAddToQueue = async (
 
     let nextPos = 1;
     if (sameDayRows && sameDayRows.length > 0) {
-      const maxPos = Math.max(...sameDayRows.map(row => row.position || 0));
+      const maxPos = Math.max(...sameDayRows.map(row => row.queue_position || 0));
       nextPos = maxPos + 1;
     }
 
@@ -844,7 +840,7 @@ const adminAddToQueue = async (
       status: QueueStatus.WAITING,
       scheduled_for_date: targetDate,
       queue_date: targetDate,
-      position: nextPos,
+      queue_position: nextPos,
     };
 
     console.log(' Admin inserting queue item:', newItem);
@@ -1130,9 +1126,9 @@ const startWashing = async (queueItemId: string) => {
         .from('machine_state')
         .upsert({
           status: MachineStatus.IDLE,
-          currentQueueItemId: null,
-          startedAt: null,
-          expectedFinishAt: null,
+          current_queue_item_id: null,
+          started_at: null,
+          expected_finish_at: null,
         });
       
       if (machineError) throw machineError;
@@ -1182,9 +1178,9 @@ const startWashing = async (queueItemId: string) => {
         .from('machine_state')
         .upsert({
           status: MachineStatus.IDLE,
-          currentQueueItemId: null,
-          startedAt: null,
-          expectedFinishAt: null,
+          current_queue_item_id: null,
+          started_at: null,
+          expected_finish_at: null,
         });
       
       if (machineError) throw machineError;
@@ -1799,7 +1795,7 @@ const transferSelectedToNextDay = async (selectedIds: string[]) => {
       // 
       const targetDate = nextDayStr;
       const existingOnDate = queue.filter(item => item.queue_date === targetDate);
-      const minPosition = existingOnDate.length > 0 ? Math.min(...existingOnDate.map(item => item.position)) : 0;
+      const minPosition = existingOnDate.length > 0 ? Math.min(...existingOnDate.map(item => item.queue_position)) : 0;
 
       const updatedQueue = queue.map(item => {
         const index = unfinishedItems.findIndex(u => u.id === item.id);
@@ -1808,7 +1804,7 @@ const transferSelectedToNextDay = async (selectedIds: string[]) => {
             ...item, 
             queue_date: targetDate, 
             scheduled_for_date: targetDate,
-            position: minPosition - 10000 - index  // 
+            queue_position: minPosition - 10000 - index  // 
           };
         }
         return item;
@@ -1845,7 +1841,7 @@ const transferSelectedToNextDay = async (selectedIds: string[]) => {
           transferred.sort((a, b) => unfinishedItems.findIndex(u => u.id === a.id) - unfinishedItems.findIndex(u => u.id === b.id));
           
           // 
-          existing.sort((a, b) => a.position - b.position);
+          existing.sort((a, b) => a.queue_position - b.queue_position);
           
           // 
           const newOrder = [...existing, ...transferred];
@@ -1854,7 +1850,7 @@ const transferSelectedToNextDay = async (selectedIds: string[]) => {
           for (let k = 0; k < newOrder.length; k++) {
             await supabase
               .from('queue')
-              .update({ position: k + 1 })
+              .update({ queue_position: k + 1 })
               .eq('id', newOrder[k].id);
           }
         }
@@ -1893,7 +1889,7 @@ const transferSelectedToPreviousDay = async (selectedIds: string[]) => {
       // 
       const targetDate = prevDayStr;
       const existingOnDate = queue.filter(item => item.queue_date === targetDate);
-      const minPosition = existingOnDate.length > 0 ? Math.min(...existingOnDate.map(item => item.position)) : 0;
+      const minPosition = existingOnDate.length > 0 ? Math.min(...existingOnDate.map(item => item.queue_position)) : 0;
 
       const updatedQueue = queue.map(item => {
         const index = unfinishedItems.findIndex(u => u.id === item.id);
@@ -1902,7 +1898,7 @@ const transferSelectedToPreviousDay = async (selectedIds: string[]) => {
             ...item, 
             queue_date: targetDate, 
             scheduled_for_date: targetDate,
-            position: minPosition - 10000 - index  // 
+            queue_position: minPosition - 10000 - index  // 
           };
         }
         return item;
@@ -1939,7 +1935,7 @@ const transferSelectedToPreviousDay = async (selectedIds: string[]) => {
           transferred.sort((a, b) => unfinishedItems.findIndex(u => u.id === a.id) - unfinishedItems.findIndex(u => u.id === b.id));
           
           // 
-          existing.sort((a, b) => a.position - b.position);
+          existing.sort((a, b) => a.queue_position - b.queue_position);
           
           // 
           const newOrder = [...existing, ...transferred];
@@ -1948,7 +1944,7 @@ const transferSelectedToPreviousDay = async (selectedIds: string[]) => {
           for (let k = 0; k < newOrder.length; k++) {
             await supabase
               .from('queue')
-              .update({ position: k + 1 })
+              .update({ queue_position: k + 1 })
               .eq('id', newOrder[k].id);
           }
         }
@@ -1987,7 +1983,7 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
       // 
       const targetDate = todayStr;
       const existingOnDate = queue.filter(item => item.queue_date === targetDate);
-      const minPosition = existingOnDate.length > 0 ? Math.min(...existingOnDate.map(item => item.position)) : 0;
+      const minPosition = existingOnDate.length > 0 ? Math.min(...existingOnDate.map(item => item.queue_position)) : 0;
 
       const updatedQueue = queue.map(item => {
         const index = unfinishedItems.findIndex(u => u.id === item.id);
@@ -1996,7 +1992,7 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
             ...item, 
             queue_date: targetDate, 
             scheduled_for_date: targetDate,
-            position: minPosition - 10000 - index  // 
+            queue_position: minPosition - 10000 - index  // 
           };
         }
         return item;
@@ -2033,7 +2029,7 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
           transferred.sort((a, b) => unfinishedItems.findIndex(u => u.id === a.id) - unfinishedItems.findIndex(u => u.id === b.id));
           
           // 
-          existing.sort((a, b) => a.position - b.position);
+          existing.sort((a, b) => a.queue_position - b.queue_position);
           
           // 
           const newOrder = [...existing, ...transferred];
@@ -2042,7 +2038,7 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
           for (let k = 0; k < newOrder.length; k++) {
             await supabase
               .from('queue')
-              .update({ position: k + 1 })
+              .update({ queue_position: k + 1 })
               .eq('id', newOrder[k].id);
           }
         }
@@ -2145,7 +2141,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     // 
     const sameDayItems = queue
       .filter(item => item.queue_date === itemToMove.queue_date && item.scheduled_for_date === itemToMove.scheduled_for_date)
-      .sort((a, b) => a.position - b.position);
+      .sort((a, b) => a.queue_position - b.queue_position);
     
     const currentIndex = sameDayItems.findIndex(item => item.id === queueId);
     
@@ -2154,16 +2150,16 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
       const prevItem = sameDayItems[currentIndex - 1];
       
       // 
-      await supabase.from('queue').update({ position: prevItem.position }).eq('id', queueId);
-      await supabase.from('queue').update({ position: itemToMove.position }).eq('id', prevItem.id);
+      await supabase.from('queue').update({ queue_position: prevItem.queue_position }).eq('id', queueId);
+      await supabase.from('queue').update({ queue_position: itemToMove.queue_position }).eq('id', prevItem.id);
       
     } else if (direction === 'down' && currentIndex < sameDayItems.length - 1) {
       // 
       const nextItem = sameDayItems[currentIndex + 1];
       
       // 
-      await supabase.from('queue').update({ position: nextItem.position }).eq('id', queueId);
-      await supabase.from('queue').update({ position: itemToMove.position }).eq('id', nextItem.id);
+      await supabase.from('queue').update({ queue_position: nextItem.queue_position }).eq('id', queueId);
+      await supabase.from('queue').update({ queue_position: itemToMove.queue_position }).eq('id', nextItem.id);
     }
     
     await fetchQueue();

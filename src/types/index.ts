@@ -65,7 +65,7 @@ export type QueueItem = {
   status: QueueStatus;
   scheduled_for_date: string; // '2025-11-02'
   queue_date: string; // '2025-11-03'
-  position: number; // 1,2,3...
+  queue_position: number; // 1,2,3...
 };
 
 export enum MachineStatus {

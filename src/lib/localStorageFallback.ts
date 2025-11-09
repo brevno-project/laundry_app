@@ -100,7 +100,7 @@ export const add_to_local_queue = (
     status: QueueStatus.WAITING,
     scheduled_for_date: new Date().toISOString().slice(0, 10),
     queue_date: new Date().toISOString().slice(0, 10),
-    position: queue.length + 1,
+    queue_position: queue.length + 1,
   };
   
   queue.push(newItem);
