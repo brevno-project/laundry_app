@@ -188,8 +188,8 @@ export default function AdminPanel() {
     
     try {
       await updateStudent(selectedStudent.id, {
-        firstname: editFirstname || undefined,
-        lastname: editLastname || undefined,
+        first_name: editFirstname || undefined,
+        last_name: editLastname || undefined,
         room: editRoom || undefined,
       });
       setShowEditStudent(false);

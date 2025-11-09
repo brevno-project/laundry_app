@@ -87,7 +87,7 @@ type LaundryContextType = {
   isNewUser: boolean; // 
   setIsNewUser: (isNewUser: boolean) => void; // 
   addStudent: (firstName: string, lastName: string, room?: string) => Promise<void>;
-  updateStudent: (studentId: string, updates: { firstname?: string; lastname?: string; room?: string }) => Promise<void>;
+  updateStudent: (studentId: string, updates: { first_name?: string; last_name?: string; room?: string }) => Promise<void>;
   deleteStudent: (studentId: string) => Promise<void>;
   updateAdminKey: (newKey: string) => Promise<void>;
   updateQueueItemDetails: (queueId: string, updates: { washCount?: number; paymentType?: string; expectedFinishAt?: string; chosenDate?: string }) => Promise<void>;
@@ -297,9 +297,9 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
     const { error: updateError } = await supabase
       .from('students')
       .update({ 
-        is_registered: true, 
-        registered_at: new Date().toISOString(),
-        user_id: authData.user.id  // КРИТИЧНО: Связать с auth.users
+        is_registered: true,  // ✅ snake_case
+        registered_at: new Date().toISOString(),  // ✅ snake_case
+        user_id: authData.user.id  // ✅ Правильно
       })
       .eq('id', studentId);
 
@@ -442,8 +442,8 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
         const { error: updateError } = await supabase
           .from('students')
           .update({ 
-            is_registered: false, 
-            registered_at: null,
+            is_registered: false,  // ✅
+            registered_at: null,  // ✅
             user_id: null
           })
           .eq('id', studentId);
@@ -562,7 +562,7 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
         const { data, error } = await supabase
           .from('history')
           .select('*')
-          .order('finishedAt', { ascending: false })
+          .order('finished_at', { ascending: false })
           .limit(5);
         
         if (error) throw error;
@@ -668,9 +668,9 @@ const joinQueue = async (
     // Получаем максимальную позицию для выбранной даты
     const { data: sameDayRows, error: posErr } = await supabase
       .from('queue')
-      .select('position, scheduledForDate, currentDate')
-      .eq('currentDate', targetDate)
-      .eq('scheduledForDate', targetDate);
+      .select('position, scheduled_for_date, queue_date')
+      .eq('queue_date', targetDate)
+      .eq('scheduled_for_date', targetDate);
 
     if (posErr) {
       console.error('Error fetching positions:', posErr);
@@ -688,19 +688,18 @@ const joinQueue = async (
     // Создаем новую запись с правильным user_id
     const newItem = {
       id: crypto.randomUUID(),
-      userId: `user_${user.id.slice(0, 8)}`, // Старое поле для совместимости
-      user_id: user.id, // КРИТИЧНО: UUID из Supabase Auth для RLS
-      student_id: user.student_id,
-      fullname: name,
-      room: room || null,
-      washCount,
-      paymentType,
-      joinedAt: new Date().toISOString(),
-      expectedFinishAt: expectedFinishAt || null,
-      status: QueueStatus.WAITING,
-      scheduledForDate: targetDate,
-      queue_date: targetDate,
-      position: nextPos,
+      user_id: user.id,  // ✅ Только snake_case
+      student_id: user.student_id,  // ✅
+      full_name: name,  // ✅
+      room: room || null,  // ✅
+      wash_count: washCount,  // ✅
+      payment_type: paymentType,  // ✅
+      joined_at: new Date().toISOString(),  // ✅
+      expected_finish_at: expectedFinishAt || null,  // ✅
+      status: QueueStatus.WAITING,  // ✅
+      scheduled_for_date: targetDate,  // ✅
+      queue_date: targetDate,  // ✅
+      position: nextPos,  // ✅
     };
 
     console.log(' Inserting new queue item:', newItem);
@@ -802,9 +801,9 @@ const adminAddToQueue = async (
     // Получаем максимальную позицию для выбранной даты
     const { data: sameDayRows, error: posErr } = await supabase
       .from('queue')
-      .select('position, scheduledForDate, currentDate')
-      .eq('currentDate', targetDate)
-      .eq('scheduledForDate', targetDate);
+      .select('position, scheduled_for_date, queue_date')
+      .eq('queue_date', targetDate)
+      .eq('scheduled_for_date', targetDate);
 
     if (posErr) {
       console.error('Error getting positions:', posErr);
@@ -823,7 +822,7 @@ const adminAddToQueue = async (
       .from('queue')
       .select('id')
       .eq('full_name', studentName)
-      .eq('currentDate', targetDate)
+      .eq('queue_date', targetDate)
       .in('status', ['WAITING', 'READY', 'KEY_ISSUED', 'WASHING']);
 
     if (existingStudent && existingStudent.length > 0) {
@@ -834,18 +833,17 @@ const adminAddToQueue = async (
     // Создаем новую запись (админ добавляет от своего имени)
     const newItem = {
       id: crypto.randomUUID(),
-      userId: `admin_${Date.now()}`, // Старое поле для совместимости
       user_id: user.id, // КРИТИЧНО: user_id админа для RLS
       student_id: null, // Админ добавляет, studentId может быть null
-      fullname: studentName,
+      full_name: studentName,
       room: studentRoom || null,
       wash_count: washCount,
       payment_type: paymentType,
-      joinedAt: new Date().toISOString(),
-      expectedFinishAt: expectedFinishAt || null,
+      joined_at: new Date().toISOString(),
+      expected_finish_at: expectedFinishAt || null,
       status: QueueStatus.WAITING,
-      scheduledForDate: targetDate,
-      currentDate: targetDate,
+      scheduled_for_date: targetDate,
+      queue_date: targetDate,
       position: nextPos,
     };
 
@@ -1052,10 +1050,10 @@ const startWashing = async (queueItemId: string) => {
       const historyItem: HistoryItem = {
         id: uuidv4(),
         user_id: queueItem.user_id,
-        full_name: queueItem.full_name,
+        full_name: queueItem.full_name,  // ✅
         room: queueItem.room || undefined,
-        started_at: machineState.started_at || new Date().toISOString(),
-        finished_at: new Date().toISOString(),
+        started_at: machineState.started_at || new Date().toISOString(),  // ✅
+        finished_at: new Date().toISOString(),  // ✅
       };
       
       const { error: historyError } = await supabase
@@ -1362,9 +1360,9 @@ const startWashing = async (queueItemId: string) => {
       const { error } = await supabase
         .from('students')
         .update({
-          is_banned: true,
-          banned_at: new Date().toISOString(),
-          ban_reason: reason || '',
+          is_banned: true,  // ✅
+          banned_at: new Date().toISOString(),  // ✅
+          ban_reason: reason || '',  // ✅
         })
         .eq('id', studentId);
   
@@ -1422,12 +1420,12 @@ const addStudent = async (firstName: string, lastName: string, room?: string) =>
       .from('students')
       .insert({
         id: uuidv4(),
-        firstname: firstName,
-    lastname: lastName,
-    fullname: fullName,
+        first_name: firstName,  // ✅
+        last_name: lastName,  // ✅
+        full_name: fullName,  // ✅
         room: room || null,
-        isRegistered: false,
-        createdAt: new Date().toISOString(),
+        is_registered: false,  // ✅
+        created_at: new Date().toISOString(),  // ✅
       });
 
     if (error) throw error;
@@ -1443,7 +1441,7 @@ const addStudent = async (firstName: string, lastName: string, room?: string) =>
 // Обновить данные студента
 const updateStudent = async (
   studentId: string,
-  updates: { firstName?: string; lastName?: string; room?: string }
+  updates: { first_name?: string; last_name?: string; room?: string }
 ) => {
   if (!isAdmin) throw new Error('');
   if (!isSupabaseConfigured || !supabase) {
@@ -1453,18 +1451,18 @@ const updateStudent = async (
   try {
     const updateData: any = {};
     
-    // Если изменяются имя или фамилия, обновляем fullName
-    if (updates.firstName || updates.lastName) {
+    // Если изменяются имя или фамилия, обновляем full_name
+    if (updates.first_name || updates.last_name) {
       const student = students.find(s => s.id === studentId);
       if (student) {
-        if (updates.firstName !== undefined) updateData.firstname = updates.firstName;
-        if (updates.lastName !== undefined) updateData.lastname = updates.lastName;
-        updateData.fullname = `${updates.firstName} ${updates.lastName}`;
+        if (updates.first_name !== undefined) updateData.first_name = updates.first_name;
+        if (updates.last_name !== undefined) updateData.last_name = updates.last_name;
+        updateData.full_name = `${updates.first_name || student.first_name} ${updates.last_name || student.last_name}`;  // ✅
       }
     }
 
-    if (updates.firstName !== undefined) updateData.firstName = updates.firstName;
-    if (updates.lastName !== undefined) updateData.lastName = updates.lastName;
+    if (updates.first_name !== undefined) updateData.first_name = updates.first_name;
+    if (updates.last_name !== undefined) updateData.last_name = updates.last_name;
     if (updates.room !== undefined) updateData.room = updates.room;
 
     const { error } = await supabase
@@ -1902,7 +1900,7 @@ const transferSelectedToPreviousDay = async (selectedIds: string[]) => {
         if (index !== -1) {
           return { 
             ...item, 
-            current_date: targetDate, 
+            queue_date: targetDate, 
             scheduled_for_date: targetDate,
             position: minPosition - 10000 - index  // 
           };
@@ -1921,7 +1919,7 @@ const transferSelectedToPreviousDay = async (selectedIds: string[]) => {
           await supabase
             .from('queue')
             .update({ 
-              current_date: prevDayStr,
+              queue_date: prevDayStr,
               scheduled_for_date: prevDayStr
             })
             .eq('id', item.id);
@@ -1931,7 +1929,7 @@ const transferSelectedToPreviousDay = async (selectedIds: string[]) => {
         const { data: allOnDate } = await supabase
           .from('queue')
           .select('*')
-          .eq('current_date', prevDayStr);
+          .eq('queue_date', prevDayStr);
 
         if (allOnDate) {
           const transferred = allOnDate.filter(item => unfinishedItems.some(u => u.id === item.id));
@@ -1996,7 +1994,7 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
         if (index !== -1) {
           return { 
             ...item, 
-            current_date: targetDate, 
+            queue_date: targetDate, 
             scheduled_for_date: targetDate,
             position: minPosition - 10000 - index  // 
           };
@@ -2015,7 +2013,7 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
           await supabase
             .from('queue')
             .update({ 
-              current_date: todayStr,
+              queue_date: todayStr,
               scheduled_for_date: todayStr
             })
             .eq('id', item.id);
@@ -2025,7 +2023,7 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
         const { data: allOnDate } = await supabase
           .from('queue')
           .select('*')
-          .eq('current_date', todayStr);
+          .eq('queue_date', todayStr);
 
         if (allOnDate) {
           const transferred = allOnDate.filter(item => unfinishedItems.some(u => u.id === item.id));
@@ -2088,12 +2086,12 @@ const updateQueueItemDetails = async (
     }
 
     const updateData: any = {};
-    if (updates.washCount !== undefined) updateData.washCount = updates.washCount;
-    if (updates.paymentType !== undefined) updateData.paymentType = updates.paymentType;
-    if (updates.expectedFinishAt !== undefined) updateData.expectedFinishAt = updates.expectedFinishAt;
+    if (updates.washCount !== undefined) updateData.wash_count = updates.washCount;  // ✅
+    if (updates.paymentType !== undefined) updateData.payment_type = updates.paymentType;  // ✅
+    if (updates.expectedFinishAt !== undefined) updateData.expected_finish_at = updates.expectedFinishAt;  // ✅
     if (updates.chosenDate !== undefined) {
-      updateData.scheduledForDate = updates.chosenDate;
-      updateData.currentDate = updates.chosenDate;
+      updateData.scheduled_for_date = updates.chosenDate;  // ✅
+      updateData.queue_date = updates.chosenDate;  // ✅
     }
 
     const { error } = await supabase
@@ -2201,6 +2199,89 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     return user;
   };
 
+  const toggle_admin_status = async (student_id: string, make_admin: boolean) => {
+    if (!isAdmin) {
+      throw new Error('Not admin');
+    }
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase not configured');
+    }
+    try {
+      // Проверить уровень доступа
+      const current_student = students.find(s => s.id === user?.student_id);
+      const target_student = students.find(s => s.id === student_id);
+    
+      // Только супер админ может менять админ статусы
+      if (!current_student?.is_super_admin) {
+        throw new Error('Not super admin');
+      }
+    
+      // Нельзя снять супер админа
+      if (!make_admin && target_student?.is_super_admin) {
+        throw new Error('Cannot remove super admin');
+      }
+      console.log(`Setting admin status for ${student_id} to ${make_admin}`);
+      const { error } = await supabase
+        .from('students')
+        .update({ is_admin: make_admin })
+        .eq('id', student_id);
+        
+      if (error) {
+        console.error('Update admin status error:', error);
+        throw error;
+      }
+      
+      console.log('Admin status updated');
+      
+      // Reload students
+      await loadStudents();
+      
+    } catch (error: any) {
+      console.error('Error toggling admin status:', error);
+      throw error;
+    }
+  };
+
+  const toggle_super_admin_status = async (student_id: string, make_super_admin: boolean) => {
+    if (!isAdmin) {
+      throw new Error('Not admin');
+    }
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase not configured');
+    }
+    try {
+      const current_student = students.find(s => s.id === user?.student_id);
+      
+      // Only super admin can manage super admin status
+      if (!current_student?.is_super_admin) {
+        throw new Error('Not super admin');
+      }
+      
+      // Cannot remove the last super admin
+      if (!make_super_admin) {
+        const super_admins_count = students.filter(s => s.is_super_admin).length;
+        if (super_admins_count <= 1) {
+          throw new Error('Cannot remove last super admin');
+        }
+      }
+      
+      const { error } = await supabase
+        .from('students')
+        .update({ is_super_admin: make_super_admin })
+        .eq('id', student_id);
+        
+      if (error) {
+        throw error;
+      }
+      
+      await loadStudents();
+      
+    } catch (error: any) {
+      console.error('Error toggling super admin status:', error);
+      throw error;
+    }
+  };
+
   const value = {
     user,
     setUser,
@@ -2253,6 +2334,8 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
    updateQueueEndTime,              
    toggleAdminStatus,
    toggleSuperAdminStatus,
+   toggle_admin_status,
+   toggle_super_admin_status,
   };
 
   return <LaundryContext.Provider value={value}>{children}</LaundryContext.Provider>;
