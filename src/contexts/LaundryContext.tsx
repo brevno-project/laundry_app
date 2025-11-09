@@ -420,17 +420,19 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
   
       try {
         // Get student data
-        const { data: studentData } = await supabase
+        const { data: studentData, error: studentError } = await supabase
           .from('students')
-          .select('user_id')
+          .select('user_id, isRegistered')
           .eq('id', studentId)
           .single();
 
-        if (studentData?.user_id) {
-          // Delete from Supabase Auth (admin operation)
-          const { error: authError } = await supabase.auth.admin.deleteUser(studentData.user_id);
-          if (authError) console.warn('Could not delete auth user:', authError);
-        }
+        if (studentError) throw studentError;
+        if (!studentData) throw new Error('Студент не найден');
+        if (!studentData.isRegistered) throw new Error('Студент не зарегистрирован');
+
+        // Delete from Supabase Auth (admin operation)
+        const { error: authError } = await supabase.auth.admin.deleteUser(studentData.user_id);
+        if (authError) console.warn('Could not delete auth user:', authError);
   
         // Mark student as not registered
         const { error: updateError } = await supabase
@@ -2180,34 +2182,32 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
 
       console.log('🔑 Admin logging in...');
       
-      // Сначала попробовать войти
-      let { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      // Создать пользователя админа
+      let authData;
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: adminEmail,
         password: adminPassword
       });
 
-      // Если не получилось, создать пользователя
-      if (authError && authError.message.includes('Invalid login credentials')) {
-        console.log('📝 Creating admin user...');
-        const { error: signUpError } = await supabase.auth.signUp({
-          email: adminEmail,
-          password: adminPassword
-        });
-        
-        if (signUpError) throw signUpError;
-        
-        // Повторить вход
-        const retryResult = await supabase.auth.signInWithPassword({
-          email: adminEmail,
-          password: adminPassword
-        });
-        
-        if (retryResult.error) throw retryResult.error;
-        authData = retryResult.data;
-      } else if (authError) {
-        throw authError;
+      if (signUpError) {
+        // Если пользователь уже существует, попробовать войти
+        if (signUpError.message.includes('already registered')) {
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: adminEmail,
+            password: adminPassword
+          });
+          
+          if (signInError) throw signInError;
+          if (!signInData.user) throw new Error('Не удалось войти');
+          
+          authData = signInData;
+        } else {
+          throw signUpError;
+        }
+      } else {
+        authData = signUpData;
       }
-
+      
       if (!authData?.user) throw new Error('Не удалось аутентифицировать админа');
 
       console.log('✅ Admin auth successful:', authData.user.id);
