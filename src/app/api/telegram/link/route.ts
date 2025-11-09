@@ -6,12 +6,12 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 export async function POST(request: NextRequest) {
   try {
-    const { studentId, telegramChatId } = await request.json();
+    const { student_id, telegram_chat_id } = await request.json();
     
-    console.log('📥 /api/telegram/link request:', { studentId, telegramChatId });
+    console.log('📥 /api/telegram/link request:', { student_id, telegram_chat_id });
 
-    if (!studentId || !telegramChatId) {
-      console.error('❌ Missing data:', { studentId, telegramChatId });
+    if (!student_id || !telegram_chat_id) {
+      console.error('❌ Missing data:', { student_id, telegram_chat_id });
       return NextResponse.json(
         { error: 'Не указаны все данные' },
         { status: 400 }
@@ -31,19 +31,19 @@ export async function POST(request: NextRequest) {
     // Проверить текущее значение
     const { data: currentData } = await supabase
       .from('students')
-      .select('id, fullName, telegram_chat_id')
-      .eq('id', studentId)
+      .select('id, full_name, telegram_chat_id')
+      .eq('id', student_id)
       .single();
     
     console.log('📊 BEFORE UPDATE:', currentData);
 
     // Обновить telegram_chat_id в таблице students
-    console.log('🔄 Updating telegram_chat_id for studentId:', studentId, 'NEW VALUE:', telegramChatId);
+    console.log('🔄 Updating telegram_chat_id for student_id:', student_id, 'NEW VALUE:', telegram_chat_id);
     const { data, error } = await supabase
       .from('students')
-      .update({ telegram_chat_id: telegramChatId })
-      .eq('id', studentId)
-      .select('id, fullName, telegram_chat_id');
+      .update({ telegram_chat_id: telegram_chat_id })
+      .eq('id', student_id)
+      .select('id, full_name, telegram_chat_id');
 
     if (error) {
       console.error('❌ Error updating telegram_chat_id:', error);
@@ -52,22 +52,13 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-    
-    console.log('✅ AFTER UPDATE:', data);
-    
-    if (!data || data.length === 0) {
-      console.error('⚠️ UPDATE returned empty array - studentId not found!');
-      return NextResponse.json(
-        { error: 'Студент не найден в базе' },
-        { status: 404 }
-      );
-    }
 
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('❌ Error in /api/telegram/link:', error);
+    console.log('✅ telegram_chat_id UPDATED:', data);
+    return NextResponse.json({ success: true, data });
+  } catch (error: any) {
+    console.error('❌ Unexpected error in /api/telegram/link:', error);
     return NextResponse.json(
-      { error: 'Ошибка сервера' },
+      { error: 'Внутренняя ошибка сервера' },
       { status: 500 }
     );
   }

@@ -10,14 +10,14 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 // Форматирование сообщения
 function formatMessage(notification: TelegramNotification): string {
-  const { type, userName, userRoom, washCount, paymentType, queueLength, expectedFinishAt } = notification;
+  const { type, full_name, room, wash_count, payment_type, queue_length, expected_finish_at } = notification;
   
-  const roomInfo = userRoom ? ` (${userRoom})` : '';
+  const roomInfo = room ? ` (${room})` : '';
   
   // Форматировать время
   let timeInfo = '';
-  if (expectedFinishAt) {
-    const date = new Date(expectedFinishAt);
+  if (expected_finish_at) {
+    const date = new Date(expected_finish_at);
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
     timeInfo = `\n⏰ Закончит в: ${hours}:${minutes}`;
@@ -25,25 +25,25 @@ function formatMessage(notification: TelegramNotification): string {
   
   switch (type) {
     case 'joined':
-      return `🧺 *Новый в очереди!*\n\n👤 ${userName}${roomInfo}\n🔢 Стирок: ${washCount || 1}\n💰 Оплата: ${paymentType === 'coupon' ? '🎫 Купон' : '💵 Деньги'}${timeInfo}\n\n📊 Всего в очереди: ${queueLength} чел.`;
+      return `🧺 *Новый в очереди!*\n\n👤 ${full_name}${roomInfo}\n🔢 Стирок: ${wash_count || 1}\n💰 Оплата: ${payment_type === 'coupon' ? '🎫 Купон' : '💵 Деньги'}${timeInfo}\n\n📊 Всего в очереди: ${queue_length} чел.`;
     
     case 'left':
-      return `❌ *Покинул очередь*\n\n👤 ${userName}${roomInfo}\n\n📊 Осталось: ${queueLength} чел.`;
+      return `❌ *Покинул очередь*\n\n👤 ${full_name}${roomInfo}\n\n📊 Осталось: ${queue_length} чел.`;
     
     case 'washing_started':
-      return `🟢 *Стирка началась!*\n\n👤 ${userName}${roomInfo}\n🔢 Стирок: ${washCount || 1}\n\n⏳ Не забудь выдать ключ!`;
+      return `🟢 *Стирка началась!*\n\n👤 ${full_name}${roomInfo}\n🔢 Стирок: ${wash_count || 1}\n\n⏳ Не забудь выдать ключ!`;
     
     case 'washing_done':
-      return `✅ *Стирка завершена!*\n\n👤 ${userName}${roomInfo}\n\n🔑 Ключ должен быть возвращен!`;
+      return `✅ *Стирка завершена!*\n\n👤 ${full_name}${roomInfo}\n\n🔑 Ключ должен быть возвращен!`;
     
     case 'admin_call_for_key':
-      return `🔔 *ВАША ОЧЕРЕДЬ!*\n\n👤 ${userName}${roomInfo}${timeInfo}\n\n🔑 Подойдите в A501 за ключом!\n💵 Возьмите деньги/купон`;
+      return `🔔 *ВАША ОЧЕРЕДЬ!*\n\n👤 ${full_name}${roomInfo}${timeInfo}\n\n🔑 Подойдите в A501 за ключом!\n💵 Возьмите деньги/купон`;
     
     case 'admin_key_issued':
-      return `✅ *Ключ выдан!*\n\n👤 ${userName}${roomInfo}${timeInfo}\n\n🧺 Начинайте стираться`;
+      return `✅ *Ключ выдан!*\n\n👤 ${full_name}${roomInfo}${timeInfo}\n\n🧺 Начинайте стираться`;
     
     case 'admin_return_key':
-      return `⏰ *ПРИНЕСИТЕ КЛЮЧ!*\n\n👤 ${userName}${roomInfo}${timeInfo}\n\n🔑 Верните ключ в A501 как можно скорее!`;
+      return `⏰ *ПРИНЕСИТЕ КЛЮЧ!*\n\n👤 ${full_name}${roomInfo}${timeInfo}\n\n🔑 Верните ключ в A501 как можно скорее!`;
     
     default:
       return `📋 Обновление очереди`;
@@ -51,8 +51,8 @@ function formatMessage(notification: TelegramNotification): string {
 }
 
 // Получить telegram_chat_id студента из базы
-async function getStudentTelegramChatId(studentId?: string, userRoom?: string): Promise<string | null> {
-  console.log(`🔍 Searching telegram_chat_id for:`, { studentId, userRoom });
+async function getStudentTelegramChatId(student_id?: string, room?: string): Promise<string | null> {
+  console.log(`🔍 Searching telegram_chat_id for:`, { student_id, room });
   
   if (!supabaseUrl || !supabaseKey) {
     console.error('❌ Supabase not configured!');
@@ -61,17 +61,17 @@ async function getStudentTelegramChatId(studentId?: string, userRoom?: string): 
   
   const supabase = createClient(supabaseUrl, supabaseKey);
   
-  // Сначала попробовать найти по studentId
-  if (studentId) {
-    console.log(`🔍 Searching by studentId: ${studentId}`);
+  // Сначала попробовать найти по student_id
+  if (student_id) {
+    console.log(`🔍 Searching by student_id: ${student_id}`);
     const { data, error } = await supabase
       .from('students')
-      .select('id, fullName, room, telegram_chat_id')
-      .eq('id', studentId)
+      .select('id, full_name, room, telegram_chat_id')
+      .eq('id', student_id)
       .single();
     
     if (error) {
-      console.error(`❌ Error searching by studentId:`, error);
+      console.error(`❌ Error searching by student_id:`, error);
     } else {
       console.log(`📊 Found student:`, data);
       if (data?.telegram_chat_id) {
@@ -84,12 +84,12 @@ async function getStudentTelegramChatId(studentId?: string, userRoom?: string): 
   }
   
   // Если не нашли по ID, попробовать по комнате
-  if (userRoom) {
-    console.log(`🔍 Searching by room: ${userRoom}`);
+  if (room) {
+    console.log(`🔍 Searching by room: ${room}`);
     const { data, error } = await supabase
       .from('students')
-      .select('id, fullName, room, telegram_chat_id')
-      .eq('room', userRoom)
+      .select('id, full_name, room, telegram_chat_id')
+      .eq('room', room)
       .single();
     
     if (error) {
@@ -105,7 +105,7 @@ async function getStudentTelegramChatId(studentId?: string, userRoom?: string): 
     }
   }
   
-  console.error(`❌ telegram_chat_id NOT FOUND for studentId: ${studentId}, room: ${userRoom}`);
+  console.error(`❌ telegram_chat_id NOT FOUND for student_id: ${student_id}, room: ${room}`);
   return null;
 }
 
@@ -166,15 +166,15 @@ export async function sendTelegramNotification(notification: TelegramNotificatio
   // 1) личные уведомления студенту
   if (studentNotifications.includes(notification.type)) {
     const studentChatId = await getStudentTelegramChatId(
-      notification.studentId,
-      notification.userRoom
+      notification.student_id,
+      notification.room
     );
 
     if (studentChatId) {
       success = await sendTelegramMessage(studentChatId, message);
       console.log(`✅ sent to student (${notification.type})`);
     } else {
-      console.warn(`⚠️ No Telegram for ${notification.userRoom}`);
+      console.warn(`⚠️ No Telegram for ${notification.room}`);
 
       // fallback: сообщить админу, что у студента нет телеги
       if (ADMIN_TELEGRAM_CHAT_ID) {
@@ -195,8 +195,8 @@ export async function sendTelegramNotification(notification: TelegramNotificatio
       // сразу говорим админу, есть ли у студента телега
       if (notification.type === 'joined') {
         const studentChatId = await getStudentTelegramChatId(
-          notification.studentId,
-          notification.userRoom
+          notification.student_id,
+          notification.room
         );
         if (!studentChatId) {
           prefix = '⚠️ У него НЕТ Telegram подключения!\n\n';
@@ -221,10 +221,10 @@ export async function sendTelegramNotification(notification: TelegramNotificatio
 export async function sendTestNotification(): Promise<boolean> {
   return sendTelegramNotification({
     type: 'joined',
-    userName: 'Тестовый Пользователь',
-    userRoom: 'A501',
-    washCount: 2,
-    paymentType: 'money',
-    queueLength: 5,
+    full_name: 'Тестовый Пользователь',
+    room: 'A501',
+    wash_count: 2,
+    payment_type: 'money',
+    queue_length: 5,
   });
 }

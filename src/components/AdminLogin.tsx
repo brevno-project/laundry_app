@@ -29,7 +29,7 @@ export default function AdminLogin() {
       return;
     }
   
-    const currentStudent = students.find(s => s.id === user.studentId);
+    const currentStudent = students.find(s => s.id === user.student_id);
     
     if (!currentStudent?.is_admin) {
       setError('У вас нет прав админа');
