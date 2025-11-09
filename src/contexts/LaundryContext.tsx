@@ -94,8 +94,7 @@ type LaundryContextType = {
   updateQueueEndTime: (queueId: string, endTime: string) => Promise<void>;
   toggleAdminStatus: (studentId: string, isAdmin: boolean) => Promise<void>;
   toggleSuperAdminStatus: (studentId: string, makeSuperAdmin: boolean) => Promise<void>;
-
-  
+  loadStudents: () => void;
 };
 
 const LaundryContext = createContext<LaundryContextType | undefined>(undefined);
@@ -2289,6 +2288,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
    updateQueueEndTime,              
    toggleAdminStatus,
    toggleSuperAdminStatus,
+   loadStudents,
   };
 
   return <LaundryContext.Provider value={value}>{children}</LaundryContext.Provider>;

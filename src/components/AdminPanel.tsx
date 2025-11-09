@@ -513,18 +513,20 @@ export default function AdminPanel() {
                   
                   {/* Действия со студентом */}
                   {isSuperAdmin && (
-                    <div>
-                      <button 
-                        onClick={() => handleToggleAdmin(student.id, !student.is_admin)}
-                        className={`w-full px-4 py-2 rounded-lg text-sm font-bold ${
-                          student.is_admin 
-                            ? 'bg-red-500 hover:bg-red-600 text-white' 
-                            : 'bg-yellow-500 hover:bg-yellow-600 text-white'
-                        }`}
-                      >
-                        {student.is_admin ? ' Снять админа' : ' Сделать админом'}
-                      </button>
-                      {student.is_banned && isSuperAdmin && (
+                    <button 
+                      onClick={() => handleToggleAdmin(student.id, !student.is_admin)}
+                      className={`w-full px-4 py-2 rounded-lg text-sm font-bold ${
+                        student.is_admin 
+                          ? 'bg-red-500 hover:bg-red-600 text-white' 
+                          : 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                      }`}
+                    >
+                      {student.is_admin ? ' Снять админа' : ' Сделать админом'}
+                    </button>
+                  )}
+                  {isAdmin && (
+                    <>
+                      {student.is_banned && (
                         <button
                           onClick={() => handleUnbanStudent(student.id)}
                           className="w-full px-4 py-2 rounded-lg text-sm font-bold bg-green-500 hover:bg-green-600 text-white"
@@ -532,7 +534,25 @@ export default function AdminPanel() {
                           ✅ Разбанить студента
                         </button>
                       )}
-                    </div>
+                      {/* Бан */}
+                      <button
+                        onClick={() => openBanModal(student)}
+                        className="bg-red-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-red-600 w-full"
+                        title="Забанить"
+                      >
+                        🚫 Забанить студента
+                      </button>
+                      {/* Удаление только для супер-админа */}
+                      {isSuperAdmin && (
+                        <button
+                          onClick={() => openDeleteModal(student)}
+                          className="bg-gray-700 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-gray-800 w-full"
+                          title="Удалить студента"
+                        >
+                          🗑️ Удалить студента
+                        </button>
+                      )}
+                    </>
                   )}
                   <button
                     onClick={() => openAddToQueueModal(student)}
@@ -541,51 +561,25 @@ export default function AdminPanel() {
                     Поставить в очередь
                   </button>
 
-                  {/* ГРУППА ОПАСНЫХ ДЕЙСТВИЙ */}
-                  <div className="flex flex-col gap-2 mt-2">
-                    {/* Редактирование */}
+                  {/* Редактирование */}
+                  <button
+                    onClick={() => openEditModal(student)}
+                    className="bg-blue-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-blue-600 w-full"
+                    title="Редактировать"
+                  >
+                    ✏️ Редактировать
+                  </button>
+                  
+                  {/* Сброс регистрации */}
+                  {student.is_registered && (
                     <button
-                      onClick={() => openEditModal(student)}
-                      className="bg-blue-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-blue-600 w-full"
-                      title="Редактировать"
+                      onClick={() => openResetConfirm(student)}
+                      className="bg-orange-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-orange-600 w-full"
+                      title="Сбросить регистрацию"
                     >
-                      ✏️ Редактировать
+                      🔄 Сбросить регистрацию
                     </button>
-                    
-                    {/* Сброс регистрации */}
-                    {student.is_registered && (
-                      <button
-                        onClick={() => openResetConfirm(student)}
-                        className="bg-orange-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-orange-600 w-full"
-                        title="Сбросить регистрацию"
-                      >
-                        🔄 Сбросить регистрацию
-                      </button>
-                    )}
-                    
-                    {/* Опасные действия только для супер-админа */}
-                    {isSuperAdmin && (
-                      <>
-                        {/* Бан */}
-                        <button
-                          onClick={() => openBanModal(student)}
-                          className="bg-red-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-red-600 w-full"
-                          title="Забанить"
-                        >
-                          🚫 Забанить студента
-                        </button>
-                        
-                        {/* Удаление */}
-                        <button
-                          onClick={() => openDeleteModal(student)}
-                          className="bg-gray-700 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-gray-800 w-full"
-                          title="Удалить студента"
-                        >
-                          🗑️ Удалить студента
-                        </button>
-                      </>
-                    )}
-                  </div>
+                  )}
                 </div>
               ))}
             </div>
