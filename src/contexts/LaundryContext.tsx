@@ -868,6 +868,7 @@ const adminAddToQueue = async (
 // ========================================
 
 // ✅ Эту функцию можно вызвать один раз для миграции старых данных
+/*
 const migrateOldQueueItems = async () => {
   if (!isAdmin || !supabase) return;
 
@@ -920,11 +921,7 @@ const migrateOldQueueItems = async () => {
     console.error('❌ Migration error:', error);
   }
 };
-
-
-
-
-
+*/
 
   // Admin: Set return key alert
   const setReturnKeyAlert = async (queueItemId: string, alert: boolean) => {
@@ -2184,7 +2181,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
       console.log('🔑 Admin logging in...');
       
       // Сначала попробовать войти
-      let { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: adminEmail,
         password: adminPassword
       });
