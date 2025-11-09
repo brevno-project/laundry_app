@@ -41,12 +41,12 @@ export default function AdminPanel() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showAddToQueue, setShowAddToQueue] = useState(false);
   
-  // ✅ Параметры записи в очередь (включая дату)
+  // Параметры записи в очередь (включая дату)
   const [queueWashCount, setQueueWashCount] = useState(1);
   const [queuePaymentType, setQueuePaymentType] = useState('money');
   const [queueHour, setQueueHour] = useState('20');
   const [queueMinute, setQueueMinute] = useState('00');
-  const [queueDate, setQueueDate] = useState(''); // ✅ НОВОЕ ПОЛЕ
+  const [queueDate, setQueueDate] = useState(''); // НОВОЕ ПОЛЕ
   
   // Форма добавления студента
   const [newFirstName, setNewFirstName] = useState('');
@@ -71,7 +71,7 @@ export default function AdminPanel() {
   
   const washingItem = queue.find(item => item.status === 'washing');
 
-  // ✅ Генерация доступных дат (сегодня + 7 дней)
+  // Генерация доступных дат (сегодня + 7 дней)
   const getAvailableDates = () => {
     const dates = [];
     const today = new Date();
@@ -130,9 +130,14 @@ export default function AdminPanel() {
     setAdminKey('');
   };
 
-  const handleClearQueueConfirm = () => {
-    clearQueue();
-    setShowConfirmClear(false);
+  const handleClearQueueConfirm = async () => {
+    try {
+      await clearQueue();
+      setShowConfirmClear(false);
+      alert('✅ Очередь очищена!');
+    } catch (err: any) {
+      alert('❌ Ошибка: ' + err.message);
+    }
   };
 
   const openResetConfirm = (student: Student) => {
@@ -244,7 +249,7 @@ export default function AdminPanel() {
     setShowDeleteConfirm(true);
   };
 
-  // ✅ ОБНОВЛЕННАЯ функция добавления в очередь С ВЫБОРОМ ДАТЫ
+  // ОБНОВЛЕННАЯ функция добавления в очередь С ВЫБОРОМ ДАТЫ
   const handleAddToQueue = async () => {
     if (!selectedStudent) return;
     
@@ -270,15 +275,15 @@ export default function AdminPanel() {
   };
 
   const handleToggleAdmin = async (studentId: string, makeAdmin: boolean) => {
-    console.log('🔑 Toggle admin:', studentId, makeAdmin);
-    console.log('👤 Current user:', user);
-    console.log('👑 Is super admin:', isSuperAdmin);
+    console.log(' Toggle admin:', studentId, makeAdmin);
+    console.log(' Current user:', user);
+    console.log(' Is super admin:', isSuperAdmin);
     
     try {
       await toggleAdminStatus(studentId, makeAdmin);
       alert(makeAdmin ? '✅ Студент стал админом!' : '✅ Админские права сняты!');
     } catch (error: any) {
-      console.error('❌ Error toggling admin:', error);
+      console.error(' Error toggling admin:', error);
       alert('❌ Ошибка: ' + error.message);
     }
   };
@@ -292,14 +297,14 @@ export default function AdminPanel() {
     setQueueHour('20');
     setQueueMinute('00');
     const today = new Date().toISOString().slice(0, 10);
-    setQueueDate(today); // ✅ Устанавливаем сегодняшнюю дату по умолчанию
+    setQueueDate(today); // Устанавливаем сегодняшнюю дату по умолчанию
     setShowAddToQueue(true);
   };
 
   if (!isAdmin) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">🔒 Администратор</h2>
+        <h2 className="text-2xl font-bold mb-4 text-gray-800"> Администратор</h2>
         <div className="space-y-4">
           <div>
             <label htmlFor="adminKey" className="block text-sm font-bold mb-2 text-gray-700">
@@ -327,15 +332,30 @@ export default function AdminPanel() {
     );
   }
 
+  // Требовать вход как пользователь для админ функций
+  if (!user) {
+    return (
+      <div className="bg-yellow-50 p-6 rounded-lg shadow-lg border border-yellow-200">
+        <h2 className="text-2xl font-bold mb-4 text-yellow-800"> Требуется вход</h2>
+        <p className="text-yellow-700 mb-4">
+          Для использования админ функций войдите как студент с правами администратора.
+        </p>
+        <p className="text-sm text-yellow-600">
+          Сначала войдите через форму входа студентов, затем используйте админ ключ.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-purple-700 p-6 rounded-lg shadow-lg border-2 border-purple-800">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-white">👑 Панель админа</h2>
+        <h2 className="text-2xl font-bold text-white"> Панель админа</h2>
         <button
           onClick={handleAdminLogout}
           className="bg-purple-800 hover:bg-purple-900 text-white text-sm font-semibold px-3 py-2 rounded transition-colors"
         >
-          🚪 Выйти
+          Выйти
         </button>
       </div>
       
@@ -347,23 +367,23 @@ export default function AdminPanel() {
             onClick={() => setShowConfirmClear(true)}
             className="w-full bg-red-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-red-700 transition-colors shadow-md"
           >
-            🗑️ Очистить очередь
+            Очистить очередь
           </button>
         ) : (
           <div className="bg-white p-4 rounded-md border-2 border-red-400">
-            <p className="text-red-700 font-bold text-base mb-3">⚠️ Вы уверены, что хотите очистить всю очередь?</p>
+            <p className="text-red-700 font-bold text-base mb-3"> Вы уверены, что хотите очистить всю очередь?</p>
             <div className="flex gap-2">
               <button
                 onClick={() => setShowConfirmClear(false)}
-                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-gray-700 transition-colors"
+                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-gray-700"
               >
-                ❌ Отмена
+                Отмена
               </button>
               <button
                 onClick={handleClearQueueConfirm}
-                className="flex-1 bg-red-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-700 transition-colors"
+                className="flex-1 bg-red-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-700"
               >
-                ✅ Да, очистить
+                Да, очистить
               </button>
             </div>
           </div>
@@ -374,7 +394,7 @@ export default function AdminPanel() {
           onClick={() => setShowStudents(!showStudents)}
           className="w-full bg-purple-800 text-white font-semibold py-3 px-4 rounded-md hover:bg-purple-900 transition-colors shadow-md"
         >
-          👥 {showStudents ? 'Скрыть студентов' : 'Управление студентами'}
+          {showStudents ? 'Скрыть студентов' : 'Управление студентами'}
         </button>
 
         {showStudents && (
@@ -385,7 +405,7 @@ export default function AdminPanel() {
                 onClick={() => setShowAddStudent(true)}
                 className="bg-green-600 text-white text-sm font-semibold py-2 px-4 rounded hover:bg-green-700"
               >
-                ➕ Добавить
+                Добавить
               </button>
             </div>
 
@@ -395,7 +415,7 @@ export default function AdminPanel() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="🔍 Поиск..."
+                placeholder=" Поиск..."
                 className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
               />
               
@@ -439,13 +459,13 @@ export default function AdminPanel() {
                     </p>
                     <div className="flex gap-1 mt-1 flex-wrap">
                       {student.isRegistered && (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded font-semibold">✅ Зарег.</span>
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded font-semibold"> Зарег.</span>
                       )}
                       {student.is_banned && (
-                        <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded font-semibold">🚫 Бан</span>
+                        <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded font-semibold"> Бан</span>
                       )}
                       {student.telegram_chat_id && (
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-semibold">📱 TG</span>
+                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-semibold"> TG</span>
                       )}
                     </div>
                   </div>
@@ -461,7 +481,7 @@ export default function AdminPanel() {
                             : 'bg-yellow-500 hover:bg-yellow-600 text-white'
                         }`}
                       >
-                        {student.is_admin ? '❌ Снять админа' : '👑 Сделать админом'}
+                        {student.is_admin ? ' Снять админа' : ' Сделать админом'}
                       </button>
                     </div>
                   )}
@@ -469,7 +489,7 @@ export default function AdminPanel() {
                     onClick={() => openAddToQueueModal(student)}
                     className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-1 w-full"
                   >
-                    ➕ Поставить в очередь
+                    Поставить в очередь
                   </button>
 
                   {/* ГРУППА ОПАСНЫХ ДЕЙСТВИЙ */}
@@ -482,7 +502,7 @@ export default function AdminPanel() {
                         className="bg-orange-500 text-white text-xs font-semibold py-1 px-2 rounded hover:bg-orange-600"
                         title="Сбросить регистрацию"
                       >
-                        🔄 Сбросить
+                        Сбросить
                       </button>
                     )}
                     <button
@@ -490,7 +510,7 @@ export default function AdminPanel() {
                       className="bg-blue-500 text-white text-xs font-semibold py-1 px-2 rounded hover:bg-blue-600"
                       title="Редактировать"
                     >
-                      ✏️ Редакт.
+                      Редакт.
                     </button>
                     </div>
                     
@@ -502,7 +522,7 @@ export default function AdminPanel() {
                           className="bg-green-500 text-white text-xs font-semibold py-1 px-2 rounded hover:bg-green-600 w-full"
                           title="Разбанить"
                         >
-                          ✅ Разбанить
+                          Разбанить
                         </button>
                       ) : (
                         <button
@@ -510,7 +530,7 @@ export default function AdminPanel() {
                           className="bg-red-500 text-white text-xs font-semibold py-1 px-2 rounded hover:bg-red-600 w-full"
                           title="Забанить"
                         >
-                          🚫 Забанить
+                          Забанить
                         </button>
                       )}
                     </div>
@@ -521,7 +541,7 @@ export default function AdminPanel() {
                       className="bg-gray-700 text-white text-xs font-semibold py-1 px-2 rounded hover:bg-gray-800 w-full"
                       title="Удалить студента"
                     >
-                      🗑️ Удалить
+                      Удалить
                     </button>
                   </div>
                 </div>
@@ -539,7 +559,7 @@ export default function AdminPanel() {
       {showAddStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">➕ Добавить студента</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-4"> Добавить студента</h3>
             <div className="space-y-3">
               <input
                 type="text"
@@ -585,7 +605,7 @@ export default function AdminPanel() {
       {showEditStudent && selectedStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">✏️ Редактировать</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-4"> Редактировать</h3>
             <div className="space-y-3">
               <input
                 type="text"
@@ -631,7 +651,7 @@ export default function AdminPanel() {
       {showResetConfirm && selectedStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-orange-700 mb-4">⚠️ Сбросить регистрацию?</h3>
+            <h3 className="text-xl font-bold text-orange-700 mb-4"> Сбросить регистрацию?</h3>
             <p className="text-gray-700 mb-4">
               Сбросить регистрацию для <span className="font-bold">{selectedStudent.fullName}</span>?
             </p>
@@ -660,7 +680,7 @@ export default function AdminPanel() {
       {showBanStudent && selectedStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">🚫 Забанить студента</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-4"> Забанить студента</h3>
             <p className="text-gray-700 mb-3">
               Забанить <span className="font-bold">{selectedStudent.fullName}</span>?
             </p>
@@ -692,12 +712,12 @@ export default function AdminPanel() {
       {showDeleteConfirm && selectedStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-red-700 mb-4">⚠️ Удалить студента?</h3>
+            <h3 className="text-xl font-bold text-red-700 mb-4"> Удалить студента?</h3>
             <p className="text-gray-700 mb-4">
               Вы уверены, что хотите удалить <span className="font-bold">{selectedStudent.fullName}</span>?
             </p>
             <p className="text-red-600 text-sm font-semibold mb-4">
-              ⚠️ Это действие нельзя отменить! Будут удалены все данные студента.
+              Это действие нельзя отменить! Будут удалены все данные студента.
             </p>
             <div className="flex gap-2">
               <button
@@ -718,19 +738,19 @@ export default function AdminPanel() {
       )}
 
       
-      {/* ✅ ГЛАВНОЕ МОДАЛЬНОЕ ОКНО: Поставить в очередь С ВЫБОРОМ ДАТЫ */}
+      {/* ГЛАВНОЕ МОДАЛЬНОЕ ОКНО: Поставить в очередь С ВЫБОРОМ ДАТЫ */}
       {showAddToQueue && selectedStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">➕ Поставить в очередь</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-4"> Поставить в очередь</h3>
             <p className="text-gray-700 mb-3">
               Студент: <span className="font-bold">{selectedStudent.fullName}</span>
             </p>
             
             <div className="space-y-3">
-              {/* ✅ НОВОЕ ПОЛЕ: Выбор даты стирки */}
+              {/* НОВОЕ ПОЛЕ: Выбор даты стирки */}
               <div>
-                <label className="block text-sm font-bold mb-2 text-gray-900">📅 Дата стирки</label>
+                <label className="block text-sm font-bold mb-2 text-gray-900"> Дата стирки</label>
                 <select
                   value={queueDate}
                   onChange={(e) => setQueueDate(e.target.value)}
@@ -763,9 +783,9 @@ export default function AdminPanel() {
                   onChange={(e) => setQueuePaymentType(e.target.value)}
                   className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
                 >
-                  <option value="money">💵 Деньги</option>
-                  <option value="coupon">🎫 Купон</option>
-                  <option value="both">💵+🎫 Оба</option>
+                  <option value="money"> Деньги</option>
+                  <option value="coupon"> Купон</option>
+                  <option value="both"> Деньги+Купон</option>
                 </select>
               </div>
               

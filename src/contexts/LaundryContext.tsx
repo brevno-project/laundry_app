@@ -73,6 +73,7 @@ type LaundryContextType = {
   clearQueue: () => void;
   removeFromQueue: (queueItemId: string) => Promise<void>;
   clearCompletedQueue: () => Promise<void>;
+  clearOldQueues: () => Promise<void>;
   banStudent: (studentId: string, reason?: string) => Promise<void>;
   unbanStudent: (studentId: string) => Promise<void>;
   isAdmin: boolean;
@@ -423,7 +424,7 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
           .select('user_id')
           .eq('id', studentId)
           .single();
-  
+
         if (studentData?.user_id) {
           // Delete from Supabase Auth (admin operation)
           const { error: authError } = await supabase.auth.admin.deleteUser(studentData.user_id);
@@ -1258,6 +1259,36 @@ const startWashing = async (queueItemId: string) => {
     }
   };
 
+  // Очистить старую очередь (за предыдущие дни)
+  const clearOldQueues = async () => {
+    if (!isAdmin) return;
+
+    if (!isSupabaseConfigured || !supabase) {
+      // Local storage fallback
+      const today = new Date().toISOString().split('T')[0];
+      const localQueue = getLocalQueue();
+      const updatedQueue = localQueue.filter(item => item.scheduledForDate >= today);
+      saveLocalQueue(updatedQueue);
+      fetchQueue();
+      return;
+    }
+
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { error } = await supabase
+        .from('queue')
+        .delete()
+        .lt('scheduledForDate', today);
+
+      if (error) throw error;
+
+      console.log('✅ Old queue items cleared');
+      await fetchQueue();
+    } catch (error) {
+      console.error('❌ Error clearing old queues:', error);
+    }
+  };
+
   // Забанить студента
   const banStudent = async (studentId: string, reason?: string) => {
     if (!isAdmin) return;
@@ -1371,7 +1402,7 @@ const updateStudent = async (
   }
 
   try {
-    const updateData: any = { ...updates };
+    const updateData: any = {};
     
     // Если изменяются имя или фамилия, обновляем fullName
     if (updates.firstName || updates.lastName) {
@@ -1379,9 +1410,13 @@ const updateStudent = async (
       if (student) {
         const firstName = updates.firstName || student.firstName;
         const lastName = updates.lastName || student.lastName;
-        updateData.fullName = `${firstName} ${lastName}`;
+        updateData.fullname = `${firstName} ${lastName}`;
       }
     }
+
+    if (updates.firstName !== undefined) updateData.firstname = updates.firstName;
+    if (updates.lastName !== undefined) updateData.lastname = updates.lastName;
+    if (updates.room !== undefined) updateData.room = updates.room;
 
     const { error } = await supabase
       .from('students')
@@ -1814,16 +1849,16 @@ const transferSelectedToPreviousDay = async (selectedIds: string[]) => {
 
       const updatedQueue = queue.map(item => {
         const index = unfinishedItems.findIndex(u => u.id === item.id);
-  if (index !== -1) {
-    return { 
-      ...item, 
-      currentDate: targetDate, 
-      scheduledForDate: targetDate,
-      position: minPosition - 10000 - index  // Перенесенные первыми, порядок сохраняется
-    };
-  }
-  return item;
-});
+        if (index !== -1) {
+          return { 
+            ...item, 
+            currentDate: targetDate, 
+            scheduledForDate: targetDate,
+            position: minPosition - 10000 - index  // Перенесенные первыми, порядок сохраняется
+          };
+        }
+        return item;
+      });
       setQueue(updatedQueue);
       saveLocalQueue(updatedQueue);
       alert(`✅ ${unfinishedItems.length} записей перенесено на ${format(prevDay, 'dd.MM.yyyy')}!`);
@@ -1871,7 +1906,7 @@ const transferSelectedToPreviousDay = async (selectedIds: string[]) => {
         }
 
         alert(`✅ ${unfinishedItems.length} записей перенесено на ${format(prevDay, 'dd.MM.yyyy')}!`);
-        await fetchQueue();
+        await fetchQueue();  // Обновить после пересчета
       }
     }
   } catch (err: any) {
@@ -2115,6 +2150,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     clearQueue,
     removeFromQueue,
     clearCompletedQueue,
+    clearOldQueues,
     banStudent,
     unbanStudent,
     isAdmin,
