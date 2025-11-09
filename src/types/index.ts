@@ -1,15 +1,15 @@
-// ✅ ИСПРАВЛЕННЫЕ ТИПЫ для работы с RLS политиками
+// ИСПРАВЛЕННЫЕ ТИПЫ для работы с RLS политиками
 
 export type Student = {
   id: string;
-  firstName: string;
-  lastName: string;
-  fullName: string;
+  first_name: string;
+  last_name: string;
+  full_name: string;
   room: string | null;
-  isRegistered: boolean;
-  registeredAt?: string;
+  is_registered: boolean;
+  registered_at?: string;
   telegram_chat_id?: string;
-  createdAt: string;
+  created_at: string;
   is_banned?: boolean;
   banned_at?: string | null;
   ban_reason?: string | null;
@@ -20,18 +20,19 @@ export type Student = {
 
 export type StudentAuth = {
   id: string;
-  studentId: string;
-  passwordHash: string;
-  createdAt: string;
+  student_id: string;
+  password_hash: string;
+  created_at: string;
 };
 
 export type User = {
-  id: string; // ✅ Это UUID из Supabase Auth (auth.users.id)
-  studentId: string; // ✅ Это ID из таблицы students
-  name: string;
+  id: string; // Это UUID из Supabase Auth (auth.users.id)
+  student_id: string; // Это ID из таблицы students
+  first_name: string;
+  last_name: string;
+  full_name: string;
   room?: string;
-  isAdmin?: boolean;
-  fullName?: string;
+  is_admin?: boolean;
   telegram_chat_id?: string;
   is_super_admin?: boolean;
 };
@@ -46,23 +47,24 @@ export enum QueueStatus {
 
 export type QueueItem = {
   id: string;
-  userId: string; // ⚠️ УСТАРЕВШЕЕ: старый формат (admin_176...)
-  user_id: string; // ✅ НОВОЕ: UUID из Supabase Auth для RLS
-  studentId: string; // ID студента из таблицы students
-  userName: string;
-  userRoom?: string;
-  washCount: number;
-  paymentType?: string;
-  joinedAt: string;
-  plannedStartAt?: string;
-  expectedFinishAt?: string;
-  finishedAt?: string;
+  user_id: string; // НОВОЕ: UUID из Supabase Auth для RLS
+  student_id: string; // ID студента из таблицы students
+  first_name: string;
+  last_name: string;
+  full_name: string;
+  room?: string;
+  wash_count: number;
+  payment_type?: string;
+  joined_at: string;
+  planned_start_at?: string;
+  expected_finish_at?: string;
+  finished_at?: string;
   note?: string;
-  adminMessage?: string;
-  returnKeyAlert?: boolean;
+  admin_message?: string;
+  return_key_alert?: boolean;
   status: QueueStatus;
-  scheduledForDate: string; // '2025-11-02'
-  currentDate: string; // '2025-11-03'
+  scheduled_for_date: string; // '2025-11-02'
+  queue_date: string; // '2025-11-03'
   position: number; // 1,2,3...
 };
 
@@ -73,18 +75,18 @@ export enum MachineStatus {
 
 export type MachineState = {
   status: MachineStatus;
-  currentQueueItemId?: string;
-  startedAt?: string;
-  expectedFinishAt?: string;
+  current_queue_item_id?: string;
+  started_at?: string;
+  expected_finish_at?: string;
 };
 
 export type HistoryItem = {
   id: string;
-  userId: string;
-  userName: string;
-  userRoom?: string;
-  startedAt: string;
-  finishedAt: string;
+  user_id: string;
+  full_name: string;
+  room?: string;
+  started_at: string;
+  finished_at: string;
 };
 
 export type TelegramNotification = {
@@ -98,13 +100,13 @@ export type TelegramNotification = {
     | 'admin_return_key'
     | 'updated';
 
-  userName?: string;
-  userRoom?: string;
-  washCount?: number;
-  paymentType?: string;
-  queueLength?: number;
-  expectedFinishAt?: string;
-  studentId?: string;
-  queueItemId?: string;
+  full_name?: string;
+  room?: string;
+  wash_count?: number;
+  payment_type?: string;
+  queue_length?: number;
+  expected_finish_at?: string;
+  student_id?: string;
+  queue_item_id?: string;
   message?: string;
 };

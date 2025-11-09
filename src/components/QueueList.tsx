@@ -237,8 +237,8 @@ const handleSaveEdit = async () => {
             
             {/* ✅ Список записей на эту дату */}
             <div className="space-y-3">
-            {groupedQueue[dateKey].map((item, index) => {
-                const isCurrentUser = user && item.studentId === user.studentId;
+            {groupedQueue[dateKey].map((item: any, index: number) => {
+                const isCurrentUser = user && item.student_id === user.student_id;
                 const statusDisplay = getStatusDisplay(item.status);
                 const globalIndex = queuedItems.findIndex((q: any) => q.id === item.id);
                 
@@ -288,8 +288,8 @@ const handleSaveEdit = async () => {
                               </span>
                             )}
                           </div>
-                          <div className="font-bold text-lg text-gray-900">{item.userName}</div>
-                          {item.userRoom && <div className="text-xs text-gray-600">Комната {item.userRoom}</div>}
+                          <div className="font-bold text-lg text-gray-900">{item.fullname}</div>
+                          {item.room && <div className="text-xs text-gray-600">Комната {item.room}</div>}
                         </div>
                       </div>
                       <span className={`px-2 py-1 rounded-full text-xs font-bold ${statusDisplay.badgeColor} whitespace-nowrap`}>
@@ -368,19 +368,19 @@ const handleSaveEdit = async () => {
                                 className="bg-yellow-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-yellow-600 shadow-sm"
                                 onClick={async () => {
                                   try {
-                                    await updateQueueItem(item.id, { returnKeyAlert: false });
+                                    await updateQueueItem(item.id, { return_key_alert: false });
                                     await new Promise(resolve => setTimeout(resolve, 100));
                                     await setQueueStatus(item.id, QueueStatus.READY);
                                     
                                     const success = await sendTelegramNotification({
                                       type: 'admin_call_for_key',
-                                      userName: item.userName,
-                                      userRoom: item.userRoom,
-                                      studentId: item.studentId,
-                                      expectedFinishAt: item.expectedFinishAt
+                                      full_name: item.full_name,
+                                      room: item.room,
+                                      student_id: item.student_id,
+                                      expected_finish_at: item.expected_finish_at
                                     });
                                     
-                                    alert(success ? `✅ ${item.userName} позван!` : `⚠️ ${item.userName} не подключил Telegram`);
+                                    alert(success ? `✅ ${item.fullname} позван!` : `⚠️ ${item.fullname} не подключил Telegram`);
                                   } catch (error) {
                                     console.error('❌ Ошибка при вызове:', error);
                                     alert('❌ Ошибка при вызове студента');
@@ -399,17 +399,17 @@ const handleSaveEdit = async () => {
                                       await new Promise(resolve => setTimeout(resolve, 100));
                                     }
                                     
-                                    await updateQueueItem(item.id, { returnKeyAlert: true });
+                                    await updateQueueItem(item.id, { return_key_alert: true });
                                     
                                     const success = await sendTelegramNotification({
                                       type: 'admin_return_key',
-                                      userName: item.userName,
-                                      userRoom: item.userRoom,
-                                      studentId: item.studentId,
-                                      expectedFinishAt: item.expectedFinishAt
+                                      full_name: item.full_name,
+                                      room: item.room,
+                                      student_id: item.student_id,
+                                      expected_finish_at: item.expected_finish_at
                                     });
                                     
-                                    alert(success ? `✅ ${item.userName} попросили вернуть ключ!` : `⚠️ ${item.userName} не подключил Telegram`);
+                                    alert(success ? `✅ ${item.fullname} попросили вернуть ключ!` : `⚠️ ${item.fullname} не подключил Telegram`);
                                   } catch (error) {
                                     console.error('❌ Ошибка:', error);
                                     alert('❌ Ошибка отправки уведомления');
@@ -423,14 +423,14 @@ const handleSaveEdit = async () => {
                                 className="bg-gray-400 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-gray-500 shadow-sm"
                                 onClick={async () => {
                                   try {
-                                    await updateQueueItem(item.id, { returnKeyAlert: false });
+                                    await updateQueueItem(item.id, { return_key_alert: false });
                                     await new Promise(resolve => setTimeout(resolve, 100));
                                     
                                     if (item.status === QueueStatus.READY) {
                                       await setQueueStatus(item.id, QueueStatus.WAITING);
                                     }
                                     
-                                    alert(`✅ Уведомления отменены для ${item.userName}`);
+                                    alert(`✅ Уведомления отменены для ${item.fullname}`);
                                   } catch (error) {
                                     console.error('❌ Ошибка:', error);
                                     alert('❌ Ошибка отмены уведомлений');
@@ -447,10 +447,10 @@ const handleSaveEdit = async () => {
                                 className="bg-blue-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-blue-700 shadow-sm"
                                 onClick={async () => {
                                   try {
-                                    await updateQueueItem(item.id, { returnKeyAlert: false });
+                                    await updateQueueItem(item.id, { return_key_alert: false });
                                     await new Promise(resolve => setTimeout(resolve, 200));
                                     await startWashing(item.id);
-                                    alert(`✅ ${item.userName} забрал ключ и начал стирку!`);
+                                    alert(`✅ ${item.fullname} забрал ключ и начал стирку!`);
                                   } catch (error) {
                                     console.error('❌ Ошибка:', error);
                                     alert('❌ Ошибка при выдаче ключа');
@@ -464,10 +464,10 @@ const handleSaveEdit = async () => {
                                 className="bg-green-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-green-700 shadow-sm"
                                 onClick={async () => {
                                   try {
-                                    await updateQueueItem(item.id, { returnKeyAlert: false });
+                                    await updateQueueItem(item.id, { return_key_alert: false });
                                     await new Promise(resolve => setTimeout(resolve, 200));
                                     await startWashing(item.id);
-                                    alert(`✅ ${item.userName} стирает!`);
+                                    alert(`✅ ${item.fullname} стирает!`);
                                   } catch (error) {
                                     console.error('❌ Ошибка:', error);
                                     alert('❌ Ошибка при запуске стирки');
@@ -481,10 +481,10 @@ const handleSaveEdit = async () => {
                                 className="bg-emerald-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-emerald-700 shadow-sm"
                                 onClick={async () => {
                                   try {
-                                    await updateQueueItem(item.id, { returnKeyAlert: false });
+                                    await updateQueueItem(item.id, { return_key_alert: false });
                                     await new Promise(resolve => setTimeout(resolve, 100));
                                     await markDone(item.id);
-                                    alert(`✅ ${item.userName} закончил!`);
+                                    alert(`✅ ${item.fullname} закончил!`);
                                   } catch (error) {
                                     console.error('❌ Ошибка:', error);
                                     alert('❌ Ошибка при завершении');
@@ -498,7 +498,7 @@ const handleSaveEdit = async () => {
                                 className="bg-purple-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-purple-600 shadow-sm"
                                 onClick={async () => {
                                   try {
-                                    await updateQueueItem(item.id, { returnKeyAlert: false });
+                                    await updateQueueItem(item.id, { return_key_alert: false });
                                     await new Promise(resolve => setTimeout(resolve, 100));
                                     
                                     if (item.status === QueueStatus.WASHING) {
@@ -507,7 +507,7 @@ const handleSaveEdit = async () => {
                                       await setQueueStatus(item.id, QueueStatus.WAITING);
                                     }
                                     
-                                    alert(`✅ ${item.userName} в ожидании`);
+                                    alert(`✅ ${item.fullname} в ожидании`);
                                   } catch (error) {
                                     console.error('❌ Ошибка:', error);
                                     alert('❌ Ошибка при возврате в ожидание');
@@ -522,9 +522,9 @@ const handleSaveEdit = async () => {
                             <button
                               className="bg-red-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-red-700 shadow-sm w-full"
                               onClick={async () => {
-                                if (confirm(`Удалить ${item.userName} из очереди?`)) {
+                                if (confirm(`Удалить ${item.fullname} из очереди?`)) {
                                   await removeFromQueue(item.id);
-                                  alert(`✅ ${item.userName} удален!`);
+                                  alert(`✅ ${item.fullname} удален!`);
                                 }
                               }}
                             >
@@ -567,7 +567,7 @@ const handleSaveEdit = async () => {
     <div className="bg-white rounded-lg p-6 max-w-md w-full">
       <h3 className="text-xl font-bold text-gray-900 mb-4">✏️ Редактировать запись</h3>
       <p className="text-gray-700 mb-3">
-        Студент: <span className="font-bold">{editingItem.userName}</span>
+        Студент: <span className="font-bold">{editingItem.fullname}</span>
       </p>
       
       <div className="space-y-3">

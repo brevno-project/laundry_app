@@ -87,7 +87,7 @@ type LaundryContextType = {
   isNewUser: boolean; // 
   setIsNewUser: (isNewUser: boolean) => void; // 
   addStudent: (firstName: string, lastName: string, room?: string) => Promise<void>;
-  updateStudent: (studentId: string, updates: { firstName?: string; lastName?: string; room?: string }) => Promise<void>;
+  updateStudent: (studentId: string, updates: { firstname?: string; lastname?: string; room?: string }) => Promise<void>;
   deleteStudent: (studentId: string) => Promise<void>;
   updateAdminKey: (newKey: string) => Promise<void>;
   updateQueueItemDetails: (queueId: string, updates: { washCount?: number; paymentType?: string; expectedFinishAt?: string; chosenDate?: string }) => Promise<void>;
@@ -227,7 +227,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase
         .from('students')
         .select('*')
-        .order('fullName', { ascending: true });
+        .order('full_name', { ascending: true });
 
       if (error) throw error;
       console.log(' Students loaded:', data?.length);
@@ -251,7 +251,7 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
     // Проверить что студент существует и не зарегистрирован
     const student = students.find(s => s.id === studentId);
     if (!student) throw new Error('');
-    if (student.isRegistered) throw new Error('');
+    if (student.is_registered) throw new Error('');
 
     // ИСПРАВЛЕНО: Создать правильный email
     // БЫЛО: const email = `${studentId}@laundry.local`;  // UUID - НЕПРАВИЛЬНО!
@@ -276,7 +276,7 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
       options: {
         data: {
           student_id: studentId,
-          full_name: student.fullName,
+          full_name: student.full_name,
           room: student.room
         }
       }
@@ -297,8 +297,8 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
     const { error: updateError } = await supabase
       .from('students')
       .update({ 
-        isRegistered: true, 
-        registeredAt: new Date().toISOString(),
+        is_registered: true, 
+        registered_at: new Date().toISOString(),
         user_id: authData.user.id  // КРИТИЧНО: Связать с auth.users
       })
       .eq('id', studentId);
@@ -313,14 +313,16 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
     // Создать объект User
     const newUser: User = {
       id: authData.user.id,  // UUID из auth.users
-      studentId: student.id,
-      name: student.fullName,
+      student_id: student.id,
+      first_name: student.first_name,
+      last_name: student.last_name,
+      full_name: student.full_name,
       room: student.room || undefined,
       telegram_chat_id: student.telegram_chat_id || undefined,
     };
     
     setUser(newUser);
-    console.log(' Student registered successfully:', newUser.name);
+    console.log(' Student registered successfully:', newUser.full_name);
     
     return newUser;
   } catch (error: any) {
@@ -347,7 +349,7 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
       .single();
 
     if (studentData?.error) throw studentData.error;
-    if (!studentData.isRegistered) throw new Error('');
+    if (!studentData.is_registered) throw new Error('');
 
     // ИСПРАВЛЕНО: Использовать тот же email что и при регистрации
     const email = `student-${studentId.slice(0, 8)}@example.com`;
@@ -371,8 +373,10 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
     // Создать объект User
     const newUser: User = {
       id: authData.user.id,
-      studentId: studentData.id,
-      name: studentData.fullName,
+      student_id: studentData.id,
+      first_name: studentData.first_name,
+      last_name: studentData.last_name,
+      full_name: studentData.full_name,
       room: studentData.room || undefined,
       telegram_chat_id: studentData.telegram_chat_id || undefined,
     };
@@ -392,7 +396,7 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
     setUser(newUser);
     localStorage.setItem('laundryUser', JSON.stringify(newUser)); // Правильный ключ
 
-    console.log(' Student logged in:', newUser.name);
+    console.log(' Student logged in:', newUser.full_name);
     return newUser;
   } catch (error: any) {
     console.error(' Error logging in:', error);
@@ -422,13 +426,13 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
         // Get student data
         const { data: studentData, error: studentError } = await supabase
           .from('students')
-          .select('user_id, isRegistered')
+          .select('user_id, is_registered')
           .eq('id', studentId)
           .single();
 
         if (studentError) throw studentError;
         if (!studentData) throw new Error('');
-        if (!studentData.isRegistered) throw new Error('');
+        if (!studentData.is_registered) throw new Error('');
 
         // Delete from Supabase Auth (admin operation)
         const { error: authError } = await supabase.auth.admin.deleteUser(studentData.user_id);
@@ -438,8 +442,8 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
         const { error: updateError } = await supabase
           .from('students')
           .update({ 
-            isRegistered: false, 
-            registeredAt: null,
+            is_registered: false, 
+            registered_at: null,
             user_id: null
           })
           .eq('id', studentId);
@@ -463,15 +467,15 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
     }
 
     try {
-      console.log(' Sending telegram link request:', { studentId: user.studentId, telegramChatId: telegramCode });
+      console.log(' Sending telegram link request:', { student_id: user.student_id, telegram_chat_id: telegramCode });
       const response = await fetch('/api/telegram/link', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          studentId: user.studentId, // 
-          telegramChatId: telegramCode,
+          student_id: user.student_id, // 
+          telegram_chat_id: telegramCode,
         }),
       });
 
@@ -602,14 +606,14 @@ const joinQueue = async (
     return;
   }
 
-  console.log(' Current user:', { id: user.id, studentId: user.studentId, name: user.name });
+  console.log(' Current user:', { id: user.id, student_id: user.student_id, name: user.full_name });
 
   // ПРОВЕРКА БАНА
   try {
     const { data: studentData } = await supabase
       .from('students')
       .select('is_banned, ban_reason, user_id')
-      .eq('id', user.studentId)
+      .eq('id', user.student_id)
       .single();
 
     if (studentData?.is_banned) {
@@ -686,16 +690,16 @@ const joinQueue = async (
       id: crypto.randomUUID(),
       userId: `user_${user.id.slice(0, 8)}`, // Старое поле для совместимости
       user_id: user.id, // КРИТИЧНО: UUID из Supabase Auth для RLS
-      studentId: user.studentId,
-      userName: name,
-      userRoom: room || null,
+      student_id: user.student_id,
+      fullname: name,
+      room: room || null,
       washCount,
       paymentType,
       joinedAt: new Date().toISOString(),
       expectedFinishAt: expectedFinishAt || null,
       status: QueueStatus.WAITING,
       scheduledForDate: targetDate,
-      currentDate: targetDate,
+      queue_date: targetDate,
       position: nextPos,
     };
 
@@ -719,13 +723,13 @@ const joinQueue = async (
     // Уведомление админа
     await sendTelegramNotification({
       type: 'joined',
-      studentId: user.studentId,
-      userName: name,
-      userRoom: room,
-      washCount,
-      paymentType,
-      queueLength: queue.length + 1,
-      expectedFinishAt,
+      student_id: user.student_id,
+      full_name: name,
+      room,
+      wash_count: washCount,
+      payment_type: paymentType,
+      queue_length: queue.length + 1,
+      expected_finish_at: expectedFinishAt,
     });
 
     await fetchQueue();
@@ -792,7 +796,7 @@ const adminAddToQueue = async (
   const targetDate = chosenDate || todayISO;
 
   console.log(' Admin adding to queue, target date:', targetDate);
-  console.log(' Admin user:', { id: user.id, name: user.name });
+  console.log(' Admin user:', { id: user.id, name: user.full_name });
 
   try {
     // Получаем максимальную позицию для выбранной даты
@@ -818,7 +822,7 @@ const adminAddToQueue = async (
     const { data: existingStudent } = await supabase
       .from('queue')
       .select('id')
-      .eq('userName', studentName)
+      .eq('full_name', studentName)
       .eq('currentDate', targetDate)
       .in('status', ['WAITING', 'READY', 'KEY_ISSUED', 'WASHING']);
 
@@ -832,11 +836,11 @@ const adminAddToQueue = async (
       id: crypto.randomUUID(),
       userId: `admin_${Date.now()}`, // Старое поле для совместимости
       user_id: user.id, // КРИТИЧНО: user_id админа для RLS
-      studentId: null, // Админ добавляет, studentId может быть null
-      userName: studentName,
-      userRoom: studentRoom || null,
-      washCount,
-      paymentType,
+      student_id: null, // Админ добавляет, studentId может быть null
+      fullname: studentName,
+      room: studentRoom || null,
+      wash_count: washCount,
+      payment_type: paymentType,
       joinedAt: new Date().toISOString(),
       expectedFinishAt: expectedFinishAt || null,
       status: QueueStatus.WAITING,
@@ -992,9 +996,9 @@ const startWashing = async (queueItemId: string) => {
     // Update machine state
     const newMachineState: MachineState = {
       status: MachineStatus.WASHING,
-      currentQueueItemId: queueItemId,
-      startedAt: new Date().toISOString(),
-      expectedFinishAt: queueItem.expectedFinishAt,
+      current_queue_item_id: queueItemId,
+      started_at: new Date().toISOString(),
+      expected_finish_at: queueItem.expected_finish_at,
     };
     
     console.log(' Updating machine state:', newMachineState);
@@ -1047,11 +1051,11 @@ const startWashing = async (queueItemId: string) => {
       // Add to history
       const historyItem: HistoryItem = {
         id: uuidv4(),
-        userId: queueItem.userId,
-        userName: queueItem.userName,
-        userRoom: queueItem.userRoom,
-        startedAt: machineState.startedAt || new Date().toISOString(),
-        finishedAt: new Date().toISOString(),
+        user_id: queueItem.user_id,
+        full_name: queueItem.full_name,
+        room: queueItem.room || undefined,
+        started_at: machineState.started_at || new Date().toISOString(),
+        finished_at: new Date().toISOString(),
       };
       
       const { error: historyError } = await supabase
@@ -1071,9 +1075,9 @@ const startWashing = async (queueItemId: string) => {
       // Reset machine state
       const idleMachineState: MachineState = {
         status: MachineStatus.IDLE,
-        currentQueueItemId: undefined,
-        startedAt: undefined,
-        expectedFinishAt: undefined,
+        current_queue_item_id: undefined,
+        started_at: undefined,
+        expected_finish_at: undefined,
       };
       const { error: machineError } = await supabase
         .from('machine_state')
@@ -1261,13 +1265,19 @@ const startWashing = async (queueItemId: string) => {
 
   // Очистить старую очередь (за предыдущие дни)
   const clearOldQueues = async () => {
-    if (!isAdmin) return;
+    console.log(' clearOldQueues вызвана');
+    console.log('isAdmin в контексте:', isAdmin);
+    
+    if (!isAdmin) {
+      console.log('❌ Нет прав админа');
+      return;
+    }
 
     if (!isSupabaseConfigured || !supabase) {
       // Local storage fallback
       const today = new Date().toISOString().split('T')[0];
       const localQueue = getLocalQueue();
-      const updatedQueue = localQueue.filter(item => item.scheduledForDate >= today);
+      const updatedQueue = localQueue.filter(item => item.scheduled_for_date >= today);
       saveLocalQueue(updatedQueue);
       fetchQueue();
       return;
@@ -1278,7 +1288,7 @@ const startWashing = async (queueItemId: string) => {
       const { error } = await supabase
         .from('queue')
         .delete()
-        .lt('scheduledForDate', today);
+        .lt('scheduled_for_date', today);
 
       if (error) throw error;
 
@@ -1301,7 +1311,7 @@ const startWashing = async (queueItemId: string) => {
       
       const localQueue = getLocalQueue();
       const updatedQueue = localQueue.filter(item => 
-        item.status === QueueStatus.DONE || item.scheduledForDate >= cutoffDate
+        item.status === QueueStatus.DONE || item.scheduled_for_date >= cutoffDate
       );
       saveLocalQueue(updatedQueue);
       fetchQueue();
@@ -1316,7 +1326,7 @@ const startWashing = async (queueItemId: string) => {
       const { error } = await supabase
         .from('queue')
         .delete()
-        .lt('scheduledForDate', cutoffDate)
+        .lt('scheduled_for_date', cutoffDate)
         .neq('status', QueueStatus.DONE);
 
       if (error) throw error;
@@ -1342,7 +1352,7 @@ const startWashing = async (queueItemId: string) => {
       const { error: queueError } = await supabase
         .from('queue')
         .delete()
-        .eq('studentId', studentId);
+        .eq('student_id', studentId);
   
       if (queueError) {
         console.error('Error removing from queue:', queueError);
@@ -1412,9 +1422,9 @@ const addStudent = async (firstName: string, lastName: string, room?: string) =>
       .from('students')
       .insert({
         id: uuidv4(),
-        firstName: firstName,
-        lastName: lastName,
-        fullName: fullName,
+        firstname: firstName,
+    lastname: lastName,
+    fullname: fullName,
         room: room || null,
         isRegistered: false,
         createdAt: new Date().toISOString(),
@@ -1447,9 +1457,9 @@ const updateStudent = async (
     if (updates.firstName || updates.lastName) {
       const student = students.find(s => s.id === studentId);
       if (student) {
-        const firstName = updates.firstName || student.firstName;
-        const lastName = updates.lastName || student.lastName;
-        updateData.fullName = `${firstName} ${lastName}`;
+        if (updates.firstName !== undefined) updateData.firstname = updates.firstName;
+        if (updates.lastName !== undefined) updateData.lastname = updates.lastName;
+        updateData.fullname = `${updates.firstName} ${updates.lastName}`;
       }
     }
 
@@ -1542,7 +1552,7 @@ const updateAdminKey = async (newKey: string) => {
   // Get current user's queue item if it exists
   const getUserQueueItem = (): QueueItem | undefined => {
     if (!user) return undefined;
-    return queue.find(item => item.studentId === user.studentId && 
+    return queue.find(item => item.student_id === user.student_id && 
                      (item.status === QueueStatus.WAITING || item.status === QueueStatus.READY || item.status === QueueStatus.KEY_ISSUED || item.status === QueueStatus.WASHING));
   };
 
@@ -1558,12 +1568,12 @@ const leaveQueue = async (queueItemId: string) => {
   }
   
   try {
-    console.log(' Leaving queue:', { queueItemId, studentId: user.studentId });
+    console.log(' Leaving queue:', { queueItemId, studentId: user.student_id });
     const { error } = await supabase
       .from('queue')
       .delete()
       .eq('id', queueItemId)
-      .eq('studentId', user.studentId);
+      .eq('student_id', user.student_id);
     
     if (error) {
       console.error(' Error from Supabase:', error);
@@ -1605,7 +1615,7 @@ const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>)
         console.error(' User not found for non-admin update');
         return;
       }
-      query = query.eq('studentId', user.studentId);
+      query = query.eq('student_id', user.student_id);
     }
     
     const { error } = await query;
@@ -1660,7 +1670,7 @@ const toggleAdminStatus = async (studentId: string, makeAdmin: boolean) => {
   }
   try {
     // Проверить уровень доступа
-  const currentStudent = students.find(s => s.id === user?.studentId);
+  const currentStudent = students.find(s => s.id === user?.student_id);
   const targetStudent = students.find(s => s.id === studentId);
   
   // Только супер админ может менять админ статусы
@@ -1706,7 +1716,7 @@ const toggleSuperAdminStatus = async (studentId: string, makeSuperAdmin: boolean
     throw new Error('Supabase ');
   }
   try {
-    const currentStudent = students.find(s => s.id === user?.studentId);
+    const currentStudent = students.find(s => s.id === user?.student_id);
     
     // Only super admin can manage super admin status
     if (!currentStudent?.is_super_admin) {
@@ -1747,7 +1757,7 @@ const sendAdminMessage = async (queueItemId: string, message: string) => {
     const queue = getLocalQueue();
     const item = queue.find(i => i.id === queueItemId);
     if (item) {
-      item.adminMessage = message;
+      item.admin_message = message;
       saveLocalQueue(queue);
     }
     fetchQueue();
@@ -1757,7 +1767,7 @@ const sendAdminMessage = async (queueItemId: string, message: string) => {
   try {
     const { error } = await supabase
       .from('queue')
-      .update({ adminMessage: message })
+      .update({ admin_message: message })
       .eq('id', queueItemId);
     
     if (error) throw error;
@@ -1790,7 +1800,7 @@ const transferSelectedToNextDay = async (selectedIds: string[]) => {
       // 
       // 
       const targetDate = nextDayStr;
-      const existingOnDate = queue.filter(item => item.currentDate === targetDate);
+      const existingOnDate = queue.filter(item => item.queue_date === targetDate);
       const minPosition = existingOnDate.length > 0 ? Math.min(...existingOnDate.map(item => item.position)) : 0;
 
       const updatedQueue = queue.map(item => {
@@ -1798,8 +1808,8 @@ const transferSelectedToNextDay = async (selectedIds: string[]) => {
         if (index !== -1) {
           return { 
             ...item, 
-            currentDate: targetDate, 
-            scheduledForDate: targetDate,
+            queue_date: targetDate, 
+            scheduled_for_date: targetDate,
             position: minPosition - 10000 - index  // 
           };
         }
@@ -1817,8 +1827,8 @@ const transferSelectedToNextDay = async (selectedIds: string[]) => {
           await supabase
             .from('queue')
             .update({ 
-              currentDate: nextDayStr,
-              scheduledForDate: nextDayStr
+              queue_date: nextDayStr,
+              scheduled_for_date: nextDayStr
             })
             .eq('id', item.id);
         }
@@ -1827,7 +1837,7 @@ const transferSelectedToNextDay = async (selectedIds: string[]) => {
         const { data: allOnDate } = await supabase
           .from('queue')
           .select('*')
-          .eq('currentDate', nextDayStr);
+          .eq('queue_date', nextDayStr);
 
         if (allOnDate) {
           const transferred = allOnDate.filter(item => unfinishedItems.some(u => u.id === item.id));
@@ -1884,7 +1894,7 @@ const transferSelectedToPreviousDay = async (selectedIds: string[]) => {
       // 
       // 
       const targetDate = prevDayStr;
-      const existingOnDate = queue.filter(item => item.currentDate === targetDate);
+      const existingOnDate = queue.filter(item => item.queue_date === targetDate);
       const minPosition = existingOnDate.length > 0 ? Math.min(...existingOnDate.map(item => item.position)) : 0;
 
       const updatedQueue = queue.map(item => {
@@ -1892,8 +1902,8 @@ const transferSelectedToPreviousDay = async (selectedIds: string[]) => {
         if (index !== -1) {
           return { 
             ...item, 
-            currentDate: targetDate, 
-            scheduledForDate: targetDate,
+            current_date: targetDate, 
+            scheduled_for_date: targetDate,
             position: minPosition - 10000 - index  // 
           };
         }
@@ -1911,8 +1921,8 @@ const transferSelectedToPreviousDay = async (selectedIds: string[]) => {
           await supabase
             .from('queue')
             .update({ 
-              currentDate: prevDayStr,
-              scheduledForDate: prevDayStr
+              current_date: prevDayStr,
+              scheduled_for_date: prevDayStr
             })
             .eq('id', item.id);
         }
@@ -1921,7 +1931,7 @@ const transferSelectedToPreviousDay = async (selectedIds: string[]) => {
         const { data: allOnDate } = await supabase
           .from('queue')
           .select('*')
-          .eq('currentDate', prevDayStr);
+          .eq('current_date', prevDayStr);
 
         if (allOnDate) {
           const transferred = allOnDate.filter(item => unfinishedItems.some(u => u.id === item.id));
@@ -1978,7 +1988,7 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
       // 
       // 
       const targetDate = todayStr;
-      const existingOnDate = queue.filter(item => item.currentDate === targetDate);
+      const existingOnDate = queue.filter(item => item.queue_date === targetDate);
       const minPosition = existingOnDate.length > 0 ? Math.min(...existingOnDate.map(item => item.position)) : 0;
 
       const updatedQueue = queue.map(item => {
@@ -1986,8 +1996,8 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
         if (index !== -1) {
           return { 
             ...item, 
-            currentDate: targetDate, 
-            scheduledForDate: targetDate,
+            current_date: targetDate, 
+            scheduled_for_date: targetDate,
             position: minPosition - 10000 - index  // 
           };
         }
@@ -2005,8 +2015,8 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
           await supabase
             .from('queue')
             .update({ 
-              currentDate: todayStr,
-              scheduledForDate: todayStr
+              current_date: todayStr,
+              scheduled_for_date: todayStr
             })
             .eq('id', item.id);
         }
@@ -2015,7 +2025,7 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
         const { data: allOnDate } = await supabase
           .from('queue')
           .select('*')
-          .eq('currentDate', todayStr);
+          .eq('current_date', todayStr);
 
         if (allOnDate) {
           const transferred = allOnDate.filter(item => unfinishedItems.some(u => u.id === item.id));
@@ -2104,12 +2114,12 @@ const updateQueueItemDetails = async (
     if (updates.expectedFinishAt && user) {
       await sendTelegramNotification({
         type: 'updated',
-        studentId: user.studentId,
-        userName: item.userName,
-        userRoom: item.userRoom,
-        washCount: updates.washCount || item.washCount,
-        paymentType: updates.paymentType || item.paymentType,
-        expectedFinishAt: updates.expectedFinishAt,
+        student_id: user.student_id,
+        full_name: item.full_name,
+        room: item.room || undefined,
+        wash_count: updates.washCount || item.wash_count,
+        payment_type: updates.paymentType || item.payment_type,
+        expected_finish_at: updates.expectedFinishAt,
       });
     }
 
@@ -2136,7 +2146,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     
     // 
     const sameDayItems = queue
-      .filter(item => item.currentDate === itemToMove.currentDate && item.scheduledForDate === itemToMove.scheduledForDate)
+      .filter(item => item.queue_date === itemToMove.queue_date && item.scheduled_for_date === itemToMove.scheduled_for_date)
       .sort((a, b) => a.position - b.position);
     
     const currentIndex = sameDayItems.findIndex(item => item.id === queueId);
@@ -2177,7 +2187,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     }
 
     // Проверить что студент имеет админ права в базе
-    if (!user.isAdmin && !user.is_super_admin) {
+    if (!user.is_admin && !user.is_super_admin) {
       throw new Error('У вас нет прав администратора');
     }
 
@@ -2187,7 +2197,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     localStorage.setItem('laundryIsAdmin', 'true');
     localStorage.setItem('laundryIsSuperAdmin', user.is_super_admin ? 'true' : 'false');
 
-    console.log('✅ Admin access granted for user:', user.name);
+    console.log('✅ Admin access granted for user:', user.full_name);
     return user;
   };
 

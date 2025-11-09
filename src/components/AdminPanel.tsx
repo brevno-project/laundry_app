@@ -57,8 +57,8 @@ export default function AdminPanel() {
   const [newRoom, setNewRoom] = useState('');
   
   // Форма редактирования студента
-  const [editFirstName, setEditFirstName] = useState('');
-  const [editLastName, setEditLastName] = useState('');
+  const [editFirstname, setEditFirstname] = useState('');
+  const [editLastname, setEditLastname] = useState('');
   const [editRoom, setEditRoom] = useState('');
   
   // Форма бана
@@ -101,13 +101,13 @@ export default function AdminPanel() {
 
   // Фильтрация студентов
   const filteredStudents = students.filter(student => {
-    const matchesSearch = student.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = student.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (student.room && student.room.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesFilter = 
       filterStatus === 'all' ? true :
-      filterStatus === 'registered' ? student.isRegistered :
-      filterStatus === 'unregistered' ? !student.isRegistered :
+      filterStatus === 'registered' ? student.is_registered :
+      filterStatus === 'unregistered' ? !student.is_registered :
       filterStatus === 'banned' ? student.is_banned : true;
     
     return matchesSearch && matchesFilter;
@@ -188,8 +188,8 @@ export default function AdminPanel() {
     
     try {
       await updateStudent(selectedStudent.id, {
-        firstName: editFirstName || undefined,
-        lastName: editLastName || undefined,
+        firstname: editFirstname || undefined,
+        lastname: editLastname || undefined,
         room: editRoom || undefined,
       });
       setShowEditStudent(false);
@@ -238,8 +238,8 @@ export default function AdminPanel() {
 
   const openEditModal = (student: Student) => {
     setSelectedStudent(student);
-    setEditFirstName(student.firstName);
-    setEditLastName(student.lastName);
+    setEditFirstname(student.first_name);
+    setEditLastname(student.last_name);
     setEditRoom(student.room || '');
     setShowEditStudent(true);
   };
@@ -265,7 +265,7 @@ export default function AdminPanel() {
       const expectedFinishAt = today.toISOString();
       
       await adminAddToQueue(
-        selectedStudent.fullName, 
+        selectedStudent.full_name, 
         selectedStudent.room || undefined,
         queueWashCount,
         queuePaymentType,
@@ -495,11 +495,11 @@ export default function AdminPanel() {
                   {/* Имя и значки */}
                   <div>
                     <p className="font-bold text-gray-900 text-base">
-                      {student.fullName}
+                      {student.full_name}
                       {student.room && <span className="text-gray-600 text-sm ml-2">({student.room})</span>}
                     </p>
                     <div className="flex gap-1 mt-1 flex-wrap">
-                      {student.isRegistered && (
+                      {student.is_registered && (
                         <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded font-semibold"> Зарег.</span>
                       )}
                       {student.is_banned && (
@@ -545,7 +545,7 @@ export default function AdminPanel() {
                     </button>
                     
                     {/* Сброс регистрации */}
-                    {student.isRegistered && (
+                    {student.is_registered && (
                       <button
                         onClick={() => openResetConfirm(student)}
                         className="bg-orange-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-orange-600 w-full"
@@ -643,15 +643,15 @@ export default function AdminPanel() {
             <div className="space-y-3">
               <input
                 type="text"
-                value={editFirstName}
-                onChange={(e) => setEditFirstName(e.target.value)}
+                value={editFirstname}
+                onChange={(e) => setEditFirstname(e.target.value)}
                 placeholder="Имя"
                 className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900"
               />
               <input
                 type="text"
-                value={editLastName}
-                onChange={(e) => setEditLastName(e.target.value)}
+                value={editLastname}
+                onChange={(e) => setEditLastname(e.target.value)}
                 placeholder="Фамилия"
                 className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900"
               />
@@ -687,7 +687,7 @@ export default function AdminPanel() {
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <h3 className="text-xl font-bold text-orange-700 mb-4"> Сбросить регистрацию?</h3>
             <p className="text-gray-700 mb-4">
-              Сбросить регистрацию для <span className="font-bold">{selectedStudent.fullName}</span>?
+              Сбросить регистрацию для <span className="font-bold">{selectedStudent.full_name}</span>?
             </p>
             <p className="text-orange-600 text-sm font-semibold mb-4">
               Студент сможет заново зарегистрироваться.
@@ -716,7 +716,7 @@ export default function AdminPanel() {
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <h3 className="text-xl font-bold text-gray-900 mb-4"> Забанить студента</h3>
             <p className="text-gray-700 mb-3">
-              Забанить <span className="font-bold">{selectedStudent.fullName}</span>?
+              Забанить <span className="font-bold">{selectedStudent.full_name}</span>?
             </p>
             <textarea
               value={banReason}
@@ -748,7 +748,7 @@ export default function AdminPanel() {
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <h3 className="text-xl font-bold text-red-700 mb-4"> Удалить студента?</h3>
             <p className="text-gray-700 mb-4">
-              Вы уверены, что хотите удалить <span className="font-bold">{selectedStudent.fullName}</span>?
+              Вы уверены, что хотите удалить <span className="font-bold">{selectedStudent.full_name}</span>?
             </p>
             <p className="text-red-600 text-sm font-semibold mb-4">
               Это действие нельзя отменить! Будут удалены все данные студента.
@@ -778,7 +778,7 @@ export default function AdminPanel() {
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <h3 className="text-xl font-bold text-gray-900 mb-4"> Поставить в очередь</h3>
             <p className="text-gray-700 mb-3">
-              Студент: <span className="font-bold">{selectedStudent.fullName}</span>
+              Студент: <span className="font-bold">{selectedStudent.full_name}</span>
             </p>
             
             <div className="space-y-3">

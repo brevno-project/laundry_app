@@ -18,7 +18,7 @@ export default function StudentAuth() {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
-      s.fullName.toLowerCase().includes(query) ||
+      s.full_name.toLowerCase().includes(query) ||
       (s.room && s.room.toLowerCase().includes(query))
     );
   });
@@ -35,14 +35,14 @@ export default function StudentAuth() {
       return;
     }
 
-    if (!selectedStudent.isRegistered && password.length < 6) {
+    if (!selectedStudent.is_registered && password.length < 6) {
       setError('Пароль должен быть минимум 6 символов');
       return;
     }
 
     setLoading(true);
     try {
-      if (selectedStudent.isRegistered) {
+      if (selectedStudent.is_registered) {
         await loginStudent(selectedStudent.id, password);
       } else {
         await registerStudent(selectedStudent.id, password);
@@ -50,7 +50,7 @@ export default function StudentAuth() {
       setError('');
     } catch (err: any) {
       setError(err.message || (
-        selectedStudent.isRegistered ? 'Неверный пароль' : 'Ошибка регистрации'
+        selectedStudent.is_registered ? 'Неверный пароль' : 'Ошибка регистрации'
       ));
     } finally {
       setLoading(false);
@@ -88,13 +88,13 @@ export default function StudentAuth() {
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="font-black text-xl text-gray-900">{student.fullName}</div>
+                    <div className="font-black text-xl text-gray-900">{student.full_name}</div>
                     {student.room && (
                       <div className="text-base text-gray-700 font-bold">🚪 Комната {student.room}</div>
                     )}
                   </div>
                   <div className="flex-shrink-0">
-                    {student.isRegistered ? (
+                    {student.is_registered ? (
                       <span className="bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-md whitespace-nowrap">
                         ✅
                       </span>
@@ -132,7 +132,7 @@ export default function StudentAuth() {
             👤
           </div>
           <div>
-            <div className="font-black text-xl text-gray-900">{selectedStudent?.fullName}</div>
+            <div className="font-black text-xl text-gray-900">{selectedStudent?.full_name}</div>
             {selectedStudent?.room && (
               <div className="text-sm text-gray-900 font-medium">🚪 Комната {selectedStudent.room}</div>
             )}
@@ -141,10 +141,10 @@ export default function StudentAuth() {
       </div>
 
       <h2 className="text-2xl font-black mb-2 text-gray-900">
-        {selectedStudent?.isRegistered ? '🔐 Вход' : '🆕 Первый раз?'}
+        {selectedStudent?.is_registered ? '🔐 Вход' : '🆕 Первый раз?'}
       </h2>
       <p className="text-gray-900 mb-6 font-medium">
-        {selectedStudent?.isRegistered 
+        {selectedStudent?.is_registered 
           ? 'Введите ваш пароль' 
           : 'Придумайте пароль для регистрации'}
       </p>
@@ -154,7 +154,6 @@ export default function StudentAuth() {
           <label htmlFor="password" className="block text-sm font-bold mb-2 text-gray-900">
             Пароль
           </label>
-          {/* ✅ Поле пароля с темным текстом */}
           <input
             id="password"
             type="password"
@@ -168,7 +167,7 @@ export default function StudentAuth() {
             placeholder="Введите пароль"
             autoFocus
           />
-          {!selectedStudent?.isRegistered && (
+          {!selectedStudent?.is_registered && (
             <p className="text-xs text-gray-700 mt-1 font-medium">От 6 символов</p>
           )}
         </div>
@@ -185,7 +184,7 @@ export default function StudentAuth() {
           className="w-full bg-blue-600 text-white font-bold py-4 px-6 rounded-lg hover:bg-blue-700 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg"
         >
           {loading ? '⏳ Загрузка...' : (
-            selectedStudent?.isRegistered ? '🔐 Войти' : '🆕 Зарегистрироваться'
+            selectedStudent?.is_registered ? '🔐 Войти' : '🆕 Зарегистрироваться'
           )}
         </button>
       </div>

@@ -22,9 +22,9 @@ export default function Home() {
   React.useEffect(() => {
     console.log('🔍 Checking telegram setup:', { 
       user: !!user, 
-      userName: user?.name,
+      userName: user?.full_name,
       isAdmin, 
-      telegram_chat_id: user?.telegram_chat_id,
+      telegramChatId: user?.telegram_chat_id,
       isNewUser
     });
     
@@ -102,7 +102,7 @@ export default function Home() {
           <h1 className="text-2xl font-bold text-white">🧺 Очередь на стирку</h1>
           {user && (
             <p className="text-sm text-blue-100 mt-1">
-              Вы вошли как: <span className="font-semibold">{user.name}</span>
+              Вы вошли как: <span className="font-semibold">{user.full_name}</span>
               {user.room && <span className="ml-2">• Комната {user.room}</span>}
             </p>
           )}
@@ -165,20 +165,20 @@ export default function Home() {
                 <div className="bg-red-50 border-2 border-red-500 rounded-lg p-3 text-center">
                   <div className="text-3xl mb-1">🔴</div>
                   <div className="text-lg font-bold text-red-900">Машина занята</div>
-                  {machineState.currentQueueItemId && (() => {
-                    const currentItem = queue.find(item => item.id === machineState.currentQueueItemId);
+                  {machineState.current_queue_item_id && (() => {
+                    const currentItem = queue.find(item => item.id === machineState.current_queue_item_id);
                     if (currentItem) {
                       return (
                         <div className="text-sm text-red-700 mt-1 font-bold">
-                          🧑 Стирает: {currentItem.userName}
+                          🧑 Стирает: {currentItem.full_name}
                         </div>
                       );
                     }
                     return null;
                   })()}
-                  {machineState.expectedFinishAt && (
+                  {machineState.expected_finish_at && (
                     <div className="text-sm text-red-700 mt-1">
-                      Закончит: {new Date(machineState.expectedFinishAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                      Закончит: {new Date(machineState.expected_finish_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   )}
                 </div>
@@ -193,7 +193,7 @@ export default function Home() {
             ) : (
               <>
                 {/* AdminLogin показывается только если пользователь супер-админ и уже вошел */}
-                {students.find(s => s.id === user.studentId)?.is_super_admin && !isAdmin && <AdminLogin />}
+                {students.find(s => s.id === user.student_id)?.is_super_admin && !isAdmin && <AdminLogin />}
                 
                 {/* Всегда показываем основные компоненты */}
                 {isAdmin && <AdminPanel />}
