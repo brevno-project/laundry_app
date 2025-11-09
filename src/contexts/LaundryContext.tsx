@@ -56,6 +56,7 @@ type LaundryContextType = {
   changeQueuePosition: (queueId: string, direction: 'up' | 'down') => Promise<void>;
   registerStudent: (studentId: string, password: string) => Promise<User | null>;
   loginStudent: (studentId: string, password: string) => Promise<User | null>;
+  adminLogin: (adminKey: string) => Promise<User | null>;
   logoutStudent: () => void;
   resetStudentRegistration: (studentId: string) => Promise<void>;
   linkTelegram: (telegramCode: string) => Promise<{ success: boolean; error?: string }>;
@@ -2165,6 +2166,80 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
   }
 };
 
+  const adminLogin = async (adminKey: string): Promise<User | null> => {
+    // Проверить админ ключ
+    const correctAdminKey = process.env.NEXT_PUBLIC_ADMIN_KEY;
+    if (!correctAdminKey || adminKey !== correctAdminKey) {
+      throw new Error('Неверный админ ключ');
+    }
+
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase не настроен');
+    }
+
+    try {
+      // Используем фиксированные credentials для админа
+      const adminEmail = 'admin@internal.local'; // Внутренний email
+      const adminPassword = 'internal_admin_pass_' + Date.now(); // Уникальный пароль
+
+      console.log('🔑 Admin logging in...');
+      
+      // Сначала попробовать войти
+      let { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: adminEmail,
+        password: adminPassword
+      });
+
+      // Если не получилось, создать пользователя
+      if (authError && authError.message.includes('Invalid login credentials')) {
+        console.log('📝 Creating admin user...');
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: adminEmail,
+          password: adminPassword
+        });
+        
+        if (signUpError) throw signUpError;
+        
+        // Повторить вход
+        const retryResult = await supabase.auth.signInWithPassword({
+          email: adminEmail,
+          password: adminPassword
+        });
+        
+        if (retryResult.error) throw retryResult.error;
+        authData = retryResult.data;
+      } else if (authError) {
+        throw authError;
+      }
+
+      if (!authData?.user) throw new Error('Не удалось аутентифицировать админа');
+
+      console.log('✅ Admin auth successful:', authData.user.id);
+
+      // Создать объект User для админа
+      const adminUser: User = {
+        id: authData.user.id,
+        studentId: 'admin',
+        name: 'Администратор',
+        room: undefined,
+        isAdmin: true,
+        is_super_admin: true,
+        telegram_chat_id: undefined,
+      };
+
+      setUser(adminUser);
+      localStorage.setItem('laundryUser', JSON.stringify(adminUser));
+      localStorage.setItem('laundryIsAdmin', 'true');
+      localStorage.setItem('laundryIsSuperAdmin', 'true');
+
+      console.log('✅ Admin logged in:', adminUser.name);
+      return adminUser;
+    } catch (error: any) {
+      console.error('❌ Error logging in admin:', error);
+      throw error;
+    }
+  };
+
   const value = {
     user,
     setUser,
@@ -2172,8 +2247,13 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     queue,
     machineState,
     history,
+    transferSelectedToNextDay,
+    transferSelectedToPreviousDay,
+    transferSelectedToToday,  
+    changeQueuePosition,
     registerStudent,
     loginStudent,
+    adminLogin,
     logoutStudent,
     resetStudentRegistration,
     linkTelegram,
@@ -2207,10 +2287,6 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
    updateStudent,
    deleteStudent,
    updateAdminKey,
-   transferSelectedToNextDay,
-   transferSelectedToPreviousDay,
-   transferSelectedToToday,  
-   changeQueuePosition,
    adminAddToQueue,
    updateQueueItemDetails,
    updateQueueEndTime,              

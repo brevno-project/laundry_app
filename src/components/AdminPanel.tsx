@@ -10,12 +10,14 @@ export default function AdminPanel() {
     isAdmin, 
     setIsAdmin, 
     verifyAdminKey, 
+    adminLogin,
     queue,
     students,
     markDone, 
     startNext, 
     clearQueue,
     clearOldQueues,
+    clearStuckQueues,
     resetStudentRegistration,
     banStudent,
     unbanStudent,
@@ -25,8 +27,7 @@ export default function AdminPanel() {
     adminAddToQueue,
     toggleAdminStatus,
     isSuperAdmin,
-    setIsSuperAdmin,
-    clearStuckQueues
+    setIsSuperAdmin
   } = useLaundry();
   
   const [adminKey, setAdminKey] = useState('');
@@ -113,17 +114,20 @@ export default function AdminPanel() {
   });
 
   // Обработчики
-  const handleAdminLogin = () => {
+  const handleAdminLogin = async () => {
     if (adminKey.trim() === '') {
       setError('Введите ключ администратора');
       return;
     }
-    
-    const isValid = verifyAdminKey(adminKey.trim());
-    if (!isValid) {
-      setError('Неверный ключ');
-    } else {
+
+    try {
+      // Залогинить админа в Supabase Auth для работы RLS политик
+      await adminLogin(adminKey.trim());
       setError('');
+      setAdminKey('');
+    } catch (err: any) {
+      console.error('❌ Admin login failed:', err);
+      setError('Ошибка авторизации: ' + err.message);
     }
   };
 
@@ -303,6 +307,23 @@ export default function AdminPanel() {
     setShowAddToQueue(true);
   };
 
+  if (!user) {
+    return (
+      <div className="bg-yellow-50 p-6 rounded-lg shadow-lg border border-yellow-200">
+        <h2 className="text-2xl font-bold mb-4 text-yellow-800">⚠️ Требуется вход</h2>
+        <p className="text-yellow-700 mb-4">
+          Для использования админ функций <strong>сначала войдите как студент</strong> с правами администратора, затем введите админ ключ.
+        </p>
+        <p className="text-sm text-yellow-600 mb-4">
+          Это необходимо для корректной работы с базой данных.
+        </p>
+        <p className="text-sm text-yellow-600">
+          После входа как студент вернитесь сюда и введите админ ключ.
+        </p>
+      </div>
+    );
+  }
+
   if (!isAdmin) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
@@ -330,21 +351,6 @@ export default function AdminPanel() {
             Войти как админ
           </button>
         </div>
-      </div>
-    );
-  }
-
-  // Требовать вход как пользователь для админ функций
-  if (!user) {
-    return (
-      <div className="bg-yellow-50 p-6 rounded-lg shadow-lg border border-yellow-200">
-        <h2 className="text-2xl font-bold mb-4 text-yellow-800"> Требуется вход</h2>
-        <p className="text-yellow-700 mb-4">
-          Для использования админ функций войдите как студент с правами администратора.
-        </p>
-        <p className="text-sm text-yellow-600">
-          Сначала войдите через форму входа студентов, затем используйте админ ключ.
-        </p>
       </div>
     );
   }
@@ -377,13 +383,13 @@ export default function AdminPanel() {
             <div className="flex gap-2">
               <button
                 onClick={() => setShowConfirmClear(false)}
-                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-gray-700"
+                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
               >
                 Отмена
               </button>
               <button
                 onClick={handleClearQueueConfirm}
-                className="flex-1 bg-red-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-700"
+                className="flex-1 bg-red-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-700"
               >
                 Да, очистить
               </button>
@@ -438,7 +444,7 @@ export default function AdminPanel() {
               <h3 className="text-lg font-bold text-gray-800">Список студентов ({filteredStudents.length})</h3>
               <button
                 onClick={() => setShowAddStudent(true)}
-                className="bg-green-600 text-white text-sm font-semibold py-2 px-4 rounded hover:bg-green-700"
+                className="bg-green-600 text-white text-sm font-semibold px-3 py-2 rounded hover:bg-green-700"
               >
                 Добавить
               </button>
