@@ -1373,9 +1373,9 @@ const addStudent = async (firstName: string, lastName: string, room?: string) =>
       .from('students')
       .insert({
         id: uuidv4(),
-        firstName,
-        lastName,
-        fullName,
+        firstName: firstName,
+        lastName: lastName,
+        fullName: fullName,
         room: room || null,
         isRegistered: false,
         createdAt: new Date().toISOString(),
@@ -1410,12 +1410,12 @@ const updateStudent = async (
       if (student) {
         const firstName = updates.firstName || student.firstName;
         const lastName = updates.lastName || student.lastName;
-        updateData.fullname = `${firstName} ${lastName}`;
+        updateData.fullName = `${firstName} ${lastName}`;
       }
     }
 
-    if (updates.firstName !== undefined) updateData.firstname = updates.firstName;
-    if (updates.lastName !== undefined) updateData.lastname = updates.lastName;
+    if (updates.firstName !== undefined) updateData.firstName = updates.firstName;
+    if (updates.lastName !== undefined) updateData.lastName = updates.lastName;
     if (updates.room !== undefined) updateData.room = updates.room;
 
     const { error } = await supabase

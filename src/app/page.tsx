@@ -224,13 +224,6 @@ export default function Home() {
             
             <div className="bg-white p-4 rounded-lg shadow-sm">
               <h3 className="font-bold text-lg text-gray-800 mb-3">Аккаунт</h3>
-              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600">Вы вошли как:</p>
-                <p className="font-semibold text-gray-900">{user.name}</p>
-                {user.room && <p className="text-sm text-gray-600">Комната: {user.room}</p>}
-                {user.is_super_admin && <p className="text-sm text-green-600 font-medium">👑 Супер-администратор</p>}
-                {user.isAdmin && !user.is_super_admin && <p className="text-sm text-blue-600 font-medium">👨‍💼 Администратор</p>}
-              </div>
               <button
                 onClick={() => {
                   logoutStudent();
