@@ -265,12 +265,12 @@ export default function AdminPanel() {
       const expectedFinishAt = today.toISOString();
       
       await adminAddToQueue(
-        selectedStudent.full_name, 
         selectedStudent.room || undefined,
         queueWashCount,
         queuePaymentType,
         expectedFinishAt,
-        queueDate
+        queueDate,
+        selectedStudent.id,
       );
       
       setShowAddToQueue(false);
@@ -524,6 +524,14 @@ export default function AdminPanel() {
                       >
                         {student.is_admin ? ' Снять админа' : ' Сделать админом'}
                       </button>
+                      {student.is_banned && isSuperAdmin && (
+                        <button
+                          onClick={() => handleUnbanStudent(student.id)}
+                          className="w-full px-4 py-2 rounded-lg text-sm font-bold bg-green-500 hover:bg-green-600 text-white"
+                        >
+                          ✅ Разбанить студента
+                        </button>
+                      )}
                     </div>
                   )}
                   <button

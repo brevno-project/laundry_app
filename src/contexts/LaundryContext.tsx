@@ -60,7 +60,6 @@ type LaundryContextType = {
   resetStudentRegistration: (studentId: string) => Promise<void>;
   linkTelegram: (telegramCode: string) => Promise<{ success: boolean; error?: string }>;
   joinQueue: (name: string, room?: string, washCount?: number, paymentType?: string, expectedFinishAt?: string, chosenDate?: string) => Promise<void>;
-  adminAddToQueue: (studentName: string, studentRoom?: string, washCount?: number, paymentType?: string, expectedFinishAt?: string, chosenDate?: string) => Promise<void>;
   leaveQueue: (queueItemId: string) => void;
   updateQueueItem: (queueItemId: string, updates: Partial<QueueItem>) => void;
   sendAdminMessage: (queueItemId: string, message: string) => Promise<void>;
@@ -90,10 +89,11 @@ type LaundryContextType = {
   updateStudent: (studentId: string, updates: { first_name?: string; last_name?: string; room?: string }) => Promise<void>;
   deleteStudent: (studentId: string) => Promise<void>;
   updateAdminKey: (newKey: string) => Promise<void>;
+  adminAddToQueue: (studentRoom?: string, washCount?: number, paymentType?: string, expectedFinishAt?: string, chosenDate?: string, studentId?: string) => Promise<void>;
   updateQueueItemDetails: (queueId: string, updates: { washCount?: number; paymentType?: string; expectedFinishAt?: string; chosenDate?: string }) => Promise<void>;
   updateQueueEndTime: (queueId: string, endTime: string) => Promise<void>;
   toggleAdminStatus: (studentId: string, isAdmin: boolean) => Promise<void>;
-  toggleSuperAdminStatus: (studentId: string, isSuperAdmin: boolean) => Promise<void>;
+  toggleSuperAdminStatus: (studentId: string, makeSuperAdmin: boolean) => Promise<void>;
 
   
 };
@@ -293,9 +293,9 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
     const { error: updateError } = await supabase
       .from('students')
       .update({ 
-        is_registered: true,  // ✅ snake_case
-        registered_at: new Date().toISOString(),  // ✅ snake_case
-        user_id: authData.user.id  // ✅ Правильно
+        is_registered: true,  // 
+        registered_at: new Date().toISOString(),  // 
+        user_id: authData.user.id  // 
       })
       .eq('id', studentId);
 
@@ -390,7 +390,7 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
     localStorage.setItem('laundryIsSuperAdmin', isSuperAdminUser.toString());
 
     setUser(newUser);
-    localStorage.setItem('laundryUser', JSON.stringify(newUser)); // Правильный ключ
+    localStorage.setItem('laundryUser', JSON.stringify(newUser)); // 
 
     console.log(' Student logged in:', newUser.full_name);
     return newUser;
@@ -438,8 +438,8 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
         const { error: updateError } = await supabase
           .from('students')
           .update({ 
-            is_registered: false,  // ✅
-            registered_at: null,  // ✅
+            is_registered: false,  // 
+            registered_at: null,  // 
             user_id: null
           })
           .eq('id', studentId);
@@ -509,6 +509,9 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
           .from('queue')
           .select('*')
           .order('queue_position', { ascending: true });
+
+        console.log(' Fetched queue:', data);  
+        console.log(' Current user:', user);   
         
         if (error) throw error;
         setQueue(data || []);
@@ -533,6 +536,8 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
         const { data, error } = await supabase
           .from('machine_state')
           .select('*')
+          .order('id', { ascending: false })  
+          .limit(1)  
           .single();
         
         if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
@@ -684,18 +689,18 @@ const joinQueue = async (
     // Создаем новую запись с правильным user_id
     const newItem = {
       id: crypto.randomUUID(),
-      user_id: user.id,  // ✅ Только snake_case
-      student_id: user.student_id,  // ✅
-      full_name: name,  // ✅
-      room: room || null,  // ✅
-      wash_count: washCount,  // ✅
-      payment_type: paymentType,  // ✅
-      joined_at: new Date().toISOString(),  // ✅
-      expected_finish_at: expectedFinishAt || null,  // ✅
-      status: QueueStatus.WAITING,  // ✅
-      scheduled_for_date: targetDate,  // ✅
-      queue_date: targetDate,  // ✅
-      queue_position: nextPos,  // ✅
+      user_id: user.id,  // 
+      student_id: user.student_id,  // 
+      full_name: name,  // 
+      room: room || null,  // 
+      wash_count: washCount,  // 
+      payment_type: paymentType,  // 
+      joined_at: new Date().toISOString(),  // 
+      expected_finish_at: expectedFinishAt || null,  // 
+      status: QueueStatus.WAITING,  // 
+      scheduled_for_date: targetDate,  // 
+      queue_date: targetDate,  // 
+      queue_position: nextPos,  // 
     };
 
     console.log(' Inserting new queue item:', newItem);
@@ -760,14 +765,21 @@ const joinQueue = async (
   };
 
 
-const adminAddToQueue = async (
-  studentName: string,
+const adminAddToQueue: (studentRoom?: string, washCount?: number, paymentType?: string, expectedFinishAt?: string, chosenDate?: string, studentId?: string) => Promise<void> = async (
+  
   studentRoom?: string,
   washCount: number = 1,
   paymentType: string = 'money',
   expectedFinishAt?: string,
-  chosenDate?: string
+  chosenDate?: string,
+  studentId?: string
 ) => {
+  // Найти студента по ID
+  const student = students.find(s => s.id === studentId);
+  if (!student) {
+    alert('Студент не найден');
+    return;
+  }
   if (!isAdmin) {
     console.error(' Not admin');
     alert('');
@@ -817,7 +829,7 @@ const adminAddToQueue = async (
     const { data: existingStudent } = await supabase
       .from('queue')
       .select('id')
-      .eq('full_name', studentName)
+      .eq('full_name', student.full_name)
       .eq('queue_date', targetDate)
       .in('status', ['WAITING', 'READY', 'KEY_ISSUED', 'WASHING']);
 
@@ -830,8 +842,8 @@ const adminAddToQueue = async (
     const newItem = {
       id: crypto.randomUUID(),
       user_id: user.id, // КРИТИЧНО: user_id админа для RLS
-      student_id: null, // Админ добавляет, studentId может быть null
-      full_name: studentName,
+      student_id: student.id, // Админ добавляет, studentId может быть null
+      full_name: student.full_name,
       room: studentRoom || null,
       wash_count: washCount,
       payment_type: paymentType,
@@ -1046,10 +1058,10 @@ const startWashing = async (queueItemId: string) => {
       const historyItem: HistoryItem = {
         id: uuidv4(),
         user_id: queueItem.user_id,
-        full_name: queueItem.full_name,  // ✅
+        full_name: queueItem.full_name,  
         room: queueItem.room || undefined,
-        started_at: machineState.started_at || new Date().toISOString(),  // ✅
-        finished_at: new Date().toISOString(),  // ✅
+        started_at: machineState.started_at || new Date().toISOString(),  
+        finished_at: new Date().toISOString(),  
       };
       
       const { error: historyError } = await supabase
@@ -1356,9 +1368,9 @@ const startWashing = async (queueItemId: string) => {
       const { error } = await supabase
         .from('students')
         .update({
-          is_banned: true,  // ✅
-          banned_at: new Date().toISOString(),  // ✅
-          ban_reason: reason || '',  // ✅
+          is_banned: true,  
+          banned_at: new Date().toISOString(),  
+          ban_reason: reason || '',  
         })
         .eq('id', studentId);
   
@@ -1416,12 +1428,12 @@ const addStudent = async (firstName: string, lastName: string, room?: string) =>
       .from('students')
       .insert({
         id: uuidv4(),
-        first_name: firstName,  // ✅
-        last_name: lastName,  // ✅
-        full_name: fullName,  // ✅
+        first_name: firstName,  
+        last_name: lastName,  
+        full_name: fullName,  
         room: room || null,
-        is_registered: false,  // ✅
-        created_at: new Date().toISOString(),  // ✅
+        is_registered: false,  
+        created_at: new Date().toISOString(),  
       });
 
     if (error) throw error;
@@ -1453,7 +1465,7 @@ const updateStudent = async (
       if (student) {
         if (updates.first_name !== undefined) updateData.first_name = updates.first_name;
         if (updates.last_name !== undefined) updateData.last_name = updates.last_name;
-        updateData.full_name = `${updates.first_name || student.first_name} ${updates.last_name || student.last_name}`;  // ✅
+        updateData.full_name = `${updates.first_name || student.first_name} ${updates.last_name || student.last_name}`;  
       }
     }
 
@@ -1655,7 +1667,7 @@ const updateQueueEndTime = async (queueId: string, endTime: string) => {
 // АДМИН ФУНКЦИИ
 // ========================================
 
-const toggleAdminStatus = async (studentId: string, makeAdmin: boolean) => {
+const toggleAdminStatus = async (studentId: string, isAdmin: boolean) => {
   if (!isAdmin) {
     throw new Error('');
   }
@@ -1673,17 +1685,17 @@ const toggleAdminStatus = async (studentId: string, makeAdmin: boolean) => {
   }
   
   // Нельзя снять супер админа
-  if (!makeAdmin && targetStudent?.is_super_admin) {
+  if (!isAdmin && targetStudent?.is_super_admin) {
     throw new Error('');
   }
-    console.log(` ${makeAdmin ? '' : ''} ${studentId}`);
+    console.log(` ${isAdmin ? '' : ''} ${studentId}`);
     console.log('');
     console.log('');
     console.log('');
     console.log('');
     const { error } = await supabase.rpc('update_student_admin_status', {
       student_id: studentId,
-      admin_status: makeAdmin
+      admin_status: isAdmin
     });
       
     if (error) {
@@ -2082,12 +2094,12 @@ const updateQueueItemDetails = async (
     }
 
     const updateData: any = {};
-    if (updates.washCount !== undefined) updateData.wash_count = updates.washCount;  // ✅
-    if (updates.paymentType !== undefined) updateData.payment_type = updates.paymentType;  // ✅
-    if (updates.expectedFinishAt !== undefined) updateData.expected_finish_at = updates.expectedFinishAt;  // ✅
+    if (updates.washCount !== undefined) updateData.wash_count = updates.washCount;  
+    if (updates.paymentType !== undefined) updateData.payment_type = updates.paymentType;  
+    if (updates.expectedFinishAt !== undefined) updateData.expected_finish_at = updates.expectedFinishAt;  
     if (updates.chosenDate !== undefined) {
-      updateData.scheduled_for_date = updates.chosenDate;  // ✅
-      updateData.queue_date = updates.chosenDate;  // ✅
+      updateData.scheduled_for_date = updates.chosenDate;  
+      updateData.queue_date = updates.chosenDate;  
     }
 
     const { error } = await supabase
@@ -2195,89 +2207,6 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     return user;
   };
 
-  const toggle_admin_status = async (student_id: string, make_admin: boolean) => {
-    if (!isAdmin) {
-      throw new Error('Not admin');
-    }
-    if (!isSupabaseConfigured || !supabase) {
-      throw new Error('Supabase not configured');
-    }
-    try {
-      // Проверить уровень доступа
-      const current_student = students.find(s => s.id === user?.student_id);
-      const target_student = students.find(s => s.id === student_id);
-    
-      // Только супер админ может менять админ статусы
-      if (!current_student?.is_super_admin) {
-        throw new Error('Not super admin');
-      }
-    
-      // Нельзя снять супер админа
-      if (!make_admin && target_student?.is_super_admin) {
-        throw new Error('Cannot remove super admin');
-      }
-      console.log(`Setting admin status for ${student_id} to ${make_admin}`);
-      const { error } = await supabase
-        .from('students')
-        .update({ is_admin: make_admin })
-        .eq('id', student_id);
-        
-      if (error) {
-        console.error('Update admin status error:', error);
-        throw error;
-      }
-      
-      console.log('Admin status updated');
-      
-      // Reload students
-      await loadStudents();
-      
-    } catch (error: any) {
-      console.error('Error toggling admin status:', error);
-      throw error;
-    }
-  };
-
-  const toggle_super_admin_status = async (student_id: string, make_super_admin: boolean) => {
-    if (!isAdmin) {
-      throw new Error('Not admin');
-    }
-    if (!isSupabaseConfigured || !supabase) {
-      throw new Error('Supabase not configured');
-    }
-    try {
-      const current_student = students.find(s => s.id === user?.student_id);
-      
-      // Only super admin can manage super admin status
-      if (!current_student?.is_super_admin) {
-        throw new Error('Not super admin');
-      }
-      
-      // Cannot remove the last super admin
-      if (!make_super_admin) {
-        const super_admins_count = students.filter(s => s.is_super_admin).length;
-        if (super_admins_count <= 1) {
-          throw new Error('Cannot remove last super admin');
-        }
-      }
-      
-      const { error } = await supabase
-        .from('students')
-        .update({ is_super_admin: make_super_admin })
-        .eq('id', student_id);
-        
-      if (error) {
-        throw error;
-      }
-      
-      await loadStudents();
-      
-    } catch (error: any) {
-      console.error('Error toggling super admin status:', error);
-      throw error;
-    }
-  };
-
   const value = {
     user,
     setUser,
@@ -2330,8 +2259,6 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
    updateQueueEndTime,              
    toggleAdminStatus,
    toggleSuperAdminStatus,
-   toggle_admin_status,
-   toggle_super_admin_status,
   };
 
   return <LaundryContext.Provider value={value}>{children}</LaundryContext.Provider>;
