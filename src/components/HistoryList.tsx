@@ -24,10 +24,10 @@ export default function HistoryList() {
             key={item.id} 
             className="p-4 bg-gradient-to-r from-gray-100 to-gray-50 rounded-md border-l-4 border-green-600 shadow-sm"
           >
-            <p className="font-bold text-gray-900 text-base">{item.userName} {item.userRoom && `(Комната ${item.userRoom})`}</p>
+            <p className="font-bold text-gray-900 text-base">{item.full_name} {item.room && `(Комната ${item.room})`}</p>
             <div className="text-sm text-gray-700 mt-2 space-y-1">
-              <p><span className="font-semibold">Начато:</span> {formatDate(item.startedAt)}</p>
-              <p><span className="font-semibold">Завершено:</span> {formatDate(item.finishedAt)}</p>
+              <p><span className="font-semibold">Начато:</span> {formatDate(item.started_at)}</p>
+              <p><span className="font-semibold">Завершено:</span> {formatDate(item.finished_at)}</p>
             </div>
           </div>
         ))}
