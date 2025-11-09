@@ -2182,29 +2182,59 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
 };
 
   const adminLogin = async (adminKey: string): Promise<User | null> => {
-    // Проверить админ ключ
-    const correctAdminKey = process.env.NEXT_PUBLIC_ADMIN_KEY;
-    if (!correctAdminKey || adminKey !== correctAdminKey) {
-      throw new Error('Неверный админ ключ');
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase not configured');
     }
 
-    if (!user) {
-      throw new Error('Сначала войдите как студент');
+    // Войти через Supabase Auth с твоим аккаунтом
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: 'student-622ddda2@example.com',
+      password: adminKey,
+    });
+
+    if (error) {
+      throw new Error('Неверный admin ключ');
     }
 
-    // Проверить что студент имеет админ права в базе
-    if (!user.is_admin && !user.is_super_admin) {
-      throw new Error('У вас нет прав администратора');
+    const authUser = data.user;
+    if (!authUser) {
+      throw new Error('Auth user not found');
     }
 
-    // Установить админ статус в state и localStorage
-    setIsAdmin(true);
-    setIsSuperAdmin(user.is_super_admin || false);
-    localStorage.setItem('laundryIsAdmin', 'true');
-    localStorage.setItem('laundryIsSuperAdmin', user.is_super_admin ? 'true' : 'false');
+    // Проверить админ статус в таблице students
+    const { data: student, error: studentError } = await supabase
+      .from('students')
+      .select('*')
+      .eq('user_id', authUser.id)
+      .single();
 
-    console.log('✅ Admin access granted for user:', user.full_name);
-    return user;
+    if (studentError || !student) {
+      throw new Error('Admin не найден в базе');
+    }
+
+    if (!student.is_admin && !student.is_super_admin) {
+      throw new Error('Пользователь не админ');
+    }
+
+    // Создать локального пользователя
+    const newUser: User = {
+      id: authUser.id,
+      student_id: student.id,
+      first_name: student.first_name,
+      last_name: student.last_name,
+      full_name: student.full_name,
+      room: student.room,
+      is_admin: student.is_admin,
+      is_super_admin: student.is_super_admin,
+    };
+
+    setUser(newUser);
+    localStorage.setItem('laundryUser', JSON.stringify(newUser));
+    localStorage.setItem('laundryIsAdmin', student.is_admin.toString());
+    localStorage.setItem('laundryIsSuperAdmin', student.is_super_admin.toString());
+
+    console.log('Admin logged in:', newUser.full_name);
+    return newUser;
   };
 
   const value = {
