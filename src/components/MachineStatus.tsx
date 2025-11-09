@@ -13,11 +13,11 @@ export default function MachineStatus() {
   useEffect(() => {
     if (
       machineState.status === MachineStatusEnum.WASHING &&
-      machineState.expectedFinishAt
+      machineState.expected_finish_at
     ) {
       const intervalId = setInterval(() => {
         const now = new Date();
-        const expectedFinish = new Date(machineState.expectedFinishAt!);
+        const expectedFinish = new Date(machineState.expected_finish_at!);
         
         if (now >= expectedFinish) {
           setTimeRemaining('Done');
@@ -52,21 +52,21 @@ export default function MachineStatus() {
         <p className="text-blue-100 text-lg mb-2">Сейчас стирает:</p>
         <div>
           <div className="text-sm text-red-700 mt-1 font-bold">
-            Стирает: {currentWashingItem.userName} (Квартира: {currentWashingItem.userRoom || 'Не указана'})
+            Стирает: {currentWashingItem.full_name} (Квартира: {currentWashingItem.room || 'Не указана'})
           </div>
           <p className="text-lg">
-            <span className="font-bold">Текущий пользователь:</span> {currentWashingItem.userName}
-            {currentWashingItem.userRoom && ` (Комната ${currentWashingItem.userRoom})`}
+            <span className="font-bold">Текущий пользователь:</span> {currentWashingItem.full_name}
+            {currentWashingItem.room && ` (Комната ${currentWashingItem.room})`}
           </p>
-          {machineState.startedAt && (
+          {machineState.started_at && (
             <p className="text-white text-xl mb-1">
-              <strong>Начало:</strong> {formatDate(currentWashingItem.joinedAt)}
+              <strong>Начало:</strong> {formatDate(currentWashingItem.joined_at)}
             </p>
           )}
-          {currentWashingItem.expectedFinishAt && (
+          {currentWashingItem.expected_finish_at && (
             <>
               <p className="text-white text-xl">
-                <strong>Предполагаемое окончание:</strong> {formatDate(currentWashingItem.expectedFinishAt)}
+                <strong>Предполагаемое окончание:</strong> {formatDate(currentWashingItem.expected_finish_at)}
               </p>
               {timeRemaining && (
                 <p className="text-2xl font-bold text-yellow-300 mt-2 bg-blue-700 p-3 rounded-md">
