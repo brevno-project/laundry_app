@@ -2181,7 +2181,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
       console.log('🔑 Admin logging in...');
       
       // Сначала попробовать войти
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      let { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: adminEmail,
         password: adminPassword
       });
