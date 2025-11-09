@@ -35,8 +35,8 @@ export default function StudentAuth() {
       return;
     }
 
-    if (!selectedStudent.isRegistered && (password.length < 4 || password.length > 6)) {
-      setError('Пароль должен быть от 6 символов');
+    if (!selectedStudent.isRegistered && password.length < 6) {
+      setError('Пароль должен быть минимум 6 символов');
       return;
     }
 
@@ -169,7 +169,7 @@ export default function StudentAuth() {
             autoFocus
           />
           {!selectedStudent?.isRegistered && (
-            <p className="text-xs text-gray-700 mt-1 font-medium">От 4 до 6 символов</p>
+            <p className="text-xs text-gray-700 mt-1 font-medium">От 6 символов</p>
           )}
         </div>
 
