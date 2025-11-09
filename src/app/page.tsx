@@ -98,7 +98,15 @@ export default function Home() {
 
       {/* Заголовок */}
       <header className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 shadow-lg sticky top-0 z-10">
-        <h1 className="text-2xl font-bold text-white text-center">🧺 Очередь на стирку</h1>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-white">🧺 Очередь на стирку</h1>
+          {user && (
+            <p className="text-sm text-blue-100 mt-1">
+              Вы вошли как: <span className="font-semibold">{user.name}</span>
+              {user.room && <span className="ml-2">• Комната {user.room}</span>}
+            </p>
+          )}
+        </div>
       </header>
 
       {/* Табы */}
@@ -216,6 +224,13 @@ export default function Home() {
             
             <div className="bg-white p-4 rounded-lg shadow-sm">
               <h3 className="font-bold text-lg text-gray-800 mb-3">Аккаунт</h3>
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600">Вы вошли как:</p>
+                <p className="font-semibold text-gray-900">{user.name}</p>
+                {user.room && <p className="text-sm text-gray-600">Комната: {user.room}</p>}
+                {user.is_super_admin && <p className="text-sm text-green-600 font-medium">👑 Супер-администратор</p>}
+                {user.isAdmin && !user.is_super_admin && <p className="text-sm text-blue-600 font-medium">👨‍💼 Администратор</p>}
+              </div>
               <button
                 onClick={() => {
                   logoutStudent();
