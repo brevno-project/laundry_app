@@ -25,7 +25,8 @@ export default function AdminPanel() {
     adminAddToQueue,
     toggleAdminStatus,
     isSuperAdmin,
-    setIsSuperAdmin
+    setIsSuperAdmin,
+    clearStuckQueues
   } = useLaundry();
   
   const [adminKey, setAdminKey] = useState('');
@@ -390,6 +391,39 @@ export default function AdminPanel() {
           </div>
         )}
 
+        {/* Очистить старые очереди */}
+        <button
+          onClick={async () => {
+            try {
+              await clearOldQueues();
+              alert('✅ Старые очереди очищены!');
+            } catch (err: any) {
+              alert('❌ Ошибка: ' + err.message);
+            }
+          }}
+          className="w-full bg-orange-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-orange-700 transition-colors shadow-md"
+        >
+          Очистить старые очереди
+        </button>
+
+        {/* Очистить зависшие очереди (только супер-админ) */}
+        {isSuperAdmin && (
+          <button
+            onClick={async () => {
+              if (!confirm('Вы уверены? Это удалит все зависшие записи старше 2 дней!')) return;
+              try {
+                await clearStuckQueues();
+                alert('✅ Зависшие очереди очищены!');
+              } catch (err: any) {
+                alert('❌ Ошибка: ' + err.message);
+              }
+            }}
+            className="w-full bg-red-700 text-white font-semibold py-3 px-4 rounded-md hover:bg-red-800 transition-colors shadow-md"
+          >
+            🧹 Очистить зависшие очереди
+          </button>
+        )}
+
         {/* Управление студентами */}
         <button
           onClick={() => setShowStudents(!showStudents)}
@@ -473,7 +507,7 @@ export default function AdminPanel() {
                   
                   {/* Действия со студентом */}
                   {isSuperAdmin && (
-                    <div className="bg-yellow-100 border-2 border-yellow-300 rounded-lg p-3 mb-3">
+                    <div>
                       <button 
                         onClick={() => handleToggleAdmin(student.id, !student.is_admin)}
                         className={`w-full px-4 py-2 rounded-lg text-sm font-bold ${
@@ -486,7 +520,7 @@ export default function AdminPanel() {
                       </button>
                     </div>
                   )}
-                    <button
+                  <button
                     onClick={() => openAddToQueueModal(student)}
                     className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-1 w-full"
                   >
@@ -495,6 +529,15 @@ export default function AdminPanel() {
 
                   {/* ГРУППА ОПАСНЫХ ДЕЙСТВИЙ */}
                   <div className="flex flex-col gap-2 mt-2">
+                    {/* Редактирование */}
+                    <button
+                      onClick={() => openEditModal(student)}
+                      className="bg-blue-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-blue-600 w-full"
+                      title="Редактировать"
+                    >
+                      ✏️ Редактировать
+                    </button>
+                    
                     {/* Сброс регистрации */}
                     {student.isRegistered && (
                       <button
@@ -506,49 +549,26 @@ export default function AdminPanel() {
                       </button>
                     )}
                     
-                    {/* Редактирование */}
-                    <button
-                      onClick={() => openEditModal(student)}
-                      className="bg-blue-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-blue-600 w-full"
-                      title="Редактировать"
-                    >
-                      ✏️ Редактировать
-                    </button>
-                    
                     {/* Опасные действия только для супер-админа */}
                     {isSuperAdmin && (
                       <>
                         {/* Бан */}
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-2">
-                          {student.is_banned ? (
-                            <button
-                              onClick={() => handleUnbanStudent(student.id)}
-                              className="bg-green-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-green-600 w-full"
-                              title="Разбанить"
-                            >
-                              ✅ Разбанить студента
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => openBanModal(student)}
-                              className="bg-red-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-red-600 w-full"
-                              title="Забанить"
-                            >
-                              🚫 Забанить студента
-                            </button>
-                          )}
-                        </div>
+                        <button
+                          onClick={() => openBanModal(student)}
+                          className="bg-red-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-red-600 w-full"
+                          title="Забанить"
+                        >
+                          🚫 Забанить студента
+                        </button>
                         
                         {/* Удаление */}
-                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-2">
-                          <button
-                            onClick={() => openDeleteModal(student)}
-                            className="bg-gray-700 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-gray-800 w-full"
-                            title="Удалить студента"
-                          >
-                            🗑️ Удалить студента
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => openDeleteModal(student)}
+                          className="bg-gray-700 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-gray-800 w-full"
+                          title="Удалить студента"
+                        >
+                          🗑️ Удалить студента
+                        </button>
                       </>
                     )}
                   </div>

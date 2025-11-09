@@ -74,6 +74,7 @@ type LaundryContextType = {
   removeFromQueue: (queueItemId: string) => Promise<void>;
   clearCompletedQueue: () => Promise<void>;
   clearOldQueues: () => Promise<void>;
+  clearStuckQueues: () => Promise<void>;
   banStudent: (studentId: string, reason?: string) => Promise<void>;
   unbanStudent: (studentId: string) => Promise<void>;
   isAdmin: boolean;
@@ -339,13 +340,13 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
 
   try {
     // Получить студента
-    const { data: studentData, error: studentError } = await supabase
+    const { data: studentData } = await supabase
       .from('students')
       .select('*')
       .eq('id', studentId)
       .single();
 
-    if (studentError) throw studentError;
+    if (studentData?.error) throw studentData.error;
     if (!studentData.isRegistered) throw new Error('Студент не зарегистрирован');
 
     // ✅ ИСПРАВЛЕНО: Использовать тот же email что и при регистрации
@@ -389,7 +390,7 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
     localStorage.setItem('laundryIsSuperAdmin', isSuperAdminUser.toString());
 
     setUser(newUser);
-    localStorage.setItem('laundryUser', JSON.stringify(newUser));
+    localStorage.setItem('laundryUser', JSON.stringify(newUser)); // ✅ Правильный ключ
 
     console.log('✅ Student logged in:', newUser.name);
     return newUser;
@@ -1285,7 +1286,46 @@ const startWashing = async (queueItemId: string) => {
       console.log('✅ Old queue items cleared');
       await fetchQueue();
     } catch (error) {
-      console.error('❌ Error clearing old queues:', error);
+      console.error('❌ Error clearing old queue:', error);
+    }
+  };
+
+  // Очистить зависшие записи (старше 2 дней, не DONE)
+  const clearStuckQueues = async () => {
+    if (!isSuperAdmin) return;
+
+    if (!isSupabaseConfigured || !supabase) {
+      // Local storage fallback
+      const twoDaysAgo = new Date();
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+      const cutoffDate = twoDaysAgo.toISOString().split('T')[0];
+      
+      const localQueue = getLocalQueue();
+      const updatedQueue = localQueue.filter(item => 
+        item.status === QueueStatus.DONE || item.scheduledForDate >= cutoffDate
+      );
+      saveLocalQueue(updatedQueue);
+      fetchQueue();
+      return;
+    }
+
+    try {
+      const twoDaysAgo = new Date();
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+      const cutoffDate = twoDaysAgo.toISOString().split('T')[0];
+      
+      const { error } = await supabase
+        .from('queue')
+        .delete()
+        .lt('scheduledForDate', cutoffDate)
+        .neq('status', QueueStatus.DONE);
+
+      if (error) throw error;
+
+      console.log('✅ Stuck queue items cleared');
+      await fetchQueue();
+    } catch (error) {
+      console.error('❌ Error clearing stuck queue:', error);
     }
   };
 
@@ -2151,6 +2191,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     removeFromQueue,
     clearCompletedQueue,
     clearOldQueues,
+    clearStuckQueues,
     banStudent,
     unbanStudent,
     isAdmin,
