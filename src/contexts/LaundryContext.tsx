@@ -1721,34 +1721,49 @@ const updateAdminKey = async (newKey: string) => {
   };
 
   // Leave the queue
-  const leaveQueue = async (queueItemId: string) => {
-    if (!user) return;
-    
-    if (!isSupabaseConfigured || !supabase) {
-      remove_from_local_queue(queueItemId, user.id);
-      fetchQueue();
-      return;
-    }
-    
-    try {
-      // ✅ RLS политика сама проверит права через is_queue_owner() OR is_admin()
-      const { error } = await supabase
-        .from('queue')
-        .delete()
-        .eq('id', queueItemId);
+  // Leave the queue
+const leaveQueue = async (queueItemId: string) => {
+  console.log('🚪 LEAVE QUEUE DEBUG:');
+  console.log('- queueItemId:', queueItemId);
+  console.log('- current user.id:', user?.id);
+  console.log('- current user.isAdmin:', isAdmin);
+  console.log('- current user.isSuperAdmin:', isSuperAdmin);
 
-      if (error) {
-        console.error('❌ Error from Supabase:', error);
-        throw error;
-      }
+  if (!user || !supabase) {
+    console.log('❌ No user or supabase');
+    return;
+  }
 
-      await fetchQueue();
-    } catch (error) {
-      console.error('❌ Error leaving queue:', error);
-      remove_from_local_queue(queueItemId, user.id);
-      await fetchQueue();
+  try {
+    // Получить запись перед удалением
+    const { data: queueItem } = await supabase
+      .from('queue')
+      .select('user_id, student_id')
+      .eq('id', queueItemId)
+      .single();
+    
+    console.log('- queue item user_id:', queueItem?.user_id);
+    console.log('- queue item student_id:', queueItem?.student_id);
+
+    // ✅ RLS политика сама проверит права через is_queue_owner() OR is_admin()
+    const { error } = await supabase
+      .from('queue')
+      .delete()
+      .eq('id', queueItemId);
+
+    if (error) {
+      console.error('❌ DELETE ERROR:', error);
+      throw error;
     }
-  };
+
+    console.log('✅ Successfully left queue');
+    await fetchQueue();
+  } catch (error) {
+    console.error('❌ Error leaving queue:', error);
+    remove_from_local_queue(queueItemId, user.id);
+    await fetchQueue();
+  }
+};
 
   // ✅ Оптимистичное обновление для мгновенного UI обновления
   const optimisticUpdateQueueItem = (queueItemId: string, updates: Partial<QueueItem>) => {
