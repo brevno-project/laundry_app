@@ -849,6 +849,7 @@ const joinQueue = async (
       
       if (error) throw error;
       console.log(' Status updated:', status);
+      await fetchQueue();
     } catch (error) {
       console.error(' Error updating status:', error);
     }
@@ -1727,11 +1728,7 @@ const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>)
     console.log(' Queue item updated successfully');
   } catch (error) {
     console.error(' Error updating queue item:', error);
-    // Fallback to local storage on error
-    if (user) {
-      update_local_queue_item(queueItemId, user.id, updates);
-    }
-    fetchQueue();
+    await fetchQueue();
   }
 };
 
