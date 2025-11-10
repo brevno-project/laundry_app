@@ -92,7 +92,7 @@ type LaundryContextType = {
   adminAddToQueue: (studentRoom?: string, washCount?: number, paymentType?: string, expectedFinishAt?: string, chosenDate?: string, studentId?: string) => Promise<void>;
   updateQueueItemDetails: (queueId: string, updates: { wash_count?: number; payment_type?: string; expected_finish_at?: string; chosen_date?: string }) => Promise<void>;
   updateQueueEndTime: (queueId: string, endTime: string) => Promise<void>;
-  toggleAdminStatus: (studentId: string, isAdmin: boolean) => Promise<void>;
+  toggleAdminStatus: (studentId: string, makeAdmin: boolean) => Promise<void>;
   toggleSuperAdminStatus: (studentId: string, makeSuperAdmin: boolean) => Promise<void>;
   loadStudents: () => void;
 };
@@ -1690,49 +1690,45 @@ const updateQueueEndTime = async (queueId: string, endTime: string) => {
 // АДМИН ФУНКЦИИ
 // ========================================
 
-const toggleAdminStatus = async (studentId: string, isAdmin: boolean) => {
-  if (!isAdmin) {
-    throw new Error('');
+const toggleAdminStatus = async (studentId: string, makeAdmin: boolean) => {  // Переименовали параметр
+  if (!isAdmin) {  // Проверяем глобальный статус текущего пользователя
+    throw new Error('Недостаточно прав');
   }
   if (!isSupabaseConfigured || !supabase) {
-    throw new Error('Supabase ');
+    throw new Error('Supabase не настроен');
   }
   try {
     // Проверить уровень доступа
-  const currentStudent = students.find(s => s.id === user?.student_id);
-  const targetStudent = students.find(s => s.id === studentId);
-  
-  // Только супер админ может менять админ статусы
-  if (!currentStudent?.is_super_admin) {
-    throw new Error('');
-  }
-  
-  // Нельзя снять супер админа
-  if (!isAdmin && targetStudent?.is_super_admin) {
-    throw new Error('');
-  }
-    console.log(` ${isAdmin ? '' : ''} ${studentId}`);
-    console.log('');
-    console.log('');
-    console.log('');
-    console.log('');
-    const { error } = await supabase.rpc('update_student_admin_status', {
-      student_id: studentId,
-      admin_status: isAdmin
-    });
+    const currentStudent = students.find(s => s.id === user?.student_id);
+    const targetStudent = students.find(s => s.id === studentId);
+    
+    // Только супер админ может менять админ статусы
+    if (!currentStudent?.is_super_admin) {
+      throw new Error('Только супер-админ может управлять админами');
+    }
+    
+    // Нельзя снять супер админа
+    if (!makeAdmin && targetStudent?.is_super_admin) {
+      throw new Error('Нельзя снять супер-админа');
+    }
+    
+    console.log(`🔄 ${makeAdmin ? 'Добавление' : 'Снятие'} админа ${studentId}`);
+    
+    const { error } = await supabase
+      .from('students')
+      .update({ is_admin: makeAdmin })
+      .eq('id', studentId);
       
     if (error) {
-      console.error('');
+      console.error('❌ Ошибка обновления статуса:', error);
       throw error;
     }
     
-    console.log('');
-    
-    // 
+    console.log('✅ Статус админа обновлен');
     await loadStudents();
     
   } catch (error: any) {
-    console.error('');
+    console.error('❌ Ошибка toggleAdminStatus:', error);
     throw error;
   }
 };
