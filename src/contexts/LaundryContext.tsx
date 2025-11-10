@@ -1615,9 +1615,8 @@ const updateStudent = async (
     }
     
     // ✅ ПРОВЕРКА: нельзя редактировать админов
-    if (targetStudent.is_admin || targetStudent.is_super_admin) {
-      throw new Error('Нельзя редактировать админов');
-    }
+    if (targetStudent.is_super_admin && !isSuperAdmin) 
+      throw new Error('Нельзя редактировать супер-админов');
 
     const updateData: any = {};
     

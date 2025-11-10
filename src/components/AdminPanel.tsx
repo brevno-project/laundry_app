@@ -480,19 +480,13 @@ export default function AdminPanel() {
                   
                   {/* ========== УПРАВЛЕНИЕ АДМИНАМИ ========== */}
                   {isSuperAdmin && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 mb-2">
-                      <button 
-                        onClick={() => handleToggleAdmin(student.id, !student.is_admin)}
-                        className={`w-full px-4 py-2 rounded-lg text-sm font-bold ${
-                          student.is_admin 
-                            ? 'bg-red-500 hover:bg-red-600 text-white' 
-                            : 'bg-yellow-500 hover:bg-yellow-600 text-white'
-                        }`}
-                      >
-                        {student.is_admin ? ' Снять админа' : ' Сделать админом'}
-                      </button>
-                    </div>
+                    <button onClick={() => handleToggleAdmin(student.id, !student.is_admin)}
+                      className="w-full px-4 py-2 rounded-lg text-sm font-bold bg-yellow-500 hover:bg-yellow-600 text-white mb-2">
+                      {student.is_admin ? ' Снять админа' : ' Сделать админом'}
+                    </button>
                   )}
+                  <div className="border-t border-gray-300 pt-2 mt-2">                   
+                  </div>
 
                   {/* ========== БЕЗОПАСНЫЕ ДЕЙСТВИЯ ========== */}
                   {isSuperAdmin || !student.is_super_admin && (
