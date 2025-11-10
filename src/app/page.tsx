@@ -28,8 +28,8 @@ export default function Home() {
       isNewUser
     });
     
-    if (user && !isAdmin && isNewUser && !user.telegram_chat_id) {
-      console.log('✅ Showing Telegram modal for new user!');
+    if (user && !isAdmin && !user.telegram_chat_id) {
+      console.log('✅ Showing Telegram modal for user without Telegram!');
       setShowTelegramModal(true);
     }
   }, [user, isAdmin, isNewUser]);
