@@ -247,16 +247,13 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
   }
 
   try {
-    // Проверить что студент существует
     const student = students.find(s => s.id === studentId);
     if (!student) throw new Error('Студент не найден');
     
-    // ДОБАВЛЕНО: Проверка бана
     if (student.is_banned) {
       throw new Error(`Вы забанены. Причина: ${student.ban_reason || 'Не указана'}`);
     }
     
-    // Проверить что не зарегистрирован
     if (student.is_registered) throw new Error('Студент уже зарегистрирован');
     
     const shortId = studentId.slice(0, 8);
@@ -264,20 +261,8 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
     
     console.log('📝 Registering with email:', email);
     
-    // Проверить что такой email еще не зарегистрирован
-    const { data: existingUsers } = await supabase.auth.admin.listUsers();
-    const emailExists = existingUsers?.users.some(u => u.email === email);
-    
-    if (emailExists) {
-      // ДОБАВЛЕНО: Если email существует, но студент не зарегистрирован,
-      // значит нужно удалить старый auth аккаунт
-      console.log('⚠️ Email already exists, cleaning up old auth user...');
-      const oldUser = existingUsers?.users.find(u => u.email === email);
-      if (oldUser) {
-        await supabase.auth.admin.deleteUser(oldUser.id);
-        console.log('✅ Old auth user deleted');
-      }
-    }
+    // ✅ УБРАЛИ проверку admin.listUsers - она требует service_role ключ
+    // Вместо этого просто пытаемся зарегистрироваться, и если email существует - ловим ошибку
     
     // Зарегистрировать в Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -293,6 +278,53 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
     });
 
     if (authError) {
+      // ✅ Если пользователь уже существует - это нормально, просто залогиниться
+      if (authError.message.includes('already registered') || authError.message.includes('User already registered')) {
+        console.log('⚠️ User already exists, trying to login...');
+        
+        const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+        
+        if (loginError) {
+          throw new Error('Email уже занят, но пароль неверный. Обратитесь к администратору.');
+        }
+        
+        if (!loginData.user) {
+          throw new Error('Не удалось войти');
+        }
+        
+        // Обновить students таблицу
+        await supabase
+          .from('students')
+          .update({ 
+            is_registered: true,
+            registered_at: new Date().toISOString(),
+            user_id: loginData.user.id,
+            is_banned: false,
+            ban_reason: null,
+            banned_at: null
+          })
+          .eq('id', studentId);
+        
+        const newUser: User = {
+          id: loginData.user.id,
+          student_id: student.id,
+          first_name: student.first_name,
+          last_name: student.last_name,
+          full_name: student.full_name,
+          room: student.room || undefined,
+          telegram_chat_id: student.telegram_chat_id || undefined,
+        };
+        
+        setUser(newUser);
+        await loadStudents();
+        console.log('✅ Student registered successfully:', newUser.full_name);
+        
+        return newUser;
+      }
+      
       console.error('❌ Auth error:', authError);
       throw authError;
     }
@@ -310,9 +342,9 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
         is_registered: true,
         registered_at: new Date().toISOString(),
         user_id: authData.user.id,
-        is_banned: false,  // ДОБАВЛЕНО: Сбросить бан при регистрации
-        ban_reason: null,  // ДОБАВЛЕНО
-        banned_at: null    // ДОБАВЛЕНО
+        is_banned: false,
+        ban_reason: null,
+        banned_at: null
       })
       .eq('id', studentId);
 
@@ -334,7 +366,22 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
     };
     
     setUser(newUser);
-    await loadStudents(); // ДОБАВЛЕНО: Обновить список студентов
+    
+    // ✅ КРИТИЧНО: Подождать пока обновится список студентов
+    await loadStudents();
+    
+    // ✅ ДОБАВЛЕНО: Еще раз проверить что user_id обновился
+    const { data: updatedStudent } = await supabase
+      .from('students')
+      .select('user_id')
+      .eq('id', studentId)
+      .single();
+    
+    if (updatedStudent?.user_id !== authData.user.id) {
+      console.error('❌ user_id не обновился!');
+      throw new Error('Ошибка обновления данных. Попробуйте войти снова.');
+    }
+    
     console.log('✅ Student registered successfully:', newUser.full_name);
     
     return newUser;
@@ -1690,15 +1737,15 @@ const updateQueueEndTime = async (queueId: string, endTime: string) => {
 // АДМИН ФУНКЦИИ
 // ========================================
 
-const toggleAdminStatus = async (studentId: string, makeAdmin: boolean) => {  // Переименовали параметр
-  if (!isAdmin) {  // Проверяем глобальный статус текущего пользователя
+const toggleAdminStatus = async (studentId: string, makeAdmin: boolean) => {
+  if (!isAdmin) {
     throw new Error('Недостаточно прав');
   }
   if (!isSupabaseConfigured || !supabase) {
     throw new Error('Supabase не настроен');
   }
+  
   try {
-    // Проверить уровень доступа
     const currentStudent = students.find(s => s.id === user?.student_id);
     const targetStudent = students.find(s => s.id === studentId);
     
@@ -1714,6 +1761,7 @@ const toggleAdminStatus = async (studentId: string, makeAdmin: boolean) => {  //
     
     console.log(`🔄 ${makeAdmin ? 'Добавление' : 'Снятие'} админа ${studentId}`);
     
+    // ✅ ПРЯМОЙ UPDATE вместо RPC
     const { error } = await supabase
       .from('students')
       .update({ is_admin: makeAdmin })

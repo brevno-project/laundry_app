@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
-import { MachineStatus as MachineStatusEnum } from '@/types';
+import { MachineStatus as MachineStatusEnum, QueueStatus } from '@/types';  // ✅ Импортировали QueueStatus
 import { formatDate } from '@/contexts/LaundryContext';
 
 export default function MachineStatus() {
   const { machineState, queue } = useLaundry();
   const [timeRemaining, setTimeRemaining] = useState<string | null>(null);
 
-  // Calculate time remaining for washing machine
   useEffect(() => {
     if (
       machineState.status === MachineStatusEnum.WASHING &&
@@ -37,8 +36,8 @@ export default function MachineStatus() {
     return undefined;
   }, [machineState]);
 
-  // ✅ Найти текущего стирающего из очереди
-  const currentWashingItem = queue.find((item) => item.status === 'washing');
+  // ✅ ИСПРАВЛЕНО: Используем QueueStatus.WASHING вместо строки
+  const currentWashingItem = queue.find((item) => item.status === QueueStatus.WASHING);
   
   const isWashing = !!currentWashingItem;
 
@@ -47,7 +46,7 @@ export default function MachineStatus() {
       <div className="bg-red-600 p-6 rounded-lg shadow-lg mb-6 border-2 border-red-700">
         <h2 className="text-2xl font-bold text-white mb-3">🔴 Машина занята</h2>
         
-        {/* ✅ Имя и комната */}
+        {/* Имя и комната */}
         <div className="bg-red-700 p-4 rounded-lg mb-3">
           <p className="text-white text-2xl font-bold">
             {currentWashingItem.full_name}
@@ -59,21 +58,20 @@ export default function MachineStatus() {
           )}
         </div>
         
-        {/* ✅ Время начала */}
+        {/* Время начала */}
         {currentWashingItem.joined_at && (
           <p className="text-white text-lg mb-2">
             <strong>Начало:</strong> {formatDate(currentWashingItem.joined_at)}
           </p>
         )}
         
-        {/* ✅ Ожидаемое окончание */}
+        {/* Ожидаемое окончание */}
         {currentWashingItem.expected_finish_at && (
           <>
             <p className="text-white text-lg mb-2">
               <strong>Ожидаемое окончание:</strong> {formatDate(currentWashingItem.expected_finish_at)}
             </p>
             
-            {/* ✅ Таймер обратного отсчета */}
             {timeRemaining && (
               <div className="bg-yellow-400 p-4 rounded-lg mt-3">
                 <p className="text-2xl font-bold text-gray-900">
