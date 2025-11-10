@@ -65,8 +65,14 @@ const [editDate, setEditDate] = useState('');
   };
 
   // Функция сохранения изменений:
+  // Функция сохранения изменений:
 const handleSaveEdit = async () => {
   if (!editingItem) return;
+  
+  if (!isAdmin) {
+    alert('❌ Только администратор может редактировать записи');
+    return;
+  }
   
   const today = new Date();
   today.setHours(parseInt(editHour), parseInt(editMinute), 0, 0);
@@ -370,6 +376,10 @@ const handleSaveEdit = async () => {
                               className="bg-yellow-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-yellow-600 shadow-sm"
                               onClick={async () => {
                                 try {
+                                  if (!isAdmin) {
+                                    alert('❌ Только администратор может позвать студента');
+                                    return;
+                                  }
                                   await updateQueueItem(item.id, { return_key_alert: false });
                                   await setQueueStatus(item.id, QueueStatus.READY);
                                   const success = await sendTelegramNotification({
@@ -394,6 +404,10 @@ const handleSaveEdit = async () => {
                               className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm"
                               onClick={async () => {
                                 try {
+                                  if (!isAdmin) {
+                                    alert('❌ Только администратор может позвать студента');
+                                    return;
+                                  }
                                   await updateQueueItem(item.id, { return_key_alert: true });
                                   
                                   const success = await sendTelegramNotification({
@@ -418,6 +432,10 @@ const handleSaveEdit = async () => {
                                 className="bg-gray-400 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-gray-500 shadow-sm"
                                 onClick={async () => {
                                   try {
+                                    if (!isAdmin) {
+                                      alert('❌ Только администратор может отменить уведомления');
+                                      return;
+                                    }
                                     await updateQueueItem(item.id, { return_key_alert: false });
                                     await new Promise(resolve => setTimeout(resolve, 100));
                                     
@@ -442,6 +460,10 @@ const handleSaveEdit = async () => {
                                 className="bg-blue-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-blue-700 shadow-sm"
                                 onClick={async () => {
                                   try {
+                                    if (!isAdmin) {
+                                      alert('❌ Только администратор может выполнять это действие');
+                                      return;
+                                    }
                                     await updateQueueItem(item.id, { return_key_alert: false });
                                     await new Promise(resolve => setTimeout(resolve, 200));
                                     await startWashing(item.id);
@@ -459,6 +481,10 @@ const handleSaveEdit = async () => {
                                 className="bg-green-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-green-700 shadow-sm"
                                 onClick={async () => {
                                   try {
+                                    if (!isAdmin) {
+                                      alert('❌ Только администратор может выполнять это действие');
+                                      return;
+                                    }
                                     await updateQueueItem(item.id, { return_key_alert: false });
                                     await new Promise(resolve => setTimeout(resolve, 200));
                                     await startWashing(item.id);
@@ -476,6 +502,10 @@ const handleSaveEdit = async () => {
                                 className="bg-emerald-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-emerald-700 shadow-sm"
                                 onClick={async () => {
                                   try {
+                                    if (!isAdmin) {
+                                      alert('❌ Только администратор может выполнять это действие');
+                                      return;
+                                    }
                                     await updateQueueItem(item.id, { return_key_alert: false });
                                     await new Promise(resolve => setTimeout(resolve, 100));
                                     await markDone(item.id);
@@ -493,6 +523,10 @@ const handleSaveEdit = async () => {
                                 className="bg-purple-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-purple-600 shadow-sm"
                                 onClick={async () => {
                                   try {
+                                    if (!isAdmin) {
+                                      alert('❌ Только администратор может выполнять это действие');
+                                      return;
+                                    }
                                     await updateQueueItem(item.id, { return_key_alert: false });
                                     await new Promise(resolve => setTimeout(resolve, 100));
                                     
@@ -517,6 +551,10 @@ const handleSaveEdit = async () => {
                             <button
                               className="bg-red-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-red-700 shadow-sm w-full"
                               onClick={async () => {
+                                if (!isAdmin) {
+                                  alert('❌ Только администратор может выполнять это действие');
+                                  return;
+                                }
                                 if (confirm(`Удалить ${item.full_name} из очереди?`)) {
                                   await removeFromQueue(item.id);
                                   alert(`✅ ${item.full_name} удален!`);
@@ -531,13 +569,13 @@ const handleSaveEdit = async () => {
                         {/* БЛОК: Редактировать */}
                         
                         {(isAdmin) && item.status === QueueStatus.WAITING && (
-  <button
-    onClick={() => openEditModal(item)}
-    className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
-    title="Редактировать параметры"
-  >
-    Редактировать
-  </button>
+                          <button
+                            onClick={() => openEditModal(item)}
+                            className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                            title="Редактировать параметры"
+                          >
+                            Редактировать
+                          </button>
                         )}
                             
                         {/* Статус для не-админа */}
@@ -557,18 +595,18 @@ const handleSaveEdit = async () => {
         ))}
       </div>
       {/* Модальное окно редактирования */}
-{showEditModal && editingItem && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-lg p-6 max-w-md w-full">
-      <h3 className="text-xl font-bold text-gray-900 mb-4">✏️ Редактировать запись</h3>
-      <p className="text-gray-700 mb-3">
-        Студент: <span className="font-bold">{editingItem.full_name}</span>
-      </p>
-      
-      <div className="space-y-3">
-        {/* Дата стирки */}
-        <div>
-          <label className="block text-sm font-bold mb-2 text-gray-900">📅 Дата стирки</label>
+      {showEditModal && editingItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">✏️ Редактировать запись</h3>
+            <p className="text-gray-700 mb-3">
+              Студент: <span className="font-bold">{editingItem.full_name}</span>
+            </p>
+            
+            <div className="space-y-3">
+              {/* Дата стирки */}
+              <div>
+                <label className="block text-sm font-bold mb-2 text-gray-900">📅 Дата стирки</label>
           <select
             value={editDate}
             onChange={(e) => setEditDate(e.target.value)}
