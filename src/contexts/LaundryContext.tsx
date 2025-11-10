@@ -902,6 +902,10 @@ const adminAddToQueue = async (
   chosenDate?: string,
   studentId?: string
 ) => {
+  // ПРОВЕРКА: нельзя ставить в очередь супер-админов
+  if (studentId && students.find(s => s.id === studentId)?.is_super_admin) {
+    throw new Error('Нельзя ставить в очередь супер-админов');
+  }
   const student = students.find(s => s.id === studentId);
   if (!student) {
     alert('Студент не найден');
@@ -1479,6 +1483,16 @@ const startWashing = async (queueItemId: string) => {
     }
   
     try {
+      // Найти целевого студента
+      const targetStudent = students.find(s => s.id === studentId);
+      if (!targetStudent) {
+        throw new Error('Студент не найден');
+      }
+
+      // ПРОВЕРКА: нельзя банить супер-админов
+      if (targetStudent.is_super_admin) {
+        throw new Error('Нельзя банить супер-админов');
+      }
       console.log(' Banning student:', studentId, 'Reason:', reason);
   
       // Убрать из очереди
@@ -1506,6 +1520,15 @@ const startWashing = async (queueItemId: string) => {
         throw error;
       }
   
+      
+      // Если забанили текущего пользователя - принудительно разлогинить
+      if (user && user.student_id === studentId) {
+        console.log(' Current user banned - logging out');
+        await logoutStudent();
+        alert('Вы были забанены администратором');
+        return; // Не продолжать выполнение
+      }
+      
       console.log(' Student banned successfully');
       await loadStudents();
       await fetchQueue();

@@ -478,7 +478,27 @@ export default function AdminPanel() {
                     </div>
                   </div>
                   
-                  {/* Действия со студентом */}
+                                    {/* ========== БЕЗОПАСНЫЕ ДЕЙСТВИЯ ========== */}
+                                    {!student.is_super_admin && (
+                    <button
+                      onClick={() => openAddToQueueModal(student)}
+                      className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-1 w-full"
+                    >
+                      Поставить в очередь
+                    </button>
+                  )}
+
+                  {!student.is_admin && !student.is_super_admin && (
+                    <button
+                      onClick={() => openEditModal(student)}
+                      className="bg-blue-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-blue-600 w-full"
+                      title="Редактировать"
+                    >
+                      ✏️ Редактировать
+                    </button>
+                  )}
+
+                  {/* ========== АДМИНСКИЕ ДЕЙСТВИЯ ========== */}
                   {isSuperAdmin && (
                     <button 
                       onClick={() => handleToggleAdmin(student.id, !student.is_admin)}
@@ -491,63 +511,48 @@ export default function AdminPanel() {
                       {student.is_admin ? ' Снять админа' : ' Сделать админом'}
                     </button>
                   )}
-                  {isAdmin && (
-                    <>
-                      {student.is_banned && (
-                        <button
-                          onClick={() => handleUnbanStudent(student.id)}
-                          className="w-full px-4 py-2 rounded-lg text-sm font-bold bg-green-500 hover:bg-green-600 text-white"
-                        >
-                          ✅ Разбанить студента
-                        </button>
-                      )}
-                      {/* Бан */}
+
+                  {/* ========== ОПАСНЫЕ ДЕЙСТВИЯ ========== */}
+                  <div className="border-t border-red-300 pt-2 mt-2">
+                    {isAdmin && student.is_registered && !student.is_admin && !student.is_super_admin && (
+                      <button
+                        onClick={() => openResetConfirm(student)}
+                        className="bg-orange-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-orange-600 w-full mb-1"
+                        title="Сбросить регистрацию"
+                      >
+                        🔄 Сбросить регистрацию
+                      </button>
+                    )}
+
+                    {isAdmin && !student.is_super_admin && student.is_banned && (
+                      <button
+                        onClick={() => handleUnbanStudent(student.id)}
+                        className="w-full px-4 py-2 rounded-lg text-sm font-bold bg-green-500 hover:bg-green-600 text-white mb-1"
+                      >
+                        ✅ Разбанить студента
+                      </button>
+                    )}
+
+                    {isAdmin && !student.is_super_admin && !student.is_banned && (
                       <button
                         onClick={() => openBanModal(student)}
-                        className="bg-red-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-red-600 w-full"
+                        className="bg-red-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-red-600 w-full mb-1"
                         title="Забанить"
                       >
                         🚫 Забанить студента
                       </button>
-                      {/* Удаление только для супер-админа */}
-                      {isSuperAdmin && (
-                        <button
-                          onClick={() => openDeleteModal(student)}
-                          className="bg-gray-700 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-gray-800 w-full"
-                          title="Удалить студента"
-                        >
-                          🗑️ Удалить студента
-                        </button>
-                      )}
-                    </>
-                  )}
-                  <button
-                    onClick={() => openAddToQueueModal(student)}
-                    className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-1 w-full"
-                  >
-                    Поставить в очередь
-                  </button>
+                    )}
 
-                  {/* Редактирование */}
-                  {!student.is_admin && !student.is_super_admin && (
-                    <button
-                      onClick={() => openEditModal(student)}
-                      className="bg-blue-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-blue-600 w-full"
-                      title="Редактировать"
-                    >
-                      ✏️ Редактировать
-                    </button>
-                  )}
-                  {/* Сброс регистрации */}
-                  {student.is_registered && !student.is_admin && !student.is_super_admin && (
-                    <button
-                      onClick={() => openResetConfirm(student)}
-                      className="bg-orange-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-orange-600 w-full"
-                      title="Сбросить регистрацию"
-                    >
-                      🔄 Сбросить регистрацию
-                    </button>
-                  )}
+                    {isAdmin && !student.is_super_admin && (
+                      <button
+                        onClick={() => openDeleteModal(student)}
+                        className="bg-gray-700 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-gray-800 w-full"
+                        title="Удалить студента"
+                      >
+                        🗑️ Удалить студента
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
