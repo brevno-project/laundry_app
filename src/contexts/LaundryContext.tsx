@@ -1651,28 +1651,37 @@ const updateStudent = async (
 
 // Удалить студента
 const deleteStudent = async (studentId: string) => {
-  if (!isAdmin) throw new Error('Недостаточно прав');
+  if (!isAdmin && !isSuperAdmin) throw new Error('Недостаточно прав');// ✅ Админ ИЛИ супер-админ
   if (!isSupabaseConfigured || !supabase) {
     throw new Error('Supabase не настроен');
   }
 
   try {
-    // ✅ ВСТАВИТЬ ЗДЕСЬ ПРОВЕРКУ:
     const targetStudent = students.find(s => s.id === studentId);
     if (!targetStudent) {
       throw new Error('Студент не найден');
     }
     
-    // ✅ ПРОВЕРКА: нельзя удалять админов
-    if (targetStudent.is_admin || targetStudent.is_super_admin) {
-      throw new Error('Нельзя удалять админов');
+    if (isAdmin && !isSuperAdmin && (targetStudent.is_admin || targetStudent.is_super_admin)) {
+      throw new Error('Админ не может удалять других админов');
     }
     
-    // ✅ ИСПРАВЛЕНО: Используем правильные имена колонок
+    // ✅ Сначала удалить записи из queue
     await supabase
       .from('queue')
       .delete()
-      .eq('student_id', studentId);  // ✅ student_id вместо studentId
+      .eq('student_id', studentId);
+
+    // ✅ ДОБАВИТЬ: Удалить студента из students
+    const { error: deleteError } = await supabase
+      .from('students')
+      .delete()
+      .eq('id', studentId);
+
+    if (deleteError) {
+      console.error('❌ Delete student error:', deleteError);
+      throw deleteError;
+    }
 
     console.log('✅ Student deleted:', studentId);
     await loadStudents();
@@ -1721,49 +1730,34 @@ const updateAdminKey = async (newKey: string) => {
   };
 
   // Leave the queue
-  // Leave the queue
-const leaveQueue = async (queueItemId: string) => {
-  console.log('🚪 LEAVE QUEUE DEBUG:');
-  console.log('- queueItemId:', queueItemId);
-  console.log('- current user.id:', user?.id);
-  console.log('- current user.isAdmin:', isAdmin);
-  console.log('- current user.isSuperAdmin:', isSuperAdmin);
-
-  if (!user || !supabase) {
-    console.log('❌ No user or supabase');
-    return;
-  }
-
-  try {
-    // Получить запись перед удалением
-    const { data: queueItem } = await supabase
-      .from('queue')
-      .select('user_id, student_id')
-      .eq('id', queueItemId)
-      .single();
+  const leaveQueue = async (queueItemId: string) => {
+    if (!user) return;
     
-    console.log('- queue item user_id:', queueItem?.user_id);
-    console.log('- queue item student_id:', queueItem?.student_id);
-
-    // ✅ RLS политика сама проверит права через is_queue_owner() OR is_admin()
-    const { error } = await supabase
-      .from('queue')
-      .delete()
-      .eq('id', queueItemId);
-
-    if (error) {
-      console.error('❌ DELETE ERROR:', error);
-      throw error;
+    if (!isSupabaseConfigured || !supabase) {
+      remove_from_local_queue(queueItemId, user.id);
+      fetchQueue();
+      return;
     }
+    
+    try {
+      // ✅ RLS политика сама проверит права через is_queue_owner() OR is_admin()
+      const { error } = await supabase
+        .from('queue')
+        .delete()
+        .eq('id', queueItemId);
 
-    console.log('✅ Successfully left queue');
-    await fetchQueue();
-  } catch (error) {
-    console.error('❌ Error leaving queue:', error);
-    remove_from_local_queue(queueItemId, user.id);
-    await fetchQueue();
-  }
-};
+      if (error) {
+        console.error('❌ Error from Supabase:', error);
+        throw error;
+      }
+
+      await fetchQueue();
+    } catch (error) {
+      console.error('❌ Error leaving queue:', error);
+      remove_from_local_queue(queueItemId, user.id);
+      await fetchQueue();
+    }
+  };
 
   // ✅ Оптимистичное обновление для мгновенного UI обновления
   const optimisticUpdateQueueItem = (queueItemId: string, updates: Partial<QueueItem>) => {
