@@ -481,19 +481,22 @@ export default function AdminPanel() {
                   {/* ========== УПРАВЛЕНИЕ АДМИНАМИ ========== */}
                   {isSuperAdmin && (
                     <button onClick={() => handleToggleAdmin(student.id, !student.is_admin)}
-                      className="w-full px-4 py-2 rounded-lg text-sm font-bold bg-yellow-500 hover:bg-yellow-600 text-white mb-2">
-                      {student.is_admin ? ' Снять админа' : ' Сделать админом'}
-                    </button>
+                    className={`w-full px-4 py-2 text-sm font-bold text-white mb-2 rounded-none ${
+                      student.is_admin 
+                        ? 'bg-red-500 hover:bg-red-600'  
+                        : 'bg-yellow-500 hover:bg-yellow-600'  
+                    }`}
+                  >
+                    {student.is_admin ? ' Снять админа' : ' Сделать админом'}
+                  </button>
                   )}
                   <div className="border-t border-gray-300 pt-2 mt-2">                   
                   </div>
 
                   {/* ========== БЕЗОПАСНЫЕ ДЕЙСТВИЯ ========== */}
-                  {isSuperAdmin || !student.is_super_admin && (
-                    <button
-                      onClick={() => openAddToQueueModal(student)}
-                      className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-1 w-full"
-                    >
+                  {(isSuperAdmin || !student.is_super_admin) && (
+                    <button onClick={() => openAddToQueueModal(student)}
+                      className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-1 w-full">
                       Поставить в очередь
                     </button>
                   )}
