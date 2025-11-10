@@ -681,24 +681,23 @@ const joinQueue = async (
   chosenDate?: string
 ) => {
   if (!user) {
-    console.error(' User not logged in');
+    console.error('❌ User not logged in');
     return;
   }
   
   if (!supabase) {
-    console.error(' Supabase not initialized');
-    alert('');
+    console.error('❌ Supabase not initialized');
+    alert('Ошибка инициализации');
     return;
   }
 
-  // ПРОВЕРКА: user.id должен быть UUID из Supabase Auth
   if (!user.id || typeof user.id !== 'string') {
-    console.error(' Invalid user.id:', user.id);
-    alert('');
+    console.error('❌ Invalid user.id:', user.id);
+    alert('Ошибка авторизации');
     return;
   }
 
-  console.log(' Current user:', { id: user.id, student_id: user.student_id, name: user.full_name });
+  console.log('📝 Current user:', { id: user.id, student_id: user.student_id, name: user.full_name });
 
   // ПРОВЕРКА БАНА
   try {
@@ -709,42 +708,29 @@ const joinQueue = async (
       .single();
 
     if (studentData?.is_banned) {
-      const banReason = studentData.ban_reason || '';
-      alert('');
+      const banReason = studentData.ban_reason || 'Не указана';
+      alert(`Вы забанены. Причина: ${banReason}`);
       logoutStudent();
       return;
     }
 
-    // КРИТИЧНО: Проверить что user_id в students совпадает с текущим user.id
     if (studentData?.user_id !== user.id) {
-      console.error(' user_id mismatch!', { 
+      console.error('❌ user_id mismatch!', { 
         studentUserId: studentData?.user_id, 
         currentUserId: user.id 
       });
-      alert('');
+      alert('Ошибка синхронизации данных');
       logoutStudent();
       return;
     }
   } catch (err) {
     console.error('Error checking ban status:', err);
-    alert('');
+    alert('Ошибка проверки статуса');
     return;
   }
 
-  // Защита от повторного добавления
   if (isJoining) {
-    console.log(' Already joining queue');
-    return;
-  }
-
-  // Проверка что пользователь еще не в очереди
-  const existingLocal = queue.find(item =>
-    item.user_id === user.id && // Проверяем по user_id (UUID)
-    ['WAITING', 'READY', 'KEY_ISSUED', 'WASHING', 'queued', 'waiting', 'ready', 'washing'].includes(item.status)
-  );
-  
-  if (existingLocal) {
-    alert('');
+    console.log('⏳ Already joining queue');
     return;
   }
 
@@ -752,12 +738,28 @@ const joinQueue = async (
   const todayISO = new Date().toISOString().slice(0, 10);
   const targetDate = chosenDate || todayISO;
 
-  console.log(' Target date:', targetDate);
+  console.log('📅 Target date:', targetDate);
+
+  // ✅ ИСПРАВЛЕНО: Проверяем по student_id на эту дату
+  try {
+    const { data: existingEntry } = await supabase
+      .from('queue')
+      .select('id')
+      .eq('student_id', user.student_id)
+      .eq('queue_date', targetDate)
+      .in('status', ['WAITING', 'READY', 'KEY_ISSUED', 'WASHING']);
+
+    if (existingEntry && existingEntry.length > 0) {
+      alert('Вы уже в очереди на эту дату');
+      return;
+    }
+  } catch (err) {
+    console.error('Error checking existing entry:', err);
+  }
 
   setIsJoining(true);
 
   try {
-    // Получаем максимальную позицию для выбранной даты
     const { data: sameDayRows, error: posErr } = await supabase
       .from('queue')
       .select('queue_position, scheduled_for_date, queue_date')
@@ -775,43 +777,40 @@ const joinQueue = async (
       nextPos = maxPos + 1;
     }
 
-    console.log(' Next position:', nextPos, 'for date:', targetDate);
+    console.log('✅ Next position:', nextPos, 'for date:', targetDate);
 
-    // Создаем новую запись с правильным user_id
     const newItem = {
       id: crypto.randomUUID(),
-      user_id: user.id,  // 
-      student_id: user.student_id,  // 
-      full_name: name,  // 
-      room: room || null,  // 
-      wash_count: washCount,  // 
-      payment_type: paymentType,  // 
-      joined_at: new Date().toISOString(),  // 
-      expected_finish_at: expectedFinishAt || null,  // 
-      status: QueueStatus.WAITING,  // 
-      scheduled_for_date: targetDate,  // 
-      queue_date: targetDate,  // 
-      queue_position: nextPos,  // 
+      user_id: user.id,
+      student_id: user.student_id,
+      full_name: name,
+      room: room || null,
+      wash_count: washCount,
+      payment_type: paymentType,
+      joined_at: new Date().toISOString(),
+      expected_finish_at: expectedFinishAt || null,
+      status: QueueStatus.WAITING,
+      scheduled_for_date: targetDate,
+      queue_date: targetDate,
+      queue_position: nextPos,
     };
 
-    console.log(' Inserting new queue item:', newItem);
-    console.log(' user_id for RLS:', newItem.user_id);
+    console.log('✅ Inserting new queue item:', newItem);
 
     const { error } = await supabase.from('queue').insert(newItem);
 
     if (error) {
       if (error.code === '23505') {
-        console.warn(' Duplicate entry blocked');
-        alert('');
+        console.warn('⚠️ Duplicate entry blocked');
+        alert('Вы уже в очереди на эту дату');
         return;
       }
-      console.error(' Insert error:', error);
+      console.error('❌ Insert error:', error);
       throw error;
     }
 
-    console.log(' Successfully added to queue');
+    console.log('✅ Successfully added to queue');
 
-    // Уведомление админа
     await sendTelegramNotification({
       type: 'joined',
       student_id: user.student_id,
@@ -826,8 +825,8 @@ const joinQueue = async (
     await fetchQueue();
 
   } catch (err: any) {
-    console.error(' Error joining queue:', err);
-    alert('');
+    console.error('❌ Error joining queue:', err);
+    alert('Ошибка добавления в очередь');
   } finally {
     setTimeout(() => setIsJoining(false), 1000);
   }
@@ -888,11 +887,17 @@ const joinQueue = async (
       return;
     }
   
+    // ✅ КРИТИЧНО: Проверить что у студента есть user_id
+    if (!student.user_id) {
+      alert(`${student.full_name} ещё не зарегистрирован в системе. Попросите его войти хотя бы раз.`);
+      return;
+    }
+  
     const todayISO = new Date().toISOString().slice(0, 10);
     const targetDate = chosenDate || todayISO;
   
     console.log('📝 Admin adding to queue, target date:', targetDate);
-    console.log('👤 Admin user:', { id: user.id, name: user.full_name });
+    console.log('👤 Student user_id:', student.user_id);
   
     try {
       const { data: sameDayRows, error: posErr } = await supabase
@@ -913,11 +918,11 @@ const joinQueue = async (
         nextPos = maxPos + 1;
       }
   
-      // ✅ ИСПРАВЛЕНО: Проверяем дубликат по student_id вместо full_name
+      // ✅ Проверяем дубликат по student_id
       const { data: existingStudent } = await supabase
         .from('queue')
         .select('id')
-        .eq('student_id', student.id)  // ✅ Используем student_id
+        .eq('student_id', student.id)
         .eq('queue_date', targetDate)
         .in('status', ['WAITING', 'READY', 'KEY_ISSUED', 'WASHING']);
   
@@ -926,9 +931,10 @@ const joinQueue = async (
         return;
       }
   
+      // ✅ ИСПРАВЛЕНО: Используем user_id СТУДЕНТА, а не админа
       const newItem = {
         id: crypto.randomUUID(),
-        user_id: user.id,
+        user_id: student.user_id,  // ✅ user_id студента!
         student_id: student.id,
         full_name: student.full_name,
         room: studentRoom || null,
@@ -943,12 +949,13 @@ const joinQueue = async (
       };
   
       console.log('✅ Admin inserting queue item:', newItem);
+      console.log('✅ user_id (student):', newItem.user_id);
   
       const { error } = await supabase.from('queue').insert(newItem);
   
       if (error) {
         console.error('❌ Error inserting queue item:', error);
-        alert('Ошибка добавления в очередь');
+        alert('Ошибка добавления в очередь: ' + error.message);
         return;
       }
   
