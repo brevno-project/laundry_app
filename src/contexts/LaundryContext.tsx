@@ -781,9 +781,19 @@ const joinQueue = async (
 
     console.log('✅ Next position:', nextPos, 'for date:', targetDate);
 
+    console.log('✅ Next position:', nextPos, 'for date:', targetDate);
+
+    // ✅ Проверяем user.id перед созданием записи
+    if (!user.id || typeof user.id !== 'string' || user.id.trim() === '') {
+      console.error('❌ Invalid user.id for queue creation:', user.id);
+      alert('Ошибка обновления данных. Попробуйте войти снова.');
+      logoutStudent();
+      return;
+    }
+
     const newItem = {
       id: crypto.randomUUID(),
-      user_id: user.id,
+      user_id: user.id,  // Теперь гарантированно валиден
       student_id: user.student_id,
       full_name: name,
       room: room || null,
