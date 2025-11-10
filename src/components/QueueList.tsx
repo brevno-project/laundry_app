@@ -3,7 +3,7 @@
 import { useLaundry } from '@/contexts/LaundryContext';
 import { QueueStatus } from '@/types';
 import { sendTelegramNotification } from '@/lib/telegram';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function QueueList() {
   const { 
@@ -29,6 +29,11 @@ export default function QueueList() {
     banStudent,
     unbanStudent,
   } = useLaundry();
+  const [, forceUpdate] = useState(0);
+  
+  useEffect(() => {
+    forceUpdate(prev => prev + 1);
+  }, [queue]);
   const [tempTimes, setTempTimes] = useState<{ [key: string]: string }>({});
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const setTempTime = (id: string, time: string) => {

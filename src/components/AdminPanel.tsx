@@ -495,7 +495,7 @@ export default function AdminPanel() {
                   )}
 
                   {/* ========== БЕЗОПАСНЫЕ ДЕЙСТВИЯ ========== */}
-                  {!student.is_super_admin && (
+                  {isSuperAdmin || !student.is_super_admin && (
                     <button
                       onClick={() => openAddToQueueModal(student)}
                       className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-1 w-full"
@@ -504,7 +504,7 @@ export default function AdminPanel() {
                     </button>
                   )}
 
-                  {!student.is_admin && !student.is_super_admin && (
+                  {(isSuperAdmin || !student.is_admin && !student.is_super_admin) && (
                     <button
                       onClick={() => openEditModal(student)}
                       className="bg-blue-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-blue-600 w-full"
@@ -516,7 +516,7 @@ export default function AdminPanel() {
 
                   {/* ========== ОПАСНЫЕ ДЕЙСТВИЯ ========== */}
                   <div className="border-t border-red-300 pt-2 mt-2">
-                    {isAdmin && student.is_registered && !student.is_admin && !student.is_super_admin && (
+                  {isAdmin && student.is_registered && (isSuperAdmin || !student.is_admin && !student.is_super_admin) && (
                       <button
                         onClick={() => openResetConfirm(student)}
                         className="bg-orange-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-orange-600 w-full mb-1"
