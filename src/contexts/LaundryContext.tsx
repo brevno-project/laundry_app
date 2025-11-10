@@ -256,7 +256,9 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
       throw new Error(`Вы забанены. Причина: ${student.ban_reason || 'Не указана'}`);
     }
     
-    if (student.is_registered) throw new Error('Студент уже зарегистрирован');
+    if (student.is_registered && student.user_id) {
+      throw new Error('Студент уже зарегистрирован');
+    }
     
     const shortId = studentId.slice(0, 8);
     const email = `student-${shortId}@example.com`;
@@ -292,17 +294,22 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
       if (!loginData.user) {
         throw new Error('Не удалось войти');
       }
+
+      // ✅ Определить authUser для обеих веток
+      const authUser = authData?.user || loginData?.user;
+      if (!authUser) {
+        throw new Error('Не удалось создать/войти в аккаунт');
+      }
       
       // ✅ КРИТИЧНО: Обновить user_id В ТРАНЗАКЦИИ
+      
+      // ✅ Обновить запись студента
       const { error: updateError } = await supabase
         .from('students')
-        .update({ 
+        .update({
+          user_id: authUser.id,
           is_registered: true,
           registered_at: new Date().toISOString(),
-          user_id: loginData.user.id,
-          is_banned: false,
-          ban_reason: null,
-          banned_at: null
         })
         .eq('id', studentId);
 
@@ -310,6 +317,8 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
         console.error('❌ Update error:', updateError);
         throw updateError;
       }
+
+      console.log('✅ Student registered with user_id:', authUser.id);
 
       // ✅ ДОБАВЛЕНО: Дождаться подтверждения обновления
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -321,15 +330,15 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
         .eq('id', studentId)
         .single();
 
-      if (verifyError || verifyStudent?.user_id !== loginData.user.id) {
-        console.error('❌ user_id verification failed!', { verifyStudent, expected: loginData.user.id });
-        throw new Error('Ошибка обновления данных. Попробуйте войти снова.');
-      }
+        if (verifyError || verifyStudent?.user_id !== authUser.id) {
+          console.error('❌ user_id verification failed!', { verifyStudent, expected: authUser.id });
+          throw new Error('Ошибка обновления данных. Попробуйте войти снова.');
+        }
 
-      console.log('✅ Verified user_id:', verifyStudent.user_id);
+        console.log('✅ Verified user_id:', verifyStudent?.user_id);
 
       const newUser: User = {
-        id: loginData.user.id,
+        id: authUser.id,
         student_id: student.id,
         first_name: student.first_name,
         last_name: student.last_name,

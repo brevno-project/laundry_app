@@ -548,7 +548,22 @@ const handleSaveEdit = async () => {
                                 ⏳ В ожидание
                               </button>
                             </div>
-
+                            {/* БЛОК: Удалить */}
+                            <button
+                              className="bg-red-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-red-700 shadow-sm w-full"
+                              onClick={async () => {
+                                if (!isAdmin) {
+                                  alert('❌ Только администратор может выполнять это действие');
+                                  return;
+                                }
+                                if (confirm(`Удалить ${item.full_name} из очереди?`)) {
+                                  await removeFromQueue(item.id);
+                                  alert(`✅ ${item.full_name} удален!`);
+                                }
+                              }}
+                            >
+                              🗑️ Удалить из очереди
+                            </button>
                           </div>
                         )}
 
@@ -572,38 +587,6 @@ const handleSaveEdit = async () => {
                           <span className="text-emerald-700 font-bold text-sm">✅ Готово</span>
                         )}
                       </div>
-                      {isAdmin && (
-                        <div className="mt-3 pt-3 border-t border-red-200">
-                          
-                          {/* БЛОК: Опасные действия */}
-                          <div className="grid grid-cols-2 gap-2">
-                            <button
-                              className="bg-red-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-red-700 shadow-sm"
-                              onClick={async () => {
-                                const reason = prompt(`Забанить ${item.full_name}? Укажите причину:`);
-                                if (reason !== null) {
-                                  await banStudent(item.student_id, reason || 'Не указана');
-                                  alert(`✅ ${item.full_name} забанен!`);
-                                }
-                              }}
-                            >
-                              🚫 Забанить
-                            </button>
-                            
-                            <button
-                              className="bg-gray-700 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-gray-800 shadow-sm"
-                              onClick={async () => {
-                                if (confirm(`Удалить ${item.full_name} из очереди?`)) {
-                                  await removeFromQueue(item.id);
-                                  alert(`✅ ${item.full_name} удален!`);
-                                }
-                              }}
-                            >
-                              🗑️ Удалить
-                            </button>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </div>
                 );
