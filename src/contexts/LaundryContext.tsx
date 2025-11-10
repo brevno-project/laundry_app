@@ -243,25 +243,40 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 const registerStudent = async (studentId: string, password: string): Promise<User | null> => {
   if (!isSupabaseConfigured || !supabase) {
-    throw new Error('Supabase ');
+    throw new Error('Supabase не настроен');
   }
 
   try {
-    // Проверить что студент существует и не зарегистрирован
+    // Проверить что студент существует
     const student = students.find(s => s.id === studentId);
-    if (!student) throw new Error('');
-    if (student.is_registered) throw new Error('');
+    if (!student) throw new Error('Студент не найден');
+    
+    // ДОБАВЛЕНО: Проверка бана
+    if (student.is_banned) {
+      throw new Error(`Вы забанены. Причина: ${student.ban_reason || 'Не указана'}`);
+    }
+    
+    // Проверить что не зарегистрирован
+    if (student.is_registered) throw new Error('Студент уже зарегистрирован');
+    
     const shortId = studentId.slice(0, 8);
     const email = `student-${shortId}@example.com`;
     
-    console.log(' Registering with email:', email);
+    console.log('📝 Registering with email:', email);
     
     // Проверить что такой email еще не зарегистрирован
-    const { data: existingUser } = await supabase.auth.admin.listUsers();
-    const emailExists = existingUser?.users.some(u => u.email === email);
+    const { data: existingUsers } = await supabase.auth.admin.listUsers();
+    const emailExists = existingUsers?.users.some(u => u.email === email);
     
     if (emailExists) {
-      throw new Error('');
+      // ДОБАВЛЕНО: Если email существует, но студент не зарегистрирован,
+      // значит нужно удалить старый auth аккаунт
+      console.log('⚠️ Email already exists, cleaning up old auth user...');
+      const oldUser = existingUsers?.users.find(u => u.email === email);
+      if (oldUser) {
+        await supabase.auth.admin.deleteUser(oldUser.id);
+        console.log('✅ Old auth user deleted');
+      }
     }
     
     // Зарегистрировать в Supabase Auth
@@ -278,36 +293,38 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
     });
 
     if (authError) {
-      console.error(' Auth error:', authError);
+      console.error('❌ Auth error:', authError);
       throw authError;
     }
     
     if (!authData.user) {
-      throw new Error('');
+      throw new Error('Не удалось создать пользователя');
     }
 
-    console.log(' Auth user created:', authData.user.id);
+    console.log('✅ Auth user created:', authData.user.id);
 
-    // Обновить students: пометить как зарегистрированного + добавить user_id
+    // Обновить students
     const { error: updateError } = await supabase
       .from('students')
       .update({ 
-        is_registered: true,  // 
-        registered_at: new Date().toISOString(),  // 
-        user_id: authData.user.id  // 
+        is_registered: true,
+        registered_at: new Date().toISOString(),
+        user_id: authData.user.id,
+        is_banned: false,  // ДОБАВЛЕНО: Сбросить бан при регистрации
+        ban_reason: null,  // ДОБАВЛЕНО
+        banned_at: null    // ДОБАВЛЕНО
       })
       .eq('id', studentId);
 
     if (updateError) {
-      console.error(' Update error:', updateError);
+      console.error('❌ Update error:', updateError);
       throw updateError;
     }
 
-    console.log(' Student updated with user_id:', authData.user.id);
+    console.log('✅ Student updated with user_id:', authData.user.id);
 
-    // Создать объект User
     const newUser: User = {
-      id: authData.user.id,  // UUID из auth.users
+      id: authData.user.id,
       student_id: student.id,
       first_name: student.first_name,
       last_name: student.last_name,
@@ -317,11 +334,12 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
     };
     
     setUser(newUser);
-    console.log(' Student registered successfully:', newUser.full_name);
+    await loadStudents(); // ДОБАВЛЕНО: Обновить список студентов
+    console.log('✅ Student registered successfully:', newUser.full_name);
     
     return newUser;
   } catch (error: any) {
-    console.error(' Error registering student:', error);
+    console.error('❌ Error registering student:', error);
     throw error;
   }
 };
@@ -412,45 +430,51 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
 
     // Admin: Reset student registration
     const resetStudentRegistration = async (studentId: string) => {
-      if (!isAdmin) throw new Error('');
+      if (!isAdmin) throw new Error('Недостаточно прав');
       if (!isSupabaseConfigured || !supabase) {
-        throw new Error('Supabase ');
+        throw new Error('Supabase не настроен');
       }
-  
+    
       try {
-        // Get student data
         const { data: studentData, error: studentError } = await supabase
           .from('students')
-          .select('user_id, is_registered')
+          .select('user_id, is_registered, full_name')
           .eq('id', studentId)
           .single();
-
+    
         if (studentError) throw studentError;
-        if (!studentData) throw new Error('');
-        if (!studentData.is_registered) throw new Error('');
-
-        // Delete from Supabase Auth (admin operation)
-        const { error: authError } = await supabase.auth.admin.deleteUser(studentData.user_id);
-        if (authError) console.warn('Could not delete auth user:', authError);
-  
-        // Mark student as not registered
+        if (!studentData) throw new Error('Студент не найден');
+        
+        console.log('🔄 Resetting registration for:', studentData.full_name);
+    
+        // Удалить из Supabase Auth если user_id существует
+        if (studentData.user_id) {
+          console.log('🗑️ Deleting auth user:', studentData.user_id);
+          const { error: authError } = await supabase.auth.admin.deleteUser(studentData.user_id);
+          if (authError) {
+            console.warn('⚠️ Could not delete auth user:', authError);
+          } else {
+            console.log('✅ Auth user deleted');
+          }
+        }
+    
+        // Сбросить регистрацию в таблице students
         const { error: updateError } = await supabase
           .from('students')
           .update({ 
-            is_registered: false,  // 
-            registered_at: null,  // 
-            user_id: null
+            is_registered: false,
+            registered_at: null,
+            user_id: null,
+            // НЕ СБРАСЫВАЕМ is_banned и ban_reason - они остаются!
           })
           .eq('id', studentId);
-  
+    
         if (updateError) throw updateError;
-  
-        // Reload students list
+    
         await loadStudents();
-  
-        console.log(' Student registration reset');
+        console.log('✅ Student registration reset');
       } catch (error: any) {
-        console.error(' Error resetting registration:', error);
+        console.error('❌ Error resetting registration:', error);
         throw error;
       }
     };
