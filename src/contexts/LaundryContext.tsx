@@ -387,11 +387,11 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
 
     // ✅ ОБНОВИТЬ ЗАПИСИ В ОЧЕРЕДИ
     try {
+      // ✅ Обновить ВСЕ записи для этого студента
       const { error: queueUpdateError } = await supabase
         .from('queue')
         .update({ user_id: authData.user.id })
-        .eq('student_id', studentId)
-        .is('user_id', null);
+        .eq('student_id', studentId);
   
       if (queueUpdateError) {
         console.error('Error updating queue user_ids:', queueUpdateError);
