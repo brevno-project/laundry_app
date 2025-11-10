@@ -249,6 +249,7 @@ const handleSaveEdit = async () => {
             <div className="space-y-3">
             {groupedQueue[dateKey].map((item: any, index: number) => {
                 const isCurrentUser = user && item.student_id === user.student_id;
+                console.log('QueueItem:', item.id, 'student_id:', item.student_id, 'user.student_id:', user?.student_id, 'isCurrentUser:', isCurrentUser, 'status:', item.status);
                 const statusDisplay = getStatusDisplay(item.status);
                 const globalIndex = queuedItems.findIndex((q: any) => q.id === item.id);
                 

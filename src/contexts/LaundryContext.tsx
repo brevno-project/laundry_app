@@ -331,6 +331,7 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
           console.error('Error updating queue user_ids:', queueUpdateError);
         } else {
           console.log('✅ Updated queue records with new user_id');
+          await fetchQueue();
         }
       } catch (queueError) {
         console.error('Error updating queue after registration:', queueError);
@@ -1528,7 +1529,7 @@ const startWashing = async (queueItemId: string) => {
         alert('Вы были забанены администратором');
         return; // Не продолжать выполнение
       }
-      
+
       console.log(' Student banned successfully');
       await loadStudents();
       await fetchQueue();

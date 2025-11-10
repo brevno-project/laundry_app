@@ -478,8 +478,24 @@ export default function AdminPanel() {
                     </div>
                   </div>
                   
-                                    {/* ========== БЕЗОПАСНЫЕ ДЕЙСТВИЯ ========== */}
-                                    {!student.is_super_admin && (
+                  {/* ========== УПРАВЛЕНИЕ АДМИНАМИ ========== */}
+                  {isSuperAdmin && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 mb-2">
+                      <button 
+                        onClick={() => handleToggleAdmin(student.id, !student.is_admin)}
+                        className={`w-full px-4 py-2 rounded-lg text-sm font-bold ${
+                          student.is_admin 
+                            ? 'bg-red-500 hover:bg-red-600 text-white' 
+                            : 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                        }`}
+                      >
+                        {student.is_admin ? ' Снять админа' : ' Сделать админом'}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* ========== БЕЗОПАСНЫЕ ДЕЙСТВИЯ ========== */}
+                  {!student.is_super_admin && (
                     <button
                       onClick={() => openAddToQueueModal(student)}
                       className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-1 w-full"
@@ -495,20 +511,6 @@ export default function AdminPanel() {
                       title="Редактировать"
                     >
                       ✏️ Редактировать
-                    </button>
-                  )}
-
-                  {/* ========== АДМИНСКИЕ ДЕЙСТВИЯ ========== */}
-                  {isSuperAdmin && (
-                    <button 
-                      onClick={() => handleToggleAdmin(student.id, !student.is_admin)}
-                      className={`w-full px-4 py-2 rounded-lg text-sm font-bold ${
-                        student.is_admin 
-                          ? 'bg-red-500 hover:bg-red-600 text-white' 
-                          : 'bg-yellow-500 hover:bg-yellow-600 text-white'
-                      }`}
-                    >
-                      {student.is_admin ? ' Снять админа' : ' Сделать админом'}
                     </button>
                   )}
 
