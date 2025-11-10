@@ -83,27 +83,28 @@ async function getStudentTelegramChatId(student_id?: string, room?: string): Pro
     }
   }
   
-  // Если не нашли по ID, попробовать по комнате
-  if (room) {
-    console.log(`🔍 Searching by room: ${room}`);
-    const { data, error } = await supabase
-      .from('students')
-      .select('id, full_name, room, telegram_chat_id')
-      .eq('room', room)
-      .single();
-    
-    if (error) {
-      console.error(`❌ Error searching by room:`, error);
+  // Если не нашли по ID, попробовать по комнате (может быть несколько студентов)
+if (room) {
+  console.log(`🔍 Searching by room: ${room}`);
+  const { data, error } = await supabase
+    .from('students')
+    .select('id, full_name, room, telegram_chat_id')
+    .eq('room', room);  // ✅ Без .single()
+  
+  if (error) {
+    console.error(`❌ Error searching by room:`, error);
+  } else {
+    console.log(`📊 Found students by room:`, data);
+    // Ищем студента с telegram_chat_id
+    const studentWithTelegram = data?.find(s => s.telegram_chat_id);
+    if (studentWithTelegram?.telegram_chat_id) {
+      console.log(`✅ Found telegram_chat_id in room: ${studentWithTelegram.telegram_chat_id}`);
+      return studentWithTelegram.telegram_chat_id;
     } else {
-      console.log(`📊 Found student by room:`, data);
-      if (data?.telegram_chat_id) {
-        console.log(`✅ Found telegram_chat_id: ${data.telegram_chat_id}`);
-        return data.telegram_chat_id;
-      } else {
-        console.warn(`⚠️ Student found but telegram_chat_id is empty!`);
-      }
+      console.warn(`⚠️ No students in room ${room} have telegram_chat_id`);
     }
   }
+}
   
   console.error(`❌ telegram_chat_id NOT FOUND for student_id: ${student_id}, room: ${room}`);
   return null;

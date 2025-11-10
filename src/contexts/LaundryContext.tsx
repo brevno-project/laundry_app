@@ -1692,10 +1692,17 @@ const updateAdminKey = async (newKey: string) => {
 
   // ✅ Оптимистичное обновление для мгновенного UI обновления
   const optimisticUpdateQueueItem = (queueItemId: string, updates: Partial<QueueItem>) => {
-    console.log('⚡ Optimistic update:', { queueItemId, updates });
-    setQueue(prev => prev.map(item => 
-      item.id === queueItemId ? { ...item, ...updates } : item
-    ));
+    console.log('⚡ OPTIMISTIC UPDATE:', queueItemId, updates);
+    console.log('📊 Queue before:', queue.length);
+    
+    setQueue(prev => {
+      const newQueue = prev.map(item => 
+        item.id === queueItemId ? { ...item, ...updates } : item
+      );
+      console.log('📊 Queue after:', newQueue.length);
+      console.log('🎯 Updated item:', newQueue.find(i => i.id === queueItemId));
+      return newQueue;
+    });
   };
 
 // Update queue item details
