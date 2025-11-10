@@ -396,40 +396,7 @@ export default function AdminPanel() {
             </div>
           </div>
         )}
-
-        {/* Очистить старые очереди */}
-        <button
-          onClick={async () => {
-            try {
-              await clearOldQueues();
-              alert('✅ Старые очереди очищены!');
-            } catch (err: any) {
-              alert('❌ Ошибка: ' + err.message);
-            }
-          }}
-          className="w-full bg-orange-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-orange-700 transition-colors shadow-md"
-        >
-          Очистить старые очереди
-        </button>
-
-        {/* Очистить зависшие очереди (только супер-админ) */}
-        {isSuperAdmin && (
-          <button
-            onClick={async () => {
-              if (!confirm('Вы уверены? Это удалит все зависшие записи старше 2 дней!')) return;
-              try {
-                await clearStuckQueues();
-                alert('✅ Зависшие очереди очищены!');
-              } catch (err: any) {
-                alert('❌ Ошибка: ' + err.message);
-              }
-            }}
-            className="w-full bg-red-700 text-white font-semibold py-3 px-4 rounded-md hover:bg-red-800 transition-colors shadow-md"
-          >
-            🧹 Очистить зависшие очереди
-          </button>
-        )}
-
+        
         {/* Управление студентами */}
         <button
           onClick={() => setShowStudents(!showStudents)}

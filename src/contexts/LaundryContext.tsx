@@ -261,10 +261,7 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
     
     console.log('📝 Registering with email:', email);
     
-    // ✅ УБРАЛИ проверку admin.listUsers - она требует service_role ключ
-    // Вместо этого просто пытаемся зарегистрироваться, и если email существует - ловим ошибку
-    
-    // Зарегистрировать в Supabase Auth
+    // Попытка регистрации
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -277,54 +274,76 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
       }
     });
 
-    if (authError) {
-      // ✅ Если пользователь уже существует - это нормально, просто залогиниться
-      if (authError.message.includes('already registered') || authError.message.includes('User already registered')) {
-        console.log('⚠️ User already exists, trying to login...');
-        
-        const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
-        
-        if (loginError) {
-          throw new Error('Email уже занят, но пароль неверный. Обратитесь к администратору.');
-        }
-        
-        if (!loginData.user) {
-          throw new Error('Не удалось войти');
-        }
-        
-        // Обновить students таблицу
-        await supabase
-          .from('students')
-          .update({ 
-            is_registered: true,
-            registered_at: new Date().toISOString(),
-            user_id: loginData.user.id,
-            is_banned: false,
-            ban_reason: null,
-            banned_at: null
-          })
-          .eq('id', studentId);
-        
-        const newUser: User = {
-          id: loginData.user.id,
-          student_id: student.id,
-          first_name: student.first_name,
-          last_name: student.last_name,
-          full_name: student.full_name,
-          room: student.room || undefined,
-          telegram_chat_id: student.telegram_chat_id || undefined,
-        };
-        
-        setUser(newUser);
-        await loadStudents();
-        console.log('✅ Student registered successfully:', newUser.full_name);
-        
-        return newUser;
+    // Если пользователь уже существует - залогиниться
+    if (authError && (authError.message.includes('already registered') || authError.message.includes('User already registered'))) {
+      console.log('⚠️ User already exists, trying to login...');
+      
+      const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (loginError) {
+        throw new Error('Этот email уже занят другим пользователем. Обратитесь к администратору.');
       }
       
+      if (!loginData.user) {
+        throw new Error('Не удалось войти');
+      }
+      
+      // ✅ КРИТИЧНО: Обновить user_id В ТРАНЗАКЦИИ
+      const { error: updateError } = await supabase
+        .from('students')
+        .update({ 
+          is_registered: true,
+          registered_at: new Date().toISOString(),
+          user_id: loginData.user.id,
+          is_banned: false,
+          ban_reason: null,
+          banned_at: null
+        })
+        .eq('id', studentId);
+
+      if (updateError) {
+        console.error('❌ Update error:', updateError);
+        throw updateError;
+      }
+
+      // ✅ ДОБАВЛЕНО: Дождаться подтверждения обновления
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // ✅ ПРОВЕРКА: Убедиться что user_id обновился
+      const { data: verifyStudent, error: verifyError } = await supabase
+        .from('students')
+        .select('user_id')
+        .eq('id', studentId)
+        .single();
+
+      if (verifyError || verifyStudent?.user_id !== loginData.user.id) {
+        console.error('❌ user_id verification failed!', { verifyStudent, expected: loginData.user.id });
+        throw new Error('Ошибка обновления данных. Попробуйте войти снова.');
+      }
+
+      console.log('✅ Verified user_id:', verifyStudent.user_id);
+
+      const newUser: User = {
+        id: loginData.user.id,
+        student_id: student.id,
+        first_name: student.first_name,
+        last_name: student.last_name,
+        full_name: student.full_name,
+        room: student.room || undefined,
+        telegram_chat_id: student.telegram_chat_id || undefined,
+      };
+      
+      setUser(newUser);
+      await loadStudents();
+      console.log('✅ Student registered successfully:', newUser.full_name);
+      
+      return newUser;
+    }
+
+    if (authError) {
       console.error('❌ Auth error:', authError);
       throw authError;
     }
@@ -335,7 +354,7 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
 
     console.log('✅ Auth user created:', authData.user.id);
 
-    // Обновить students
+    // ✅ КРИТИЧНО: Обновить user_id
     const { error: updateError } = await supabase
       .from('students')
       .update({ 
@@ -355,6 +374,23 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
 
     console.log('✅ Student updated with user_id:', authData.user.id);
 
+    // ✅ ДОБАВЛЕНО: Дождаться подтверждения
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // ✅ ПРОВЕРКА: Убедиться что user_id обновился
+    const { data: verifyStudent, error: verifyError } = await supabase
+      .from('students')
+      .select('user_id')
+      .eq('id', studentId)
+      .single();
+
+    if (verifyError || verifyStudent?.user_id !== authData.user.id) {
+      console.error('❌ user_id verification failed!', { verifyStudent, expected: authData.user.id });
+      throw new Error('Ошибка обновления данных. Попробуйте войти снова.');
+    }
+
+    console.log('✅ Verified user_id:', verifyStudent.user_id);
+
     const newUser: User = {
       id: authData.user.id,
       student_id: student.id,
@@ -366,22 +402,7 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
     };
     
     setUser(newUser);
-    
-    // ✅ КРИТИЧНО: Подождать пока обновится список студентов
     await loadStudents();
-    
-    // ✅ ДОБАВЛЕНО: Еще раз проверить что user_id обновился
-    const { data: updatedStudent } = await supabase
-      .from('students')
-      .select('user_id')
-      .eq('id', studentId)
-      .single();
-    
-    if (updatedStudent?.user_id !== authData.user.id) {
-      console.error('❌ user_id не обновился!');
-      throw new Error('Ошибка обновления данных. Попробуйте войти снова.');
-    }
-    
     console.log('✅ Student registered successfully:', newUser.full_name);
     
     return newUser;
@@ -1633,36 +1654,38 @@ const updateAdminKey = async (newKey: string) => {
   };
 
   // Leave the queue
-const leaveQueue = async (queueItemId: string) => {
-  if (!user) return;
-  
-  if (!isSupabaseConfigured || !supabase) {
-    // Use local storage fallback
-    remove_from_local_queue(queueItemId, user.id);
-    fetchQueue();
-    return;
-  }
-  
-  try {
-    console.log(' Leaving queue:', { queueItemId, studentId: user.student_id });
-    const { error } = await supabase
-      .from('queue')
-      .delete()
-      .eq('id', queueItemId)
-      .eq('student_id', user.student_id);
+  const leaveQueue = async (queueItemId: string) => {
+    if (!user) return;
     
-    if (error) {
-      console.error(' Error from Supabase:', error);
-      throw error;
+    if (!isSupabaseConfigured || !supabase) {
+      remove_from_local_queue(queueItemId, user.id);
+      fetchQueue();
+      return;
     }
-    console.log(' Successfully left queue');
-  } catch (error) {
-    console.error(' Error leaving queue:', error);
-    // Fallback to local storage on error
-    remove_from_local_queue(queueItemId, user.id);
-    fetchQueue();
-  }
-};
+    
+    try {
+      console.log('🚪 Leaving queue:', { queueItemId, studentId: user.student_id });
+      
+      // ✅ ИСПРАВЛЕНО: RLS политика работает по user_id, а не по student_id
+      const { error } = await supabase
+        .from('queue')
+        .delete()
+        .eq('id', queueItemId)
+        .eq('user_id', user.id);  // ✅ Используем user_id вместо student_id
+      
+      if (error) {
+        console.error('❌ Error from Supabase:', error);
+        throw error;
+      }
+      
+      console.log('✅ Successfully left queue');
+      await fetchQueue();
+    } catch (error) {
+      console.error('❌ Error leaving queue:', error);
+      remove_from_local_queue(queueItemId, user.id);
+      fetchQueue();
+    }
+  };
 
 // Update queue item details
 const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>) => {
