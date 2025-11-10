@@ -1751,7 +1751,7 @@ const updateAdminKey = async (newKey: string) => {
     } catch (error) {
       console.error('❌ Error leaving queue:', error);
       remove_from_local_queue(queueItemId, user.id);
-      fetchQueue();
+      await fetchQueue();
     }
   };
 
