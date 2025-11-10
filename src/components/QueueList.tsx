@@ -45,12 +45,12 @@ const [editDate, setEditDate] = useState('');
   };
   const openEditModal = (item: any) => {
     setEditingItem(item);
-    setEditWashCount(item.washCount || 1);
-    setEditPaymentType(item.paymentType || 'money');
+    setEditWashCount(item.wash_count || 1);
+    setEditPaymentType(item.payment_type || 'money');
     
     // Парсим expectedFinishAt
-    if (item.expectedFinishAt) {
-      const date = new Date(item.expectedFinishAt);
+    if (item.expected_finish_at) {
+      const date = new Date(item.expected_finish_at);
       setEditHour(date.getHours().toString().padStart(2, '0'));
       setEditMinute(date.getMinutes().toString().padStart(2, '0'));
     } else {
@@ -58,7 +58,7 @@ const [editDate, setEditDate] = useState('');
       setEditMinute('00');
     }
     
-    setEditDate(item.currentDate || new Date().toISOString().slice(0, 10));
+    setEditDate(item.queue_date || new Date().toISOString().slice(0, 10));
     setShowEditModal(true);
   };
 
@@ -71,10 +71,10 @@ const handleSaveEdit = async () => {
   const expectedFinishAt = today.toISOString();
   
   await updateQueueItemDetails(editingItem.id, {
-    washCount: editWashCount,
-    paymentType: editPaymentType,
-    expectedFinishAt,
-    chosenDate: editDate,
+    wash_count: editWashCount,
+    payment_type: editPaymentType,
+    expected_finish_at: expectedFinishAt,
+    chosen_date: editDate,
   });
   
   setShowEditModal(false);
@@ -86,7 +86,7 @@ const handleSaveEdit = async () => {
     const groups: { [key: string]: any[] } = {};
     
     items.forEach(item => {
-      const date = item.currentDate || new Date().toISOString().slice(0, 10);
+      const date = item.queue_date || new Date().toISOString().slice(0, 10);
       if (!groups[date]) {
         groups[date] = [];
       }
@@ -288,7 +288,7 @@ const handleSaveEdit = async () => {
                               </span>
                             )}
                           </div>
-                          <div className="font-bold text-lg text-gray-900">{item.fullname}</div>
+                          <div className="font-bold text-lg text-gray-900">{item.full_name}</div>
                           {item.room && <div className="text-xs text-gray-600">Комната {item.room}</div>}
                         </div>
                       </div>
@@ -301,35 +301,35 @@ const handleSaveEdit = async () => {
                     <div className="grid grid-cols-3 gap-2 mb-2 text-sm">
                       <div className="flex flex-col">
                         <span className="text-xs text-gray-600">Стирок</span>
-                        <span className="text-lg font-bold text-blue-700">{item.washCount || 1}</span>
+                        <span className="text-lg font-bold text-blue-700">{item.wash_count || 1}</span>
                       </div>
                       <div className="flex flex-col">
                         <span className="text-xs text-gray-600">Оплата</span>
                         <span className="text-sm font-bold text-gray-900">
-                          {item.paymentType === 'coupon' ? '🎫 Купон' : 
-                           item.paymentType === 'both' ? '💵+🎫' : 
+                          {item.payment_type === 'coupon' ? '🎫 Купон' : 
+                           item.payment_type === 'both' ? '💵+🎫' : 
                            '💵 Деньги'}
                         </span>
                       </div>
                       {/* Время */}
-                      {item.status === QueueStatus.DONE && item.finishedAt ? (
+                      {item.status === QueueStatus.DONE && item.finished_at ? (
                         <div className="flex flex-col">
                           <span className="text-xs text-gray-600">Закончил</span>
                           <span className="text-lg font-bold text-emerald-700">
                             {(() => {
-                              const date = new Date(item.finishedAt);
+                              const date = new Date(item.finished_at);
                               const hours = date.getHours().toString().padStart(2, '0');
                               const minutes = date.getMinutes().toString().padStart(2, '0');
                               return `${hours}:${minutes}`;
                             })()}
                           </span>
                         </div>
-                      ) : item.expectedFinishAt ? (
+                      ) : item.expected_finish_at ? (
                         <div className="flex flex-col">
                           <span className="text-xs text-gray-600">Закончит</span>
                           <span className="text-lg font-bold text-blue-700">
                             {(() => {
-                              const date = new Date(item.expectedFinishAt);
+                              const date = new Date(item.expected_finish_at);
                               const hours = date.getHours().toString().padStart(2, '0');
                               const minutes = date.getMinutes().toString().padStart(2, '0');
                               return `${hours}:${minutes}`;
@@ -343,9 +343,9 @@ const handleSaveEdit = async () => {
                     <div>
                       <div className="flex flex-col gap-2">
                         {/* Сообщение от админа */}
-                        {item.adminMessage && (
+                        {item.admin_message && (
                           <div className="bg-yellow-100 border-l-4 border-yellow-500 p-3 rounded">
-                            <p className="font-bold text-yellow-800">📢 {item.adminMessage}</p>
+                            <p className="font-bold text-yellow-800">📢 {item.admin_message}</p>
                           </div>
                         )}
                         
@@ -380,7 +380,7 @@ const handleSaveEdit = async () => {
                                       expected_finish_at: item.expected_finish_at
                                     });
                                     
-                                    alert(success ? `✅ ${item.fullname} позван!` : `⚠️ ${item.fullname} не подключил Telegram`);
+                                    alert(success ? `✅ ${item.full_name} позван!` : `⚠️ ${item.full_name} не подключил Telegram`);
                                   } catch (error) {
                                     console.error('❌ Ошибка при вызове:', error);
                                     alert('❌ Ошибка при вызове студента');
@@ -409,7 +409,7 @@ const handleSaveEdit = async () => {
                                       expected_finish_at: item.expected_finish_at
                                     });
                                     
-                                    alert(success ? `✅ ${item.fullname} попросили вернуть ключ!` : `⚠️ ${item.fullname} не подключил Telegram`);
+                                    alert(success ? `✅ ${item.full_name} попросили вернуть ключ!` : `⚠️ ${item.full_name} не подключил Telegram`);
                                   } catch (error) {
                                     console.error('❌ Ошибка:', error);
                                     alert('❌ Ошибка отправки уведомления');
@@ -430,7 +430,7 @@ const handleSaveEdit = async () => {
                                       await setQueueStatus(item.id, QueueStatus.WAITING);
                                     }
                                     
-                                    alert(`✅ Уведомления отменены для ${item.fullname}`);
+                                    alert(`✅ Уведомления отменены для ${item.full_name}`);
                                   } catch (error) {
                                     console.error('❌ Ошибка:', error);
                                     alert('❌ Ошибка отмены уведомлений');
@@ -450,7 +450,7 @@ const handleSaveEdit = async () => {
                                     await updateQueueItem(item.id, { return_key_alert: false });
                                     await new Promise(resolve => setTimeout(resolve, 200));
                                     await startWashing(item.id);
-                                    alert(`✅ ${item.fullname} забрал ключ и начал стирку!`);
+                                    alert(`✅ ${item.full_name} забрал ключ и начал стирку!`);
                                   } catch (error) {
                                     console.error('❌ Ошибка:', error);
                                     alert('❌ Ошибка при выдаче ключа');
@@ -467,7 +467,7 @@ const handleSaveEdit = async () => {
                                     await updateQueueItem(item.id, { return_key_alert: false });
                                     await new Promise(resolve => setTimeout(resolve, 200));
                                     await startWashing(item.id);
-                                    alert(`✅ ${item.fullname} стирает!`);
+                                    alert(`✅ ${item.full_name} стирает!`);   
                                   } catch (error) {
                                     console.error('❌ Ошибка:', error);
                                     alert('❌ Ошибка при запуске стирки');
@@ -484,7 +484,7 @@ const handleSaveEdit = async () => {
                                     await updateQueueItem(item.id, { return_key_alert: false });
                                     await new Promise(resolve => setTimeout(resolve, 100));
                                     await markDone(item.id);
-                                    alert(`✅ ${item.fullname} закончил!`);
+                                    alert(`✅ ${item.full_name} закончил!`);
                                   } catch (error) {
                                     console.error('❌ Ошибка:', error);
                                     alert('❌ Ошибка при завершении');
@@ -507,7 +507,7 @@ const handleSaveEdit = async () => {
                                       await setQueueStatus(item.id, QueueStatus.WAITING);
                                     }
                                     
-                                    alert(`✅ ${item.fullname} в ожидании`);
+                                    alert(`✅ ${item.full_name} в ожидании`);
                                   } catch (error) {
                                     console.error('❌ Ошибка:', error);
                                     alert('❌ Ошибка при возврате в ожидание');
@@ -522,9 +522,9 @@ const handleSaveEdit = async () => {
                             <button
                               className="bg-red-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-red-700 shadow-sm w-full"
                               onClick={async () => {
-                                if (confirm(`Удалить ${item.fullname} из очереди?`)) {
+                                if (confirm(`Удалить ${item.full_name} из очереди?`)) {
                                   await removeFromQueue(item.id);
-                                  alert(`✅ ${item.fullname} удален!`);
+                                  alert(`✅ ${item.full_name} удален!`);
                                 }
                               }}
                             >
@@ -567,7 +567,7 @@ const handleSaveEdit = async () => {
     <div className="bg-white rounded-lg p-6 max-w-md w-full">
       <h3 className="text-xl font-bold text-gray-900 mb-4">✏️ Редактировать запись</h3>
       <p className="text-gray-700 mb-3">
-        Студент: <span className="font-bold">{editingItem.fullname}</span>
+        Студент: <span className="font-bold">{editingItem.full_name}</span>
       </p>
       
       <div className="space-y-3">

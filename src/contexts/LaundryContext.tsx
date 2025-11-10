@@ -90,7 +90,7 @@ type LaundryContextType = {
   deleteStudent: (studentId: string) => Promise<void>;
   updateAdminKey: (newKey: string) => Promise<void>;
   adminAddToQueue: (studentRoom?: string, washCount?: number, paymentType?: string, expectedFinishAt?: string, chosenDate?: string, studentId?: string) => Promise<void>;
-  updateQueueItemDetails: (queueId: string, updates: { washCount?: number; paymentType?: string; expectedFinishAt?: string; chosenDate?: string }) => Promise<void>;
+  updateQueueItemDetails: (queueId: string, updates: { wash_count?: number; payment_type?: string; expected_finish_at?: string; chosen_date?: string }) => Promise<void>;
   updateQueueEndTime: (queueId: string, endTime: string) => Promise<void>;
   toggleAdminStatus: (studentId: string, isAdmin: boolean) => Promise<void>;
   toggleSuperAdminStatus: (studentId: string, makeSuperAdmin: boolean) => Promise<void>;
@@ -2092,10 +2092,10 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
 const updateQueueItemDetails = async (
   queueId: string, 
   updates: {
-    washCount?: number;
-    paymentType?: string;
-    expectedFinishAt?: string;
-    chosenDate?: string;
+    wash_count?: number;
+    payment_type?: string;
+    expected_finish_at?: string;
+    chosen_date?: string;
   }
 ) => {
   if (!supabase) {
@@ -2117,12 +2117,12 @@ const updateQueueItemDetails = async (
     }
 
     const updateData: any = {};
-    if (updates.washCount !== undefined) updateData.wash_count = updates.washCount;  
-    if (updates.paymentType !== undefined) updateData.payment_type = updates.paymentType;  
-    if (updates.expectedFinishAt !== undefined) updateData.expected_finish_at = updates.expectedFinishAt;  
-    if (updates.chosenDate !== undefined) {
-      updateData.scheduled_for_date = updates.chosenDate;  
-      updateData.queue_date = updates.chosenDate;  
+    if (updates.wash_count !== undefined) updateData.wash_count = updates.wash_count;  
+    if (updates.payment_type !== undefined) updateData.payment_type = updates.payment_type;  
+    if (updates.expected_finish_at !== undefined) updateData.expected_finish_at = updates.expected_finish_at;  
+    if (updates.chosen_date !== undefined) {
+      updateData.scheduled_for_date = updates.chosen_date;  
+      updateData.queue_date = updates.chosen_date;  
     }
 
     const { error } = await supabase
@@ -2140,15 +2140,15 @@ const updateQueueItemDetails = async (
     await fetchQueue();  
     
     // 
-    if (updates.expectedFinishAt && user) {
+    if (updates.expected_finish_at && user) {
       await sendTelegramNotification({
         type: 'updated',
         student_id: user.student_id,
         full_name: item.full_name,
         room: item.room || undefined,
-        wash_count: updates.washCount || item.wash_count,
-        payment_type: updates.paymentType || item.payment_type,
-        expected_finish_at: updates.expectedFinishAt,
+        wash_count: updates.wash_count || item.wash_count,
+        payment_type: updates.payment_type || item.payment_type,
+        expected_finish_at: updates.expected_finish_at,
       });
     }
 
