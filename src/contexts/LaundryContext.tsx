@@ -320,23 +320,6 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
 
       console.log('✅ Student registered with user_id:', authUser.id);
 
-      // ✅ ДОБАВЛЕНО: Дождаться подтверждения обновления
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // ✅ ПРОВЕРКА: Убедиться что user_id обновился
-      const { data: verifyStudent, error: verifyError } = await supabase
-        .from('students')
-        .select('user_id')
-        .eq('id', studentId)
-        .single();
-
-        if (verifyError || verifyStudent?.user_id !== authUser.id) {
-          console.error('❌ user_id verification failed!', { verifyStudent, expected: authUser.id });
-          throw new Error('Ошибка обновления данных. Попробуйте войти снова.');
-        }
-
-        console.log('✅ Verified user_id:', verifyStudent?.user_id);
-
       const newUser: User = {
         id: authUser.id,
         student_id: student.id,
