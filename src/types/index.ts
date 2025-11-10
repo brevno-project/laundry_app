@@ -107,6 +107,7 @@ export type TelegramNotification = {
   queue_length?: number;
   expected_finish_at?: string;
   student_id?: string;
+  admin_student_id?: string;
   queue_item_id?: string;
   message?: string;
 };

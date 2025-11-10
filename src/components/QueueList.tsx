@@ -385,14 +385,15 @@ const handleSaveEdit = async () => {
                                   await updateQueueItem(item.id, { return_key_alert: false });
                                   await setQueueStatus(item.id, QueueStatus.READY);
                                   const success = await sendTelegramNotification({
-                                    type: 'admin_call_for_key',
+                                    type: 'admin_return_key',  // ИСПРАВИТЬ ЗДЕСЬ
                                     full_name: item.full_name,
                                     room: item.room,
                                     student_id: item.student_id,
+                                    admin_student_id: user?.student_id,
                                     expected_finish_at: item.expected_finish_at
                                   });
                                   
-                                  alert(success ? `✅ ${item.full_name} позван!` : `⚠️ ${item.full_name} не подключил Telegram`);
+                                  alert(success ? `✅ Админ уведомлен о необходимости позвать ${item.full_name}!` : `⚠️ Не удалось отправить уведомление админу`);
                                 } catch (error) {
                                   console.error('❌ Ошибка при вызове:', error);
                                   alert('❌ Ошибка при вызове студента');
@@ -407,20 +408,21 @@ const handleSaveEdit = async () => {
                               onClick={async () => {
                                 try {
                                   if (!isAdmin) {
-                                    alert('❌ Только администратор может позвать студента');
+                                    alert('❌ Только администратор может попросить вернуть ключ');
                                     return;
                                   }
                                   await updateQueueItem(item.id, { return_key_alert: true });
                                   
                                   const success = await sendTelegramNotification({
-                                    type: 'admin_return_key',
+                                    type: 'admin_call_for_key',
                                     full_name: item.full_name,
                                     room: item.room,
                                     student_id: item.student_id,
+                                    admin_student_id: user?.student_id, // ДОБАВИТЬ ЭТО
                                     expected_finish_at: item.expected_finish_at
                                   });
                                   
-                                  alert(success ? `✅ ${item.full_name} попросили вернуть ключ!` : `⚠️ ${item.full_name} не подключил Telegram`);
+                                  alert(success ? `✅ Админ уведомлен о необходимости вернуть ключ от ${item.full_name}!` : `⚠️ Не удалось отправить уведомление админу`);
                                 } catch (error) {
                                   console.error('❌ Ошибка:', error);
                                   alert('❌ Ошибка отправки уведомления');
