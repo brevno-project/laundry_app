@@ -147,13 +147,13 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         
         // Subscribe to queue changes
         const queueSubscription = supabase
-          .channel('public:queue')
+          .channel('queue-changes')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'queue' }, payload => {
-            console.log(' Queue change detected:', payload);
+            console.log('🔄 QUEUE CHANGE DETECTED:', payload);
             fetchQueue();
           })
           .subscribe((status) => {
-            console.log('Queue subscription status:', status);
+            console.log('📡 Queue subscription status:', status);
           });
         
         // Subscribe to machine state changes
