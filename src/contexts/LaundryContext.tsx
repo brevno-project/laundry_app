@@ -856,115 +856,110 @@ const joinQueue = async (
   };
 
 
-const adminAddToQueue: (studentRoom?: string, washCount?: number, paymentType?: string, expectedFinishAt?: string, chosenDate?: string, studentId?: string) => Promise<void> = async (
+  const adminAddToQueue = async (
+    studentRoom?: string,
+    washCount: number = 1,
+    paymentType: string = 'money',
+    expectedFinishAt?: string,
+    chosenDate?: string,
+    studentId?: string
+  ) => {
+    const student = students.find(s => s.id === studentId);
+    if (!student) {
+      alert('Студент не найден');
+      return;
+    }
+    
+    if (!isAdmin) {
+      console.error('❌ Not admin');
+      alert('Недостаточно прав');
+      return;
+    }
   
-  studentRoom?: string,
-  washCount: number = 1,
-  paymentType: string = 'money',
-  expectedFinishAt?: string,
-  chosenDate?: string,
-  studentId?: string
-) => {
-  // Найти студента по ID
-  const student = students.find(s => s.id === studentId);
-  if (!student) {
-    alert('Студент не найден');
-    return;
-  }
-  if (!isAdmin) {
-    console.error(' Not admin');
-    alert('');
-    return;
-  }
-
-  if (!supabase) {
-    console.error(' Supabase not initialized');
-    alert('');
-    return;
-  }
-
-  // КРИТИЧНО: Админ должен использовать свой user_id для RLS
-  if (!user || !user.id) {
-    console.error(' Admin not logged in or invalid user.id');
-    alert('');
-    return;
-  }
-
-  const todayISO = new Date().toISOString().slice(0, 10);
-  const targetDate = chosenDate || todayISO;
-
-  console.log(' Admin adding to queue, target date:', targetDate);
-  console.log(' Admin user:', { id: user.id, name: user.full_name });
-
-  try {
-    // Получаем максимальную позицию для выбранной даты
-    const { data: sameDayRows, error: posErr } = await supabase
-      .from('queue')
-      .select('queue_position, scheduled_for_date, queue_date')
-      .eq('queue_date', targetDate)
-      .eq('scheduled_for_date', targetDate);
-
-    if (posErr) {
-      console.error('Error getting positions:', posErr);
-      alert('');
+    if (!supabase) {
+      console.error('❌ Supabase not initialized');
+      alert('Ошибка инициализации');
       return;
     }
-
-    let nextPos = 1;
-    if (sameDayRows && sameDayRows.length > 0) {
-      const maxPos = Math.max(...sameDayRows.map(row => row.queue_position || 0));
-      nextPos = maxPos + 1;
-    }
-
-    // Проверяем дубликат по имени студента на эту дату
-    const { data: existingStudent } = await supabase
-      .from('queue')
-      .select('id')
-      .eq('full_name', student.full_name)
-      .eq('queue_date', targetDate)
-      .in('status', ['WAITING', 'READY', 'KEY_ISSUED', 'WASHING']);
-
-    if (existingStudent && existingStudent.length > 0) {
-      alert('');
+  
+    if (!user || !user.id) {
+      console.error('❌ Admin not logged in or invalid user.id');
+      alert('Войдите как администратор');
       return;
     }
-
-    // Создаем новую запись (админ добавляет от своего имени)
-    const newItem = {
-      id: crypto.randomUUID(),
-      user_id: user.id, // КРИТИЧНО: user_id админа для RLS
-      student_id: student.id, // Админ добавляет, studentId может быть null
-      full_name: student.full_name,
-      room: studentRoom || null,
-      wash_count: washCount,
-      payment_type: paymentType,
-      joined_at: new Date().toISOString(),
-      expected_finish_at: expectedFinishAt || null,
-      status: QueueStatus.WAITING,
-      scheduled_for_date: targetDate,
-      queue_date: targetDate,
-      queue_position: nextPos,
-    };
-
-    console.log(' Admin inserting queue item:', newItem);
-    console.log(' user_id (admin) for RLS:', newItem.user_id);
-
-    const { error } = await supabase.from('queue').insert(newItem);
-
-    if (error) {
-      console.error(' Error inserting queue item:', error);
-      alert('');
-      return;
+  
+    const todayISO = new Date().toISOString().slice(0, 10);
+    const targetDate = chosenDate || todayISO;
+  
+    console.log('📝 Admin adding to queue, target date:', targetDate);
+    console.log('👤 Admin user:', { id: user.id, name: user.full_name });
+  
+    try {
+      const { data: sameDayRows, error: posErr } = await supabase
+        .from('queue')
+        .select('queue_position, scheduled_for_date, queue_date')
+        .eq('queue_date', targetDate)
+        .eq('scheduled_for_date', targetDate);
+  
+      if (posErr) {
+        console.error('Error getting positions:', posErr);
+        alert('Ошибка получения позиций');
+        return;
+      }
+  
+      let nextPos = 1;
+      if (sameDayRows && sameDayRows.length > 0) {
+        const maxPos = Math.max(...sameDayRows.map(row => row.queue_position || 0));
+        nextPos = maxPos + 1;
+      }
+  
+      // ✅ ИСПРАВЛЕНО: Проверяем дубликат по student_id вместо full_name
+      const { data: existingStudent } = await supabase
+        .from('queue')
+        .select('id')
+        .eq('student_id', student.id)  // ✅ Используем student_id
+        .eq('queue_date', targetDate)
+        .in('status', ['WAITING', 'READY', 'KEY_ISSUED', 'WASHING']);
+  
+      if (existingStudent && existingStudent.length > 0) {
+        alert(`${student.full_name} уже в очереди на эту дату`);
+        return;
+      }
+  
+      const newItem = {
+        id: crypto.randomUUID(),
+        user_id: user.id,
+        student_id: student.id,
+        full_name: student.full_name,
+        room: studentRoom || null,
+        wash_count: washCount,
+        payment_type: paymentType,
+        joined_at: new Date().toISOString(),
+        expected_finish_at: expectedFinishAt || null,
+        status: QueueStatus.WAITING,
+        scheduled_for_date: targetDate,
+        queue_date: targetDate,
+        queue_position: nextPos,
+      };
+  
+      console.log('✅ Admin inserting queue item:', newItem);
+  
+      const { error } = await supabase.from('queue').insert(newItem);
+  
+      if (error) {
+        console.error('❌ Error inserting queue item:', error);
+        alert('Ошибка добавления в очередь');
+        return;
+      }
+  
+      console.log('✅ Admin added to queue:', newItem);
+      await fetchQueue();
+  
+    } catch (error: any) {
+      console.error('❌ Exception in adminAddToQueue:', error);
+      alert('Ошибка добавления');
     }
-
-    console.log(' Admin added to queue:', newItem);
-    await fetchQueue();
-
-  } catch (error: any) {
-    console.error(' Exception in adminAddToQueue:', error);
-    alert('');
-  }
-};
+  };
 
 // ========================================
 // ДОПОЛНИТЕЛЬНО: Функция для обновления старых записей
@@ -1268,15 +1263,14 @@ const startWashing = async (queueItemId: string) => {
     if (!isAdmin) return;
     
     if (!isSupabaseConfigured || !supabase) {
-      // Use local storage fallback
       clear_local_queue();
-      fetchQueue(); // Refresh queue from local storage
-      fetchMachineState(); // Refresh machine state from local storage
+      fetchQueue();
+      fetchMachineState();
       return;
     }
     
     try {
-      // Reset machine state
+      // ✅ СБРОС машины
       const { error: machineError } = await supabase
         .from('machine_state')
         .upsert({
@@ -1288,19 +1282,22 @@ const startWashing = async (queueItemId: string) => {
       
       if (machineError) throw machineError;
       
-      // Delete all queue items except those currently washing
+      // ✅ УДАЛИТЬ ВСЕ записи из очереди (включая те, что добавлены админом)
       const { error: queueError } = await supabase
         .from('queue')
         .delete()
-        .eq('status', QueueStatus.WAITING);
+        .neq('id', '00000000-0000-0000-0000-000000000000');  // ✅ Удаляем ВСЕ
       
       if (queueError) throw queueError;
+      
+      console.log('✅ Queue cleared');
+      await fetchQueue();
+      await fetchMachineState();
     } catch (error) {
-      console.error('Error clearing queue:', error);
-      // Fallback to local storage on error
+      console.error('❌ Error clearing queue:', error);
       clear_local_queue();
-      fetchQueue(); // Refresh queue from local storage
-      fetchMachineState(); // Refresh machine state from local storage
+      fetchQueue();
+      fetchMachineState();
     }
   };
 
@@ -1581,25 +1578,21 @@ const updateStudent = async (
 
 // Удалить студента
 const deleteStudent = async (studentId: string) => {
-  if (!isAdmin) throw new Error('');
+  if (!isAdmin) throw new Error('Недостаточно прав');
   if (!isSupabaseConfigured || !supabase) {
-    throw new Error('Supabase ');
+    throw new Error('Supabase не настроен');
   }
 
   try {
-    // Удалить из очереди
+    // ✅ ИСПРАВЛЕНО: Используем правильные имена колонок
     await supabase
       .from('queue')
       .delete()
-      .eq('studentId', studentId);
+      .eq('student_id', studentId);  // ✅ student_id вместо studentId
 
-    // Удалить аутентификацию
-    await supabase
-      .from('student_auth')
-      .delete()
-      .eq('studentId', studentId);
+    // ✅ ИСПРАВЛЕНО: Таблица student_auth больше не используется
+    // Удаление auth пользователя происходит через admin API
 
-    // Удалить студента
     const { error } = await supabase
       .from('students')
       .delete()
@@ -1607,11 +1600,11 @@ const deleteStudent = async (studentId: string) => {
 
     if (error) throw error;
 
-    console.log(' Student deleted:', studentId);
+    console.log('✅ Student deleted:', studentId);
     await loadStudents();
     await fetchQueue();
   } catch (error: any) {
-    console.error(' Error deleting student:', error);
+    console.error('❌ Error deleting student:', error);
     throw error;
   }
 };
