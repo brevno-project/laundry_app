@@ -1746,6 +1746,7 @@ const updateAdminKey = async (newKey: string) => {
       }
       
       console.log('✅ Successfully left queue');
+      setQueue(prev => prev.filter(item => item.id !== queueItemId));
       await fetchQueue();
     } catch (error) {
       console.error('❌ Error leaving queue:', error);
