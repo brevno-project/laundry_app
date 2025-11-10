@@ -529,16 +529,17 @@ export default function AdminPanel() {
                   </button>
 
                   {/* Редактирование */}
-                  <button
-                    onClick={() => openEditModal(student)}
-                    className="bg-blue-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-blue-600 w-full"
-                    title="Редактировать"
-                  >
-                    ✏️ Редактировать
-                  </button>
-                  
+                  {!student.is_admin && !student.is_super_admin && (
+                    <button
+                      onClick={() => openEditModal(student)}
+                      className="bg-blue-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-blue-600 w-full"
+                      title="Редактировать"
+                    >
+                      ✏️ Редактировать
+                    </button>
+                  )}
                   {/* Сброс регистрации */}
-                  {student.is_registered && (
+                  {student.is_registered && !student.is_admin && !student.is_super_admin && (
                     <button
                       onClick={() => openResetConfirm(student)}
                       className="bg-orange-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-orange-600 w-full"

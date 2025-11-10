@@ -319,6 +319,22 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
       }
 
       console.log('✅ Student registered with user_id:', authUser.id);
+      // ✅ ОБНОВИТЬ ЗАПИСИ В ОЧЕРЕДИ
+      try {
+        const { error: queueUpdateError } = await supabase
+          .from('queue')
+          .update({ user_id: authUser.id })
+          .eq('student_id', studentId)
+          .is('user_id', null);
+  
+        if (queueUpdateError) {
+          console.error('Error updating queue user_ids:', queueUpdateError);
+        } else {
+          console.log('✅ Updated queue records with new user_id');
+        }
+      } catch (queueError) {
+        console.error('Error updating queue after registration:', queueError);
+      }
 
       const newUser: User = {
         id: authUser.id,
@@ -367,6 +383,23 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
     }
 
     console.log('✅ Student updated with user_id:', authData.user.id);
+
+    // ✅ ОБНОВИТЬ ЗАПИСИ В ОЧЕРЕДИ
+    try {
+      const { error: queueUpdateError } = await supabase
+        .from('queue')
+        .update({ user_id: authData.user.id })
+        .eq('student_id', studentId)
+        .is('user_id', null);
+  
+      if (queueUpdateError) {
+        console.error('Error updating queue user_ids:', queueUpdateError);
+      } else {
+        console.log('✅ Updated queue records with new user_id');
+      }
+    } catch (queueError) {
+      console.error('Error updating queue after registration:', queueError);
+    }
 
     // ✅ ДОБАВЛЕНО: Дождаться подтверждения
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -860,118 +893,112 @@ const joinQueue = async (
   };
 
 
-  const adminAddToQueue = async (
-    studentRoom?: string,
-    washCount: number = 1,
-    paymentType: string = 'money',
-    expectedFinishAt?: string,
-    chosenDate?: string,
-    studentId?: string
-  ) => {
-    const student = students.find(s => s.id === studentId);
-    if (!student) {
-      alert('Студент не найден');
+  // Admin: Add student to queue (works for both registered and unregistered students)
+const adminAddToQueue = async (
+  studentRoom?: string,
+  washCount: number = 1,
+  paymentType: string = 'money',
+  expectedFinishAt?: string,
+  chosenDate?: string,
+  studentId?: string
+) => {
+  const student = students.find(s => s.id === studentId);
+  if (!student) {
+    alert('Студент не найден');
+    return;
+  }
+  
+  if (!isAdmin) {
+    console.error('❌ Not admin');
+    alert('Недостаточно прав');
+    return;
+  }
+
+  if (!supabase) {
+    console.error('❌ Supabase not initialized');
+    alert('Ошибка инициализации');
+    return;
+  }
+
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const targetDate = chosenDate || todayISO;
+
+  console.log('📝 Admin adding to queue, target date:', targetDate);
+
+  try {
+    // Получить позиции для правильной сортировки
+    const { data: sameDayRows, error: posErr } = await supabase
+      .from('queue')
+      .select('queue_position, scheduled_for_date, queue_date')
+      .eq('queue_date', targetDate)
+      .eq('scheduled_for_date', targetDate);
+
+    if (posErr) {
+      console.error('Error getting positions:', posErr);
+      alert('Ошибка получения позиций');
       return;
     }
-    
-    if (!isAdmin) {
-      console.error('❌ Not admin');
-      alert('Недостаточно прав');
+
+    let nextPos = 1;
+    if (sameDayRows && sameDayRows.length > 0) {
+      const maxPos = Math.max(...sameDayRows.map(row => row.queue_position || 0));
+      nextPos = maxPos + 1;
+    }
+
+    // ✅ Проверяем дубликат по student_id
+    const { data: existingStudent } = await supabase
+      .from('queue')
+      .select('id')
+      .eq('student_id', student.id)
+      .eq('queue_date', targetDate)
+      .in('status', ['WAITING', 'READY', 'KEY_ISSUED', 'WASHING']);
+
+    if (existingStudent && existingStudent.length > 0) {
+      alert(`${student.full_name} уже в очереди на эту дату`);
       return;
     }
-  
-    if (!supabase) {
-      console.error('❌ Supabase not initialized');
-      alert('Ошибка инициализации');
+
+    // ✅ КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: user_id может быть null для незарегистрированных
+    const userId = student.is_registered ? student.user_id : null;
+
+    const newItem = {
+      id: crypto.randomUUID(),
+      user_id: userId,  // ✅ null для незарегистрированных!
+      student_id: student.id,
+      full_name: student.full_name,
+      room: studentRoom || student.room || null,
+      wash_count: washCount,
+      payment_type: paymentType,
+      joined_at: new Date().toISOString(),
+      expected_finish_at: expectedFinishAt || null,
+      status: QueueStatus.WAITING,
+      scheduled_for_date: targetDate,
+      queue_date: targetDate,
+      queue_position: nextPos,
+      admin_message: null,
+      return_key_alert: false,
+      created_at: new Date().toISOString(),
+    };
+
+    console.log('✅ Admin inserting queue item:', newItem);
+    console.log('✅ user_id (may be null):', newItem.user_id);
+
+    const { error } = await supabase.from('queue').insert(newItem);
+
+    if (error) {
+      console.error('❌ Error inserting queue item:', error);
+      alert('Ошибка добавления в очередь: ' + error.message);
       return;
     }
-  
-    if (!user || !user.id) {
-      console.error('❌ Admin not logged in or invalid user.id');
-      alert('Войдите как администратор');
-      return;
-    }
-  
-    // ✅ КРИТИЧНО: Проверить что у студента есть user_id
-    if (!student.user_id) {
-      alert(`${student.full_name} ещё не зарегистрирован в системе. Попросите его войти хотя бы раз.`);
-      return;
-    }
-  
-    const todayISO = new Date().toISOString().slice(0, 10);
-    const targetDate = chosenDate || todayISO;
-  
-    console.log('📝 Admin adding to queue, target date:', targetDate);
-    console.log('👤 Student user_id:', student.user_id);
-  
-    try {
-      const { data: sameDayRows, error: posErr } = await supabase
-        .from('queue')
-        .select('queue_position, scheduled_for_date, queue_date')
-        .eq('queue_date', targetDate)
-        .eq('scheduled_for_date', targetDate);
-  
-      if (posErr) {
-        console.error('Error getting positions:', posErr);
-        alert('Ошибка получения позиций');
-        return;
-      }
-  
-      let nextPos = 1;
-      if (sameDayRows && sameDayRows.length > 0) {
-        const maxPos = Math.max(...sameDayRows.map(row => row.queue_position || 0));
-        nextPos = maxPos + 1;
-      }
-  
-      // ✅ Проверяем дубликат по student_id
-      const { data: existingStudent } = await supabase
-        .from('queue')
-        .select('id')
-        .eq('student_id', student.id)
-        .eq('queue_date', targetDate)
-        .in('status', ['WAITING', 'READY', 'KEY_ISSUED', 'WASHING']);
-  
-      if (existingStudent && existingStudent.length > 0) {
-        alert(`${student.full_name} уже в очереди на эту дату`);
-        return;
-      }
-  
-      // ✅ ИСПРАВЛЕНО: Используем user_id СТУДЕНТА, а не админа
-      const newItem = {
-        id: crypto.randomUUID(),
-        user_id: student.user_id,  // ✅ user_id студента!
-        student_id: student.id,
-        full_name: student.full_name,
-        room: studentRoom || null,
-        wash_count: washCount,
-        payment_type: paymentType,
-        joined_at: new Date().toISOString(),
-        expected_finish_at: expectedFinishAt || null,
-        status: QueueStatus.WAITING,
-        scheduled_for_date: targetDate,
-        queue_date: targetDate,
-        queue_position: nextPos,
-      };
-  
-      console.log('✅ Admin inserting queue item:', newItem);
-      console.log('✅ user_id (student):', newItem.user_id);
-  
-      const { error } = await supabase.from('queue').insert(newItem);
-  
-      if (error) {
-        console.error('❌ Error inserting queue item:', error);
-        alert('Ошибка добавления в очередь: ' + error.message);
-        return;
-      }
-  
-      console.log('✅ Admin added to queue:', newItem);
-      await fetchQueue();
-  
-    } catch (error: any) {
-      console.error('❌ Exception in adminAddToQueue:', error);
-      alert('Ошибка добавления');
-    }
-  };
+
+    console.log('✅ Admin added to queue successfully');
+    await fetchQueue();
+
+  } catch (error: any) {
+    console.error('❌ Exception in adminAddToQueue:', error);
+    alert('Ошибка добавления');
+  }
+};
 
 // ========================================
 // ДОПОЛНИТЕЛЬНО: Функция для обновления старых записей
@@ -1557,6 +1584,17 @@ const updateStudent = async (
   }
 
   try {
+    // ✅ ВСТАВИТЬ ЗДЕСЬ ПРОВЕРКУ:
+    const targetStudent = students.find(s => s.id === studentId);
+    if (!targetStudent) {
+      throw new Error('Студент не найден');
+    }
+    
+    // ✅ ПРОВЕРКА: нельзя редактировать админов
+    if (targetStudent.is_admin || targetStudent.is_super_admin) {
+      throw new Error('Нельзя редактировать админов');
+    }
+
     const updateData: any = {};
     
     // Если изменяются имя или фамилия, обновляем full_name
@@ -1596,21 +1634,22 @@ const deleteStudent = async (studentId: string) => {
   }
 
   try {
+    // ✅ ВСТАВИТЬ ЗДЕСЬ ПРОВЕРКУ:
+    const targetStudent = students.find(s => s.id === studentId);
+    if (!targetStudent) {
+      throw new Error('Студент не найден');
+    }
+    
+    // ✅ ПРОВЕРКА: нельзя удалять админов
+    if (targetStudent.is_admin || targetStudent.is_super_admin) {
+      throw new Error('Нельзя удалять админов');
+    }
+    
     // ✅ ИСПРАВЛЕНО: Используем правильные имена колонок
     await supabase
       .from('queue')
       .delete()
       .eq('student_id', studentId);  // ✅ student_id вместо studentId
-
-    // ✅ ИСПРАВЛЕНО: Таблица student_auth больше не используется
-    // Удаление auth пользователя происходит через admin API
-
-    const { error } = await supabase
-      .from('students')
-      .delete()
-      .eq('id', studentId);
-
-    if (error) throw error;
 
     console.log('✅ Student deleted:', studentId);
     await loadStudents();
