@@ -12,6 +12,7 @@ export default function QueueList() {
     leaveQueue, 
     updateQueueItem, 
     setQueueStatus,
+    fetchQueue,
     removeFromQueue,
     startWashing,
     cancelWashing,
@@ -24,6 +25,7 @@ export default function QueueList() {
     changeQueuePosition, 
     updateQueueEndTime,
     updateQueueItemDetails,
+    optimisticUpdateQueueItem,
   } = useLaundry();
   const [tempTimes, setTempTimes] = useState<{ [key: string]: string }>({});
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -364,60 +366,74 @@ const handleSaveEdit = async () => {
                           <div className="space-y-2">
                             {/* БЛОК: Уведомления */}
                             <div className="grid grid-cols-3 gap-2">
-                              <button
-                                className="bg-yellow-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-yellow-600 shadow-sm"
-                                onClick={async () => {
-                                  try {
-                                    await updateQueueItem(item.id, { return_key_alert: false });
-                                    await new Promise(resolve => setTimeout(resolve, 100));
-                                    await setQueueStatus(item.id, QueueStatus.READY);
-                                    
-                                    const success = await sendTelegramNotification({
-                                      type: 'admin_call_for_key',
-                                      full_name: item.full_name,
-                                      room: item.room,
-                                      student_id: item.student_id,
-                                      expected_finish_at: item.expected_finish_at
-                                    });
-                                    
-                                    alert(success ? `✅ ${item.full_name} позван!` : `⚠️ ${item.full_name} не подключил Telegram`);
-                                  } catch (error) {
-                                    console.error('❌ Ошибка при вызове:', error);
-                                    alert('❌ Ошибка при вызове студента');
-                                  }
-                                }}
-                              >
-                                🔔 Позвать
-                              </button>
+                            <button
+  className="bg-yellow-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-yellow-600 shadow-sm"
+  onClick={async () => {
+    try {
+      // ✅ Оптимистичное обновление - мгновенное изменение UI
+      optimisticUpdateQueueItem(item.id, { 
+        status: QueueStatus.READY,
+        return_key_alert: false 
+      });
+      
+      // Обновление в базе данных
+      await updateQueueItem(item.id, { return_key_alert: false });
+      await setQueueStatus(item.id, QueueStatus.READY);
+      
+      // Синхронизация с актуальными данными
+      await fetchQueue();
+      
+      const success = await sendTelegramNotification({
+        type: 'admin_call_for_key',
+        full_name: item.full_name,
+        room: item.room,
+        student_id: item.student_id,
+        expected_finish_at: item.expected_finish_at
+      });
+      
+      alert(success ? `✅ ${item.full_name} позван!` : `⚠️ ${item.full_name} не подключил Telegram`);
+    } catch (error) {
+      console.error('❌ Ошибка при вызове:', error);
+      alert('❌ Ошибка при вызове студента');
+      // Откат при ошибке
+      await fetchQueue();
+    }
+  }}
+>
+  🔔 Позвать
+</button>
                               
-                              <button
-                                className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm"
-                                onClick={async () => {
-                                  try {
-                                    if (item.status === QueueStatus.READY) {
-                                      await setQueueStatus(item.id, QueueStatus.WAITING);
-                                      await new Promise(resolve => setTimeout(resolve, 100));
-                                    }
-                                    
-                                    await updateQueueItem(item.id, { return_key_alert: true });
-                                    
-                                    const success = await sendTelegramNotification({
-                                      type: 'admin_return_key',
-                                      full_name: item.full_name,
-                                      room: item.room,
-                                      student_id: item.student_id,
-                                      expected_finish_at: item.expected_finish_at
-                                    });
-                                    
-                                    alert(success ? `✅ ${item.full_name} попросили вернуть ключ!` : `⚠️ ${item.full_name} не подключил Telegram`);
-                                  } catch (error) {
-                                    console.error('❌ Ошибка:', error);
-                                    alert('❌ Ошибка отправки уведомления');
-                                  }
-                                }}
-                              >
-                                🔔 Вернуть
-                              </button>
+<button
+  className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm"
+  onClick={async () => {
+    try {
+      // ✅ Оптимистичное обновление
+      optimisticUpdateQueueItem(item.id, { return_key_alert: true });
+      
+      // Обновление в базе
+      await updateQueueItem(item.id, { return_key_alert: true });
+      
+      // Синхронизация
+      await fetchQueue();
+      
+      const success = await sendTelegramNotification({
+        type: 'admin_return_key',
+        full_name: item.full_name,
+        room: item.room,
+        student_id: item.student_id,
+        expected_finish_at: item.expected_finish_at
+      });
+      
+      alert(success ? `✅ ${item.full_name} попросили вернуть ключ!` : `⚠️ ${item.full_name} не подключил Telegram`);
+    } catch (error) {
+      console.error('❌ Ошибка:', error);
+      alert('❌ Ошибка отправки уведомления');
+      await fetchQueue();
+    }
+  }}
+>
+  🔔 Вернуть
+</button>
                               
                               <button
                                 className="bg-gray-400 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-gray-500 shadow-sm"

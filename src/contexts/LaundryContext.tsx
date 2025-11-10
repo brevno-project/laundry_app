@@ -95,6 +95,8 @@ type LaundryContextType = {
   toggleAdminStatus: (studentId: string, makeAdmin: boolean) => Promise<void>;
   toggleSuperAdminStatus: (studentId: string, makeSuperAdmin: boolean) => Promise<void>;
   loadStudents: () => void;
+  optimisticUpdateQueueItem: (queueItemId: string, updates: Partial<QueueItem>) => void;
+  fetchQueue: () => Promise<void>;
 };
 
 const LaundryContext = createContext<LaundryContextType | undefined>(undefined);
@@ -1688,6 +1690,14 @@ const updateAdminKey = async (newKey: string) => {
     }
   };
 
+  // ✅ Оптимистичное обновление для мгновенного UI обновления
+  const optimisticUpdateQueueItem = (queueItemId: string, updates: Partial<QueueItem>) => {
+    console.log('⚡ Optimistic update:', { queueItemId, updates });
+    setQueue(prev => prev.map(item => 
+      item.id === queueItemId ? { ...item, ...updates } : item
+    ));
+  };
+
 // Update queue item details
 const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>) => {
   console.log(' updateQueueItem called:', { queueItemId, updates, isAdmin, user });
@@ -2343,9 +2353,11 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     linkTelegram,
     joinQueue,
     leaveQueue,
+    optimisticUpdateQueueItem,
     updateQueueItem,
     sendAdminMessage,
     setQueueStatus,
+    fetchQueue,
     setReturnKeyAlert,
     startWashing,
     cancelWashing,
