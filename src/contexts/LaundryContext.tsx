@@ -1731,22 +1731,17 @@ const updateAdminKey = async (newKey: string) => {
     }
     
     try {
-      console.log('🚪 Leaving queue:', { queueItemId, studentId: user.student_id });
-      
-      // ✅ ИСПРАВЛЕНО: RLS политика работает по user_id, а не по student_id
+      // ✅ RLS политика сама проверит права через is_queue_owner() OR is_admin()
       const { error } = await supabase
         .from('queue')
         .delete()
-        .eq('id', queueItemId)
-        .eq('user_id', user.id);  // ✅ Используем user_id вместо student_id
-      
+        .eq('id', queueItemId);
+
       if (error) {
         console.error('❌ Error from Supabase:', error);
         throw error;
       }
-      
-      console.log('✅ Successfully left queue');
-      setQueue(prev => prev.filter(item => item.id !== queueItemId));
+
       await fetchQueue();
     } catch (error) {
       console.error('❌ Error leaving queue:', error);

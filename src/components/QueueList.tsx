@@ -29,11 +29,7 @@ export default function QueueList() {
     banStudent,
     unbanStudent,
   } = useLaundry();
-  const [, forceUpdate] = useState(0);
   
-  useEffect(() => {
-    forceUpdate(prev => prev + 1);
-  }, [queue]);
   const [tempTimes, setTempTimes] = useState<{ [key: string]: string }>({});
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const setTempTime = (id: string, time: string) => {
