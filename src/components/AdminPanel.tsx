@@ -166,8 +166,8 @@ export default function AdminPanel() {
   };
 
   const handleAddStudent = async () => {
-    if (!newFirstName || !newLastName) {
-      alert('Введите имя и фамилию');
+    if (!newFirstName) {  // ✅ ТОЛЬКО имя обязательно
+      alert('Введите имя');
       return;
     }
     
@@ -386,6 +386,25 @@ export default function AdminPanel() {
                 className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
               >
                 Отмена
+              </button>
+              {/* ✅ ТЕСТОВОЕ УВЕДОМЛЕНИЕ */}
+              <button
+                onClick={async () => {
+                  try {
+                    const { sendTestNotification } = await import('@/lib/telegram');
+                    const success = await sendTestNotification(user?.student_id);
+                    alert(success 
+                      ? '✅ Тестовое уведомление отправлено!' 
+                      : '❌ Ошибка отправки. Проверь консоль.'
+                    );
+                  } catch (err: any) {
+                    console.error('Test notification error:', err);
+                    alert('❌ Ошибка: ' + err.message);
+                  }
+                }}
+                className="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-blue-700 transition-colors shadow-md"
+              >
+                📱 Отправить тестовое уведомление
               </button>
               <button
                 onClick={handleClearQueueConfirm}

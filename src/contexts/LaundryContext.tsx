@@ -1567,91 +1567,43 @@ const startWashing = async (queueItemId: string) => {
   };
 
   // Добавить нового студента
-const addStudent = async (firstName: string, lastName: string, room?: string) => {
-  if (!isAdmin) throw new Error('');
-  if (!isSupabaseConfigured || !supabase) {
-    throw new Error('Supabase ');
-  }
+  const addStudent = async (firstName: string, lastName: string, room?: string) => {
+    if (!isAdmin) throw new Error('Недостаточно прав');
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase не настроен');
+    }
+  
+    try {
+      const fullName = lastName ? `${firstName} ${lastName}` : firstName;
+      
+      const { error } = await supabase
+        .from('students')
+        .insert({
+          id: uuidv4(),
+          first_name: firstName,
+          last_name: lastName || '',
+          full_name: fullName,
+          room: room || null,
+          is_registered: false,
+          created_at: new Date().toISOString(),
+        });
+  
+      if (error) throw error;
+  
+      console.log('✅ Student added:', fullName);
+      await loadStudents();
+    } catch (error: any) {
+      console.error('❌ Error adding student:', error);
+      throw error;
+    }
+  };
 
-  try {
-    const fullName = `${firstName} ${lastName}`;
-    const { error } = await supabase
-      .from('students')
-      .insert({
-        id: uuidv4(),
-        first_name: firstName,  
-        last_name: lastName,  
-        full_name: fullName,  
-        room: room || null,
-        is_registered: false,  
-        created_at: new Date().toISOString(),  
-      });
-
-    if (error) throw error;
-
-    console.log(' Student added:', fullName);
-    await loadStudents();
-  } catch (error: any) {
-    console.error(' Error adding student:', error);
-    throw error;
-  }
-};
-
-// Обновить данные студента
-const updateStudent = async (
-  studentId: string,
-  updates: { first_name?: string; last_name?: string; room?: string }
+  // Обновить данные студента
+  const updateStudent = async (
+    studentId: string,
+    updates: { first_name?: string; last_name?: string; room?: string }
 ) => {
-  if (!isAdmin) throw new Error('');
-  if (!isSupabaseConfigured || !supabase) {
-    throw new Error('Supabase ');
-  }
-
-  try {
-    // ✅ ВСТАВИТЬ ЗДЕСЬ ПРОВЕРКУ:
-    const targetStudent = students.find(s => s.id === studentId);
-    if (!targetStudent) {
-      throw new Error('Студент не найден');
-    }
-    
-    // ✅ ПРОВЕРКА: нельзя редактировать админов
-    if (targetStudent.is_super_admin && !isSuperAdmin) 
-      throw new Error('Нельзя редактировать супер-админов');
-
-    const updateData: any = {};
-    
-    // Если изменяются имя или фамилия, обновляем full_name
-    if (updates.first_name || updates.last_name) {
-      const student = students.find(s => s.id === studentId);
-      if (student) {
-        if (updates.first_name !== undefined) updateData.first_name = updates.first_name;
-        if (updates.last_name !== undefined) updateData.last_name = updates.last_name;
-        updateData.full_name = `${updates.first_name || student.first_name} ${updates.last_name || student.last_name}`;  
-      }
-    }
-
-    if (updates.first_name !== undefined) updateData.first_name = updates.first_name;
-    if (updates.last_name !== undefined) updateData.last_name = updates.last_name;
-    if (updates.room !== undefined) updateData.room = updates.room;
-
-    const { error } = await supabase
-      .from('students')
-      .update(updateData)
-      .eq('id', studentId);
-
-    if (error) throw error;
-
-    console.log(' Student updated:', studentId);
-    await loadStudents();
-  } catch (error: any) {
-    console.error(' Error updating student:', error);
-    throw error;
-  }
-};
-
-// Удалить студента
-const deleteStudent = async (studentId: string) => {
-  if (!isAdmin && !isSuperAdmin) throw new Error('Недостаточно прав');// ✅ Админ ИЛИ супер-админ
+  if (!isAdmin) throw new Error('Недостаточно прав');
   if (!isSupabaseConfigured || !supabase) {
     throw new Error('Supabase не настроен');
   }
@@ -1662,17 +1614,98 @@ const deleteStudent = async (studentId: string) => {
       throw new Error('Студент не найден');
     }
     
+    if (targetStudent.is_super_admin && !isSuperAdmin) {
+      throw new Error('Нельзя редактировать супер-админов');
+    }
+
+    const updateData: any = {};
+    
+    if (updates.first_name !== undefined || updates.last_name !== undefined) {
+      const newFirstName = updates.first_name !== undefined ? updates.first_name : targetStudent.first_name;
+      const newLastName = updates.last_name !== undefined ? updates.last_name : targetStudent.last_name;
+      
+      updateData.full_name = newLastName ? `${newFirstName} ${newLastName}` : newFirstName;
+      
+      if (updates.first_name !== undefined) updateData.first_name = newFirstName;
+      if (updates.last_name !== undefined) updateData.last_name = newLastName || '';
+    }
+
+    if (updates.room !== undefined) updateData.room = updates.room;
+
+    const { error } = await supabase
+      .from('students')
+      .update(updateData)
+      .eq('id', studentId);
+
+    if (error) throw error;
+
+    console.log('✅ Student updated:', studentId);
+    await loadStudents();
+  } catch (error: any) {
+    console.error('❌ Error updating student:', error);
+    throw error;
+  }
+};
+
+// Удалить студента
+const deleteStudent = async (studentId: string) => {
+  if (!isAdmin && !isSuperAdmin) throw new Error('Недостаточно прав');
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase не настроен');
+  }
+
+  try {
+    // ✅ ПРОВЕРКА: Существует ли студент
+    const targetStudent = students.find(s => s.id === studentId);
+    if (!targetStudent) {
+      throw new Error('Студент не найден');
+    }
+    
+    // ✅ ПРОВЕРКА: Админ не может удалять других админов
     if (isAdmin && !isSuperAdmin && (targetStudent.is_admin || targetStudent.is_super_admin)) {
       throw new Error('Админ не может удалять других админов');
     }
     
-    // ✅ Сначала удалить записи из queue
-    await supabase
+    // ✅ ПРОВЕРКА: Нельзя удалить последнего супер-админа
+    if (targetStudent.is_super_admin) {
+      const superAdminsCount = students.filter(s => s.is_super_admin).length;
+      if (superAdminsCount <= 1) {
+        throw new Error('Нельзя удалить последнего супер-админа');
+      }
+    }
+    
+    // 1. Удалить записи из очереди
+    const { error: queueError } = await supabase
       .from('queue')
       .delete()
       .eq('student_id', studentId);
 
-    // ✅ ДОБАВИТЬ: Удалить студента из students
+    if (queueError) {
+      console.error('❌ Queue delete error:', queueError);
+      // Не бросаем ошибку, продолжаем удаление
+    }
+
+    // 2. Удалить из истории (если есть)
+    const { error: historyError } = await supabase
+      .from('history')
+      .delete()
+      .eq('user_id', targetStudent.user_id);
+
+    if (historyError) {
+      console.error('❌ History delete error:', historyError);
+      // Не бросаем ошибку, продолжаем удаление
+    }
+
+    // 3. Удалить auth пользователя (если есть user_id)
+    if (targetStudent.user_id) {
+      const { error: authError } = await supabase.auth.admin.deleteUser(targetStudent.user_id);
+      if (authError) {
+        console.warn('⚠️ Could not delete auth user:', authError);
+        // Не бросаем ошибку, продолжаем удаление
+      }
+    }
+
+    // 4. Удалить студента из таблицы students
     const { error: deleteError } = await supabase
       .from('students')
       .delete()

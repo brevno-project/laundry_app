@@ -376,26 +376,29 @@ const handleSaveEdit = async () => {
                           <div className="space-y-2">
                             {/* БЛОК: Уведомления */}
                             <div className="grid grid-cols-3 gap-2">
+                            {/* КНОПКА: Позвать */}
                             <button
                               className="bg-yellow-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-yellow-600 shadow-sm"
                               onClick={async () => {
                                 try {
-                                  if (!isAdmin) {
-                                    alert('❌ Только администратор может позвать студента');
-                                    return;
-                                  }
                                   await updateQueueItem(item.id, { return_key_alert: false });
+                                  await new Promise(resolve => setTimeout(resolve, 100));
                                   await setQueueStatus(item.id, QueueStatus.READY);
+                                  
+                                  // ✅ ИСПРАВЛЕНО: Передаём admin_student_id
                                   const success = await sendTelegramNotification({
-                                    type: 'admin_return_key',  // ИСПРАВИТЬ ЗДЕСЬ
+                                    type: 'admin_call_for_key',
                                     full_name: item.full_name,
                                     room: item.room,
                                     student_id: item.student_id,
-                                    admin_student_id: user?.student_id,
-                                    expected_finish_at: item.expected_finish_at
+                                    expected_finish_at: item.expected_finish_at,
+                                    admin_student_id: user?.student_id,  // ✅ ID админа
                                   });
                                   
-                                  alert(success ? `✅ Админ уведомлен о необходимости позвать ${item.full_name}!` : `⚠️ Не удалось отправить уведомление админу`);
+                                  alert(success 
+                                    ? `✅ ${item.full_name} позван!` 
+                                    : `⚠️ ${item.full_name} не подключил Telegram`
+                                  );
                                 } catch (error) {
                                   console.error('❌ Ошибка при вызове:', error);
                                   alert('❌ Ошибка при вызове студента');
@@ -404,27 +407,32 @@ const handleSaveEdit = async () => {
                             >
                               🔔 Позвать
                             </button>
-                              
+                            {/* КНОПКА: Вернуть ключ */}
                             <button
                               className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm"
                               onClick={async () => {
                                 try {
-                                  if (!isAdmin) {
-                                    alert('❌ Только администратор может попросить вернуть ключ');
-                                    return;
+                                  if (item.status === QueueStatus.READY) {
+                                    await setQueueStatus(item.id, QueueStatus.WAITING);
+                                    await new Promise(resolve => setTimeout(resolve, 100));
                                   }
+                                  
                                   await updateQueueItem(item.id, { return_key_alert: true });
                                   
+                                  // ✅ ИСПРАВЛЕНО: Передаём admin_student_id
                                   const success = await sendTelegramNotification({
-                                    type: 'admin_call_for_key',
+                                    type: 'admin_return_key',
                                     full_name: item.full_name,
                                     room: item.room,
                                     student_id: item.student_id,
-                                    admin_student_id: user?.student_id, // ДОБАВИТЬ ЭТО
-                                    expected_finish_at: item.expected_finish_at
+                                    expected_finish_at: item.expected_finish_at,
+                                    admin_student_id: user?.student_id,  // ✅ ID админа
                                   });
                                   
-                                  alert(success ? `✅ Админ уведомлен о необходимости вернуть ключ от ${item.full_name}!` : `⚠️ Не удалось отправить уведомление админу`);
+                                  alert(success 
+                                    ? `✅ ${item.full_name} попросили вернуть ключ!` 
+                                    : `⚠️ ${item.full_name} не подключил Telegram`
+                                  );
                                 } catch (error) {
                                   console.error('❌ Ошибка:', error);
                                   alert('❌ Ошибка отправки уведомления');

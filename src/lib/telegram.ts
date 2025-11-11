@@ -3,14 +3,40 @@ import { createClient } from '@supabase/supabase-js';
 import { TelegramNotification } from '../types/index';
 
 const TELEGRAM_BOT_TOKEN = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN || '';
-const ADMIN_TELEGRAM_CHAT_ID = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID || ''; // ID админа
+const ADMIN_TELEGRAM_CHAT_ID = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID || '';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
+// ✅ НОВАЯ ФУНКЦИЯ: Получить информацию об админе
+async function getAdminInfo(admin_student_id?: string): Promise<{ full_name: string; room: string; telegram_chat_id: string | null } | null> {
+  console.log(`🔍 Getting admin info for:`, admin_student_id);
+  
+  if (!supabaseUrl || !supabaseKey || !admin_student_id) {
+    console.error('❌ Supabase not configured or no admin_student_id!');
+    return null;
+  }
+  
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  
+  const { data, error } = await supabase
+    .from('students')
+    .select('full_name, room, telegram_chat_id')
+    .eq('id', admin_student_id)
+    .single();
+  
+  if (error) {
+    console.error(`❌ Error getting admin info:`, error);
+    return null;
+  }
+  
+  console.log(`✅ Admin info:`, data);
+  return data;
+}
+
 // Форматирование сообщения
-function formatMessage(notification: TelegramNotification): string {
-  const { type, full_name, room, wash_count, payment_type, queue_length, expected_finish_at } = notification;
+async function formatMessage(notification: TelegramNotification): Promise<string> {
+  const { type, full_name, room, wash_count, payment_type, queue_length, expected_finish_at, admin_student_id } = notification;
   
   const roomInfo = room ? ` (${room})` : '';
   
@@ -21,6 +47,12 @@ function formatMessage(notification: TelegramNotification): string {
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
     timeInfo = `\n⏰ Закончит в: ${hours}:${minutes}`;
+  }
+  
+  // ✅ КРИТИЧНО: Получить информацию об админе для персональных уведомлений
+  let adminInfo = null;
+  if (admin_student_id && (type === 'admin_call_for_key' || type === 'admin_return_key')) {
+    adminInfo = await getAdminInfo(admin_student_id);
   }
   
   switch (type) {
@@ -37,13 +69,23 @@ function formatMessage(notification: TelegramNotification): string {
       return `✅ *Стирка завершена!*\n\n👤 ${full_name}${roomInfo}\n\n🔑 Ключ должен быть возвращен!`;
     
     case 'admin_call_for_key':
-      return `🔔 *ПОЗВАТЬ СТУДЕНТА!*\n\n👤 ${full_name}${roomInfo}${timeInfo}\n\n🔑 Нужно позвать студента за ключом!\n💵 Не забудьте взять деньги/купон`;
+      // ✅ ИСПРАВЛЕНО: Показываем комнату админа, без fallback на A501
+      if (adminInfo && adminInfo.room) {
+        return `🔔 *ВАС ЗОВУТ ЗА КЛЮЧОМ!*\n\n👤 ${full_name}${roomInfo}${timeInfo}\n\n🏠 Подойдите к комнате: *${adminInfo.room}*\n👨‍💼 Админ: ${adminInfo.full_name}\n\n💵 Не забудьте взять деньги/купон!`;
+      }
+      console.error('❌ Cannot send call_for_key notification: no admin room info');
+      return `⚠️ ОШИБКА: Не удалось получить комнату админа`;
     
     case 'admin_key_issued':
       return `✅ *Ключ выдан!*\n\n👤 ${full_name}${roomInfo}${timeInfo}\n\n🧺 Начинайте стираться`;
     
     case 'admin_return_key':
-      return `⏰ *ПРИНЕСИТЕ КЛЮЧ!*\n\n👤 ${full_name}${roomInfo}${timeInfo}\n\n🔑 Верните ключ в A501 как можно скорее!`;
+      // ✅ ИСПРАВЛЕНО: Показываем комнату админа, без fallback на A501
+      if (adminInfo && adminInfo.room) {
+        return `⏰ *ВЕРНИТЕ КЛЮЧ!*\n\n👤 ${full_name}${roomInfo}${timeInfo}\n\n🏠 Верните ключ в комнату: *${adminInfo.room}*\n👨‍💼 Админ: ${adminInfo.full_name}\n\n⚡ Как можно скорее!`;
+      }
+      console.error('❌ Cannot send return_key notification: no admin room info');
+      return `⚠️ ОШИБКА: Не удалось получить комнату админа`;
     
     default:
       return `📋 Обновление очереди`;
@@ -83,66 +125,29 @@ async function getStudentTelegramChatId(student_id?: string, room?: string): Pro
     }
   }
   
-  // Если не нашли по ID, попробовать по комнате (может быть несколько студентов)
-if (room) {
-  console.log(`🔍 Searching by room: ${room}`);
-  const { data, error } = await supabase
-    .from('students')
-    .select('id, full_name, room, telegram_chat_id')
-    .eq('room', room);  // ✅ Без .single()
-  
-  if (error) {
-    console.error(`❌ Error searching by room:`, error);
-  } else {
-    console.log(`📊 Found students by room:`, data);
-    // Ищем студента с telegram_chat_id
-    const studentWithTelegram = data?.find(s => s.telegram_chat_id);
-    if (studentWithTelegram?.telegram_chat_id) {
-      console.log(`✅ Found telegram_chat_id in room: ${studentWithTelegram.telegram_chat_id}`);
-      return studentWithTelegram.telegram_chat_id;
-    } else {
-      console.warn(`⚠️ No students in room ${room} have telegram_chat_id`);
-    }
-  }
-}
-  
-  console.error(`❌ telegram_chat_id NOT FOUND for student_id: ${student_id}, room: ${room}`);
-  return null;
-}
-
-// Получить telegram_chat_id админа из базы
-async function getAdminTelegramChatId(admin_student_id?: string): Promise<string | null> {
-  console.log(`🔍 Searching admin telegram_chat_id for:`, { admin_student_id });
-  
-  if (!supabaseUrl || !supabaseKey) {
-    console.error('❌ Supabase not configured!');
-    return null;
-  }
-  
-  const supabase = createClient(supabaseUrl, supabaseKey);
-  
-  if (admin_student_id) {
-    console.log(`🔍 Searching admin by student_id: ${admin_student_id}`);
+  // Если не нашли по ID, попробовать по комнате
+  if (room) {
+    console.log(`🔍 Searching by room: ${room}`);
     const { data, error } = await supabase
       .from('students')
-      .select('id, full_name, telegram_chat_id')
-      .eq('id', admin_student_id)
-      .single();
+      .select('id, full_name, room, telegram_chat_id')
+      .eq('room', room);
     
     if (error) {
-      console.error(`❌ Error searching admin by student_id:`, error);
+      console.error(`❌ Error searching by room:`, error);
     } else {
-      console.log(`📊 Found admin:`, data);
-      if (data?.telegram_chat_id) {
-        console.log(`✅ Found admin telegram_chat_id: ${data.telegram_chat_id}`);
-        return data.telegram_chat_id;
+      console.log(`📊 Found students by room:`, data);
+      const studentWithTelegram = data?.find(s => s.telegram_chat_id);
+      if (studentWithTelegram?.telegram_chat_id) {
+        console.log(`✅ Found telegram_chat_id in room: ${studentWithTelegram.telegram_chat_id}`);
+        return studentWithTelegram.telegram_chat_id;
       } else {
-        console.warn(`⚠️ Admin found but telegram_chat_id is empty!`);
+        console.warn(`⚠️ No students in room ${room} have telegram_chat_id`);
       }
     }
   }
   
-  console.error(`❌ Admin telegram_chat_id NOT FOUND for student_id: ${admin_student_id}`);
+  console.error(`❌ telegram_chat_id NOT FOUND for student_id: ${student_id}, room: ${room}`);
   return null;
 }
 
@@ -181,26 +186,38 @@ async function sendTelegramMessage(chatId: string, message: string): Promise<boo
   }
 }
 
-// Отправка уведомления в Telegram
+// ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ: Отправка уведомления в Telegram
 export async function sendTelegramNotification(notification: TelegramNotification): Promise<boolean> {
-  const message = formatMessage(notification);
+  // ✅ КРИТИЧНО: Проверить что есть admin_student_id для админских уведомлений
+  if ((notification.type === 'admin_call_for_key' || notification.type === 'admin_return_key') && !notification.admin_student_id) {
+    console.error('❌ Cannot send notification: missing admin_student_id for', notification.type);
+    return false;
+  }
+
+  const message = await formatMessage(notification);
+  
+  // ✅ КРИТИЧНО: Не отправлять если форматирование не удалось
+  if (message.includes('ОШИБКА:')) {
+    console.error('❌ Message formatting failed:', message);
+    return false;
+  }
 
   const studentNotifications = [
-    'admin_key_issued',
+    'admin_call_for_key',     // ✅ Студенту: вас зовут за ключом
+    'admin_return_key',       // ✅ Студенту: верните ключ
+    'admin_key_issued',       // ✅ Студенту: ключ выдан
   ];
   
   const adminNotifications = [
-    'joined',
-    'left', 
-    'washing_started',
-    'washing_done',
-    'admin_call_for_key',
-    'admin_return_key',
+    'joined',                 // ✅ Админу: кто-то встал в очередь
+    'left',                   // ✅ Админу: кто-то вышел
+    'washing_started',        // ✅ Админу: стирка началась
+    'washing_done',           // ✅ Админу: стирка завершена
   ];
 
   let success = false;
 
-  // 1) личные уведомления студенту
+  // 1) Личные уведомления студенту
   if (studentNotifications.includes(notification.type)) {
     const studentChatId = await getStudentTelegramChatId(
       notification.student_id,
@@ -209,44 +226,35 @@ export async function sendTelegramNotification(notification: TelegramNotificatio
 
     if (studentChatId) {
       success = await sendTelegramMessage(studentChatId, message);
-      console.log(`✅ sent to student (${notification.type})`);
+      console.log(`✅ Sent to student (${notification.type})`);
     } else {
-      console.warn(`⚠️ No Telegram for ${notification.room}`);
-
-      // fallback: сообщить админу, что у студента нет телеги
+      console.warn(`⚠️ Student has no Telegram: ${notification.full_name}`);
+      
+      // Fallback: уведомить админа
       if (ADMIN_TELEGRAM_CHAT_ID) {
         await sendTelegramMessage(
           ADMIN_TELEGRAM_CHAT_ID,
-          `⚠️ Студент не подключил Telegram!\n\n${message}`
+          `⚠️ Студент ${notification.full_name} не подключил Telegram!\n\nНе получит уведомление: ${notification.type}`
         );
       }
     }
   }
 
-  // 2) админские уведомления
+  // 2) Админские уведомления
   if (adminNotifications.includes(notification.type)) {
-    let chatId = ADMIN_TELEGRAM_CHAT_ID;
-    
-    // Для персональных уведомлений админу используем его chat_id
-    if ((notification.type === 'admin_call_for_key' || notification.type === 'admin_return_key') && notification.admin_student_id) {
-      const adminChatId = await getAdminTelegramChatId(notification.admin_student_id);
-      if (adminChatId) {
-        chatId = adminChatId;
-      }
-    }
+    const chatId = ADMIN_TELEGRAM_CHAT_ID;
     
     if (chatId) {
       let prefix = '';
 
-      // спецлогика для "joined":
-      // сразу говорим админу, есть ли у студента телега
+      // Для "joined": сразу сообщить есть ли у студента телеграм
       if (notification.type === 'joined') {
         const studentChatId = await getStudentTelegramChatId(
           notification.student_id,
           notification.room
         );
         if (!studentChatId) {
-          prefix = '⚠️ У него НЕТ Telegram подключения!\n\n';
+          prefix = '⚠️ У него НЕТ Telegram!\n\n';
         }
       }
 
@@ -255,23 +263,24 @@ export async function sendTelegramNotification(notification: TelegramNotificatio
         `${prefix}${message}`
       );
 
-      console.log(`✅ sent to admin (${notification.type})`);
+      console.log(`✅ Sent to admin (${notification.type})`);
     }
   }
 
   return success;
 }
 
-
-
 // Тестовое уведомление (для проверки настройки)
-export async function sendTestNotification(): Promise<boolean> {
+export async function sendTestNotification(adminStudentId?: string): Promise<boolean> {
   return sendTelegramNotification({
-    type: 'joined',
+    type: 'admin_call_for_key',
     full_name: 'Тестовый Пользователь',
-    room: 'A501',
+    room: 'B201',
     wash_count: 2,
     payment_type: 'money',
     queue_length: 5,
+    expected_finish_at: new Date().toISOString(),
+    admin_student_id: adminStudentId,
+    student_id: 'test-student-id',
   });
 }

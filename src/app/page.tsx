@@ -18,7 +18,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = React.useState('main');
   const [showTelegramModal, setShowTelegramModal] = React.useState(false);
 
-  // ✅ Проверка: нужно ли показать модалку Telegram
+  // ✅ Проверка: показывать модалку ТОЛЬКО для новых пользователей
   React.useEffect(() => {
     console.log('🔍 Checking telegram setup:', { 
       user: !!user, 
@@ -27,9 +27,10 @@ export default function Home() {
       telegramChatId: user?.telegram_chat_id,
       isNewUser
     });
-    
-    if (user && !isAdmin && !user.telegram_chat_id) {
-      console.log('✅ Showing Telegram modal for user without Telegram!');
+  
+    // ✅ Показываем ТОЛЬКО для новых пользователей без Telegram
+    if (user && !isAdmin && isNewUser && !user.telegram_chat_id) {
+      console.log('✅ Showing Telegram modal for new user!');
       setShowTelegramModal(true);
     }
   }, [user, isAdmin, isNewUser]);
