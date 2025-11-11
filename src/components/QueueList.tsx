@@ -195,6 +195,7 @@ const handleSaveEdit = async () => {
   }
 
   console.log('🎰 Machine State:', machineState);
+  console.log('🔑 isAdmin:', isAdmin, 'selectedItems:', selectedItems.length);
   
   return (
     <div className="bg-white rounded-lg shadow-lg border border-gray-200">
@@ -206,6 +207,7 @@ const handleSaveEdit = async () => {
       </div>
       
       {/* ✅ Кнопки переноса для админа - вынесены из header */}
+      {/* DEBUG: isAdmin={String(isAdmin)}, selectedItems.length={selectedItems.length} */}
       {isAdmin && selectedItems.length > 0 && (
         <div className="bg-blue-50 border-2 border-blue-500 rounded-lg p-3 m-3">
           <h4 className="font-bold text-blue-900 mb-2 text-sm">

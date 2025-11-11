@@ -346,7 +346,16 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
         telegram_chat_id: student.telegram_chat_id || undefined,
       };
       
+      const isAdminUser = student.is_admin || false;
+      const isSuperAdminUser = student.is_super_admin || false;
+      
+      setIsAdmin(isAdminUser);
+      setIsSuperAdmin(isSuperAdminUser);
+      localStorage.setItem('laundryIsAdmin', isAdminUser.toString());
+      localStorage.setItem('laundryIsSuperAdmin', isSuperAdminUser.toString());
+      
       setUser(newUser);
+      localStorage.setItem('laundryUser', JSON.stringify(newUser));
       await loadStudents();
       console.log('✅ Student registered successfully:', newUser.full_name);
       
@@ -428,7 +437,16 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
       telegram_chat_id: student.telegram_chat_id || undefined,
     };
     
+    const isAdminUser = student.is_admin || false;
+    const isSuperAdminUser = student.is_super_admin || false;
+    
+    setIsAdmin(isAdminUser);
+    setIsSuperAdmin(isSuperAdminUser);
+    localStorage.setItem('laundryIsAdmin', isAdminUser.toString());
+    localStorage.setItem('laundryIsSuperAdmin', isSuperAdminUser.toString());
+    
     setUser(newUser);
+    localStorage.setItem('laundryUser', JSON.stringify(newUser));
     await loadStudents();
     console.log('✅ Student registered successfully:', newUser.full_name);
     
@@ -515,8 +533,11 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
     }
     setUser(null);
     setIsAdmin(false);
+    setIsSuperAdmin(false);
     localStorage.removeItem('laundryUser');
-    console.log(' Student logged out');
+    localStorage.removeItem('laundryIsAdmin');
+    localStorage.removeItem('laundryIsSuperAdmin');
+    console.log('👋 Student logged out');
   };
 
     // Admin: Reset student registration
@@ -2321,11 +2342,13 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     };
 
     setUser(newUser);
+    setIsAdmin(student.is_admin);
+    setIsSuperAdmin(student.is_super_admin);
     localStorage.setItem('laundryUser', JSON.stringify(newUser));
     localStorage.setItem('laundryIsAdmin', student.is_admin.toString());
     localStorage.setItem('laundryIsSuperAdmin', student.is_super_admin.toString());
 
-    console.log('Admin logged in:', newUser.full_name);
+    console.log('✅ Admin logged in:', newUser.full_name, 'isAdmin:', student.is_admin, 'isSuperAdmin:', student.is_super_admin);
     return newUser;
   };
 
