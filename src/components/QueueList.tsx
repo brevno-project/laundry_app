@@ -19,8 +19,7 @@ export default function QueueList() {
     markDone,
     isAdmin,
     machineState,
-    transferSelectedToNextDay,
-    transferSelectedToPreviousDay,
+    transferSelectedToDate,
     transferSelectedToToday,  
     changeQueuePosition, 
     updateQueueEndTime,
@@ -206,34 +205,61 @@ const handleSaveEdit = async () => {
         </h2>
         
                         {/* Кнопки переноса для админа */}
-        {isAdmin && (
-          <div className="flex flex-col space-y-1">
-            <div className="flex space-x-1">
+                        {/* ✅ НОВЫЙ БЛОК: Кнопки переноса */}
+        {isAdmin && selectedItems.length > 0 && (
+          <div className="bg-blue-50 border-2 border-blue-500 rounded-lg p-3 mb-3">
+            <h4 className="font-bold text-blue-900 mb-2 text-sm">
+              📅 Перенести выбранных ({selectedItems.length})
+            </h4>
+    
+            <div className="grid grid-cols-3 gap-2">
+              {/* Назад */}
               <button
-                onClick={() => transferSelectedToPreviousDay(selectedItems)}
-                disabled={selectedItems.length === 0}
-                className="px-1 py-0.5 bg-red-600 text-white text-xs font-bold rounded hover:bg-red-700 disabled:opacity-50"
-                title="Перенести назад"
+                onClick={async () => {
+                  const targetDate = new Date();
+                  targetDate.setDate(targetDate.getDate() - 1);
+                  const dateStr = targetDate.toISOString().slice(0, 10);
+                  await transferSelectedToDate(selectedItems, dateStr);
+                  setSelectedItems([]);
+                }}
+                className="bg-red-500 text-white font-semibold py-2 px-2 rounded-lg hover:bg-red-600 text-xs"
               >
-                ⬅️ ({selectedItems.length})
+                ⬅️ Назад
               </button>
+      
+              {/* Сегодня */}
               <button
-                onClick={() => transferSelectedToToday(selectedItems)}
-                disabled={selectedItems.length === 0}
-                className="px-1 py-0.5 bg-green-600 text-white text-xs font-bold rounded hover:bg-green-700 disabled:opacity-50"
-                title="Перенести на сегодня"
+                onClick={async () => {
+                  await transferSelectedToToday(selectedItems);
+                  setSelectedItems([]);
+                }}
+                className="bg-green-500 text-white font-semibold py-2 px-2 rounded-lg hover:bg-green-600 text-xs"
               >
-                Сегодня ({selectedItems.length})
+                Сегодня
               </button>
+      
+              {/* Вперед */}
               <button
-                onClick={() => transferSelectedToNextDay(selectedItems)}
-                disabled={selectedItems.length === 0}
-                className="px-1 py-0.5 bg-blue-600 text-white text-xs font-bold rounded hover:bg-blue-700 disabled:opacity-50"
-                title="Перенести вперед"
+                onClick={async () => {
+                  const targetDate = new Date();
+                  targetDate.setDate(targetDate.getDate() + 1);
+                  const dateStr = targetDate.toISOString().slice(0, 10);
+                  await transferSelectedToDate(selectedItems, dateStr);
+                  setSelectedItems([]);
+                }}
+                className="bg-blue-500 text-white font-semibold py-2 px-2 rounded-lg hover:bg-blue-600 text-xs"
               >
-                ➡️ ({selectedItems.length})
+                Вперед ➡️
               </button>
             </div>
+    
+            {/* Отмена выбора */}
+            <button
+              onClick={() => setSelectedItems([])}
+              className="w-full mt-2 bg-gray-400 text-white font-semibold py-2 px-3 rounded-lg hover:bg-gray-500 text-xs"
+            >
+              ❌ Отменить выбор
+            </button>
           </div>
         )}
       </div>
@@ -385,7 +411,7 @@ const handleSaveEdit = async () => {
                                   await new Promise(resolve => setTimeout(resolve, 100));
                                   await setQueueStatus(item.id, QueueStatus.READY);
                                   
-                                  // ✅ ИСПРАВЛЕНО: Передаём admin_student_id
+                                  // ✅ КРИТИЧНО: Передаём admin_student_id
                                   const success = await sendTelegramNotification({
                                     type: 'admin_call_for_key',
                                     full_name: item.full_name,
@@ -407,6 +433,7 @@ const handleSaveEdit = async () => {
                             >
                               🔔 Позвать
                             </button>
+
                             {/* КНОПКА: Вернуть ключ */}
                             <button
                               className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm"
@@ -419,7 +446,7 @@ const handleSaveEdit = async () => {
                                   
                                   await updateQueueItem(item.id, { return_key_alert: true });
                                   
-                                  // ✅ ИСПРАВЛЕНО: Передаём admin_student_id
+                                  // ✅ КРИТИЧНО: Передаём admin_student_id
                                   const success = await sendTelegramNotification({
                                     type: 'admin_return_key',
                                     full_name: item.full_name,

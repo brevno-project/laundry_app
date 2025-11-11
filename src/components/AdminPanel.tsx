@@ -387,7 +387,17 @@ export default function AdminPanel() {
               >
                 Отмена
               </button>
-              {/* ✅ ТЕСТОВОЕ УВЕДОМЛЕНИЕ */}
+              
+              <button
+                onClick={handleClearQueueConfirm}
+                className="flex-1 bg-red-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-700"
+              >
+                Да, очистить
+              </button>
+              
+            </div>
+            {/* ✅ ТЕСТОВОЕ УВЕДОМЛЕНИЕ - ВСЕГДА ВИДНО */}
+            {isAdmin && (
               <button
                 onClick={async () => {
                   try {
@@ -406,13 +416,7 @@ export default function AdminPanel() {
               >
                 📱 Отправить тестовое уведомление
               </button>
-              <button
-                onClick={handleClearQueueConfirm}
-                className="flex-1 bg-red-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-700"
-              >
-                Да, очистить
-              </button>
-            </div>
+            )}
           </div>
         )}
         
@@ -513,7 +517,7 @@ export default function AdminPanel() {
                   </div>
 
                   {/* ========== БЕЗОПАСНЫЕ ДЕЙСТВИЯ ========== */}
-                  {(isSuperAdmin || !student.is_super_admin) && (
+                  {(isSuperAdmin || (!student.is_admin && !student.is_super_admin)) && (
                     <button onClick={() => openAddToQueueModal(student)}
                       className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-1 w-full">
                       Поставить в очередь

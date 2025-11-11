@@ -49,9 +49,8 @@ type LaundryContextType = {
   queue: QueueItem[];
   machineState: MachineState;
   history: HistoryItem[];
-  transferSelectedToNextDay: (selectedIds: string[]) => Promise<void>;
-  transferSelectedToPreviousDay: (selectedIds: string[]) => Promise<void>;
   transferSelectedToToday: (selectedIds: string[]) => Promise<void>;
+  transferSelectedToDate: (selectedIds: string[], targetDateStr: string) => Promise<void>;
   changeQueuePosition: (queueId: string, direction: 'up' | 'down') => Promise<void>;
   registerStudent: (studentId: string, password: string) => Promise<User | null>;
   loginStudent: (studentId: string, password: string) => Promise<User | null>;
@@ -446,40 +445,39 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
 
 const loginStudent = async (studentId: string, password: string): Promise<User | null> => {
   if (!isSupabaseConfigured || !supabase) {
-    throw new Error('Supabase ');
+    throw new Error('Supabase не настроен');
   }
 
   try {
-    // Получить студента
-    const { data: studentData } = await supabase
+    // ✅ КРИТИЧНО: Сначала проверить бан ДО попытки входа
+    const { data: studentData, error: studentError } = await supabase
       .from('students')
       .select('*')
       .eq('id', studentId)
       .single();
 
-    if (studentData?.error) throw studentData.error;
-    if (!studentData.is_registered) throw new Error('');
-
-    // ИСПРАВЛЕНО: Использовать тот же email что и при регистрации
-    const email = `student-${studentId.slice(0, 8)}@example.com`;
-    console.log(' Logging in with email:', email);
+    if (studentError) throw studentError;
+    if (!studentData) throw new Error('Студент не найден');
     
-    // Войти через Supabase Auth
+    // ✅ ПРОВЕРКА БАНА ДО ЛОГИНА
+    if (studentData.is_banned) {
+      const banReason = studentData.ban_reason || 'Не указана';
+      throw new Error(`Вы забанены. Причина: ${banReason}`);
+    }
+    
+    if (!studentData.is_registered) throw new Error('Студент не зарегистрирован');
+
+    const email = `student-${studentId.slice(0, 8)}@example.com`;
+    console.log('📝 Logging in with email:', email);
+    
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password
     });
 
     if (authError) throw authError;
-    if (!authData.user) throw new Error('');
+    if (!authData.user) throw new Error('Не удалось войти');
 
-    // Проверка бана
-    if (studentData.is_banned) {
-      const banReason = studentData.ban_reason || '';
-      throw new Error('');
-    }
-
-    // Создать объект User
     const newUser: User = {
       id: authData.user.id,
       student_id: studentData.id,
@@ -490,25 +488,22 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
       telegram_chat_id: studentData.telegram_chat_id || undefined,
     };
 
-    // Проверить админские права
-    // АВТОМАТИЧЕСКИ: Проверить админ статус из БД
     const isAdminUser = studentData.is_admin || false;
     const isSuperAdminUser = studentData.is_super_admin || false;
 
     setIsAdmin(isAdminUser);
     setIsSuperAdmin(isSuperAdminUser);
 
-    // Сохранить в localStorage
     localStorage.setItem('laundryIsAdmin', isAdminUser.toString());
     localStorage.setItem('laundryIsSuperAdmin', isSuperAdminUser.toString());
 
     setUser(newUser);
-    localStorage.setItem('laundryUser', JSON.stringify(newUser)); // 
+    localStorage.setItem('laundryUser', JSON.stringify(newUser));
 
-    console.log(' Student logged in:', newUser.full_name);
+    console.log('✅ Student logged in:', newUser.full_name);
     return newUser;
   } catch (error: any) {
-    console.error(' Error logging in:', error);
+    console.error('❌ Error logging in:', error);
     throw error;
   }
 };
@@ -1171,27 +1166,27 @@ const startWashing = async (queueItemId: string) => {
     if (!isAdmin) return;
     
     const queueItem = queue.find(item => item.id === queueItemId);
-    if (!queueItem || queueItem.status !== QueueStatus.WASHING) return;
+    if (!queueItem) return;
+    
+    // ✅ УБРАНА проверка статуса - можно завершить любого
     
     if (!isSupabaseConfigured || !supabase) {
-      // Use local storage fallback
       mark_local_done();
-      fetchQueue(); // Refresh queue from local storage
-      fetchMachineState(); // Refresh machine state from local storage
-      fetchHistory(); // Refresh history from local storage
+      fetchQueue();
+      fetchMachineState();
+      fetchHistory();
       return;
     }
     
     try {
-      
-      // Add to history
+      // Добавить в историю
       const historyItem: HistoryItem = {
         id: uuidv4(),
         user_id: queueItem.user_id,
-        full_name: queueItem.full_name,  
+        full_name: queueItem.full_name,
         room: queueItem.room || undefined,
-        started_at: machineState.started_at || new Date().toISOString(),  
-        finished_at: new Date().toISOString(),  
+        started_at: machineState.started_at || new Date().toISOString(),
+        finished_at: new Date().toISOString(),
       };
       
       const { error: historyError } = await supabase
@@ -1200,7 +1195,7 @@ const startWashing = async (queueItemId: string) => {
       
       if (historyError) throw historyError;
       
-      // Удалить из очереди (вместо статуса DONE)
+      // Удалить из очереди
       const { error: deleteError } = await supabase
         .from('queue')
         .delete()
@@ -1208,7 +1203,7 @@ const startWashing = async (queueItemId: string) => {
       
       if (deleteError) throw deleteError;
       
-      // Reset machine state
+      // Сбросить состояние машины
       const idleMachineState: MachineState = {
         status: MachineStatus.IDLE,
         current_queue_item_id: undefined,
@@ -1225,11 +1220,10 @@ const startWashing = async (queueItemId: string) => {
       save_local_machine_state(idleMachineState);
     } catch (error) {
       console.error('Error marking done:', error);
-      // Fallback to local storage on error
       mark_local_done();
-      fetchQueue(); // Refresh queue from local storage
-      fetchMachineState(); // Refresh machine state from local storage
-      fetchHistory(); // Refresh history from local storage
+      fetchQueue();
+      fetchMachineState();
+      fetchHistory();
     }
   };
 
@@ -1988,196 +1982,7 @@ const sendAdminMessage = async (queueItemId: string, message: string) => {
     console.error(' Error sending admin message:', error);
   }
 };
-
-// 
-const transferSelectedToNextDay = async (selectedIds: string[]) => {
-  try {
-    // 
-    const unfinishedStatuses = [QueueStatus.WAITING, QueueStatus.READY, QueueStatus.KEY_ISSUED];
-    
-    const unfinishedItems = queue.filter(item => 
-      selectedIds.includes(item.id) && unfinishedStatuses.includes(item.status)
-    );
-    
-    if (unfinishedItems.length === 0) {
-      alert('');
-      return;
-    }
-    
-    // 
-    const nextDay = addDays(new Date(), 1);
-    const nextDayStr = format(nextDay, 'yyyy-MM-dd');
-    
-    if (!isSupabaseConfigured) {
-      // 
-      // 
-      const targetDate = nextDayStr;
-      const existingOnDate = queue.filter(item => item.queue_date === targetDate);
-      const minPosition = existingOnDate.length > 0 ? Math.min(...existingOnDate.map(item => item.queue_position)) : 0;
-
-      const updatedQueue = queue.map(item => {
-        const index = unfinishedItems.findIndex(u => u.id === item.id);
-        if (index !== -1) {
-          return { 
-            ...item, 
-            queue_date: targetDate, 
-            scheduled_for_date: targetDate,
-            queue_position: minPosition - 10000 - index  // 
-          };
-        }
-        return item;
-      });
-      setQueue(updatedQueue);
-      save_local_queue(updatedQueue);
-      alert('');
-    } else {
-      if (supabase) {
-        // 
-        // 
-        for (let i = 0; i < unfinishedItems.length; i++) {
-          const item = unfinishedItems[i];
-          await supabase
-            .from('queue')
-            .update({ 
-              queue_date: nextDayStr,
-              scheduled_for_date: nextDayStr
-            })
-            .eq('id', item.id);
-        }
-        
-        // 
-        const { data: allOnDate } = await supabase
-          .from('queue')
-          .select('*')
-          .eq('queue_date', nextDayStr);
-
-        if (allOnDate) {
-          const transferred = allOnDate.filter(item => unfinishedItems.some(u => u.id === item.id));
-          const existing = allOnDate.filter(item => !unfinishedItems.some(u => u.id === item.id));
-          
-          // 
-          transferred.sort((a, b) => unfinishedItems.findIndex(u => u.id === a.id) - unfinishedItems.findIndex(u => u.id === b.id));
-          
-          // 
-          existing.sort((a, b) => a.queue_position - b.queue_position);
-          
-          // 
-          const newOrder = [...existing, ...transferred];
-          
-          // 
-          for (let k = 0; k < newOrder.length; k++) {
-            await supabase
-              .from('queue')
-              .update({ queue_position: k + 1 })
-              .eq('id', newOrder[k].id);
-          }
-        }
-
-        alert('');
-        await fetchQueue();  
-      }
-    }
-  } catch (err: any) {
-    console.error('');
-    alert('');
-  }
-};
-
-// 
-const transferSelectedToPreviousDay = async (selectedIds: string[]) => {
-  try {
-    // 
-    const unfinishedStatuses = [QueueStatus.WAITING, QueueStatus.READY, QueueStatus.KEY_ISSUED];
-    
-    const unfinishedItems = queue.filter(item => 
-      selectedIds.includes(item.id) && unfinishedStatuses.includes(item.status)
-    );
-    
-    if (unfinishedItems.length === 0) {
-      alert('');
-      return;
-    }
-    
-    // 
-    const prevDay = addDays(new Date(), -1);
-    const prevDayStr = format(prevDay, 'yyyy-MM-dd');
-    
-    if (!isSupabaseConfigured) {
-      // 
-      // 
-      const targetDate = prevDayStr;
-      const existingOnDate = queue.filter(item => item.queue_date === targetDate);
-      const minPosition = existingOnDate.length > 0 ? Math.min(...existingOnDate.map(item => item.queue_position)) : 0;
-
-      const updatedQueue = queue.map(item => {
-        const index = unfinishedItems.findIndex(u => u.id === item.id);
-        if (index !== -1) {
-          return { 
-            ...item, 
-            queue_date: targetDate, 
-            scheduled_for_date: targetDate,
-            queue_position: minPosition - 10000 - index  // 
-          };
-        }
-        return item;
-      });
-      setQueue(updatedQueue);
-      save_local_queue(updatedQueue);
-      alert('');
-    } else {
-      if (supabase) {
-        // 
-        // 
-        for (let i = 0; i < unfinishedItems.length; i++) {
-          const item = unfinishedItems[i];
-          await supabase
-            .from('queue')
-            .update({ 
-              queue_date: prevDayStr,
-              scheduled_for_date: prevDayStr
-            })
-            .eq('id', item.id);
-        }
-        
-        // 
-        const { data: allOnDate } = await supabase
-          .from('queue')
-          .select('*')
-          .eq('queue_date', prevDayStr);
-
-        if (allOnDate) {
-          const transferred = allOnDate.filter(item => unfinishedItems.some(u => u.id === item.id));
-          const existing = allOnDate.filter(item => !unfinishedItems.some(u => u.id === item.id));
-          
-          // 
-          transferred.sort((a, b) => unfinishedItems.findIndex(u => u.id === a.id) - unfinishedItems.findIndex(u => u.id === b.id));
-          
-          // 
-          existing.sort((a, b) => a.queue_position - b.queue_position);
-          
-          // 
-          const newOrder = [...existing, ...transferred];
-          
-          // 
-          for (let k = 0; k < newOrder.length; k++) {
-            await supabase
-              .from('queue')
-              .update({ queue_position: k + 1 })
-              .eq('id', newOrder[k].id);
-          }
-        }
-
-        alert('');
-        await fetchQueue();  
-      }
-    }
-  } catch (err: any) {
-    console.error('');
-    alert('');
-  }
-};
-
-// 
+ 
 const transferSelectedToToday = async (selectedIds: string[]) => {
   try {
     // 
@@ -2269,6 +2074,87 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
     console.error('');
     alert('');
   }
+};
+
+// ✅ УНИВЕРСАЛЬНАЯ функция переноса на любую дату
+const transferSelectedToDate = async (selectedIds: string[], targetDateStr: string) => {
+  try {
+    const unfinishedStatuses = [QueueStatus.WAITING, QueueStatus.READY, QueueStatus.KEY_ISSUED];
+    
+    const unfinishedItems = queue.filter(item => 
+      selectedIds.includes(item.id) && unfinishedStatuses.includes(item.status)
+    );
+    
+    if (unfinishedItems.length === 0) {
+      alert('Нет незавершенных записей для переноса');
+      return;
+    }
+    
+    if (!isSupabaseConfigured || !supabase) {
+      alert('Ошибка: Supabase не настроен');
+      return;
+    }
+    
+    // Перенести даты
+    for (let i = 0; i < unfinishedItems.length; i++) {
+      const item = unfinishedItems[i];
+      await supabase
+        .from('queue')
+        .update({ 
+          queue_date: targetDateStr,
+          scheduled_for_date: targetDateStr
+        })
+        .eq('id', item.id);
+    }
+    
+    // Пересчитать позиции
+    const { data: allOnDate } = await supabase
+      .from('queue')
+      .select('*')
+      .eq('queue_date', targetDateStr);
+
+    if (allOnDate) {
+      const transferred = allOnDate.filter(item => unfinishedItems.some(u => u.id === item.id));
+      const existing = allOnDate.filter(item => !unfinishedItems.some(u => u.id === item.id));
+      
+      transferred.sort((a, b) => unfinishedItems.findIndex(u => u.id === a.id) - unfinishedItems.findIndex(u => u.id === b.id));
+      existing.sort((a, b) => a.queue_position - b.queue_position);
+      
+      const newOrder = [...existing, ...transferred];
+      
+      for (let k = 0; k < newOrder.length; k++) {
+        await supabase
+          .from('queue')
+          .update({ queue_position: k + 1 })
+          .eq('id', newOrder[k].id);
+      }
+    }
+
+    const dateLabel = formatDateForAlert(targetDateStr);
+    alert(`✅ Перенесено ${unfinishedItems.length} записей на ${dateLabel}`);
+    await fetchQueue();
+  } catch (err: any) {
+    console.error('Ошибка переноса:', err);
+    alert('❌ Ошибка переноса');
+  }
+};
+
+// Вспомогательная функция для красивого отображения даты
+const formatDateForAlert = (dateStr: string) => {
+  const date = new Date(dateStr + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const targetDate = new Date(dateStr + 'T00:00:00');
+  targetDate.setHours(0, 0, 0, 0);
+  
+  const daysDiff = Math.round((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  
+  if (daysDiff === 0) return 'сегодня';
+  if (daysDiff === 1) return 'завтра';
+  if (daysDiff === -1) return 'вчера';
+  if (daysDiff > 0) return `через ${daysDiff} дн.`;
+  return `${Math.abs(daysDiff)} дн. назад`;
 };
 
 // 
@@ -2450,9 +2336,8 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     queue,
     machineState,
     history,
-    transferSelectedToNextDay,
-    transferSelectedToPreviousDay,
-    transferSelectedToToday,  
+    transferSelectedToToday,
+    transferSelectedToDate,
     changeQueuePosition,
     registerStudent,
     loginStudent,
