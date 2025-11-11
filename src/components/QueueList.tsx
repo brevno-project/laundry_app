@@ -198,70 +198,70 @@ const handleSaveEdit = async () => {
   
   return (
     <div className="bg-white rounded-lg shadow-lg border border-gray-200">
+      {/* Header */}
       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-t-lg">
         <h2 className="text-xl font-bold text-gray-800">
           📋 Очередь ({queuedItems.length})
         </h2>
-        
-                        {/* Кнопки переноса для админа */}
-                        {/* ✅ НОВЫЙ БЛОК: Кнопки переноса */}
-        {isAdmin && selectedItems.length > 0 && (
-          <div className="bg-blue-50 border-2 border-blue-500 rounded-lg p-3 mb-3">
-            <h4 className="font-bold text-blue-900 mb-2 text-sm">
-              📅 Перенести выбранных ({selectedItems.length})
-            </h4>
-    
-            <div className="grid grid-cols-3 gap-2">
-              {/* Назад */}
-              <button
-                onClick={async () => {
-                  const targetDate = new Date();
-                  targetDate.setDate(targetDate.getDate() - 1);
-                  const dateStr = targetDate.toISOString().slice(0, 10);
-                  await transferSelectedToDate(selectedItems, dateStr);
-                  setSelectedItems([]);
-                }}
-                className="bg-red-500 text-white font-semibold py-2 px-2 rounded-lg hover:bg-red-600 text-xs"
-              >
-                ⬅️ Назад
-              </button>
+      </div>
       
-              {/* Сегодня */}
-              <button
-                onClick={async () => {
-                  await transferSelectedToToday(selectedItems);
-                  setSelectedItems([]);
-                }}
-                className="bg-green-500 text-white font-semibold py-2 px-2 rounded-lg hover:bg-green-600 text-xs"
-              >
-                Сегодня
-              </button>
-      
-              {/* Вперед */}
-              <button
-                onClick={async () => {
-                  const targetDate = new Date();
-                  targetDate.setDate(targetDate.getDate() + 1);
-                  const dateStr = targetDate.toISOString().slice(0, 10);
-                  await transferSelectedToDate(selectedItems, dateStr);
-                  setSelectedItems([]);
-                }}
-                className="bg-blue-500 text-white font-semibold py-2 px-2 rounded-lg hover:bg-blue-600 text-xs"
-              >
-                Вперед ➡️
-              </button>
-            </div>
-    
-            {/* Отмена выбора */}
+      {/* ✅ Кнопки переноса для админа - вынесены из header */}
+      {isAdmin && selectedItems.length > 0 && (
+        <div className="bg-blue-50 border-2 border-blue-500 rounded-lg p-3 m-3">
+          <h4 className="font-bold text-blue-900 mb-2 text-sm">
+            📅 Перенести выбранных ({selectedItems.length})
+          </h4>
+  
+          <div className="grid grid-cols-3 gap-2">
+            {/* Назад */}
             <button
-              onClick={() => setSelectedItems([])}
-              className="w-full mt-2 bg-gray-400 text-white font-semibold py-2 px-3 rounded-lg hover:bg-gray-500 text-xs"
+              onClick={async () => {
+                const targetDate = new Date();
+                targetDate.setDate(targetDate.getDate() - 1);
+                const dateStr = targetDate.toISOString().slice(0, 10);
+                await transferSelectedToDate(selectedItems, dateStr);
+                setSelectedItems([]);
+              }}
+              className="bg-red-500 text-white font-semibold py-2 px-2 rounded-lg hover:bg-red-600 text-xs"
             >
-              ❌ Отменить выбор
+              ⬅️ Назад
+            </button>
+    
+            {/* Сегодня */}
+            <button
+              onClick={async () => {
+                await transferSelectedToToday(selectedItems);
+                setSelectedItems([]);
+              }}
+              className="bg-green-500 text-white font-semibold py-2 px-2 rounded-lg hover:bg-green-600 text-xs"
+            >
+              Сегодня
+            </button>
+    
+            {/* Вперед */}
+            <button
+              onClick={async () => {
+                const targetDate = new Date();
+                targetDate.setDate(targetDate.getDate() + 1);
+                const dateStr = targetDate.toISOString().slice(0, 10);
+                await transferSelectedToDate(selectedItems, dateStr);
+                setSelectedItems([]);
+              }}
+              className="bg-blue-500 text-white font-semibold py-2 px-2 rounded-lg hover:bg-blue-600 text-xs"
+            >
+              Вперед ➡️
             </button>
           </div>
-        )}
-      </div>
+  
+          {/* Отмена выбора */}
+          <button
+            onClick={() => setSelectedItems([])}
+            className="w-full mt-2 bg-gray-400 text-white font-semibold py-2 px-3 rounded-lg hover:bg-gray-500 text-xs"
+          >
+            ❌ Отменить выбор
+          </button>
+        </div>
+      )}
       
       <div className="p-2 space-y-4">
         {sortedDates.map(dateKey => (
