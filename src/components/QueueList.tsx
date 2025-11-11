@@ -409,7 +409,7 @@ const handleSaveEdit = async () => {
                                   await updateQueueItem(item.id, { return_key_alert: false });
                                   await new Promise(resolve => setTimeout(resolve, 100));
                                   await setQueueStatus(item.id, QueueStatus.READY);
-                                  
+      
                                   // ✅ КРИТИЧНО: Передаём admin_student_id
                                   const success = await sendTelegramNotification({
                                     type: 'admin_call_for_key',
@@ -417,9 +417,9 @@ const handleSaveEdit = async () => {
                                     room: item.room,
                                     student_id: item.student_id,
                                     expected_finish_at: item.expected_finish_at,
-                                    admin_student_id: user?.student_id,  // ✅ ID админа
+                                    admin_student_id: user?.student_id,  // ✅ Это уже есть
                                   });
-                                  
+      
                                   alert(success 
                                     ? `✅ ${item.full_name} позван!` 
                                     : `⚠️ ${item.full_name} не подключил Telegram`

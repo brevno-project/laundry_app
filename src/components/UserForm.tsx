@@ -5,7 +5,7 @@ import { useLaundry } from '@/contexts/LaundryContext';
 import FullScreenAlert from './FullScreenAlert';
 
 export default function UserForm() {
-  const { user, joinQueue, logoutStudent, getUserQueueItem, queue, updateQueueItem } = useLaundry();
+  const { user, joinQueue, logoutStudent, getUserQueueItem, queue, updateQueueItem,students } = useLaundry();
   const [washCount, setWashCount] = useState<number>(1);
   const [paymentType, setPaymentType] = useState<string>('money');
   const [selectedHour, setSelectedHour] = useState<string>('20');
@@ -84,7 +84,7 @@ export default function UserForm() {
 
   // Полноэкранное уведомление когда зовут
   if (existingQueueItem?.status === 'ready') {
-    return <FullScreenAlert status={existingQueueItem.status} />;
+    return <FullScreenAlert status={existingQueueItem.status} adminRoom={user?.room} />;
   }
 
   // Полноэкранное уведомление "Принеси ключ" - БЕЗ кнопки закрытия
@@ -93,6 +93,7 @@ export default function UserForm() {
       <FullScreenAlert 
         status={existingQueueItem.status} 
         needsToReturnKey={true}
+        adminRoom={user?.room}
       />
     );
   }
