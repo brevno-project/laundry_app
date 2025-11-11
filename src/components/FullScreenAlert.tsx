@@ -5,10 +5,11 @@ import { QueueStatus } from '@/types';
 interface FullScreenAlertProps {
   status: QueueStatus;
   needsToReturnKey?: boolean;
+  adminRoom?: string;  // ✅ ДОБАВЛЕНО: комната админа
   onClose?: () => void;
 }
 
-export default function FullScreenAlert({ status, needsToReturnKey, onClose }: FullScreenAlertProps) {
+export default function FullScreenAlert({ status, needsToReturnKey, adminRoom, onClose }: FullScreenAlertProps) {
   // ✅ ПРИОРИТЕТ 1: "Принеси ключ" - показывается ВСЕГДА если флаг установлен
   if (needsToReturnKey) {
     return (
@@ -19,7 +20,8 @@ export default function FullScreenAlert({ status, needsToReturnKey, onClose }: F
             ПРИНЕСИТЕ КЛЮЧ!
           </h1>
           <p className="text-4xl font-bold text-orange-800 mb-8">
-            Верните ключ в A501
+            {/* ✅ ИСПРАВЛЕНО: Используем adminRoom */}
+            Верните ключ в {adminRoom || 'A501'}
           </p>
           <p className="text-2xl font-semibold text-orange-700">
             ⚡ Как можно скорее!
@@ -39,7 +41,8 @@ export default function FullScreenAlert({ status, needsToReturnKey, onClose }: F
             ВАС ЗОВУТ!
           </h1>
           <p className="text-4xl font-bold text-yellow-800 mb-8">
-            Подойдите в A501 за ключом
+            {/* ✅ ИСПРАВЛЕНО: Используем adminRoom */}
+            Подойдите в {adminRoom || 'A501'} за ключом
           </p>
           <p className="text-2xl font-semibold text-yellow-700">
             💵 Возьмите деньги/купон
