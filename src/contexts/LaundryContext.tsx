@@ -1556,27 +1556,41 @@ const startWashing = async (queueItemId: string) => {
 
   // Разбанить студента
   const unbanStudent = async (studentId: string) => {
-    if (!isAdmin) return;
+    console.log('🔓 unbanStudent called:', { studentId, isAdmin, user: user?.full_name });
+    
+    if (!isAdmin) {
+      console.error('❌ Not admin, cannot unban');
+      return;
+    }
+    
     if (!isSupabaseConfigured || !supabase) {
-      throw new Error('Supabase ');
+      throw new Error('Supabase не настроен');
     }
 
     try {
-      const { error } = await supabase
+      // Проверить текущую сессию
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log('🔑 Current session:', sessionData.session?.user?.id);
+      
+      const { data, error } = await supabase
         .from('students')
         .update({
           is_banned: false,
           banned_at: null,
           ban_reason: null,
         })
-        .eq('id', studentId);
+        .eq('id', studentId)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Supabase error:', error);
+        throw error;
+      }
 
-      console.log(' Student unbanned:', studentId);
+      console.log('✅ Student unbanned:', studentId, data);
       await loadStudents();
     } catch (error) {
-      console.error(' Error unbanning student:', error);
+      console.error('❌ Error unbanning student:', error);
       throw error;
     }
   };
@@ -1618,6 +1632,8 @@ const startWashing = async (queueItemId: string) => {
     studentId: string,
     updates: { first_name?: string; last_name?: string; room?: string }
 ) => {
+  console.log('✏️ updateStudent called:', { studentId, updates, isAdmin, user: user?.full_name });
+  
   if (!isAdmin) throw new Error('Недостаточно прав');
   if (!isSupabaseConfigured || !supabase) {
     throw new Error('Supabase не настроен');
@@ -1647,14 +1663,24 @@ const startWashing = async (queueItemId: string) => {
 
     if (updates.room !== undefined) updateData.room = updates.room;
 
-    const { error } = await supabase
+    console.log('📝 Update data:', updateData);
+    
+    // Проверить текущую сессию
+    const { data: sessionData } = await supabase.auth.getSession();
+    console.log('🔑 Current session:', sessionData.session?.user?.id);
+
+    const { data, error } = await supabase
       .from('students')
       .update(updateData)
-      .eq('id', studentId);
+      .eq('id', studentId)
+      .select();
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Supabase error:', error);
+      throw error;
+    }
 
-    console.log('✅ Student updated:', studentId);
+    console.log('✅ Student updated:', studentId, data);
     await loadStudents();
   } catch (error: any) {
     console.error('❌ Error updating student:', error);
