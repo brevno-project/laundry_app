@@ -164,6 +164,8 @@ async function sendTelegramMessage(chatId: string, message: string): Promise<boo
 export async function POST(request: NextRequest) {
   try {
     const notification: TelegramNotification = await request.json();
+    
+    console.log('📥 Received notification:', JSON.stringify(notification, null, 2));
 
     if (!notification || !notification.type) {
       return NextResponse.json(
@@ -173,6 +175,7 @@ export async function POST(request: NextRequest) {
     }
 
     const message = await formatMessage(notification);
+    console.log('📝 Formatted message:', message);
     let success = false;
 
     // ✅ Уведомления, которые идут ТОЛЬКО студенту
