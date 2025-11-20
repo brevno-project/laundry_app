@@ -175,8 +175,13 @@ export async function POST(request: NextRequest) {
     const message = await formatMessage(notification);
     let success = false;
 
-    // Отправить админу
-    if (TELEGRAM_ADMIN_CHAT_ID) {
+    // ✅ Уведомления, которые идут ТОЛЬКО студенту
+    const studentOnlyNotifications = ['admin_call_for_key', 'admin_return_key'];
+    const isStudentOnly = studentOnlyNotifications.includes(notification.type);
+
+    // Отправить админу (только если это НЕ student-only уведомление)
+    if (!isStudentOnly && TELEGRAM_ADMIN_CHAT_ID) {
+      console.log('📤 Sending to admin:', TELEGRAM_ADMIN_CHAT_ID);
       const adminSuccess = await sendTelegramMessage(TELEGRAM_ADMIN_CHAT_ID, message);
       success = adminSuccess;
     }
@@ -185,8 +190,11 @@ export async function POST(request: NextRequest) {
     if (notification.student_id) {
       const studentChatId = await getStudentTelegramChatId(notification.student_id);
       if (studentChatId) {
+        console.log('📤 Sending to student:', studentChatId);
         const studentSuccess = await sendTelegramMessage(studentChatId, message);
         success = success || studentSuccess;
+      } else {
+        console.log('⚠️ Student has no telegram_chat_id');
       }
     }
 
