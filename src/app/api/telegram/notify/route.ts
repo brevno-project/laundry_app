@@ -111,7 +111,7 @@ async function formatMessage(notification: TelegramNotification): Promise<string
     
     case 'admin_call_for_key':
       if (adminInfo && adminInfo.room) {
-        return `🔔 *ВАС ЗОВУТ ЗА КЛЮЧОМ!*\n\n👤 ${full_name}${roomInfo}${timeInfo}\n\n🏠 Подойдите к комнате: *${adminInfo.room}*\n👨‍💼 Админ: ${adminInfo.full_name}\n\n💵 Не забудьте взять деньги/купон!`;
+        return `🔔 *ВАС ЗОВУТ ЗА КЛЮЧОМ!*\n\n👤 ${full_name}${timeInfo}\n\n🏠 Подойдите к комнате: *${adminInfo.room}*\n👨‍💼 Админ: ${adminInfo.full_name}\n\n💵 Не забудьте взять деньги/купон!`;
       }
       return `⚠️ ОШИБКА: Не удалось получить комнату админа`;
     
@@ -120,7 +120,7 @@ async function formatMessage(notification: TelegramNotification): Promise<string
     
     case 'admin_return_key':
       if (adminInfo && adminInfo.room) {
-        return `⏰ *ВЕРНИТЕ КЛЮЧ!*\n\n👤 ${full_name}${roomInfo}${timeInfo}\n\n🏠 Верните ключ в комнату: *${adminInfo.room}*\n👨‍💼 Админ: ${adminInfo.full_name}\n\n⚡ Как можно скорее!`;
+        return `⏰ *ВЕРНИТЕ КЛЮЧ!*\n\n👤 ${full_name}${timeInfo}\n\n🏠 Верните ключ в комнату: *${adminInfo.room}*\n👨‍💼 Админ: ${adminInfo.full_name}\n\n⚡ Как можно скорее!`;
       }
       return `⚠️ ОШИБКА: Не удалось получить комнату админа`;
     
