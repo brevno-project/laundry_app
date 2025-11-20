@@ -84,7 +84,7 @@ export default function UserForm() {
 
   // Полноэкранное уведомление когда зовут
   if (existingQueueItem?.status === 'ready') {
-    return <FullScreenAlert status={existingQueueItem.status} adminRoom={user?.room} />;
+    return <FullScreenAlert status={existingQueueItem.status} adminRoom={existingQueueItem.admin_room} />;
   }
 
   // Полноэкранное уведомление "Принеси ключ" - БЕЗ кнопки закрытия
@@ -93,7 +93,7 @@ export default function UserForm() {
       <FullScreenAlert 
         status={existingQueueItem.status} 
         needsToReturnKey={true}
-        adminRoom={user?.room}
+        adminRoom={existingQueueItem.admin_room}
       />
     );
   }

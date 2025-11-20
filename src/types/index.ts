@@ -63,6 +63,7 @@ export type QueueItem = {
   note?: string;
   admin_message?: string;
   return_key_alert?: boolean;
+  admin_room?: string; // ✅ Комната админа который позвал
   status: QueueStatus;
   scheduled_for_date: string; // '2025-11-02'
   queue_date: string; // '2025-11-03'
