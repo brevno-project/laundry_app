@@ -82,15 +82,14 @@ export default function UserForm() {
     logoutStudent();
   };
 
-  // ✅ Получаем комнату админа из admin_room или из students
+  // ✅ Получаем комнату админа из admin_message
   const getAdminRoom = () => {
-    // Если есть admin_room - используем его
-    if (existingQueueItem?.admin_room) {
-      return existingQueueItem.admin_room;
+    // Парсим admin_message: "admin_room:A402"
+    if (existingQueueItem?.admin_message?.startsWith('admin_room:')) {
+      return existingQueueItem.admin_message.replace('admin_room:', '');
     }
-    // Иначе ищем админа в students (любого админа)
-    const admin = students.find(s => s.is_admin);
-    return admin?.room || 'A501';
+    // Fallback
+    return 'A501';
   };
 
   // Полноэкранное уведомление когда зовут

@@ -411,10 +411,10 @@ const handleSaveEdit = async () => {
                               className="bg-yellow-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-yellow-600 shadow-sm"
                               onClick={async () => {
                                 try {
-                                  // ✅ Сохраняем комнату админа
+                                  // ✅ Сохраняем комнату админа в admin_message
                                   await updateQueueItem(item.id, { 
                                     return_key_alert: false,
-                                    admin_room: user?.room // ✅ Комната админа
+                                    admin_message: `admin_room:${user?.room}` // ✅ Комната админа
                                   });
                                   await new Promise(resolve => setTimeout(resolve, 100));
                                   await setQueueStatus(item.id, QueueStatus.READY);
@@ -450,10 +450,10 @@ const handleSaveEdit = async () => {
                                   await setQueueStatus(item.id, QueueStatus.RETURNING_KEY);
                                   await new Promise(resolve => setTimeout(resolve, 100));
                                   
-                                  // ✅ Сохраняем комнату админа
+                                  // ✅ Сохраняем комнату админа в admin_message
                                   await updateQueueItem(item.id, { 
                                     return_key_alert: true,
-                                    admin_room: user?.room // ✅ Комната админа
+                                    admin_message: `admin_room:${user?.room}` // ✅ Комната админа
                                   });
                                   
                                   // ✅ КРИТИЧНО: Передаём admin_student_id, НЕ передаём room студента
