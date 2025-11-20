@@ -42,6 +42,7 @@ export enum QueueStatus {
   READY = 'ready',
   KEY_ISSUED = 'key_issued',
   WASHING = 'washing',
+  RETURNING_KEY = 'returning_key',
   DONE = 'done',
 }
 

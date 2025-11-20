@@ -32,7 +32,10 @@ interface TelegramNotification {
 
 // Получить информацию об админе
 async function getAdminInfo(admin_student_id?: string): Promise<{ full_name: string; room: string; telegram_chat_id: string | null } | null> {
+  console.log('🔍 getAdminInfo called with admin_student_id:', admin_student_id);
+  
   if (!supabaseUrl || !supabaseKey || !admin_student_id) {
+    console.error('❌ Missing required data:', { supabaseUrl: !!supabaseUrl, supabaseKey: !!supabaseKey, admin_student_id });
     return null;
   }
   
@@ -45,10 +48,11 @@ async function getAdminInfo(admin_student_id?: string): Promise<{ full_name: str
     .single();
   
   if (error) {
-    console.error('Error getting admin info:', error);
+    console.error('❌ Error getting admin info:', error);
     return null;
   }
   
+  console.log('✅ Admin info retrieved:', data);
   return data;
 }
 

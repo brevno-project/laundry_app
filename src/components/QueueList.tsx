@@ -164,6 +164,8 @@ const handleSaveEdit = async () => {
         return { bg: 'bg-blue-50', text: 'text-blue-900', badge: '🔑 Ключ выдан', badgeColor: 'bg-blue-400 text-blue-900' };
       case QueueStatus.WASHING:
         return { bg: 'bg-green-50', text: 'text-green-900', badge: '🟢 СТИРАЕТ', badgeColor: 'bg-green-400 text-green-900' };
+      case QueueStatus.RETURNING_KEY:
+        return { bg: 'bg-orange-50', text: 'text-orange-900', badge: '🔑 ВОЗВРАЩАЕТ КЛЮЧ', badgeColor: 'bg-orange-400 text-orange-900' };
       case QueueStatus.DONE:
         return { bg: 'bg-emerald-50', text: 'text-emerald-900', badge: '✅ ПОСТИРАЛСЯ', badgeColor: 'bg-emerald-400 text-emerald-900' };
       default:
@@ -177,6 +179,7 @@ const handleSaveEdit = async () => {
     item.status === QueueStatus.READY || 
     item.status === QueueStatus.KEY_ISSUED || 
     item.status === QueueStatus.WASHING || 
+    item.status === QueueStatus.RETURNING_KEY || 
     item.status === QueueStatus.DONE
   );
 
@@ -440,10 +443,9 @@ const handleSaveEdit = async () => {
                               className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm"
                               onClick={async () => {
                                 try {
-                                  if (item.status === QueueStatus.READY) {
-                                    await setQueueStatus(item.id, QueueStatus.WAITING);
-                                    await new Promise(resolve => setTimeout(resolve, 100));
-                                  }
+                                  // ✅ Устанавливаем статус RETURNING_KEY
+                                  await setQueueStatus(item.id, QueueStatus.RETURNING_KEY);
+                                  await new Promise(resolve => setTimeout(resolve, 100));
                                   
                                   await updateQueueItem(item.id, { return_key_alert: true });
                                   
@@ -619,13 +621,7 @@ const handleSaveEdit = async () => {
                           </button>
                         )}
                             
-                        {/* Статус для не-админа */}
-                        {!isAdmin && item.status === QueueStatus.WASHING && (
-                          <span className="text-green-700 font-bold text-sm">🟢 Стирает...</span>
-                          )}
-                        {!isAdmin && item.status === QueueStatus.DONE && (
-                          <span className="text-emerald-700 font-bold text-sm">✅ Готово</span>
-                        )}
+                        {/* Статус для не-админа - убран, так как уже отображается выше */}
                       </div>
                     </div>
                   </div>
