@@ -82,14 +82,9 @@ export default function UserForm() {
     logoutStudent();
   };
 
-  // ✅ Получаем комнату админа из admin_message
+  // ✅ Получаем комнату админа из базы
   const getAdminRoom = () => {
-    // Парсим admin_message: "admin_room:A402"
-    if (existingQueueItem?.admin_message?.startsWith('admin_room:')) {
-      return existingQueueItem.admin_message.replace('admin_room:', '');
-    }
-    // Fallback
-    return 'A501';
+    return existingQueueItem?.admin_room || 'A501';
   };
 
   // Полноэкранное уведомление когда зовут
