@@ -82,9 +82,20 @@ export default function UserForm() {
     logoutStudent();
   };
 
+  // ✅ Получаем комнату админа из admin_room или из students
+  const getAdminRoom = () => {
+    // Если есть admin_room - используем его
+    if (existingQueueItem?.admin_room) {
+      return existingQueueItem.admin_room;
+    }
+    // Иначе ищем админа в students (любого админа)
+    const admin = students.find(s => s.is_admin);
+    return admin?.room || 'A501';
+  };
+
   // Полноэкранное уведомление когда зовут
   if (existingQueueItem?.status === 'ready') {
-    return <FullScreenAlert status={existingQueueItem.status} adminRoom={existingQueueItem.admin_room} />;
+    return <FullScreenAlert status={existingQueueItem.status} adminRoom={getAdminRoom()} />;
   }
 
   // Полноэкранное уведомление "Принеси ключ" - БЕЗ кнопки закрытия
@@ -93,7 +104,7 @@ export default function UserForm() {
       <FullScreenAlert 
         status={existingQueueItem.status} 
         needsToReturnKey={true}
-        adminRoom={existingQueueItem.admin_room}
+        adminRoom={getAdminRoom()}
       />
     );
   }
