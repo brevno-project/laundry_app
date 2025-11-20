@@ -2,14 +2,12 @@
 
 import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
-import { v4 as uuidv4 } from 'uuid';
 
 export default function AdminLogin() {
-  const { setUser, setIsAdmin,user, students } = useLaundry();
+  const { adminLogin } = useLaundry();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { verifyAdminKey } = useLaundry();
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,30 +20,15 @@ export default function AdminLogin() {
     setLoading(true);
     setError('');
   
-    // ✅ ПРОВЕРКА: Пользователь должен быть студентом с is_admin
-    if (!user) {
-      setError('Сначала войдите как студент');
-      setLoading(false);
-      return;
-    }
-  
-    const currentStudent = students.find(s => s.id === user.student_id);
-    
-    if (!currentStudent?.is_admin) {
-      setError('У вас нет прав админа');
-      setLoading(false);
-      return;
-    }
-  
-    // ✅ Проверить админ пароль из Vercel
-    const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
-    
-    if (password === adminPassword) {
-      setIsAdmin(true);
-      localStorage.setItem('laundryIsAdmin', 'true');
+    try {
+      // ✅ Вызываем безопасный API route, который проверяет пароль на сервере
+      await adminLogin(password);
       setError('');
-    } else {
-      setError('Неверный пароль админа');
+      setPassword('');
+    } catch (err: any) {
+      console.error('❌ Admin login error:', err);
+      setError(err.message || 'Ошибка входа');
+    } finally {
       setLoading(false);
     }
   };

@@ -43,3 +43,6 @@ next-env.d.ts
 
 # windsurf rules
 .windsurfrules
+
+# Telegram secrets
+token_bot_telegram.txt

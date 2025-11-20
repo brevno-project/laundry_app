@@ -27,7 +27,6 @@ import {
 
 
 const TIMEZONE = 'Asia/Bishkek';
-const ADMIN_KEY = process.env.NEXT_PUBLIC_ADMIN_KEY || 'admin';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -79,7 +78,6 @@ type LaundryContextType = {
   isSuperAdmin: boolean;
   setIsAdmin: (isAdmin: boolean) => void;
   setIsSuperAdmin: (isSuperAdmin: boolean) => void;
-  verifyAdminKey: (key: string) => boolean;
   getUserQueueItem: () => QueueItem | undefined;
   isLoading: boolean;
   isNewUser: boolean; // 
@@ -560,13 +558,26 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
         console.log('🔄 Resetting registration for:', studentData.full_name);
     
         // Удалить из Supabase Auth если user_id существует
-        if (studentData.user_id) {
+        if (studentData.user_id && user?.id) {
           console.log('🗑️ Deleting auth user:', studentData.user_id);
-          const { error: authError } = await supabase.auth.admin.deleteUser(studentData.user_id);
-          if (authError) {
-            console.warn('⚠️ Could not delete auth user:', authError);
-          } else {
-            console.log('✅ Auth user deleted');
+          try {
+            const response = await fetch('/api/admin/delete-user', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                userId: studentData.user_id,
+                adminUserId: user.id 
+              })
+            });
+            
+            const result = await response.json();
+            if (!response.ok) {
+              console.warn('⚠️ Could not delete auth user:', result.error);
+            } else {
+              console.log('✅ Auth user deleted');
+            }
+          } catch (error) {
+            console.warn('⚠️ Error calling delete-user API:', error);
           }
         }
     
@@ -1738,10 +1749,23 @@ const deleteStudent = async (studentId: string) => {
     }
 
     // 3. Удалить auth пользователя (если есть user_id)
-    if (targetStudent.user_id) {
-      const { error: authError } = await supabase.auth.admin.deleteUser(targetStudent.user_id);
-      if (authError) {
-        console.warn('⚠️ Could not delete auth user:', authError);
+    if (targetStudent.user_id && user?.id) {
+      try {
+        const response = await fetch('/api/admin/delete-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            userId: targetStudent.user_id,
+            adminUserId: user.id 
+          })
+        });
+        
+        const result = await response.json();
+        if (!response.ok) {
+          console.warn('⚠️ Could not delete auth user:', result.error);
+        }
+      } catch (error) {
+        console.warn('⚠️ Error calling delete-user API:', error);
         // Не бросаем ошибку, продолжаем удаление
       }
     }
@@ -1787,14 +1811,7 @@ const updateAdminKey = async (newKey: string) => {
   }
 };
 
-  // Verify admin key
-  const verifyAdminKey = (key: string): boolean => {
-    const isValid = key === ADMIN_KEY;
-    if (isValid) {
-      setIsAdmin(true);
-    }
-    return isValid;
-  };
+
 
   // Get current user's queue item if it exists
   const getUserQueueItem = (): QueueItem | undefined => {
@@ -2320,62 +2337,45 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
   }
 };
 
-  const adminLogin = async (adminKey: string): Promise<User | null> => {
+  const adminLogin = async (password: string): Promise<User | null> => {
     if (!isSupabaseConfigured || !supabase) {
       throw new Error('Supabase not configured');
     }
 
-    // Войти через Supabase Auth с твоим аккаунтом
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: 'student-622ddda2@example.com',
-      password: adminKey,
-    });
+    try {
+      // Вызываем безопасный API route, который хранит email админа на сервере
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
 
-    if (error) {
-      throw new Error('Неверный admin ключ');
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка входа');
+      }
+
+      // Устанавливаем сессию в Supabase клиенте
+      if (result.session) {
+        await supabase.auth.setSession(result.session);
+      }
+
+      const newUser: User = result.user;
+
+      setUser(newUser);
+      setIsAdmin(newUser.is_admin || false);
+      setIsSuperAdmin(newUser.is_super_admin || false);
+      localStorage.setItem('laundryUser', JSON.stringify(newUser));
+      localStorage.setItem('laundryIsAdmin', (newUser.is_admin || false).toString());
+      localStorage.setItem('laundryIsSuperAdmin', (newUser.is_super_admin || false).toString());
+
+      console.log('✅ Admin logged in:', newUser.full_name, 'isAdmin:', newUser.is_admin, 'isSuperAdmin:', newUser.is_super_admin);
+      return newUser;
+    } catch (error: any) {
+      console.error('❌ Admin login error:', error);
+      throw error;
     }
-
-    const authUser = data.user;
-    if (!authUser) {
-      throw new Error('Auth user not found');
-    }
-
-    // Проверить админ статус в таблице students
-    const { data: student, error: studentError } = await supabase
-      .from('students')
-      .select('*')
-      .eq('user_id', authUser.id)
-      .single();
-
-    if (studentError || !student) {
-      throw new Error('Admin не найден в базе');
-    }
-
-    if (!student.is_admin && !student.is_super_admin) {
-      throw new Error('Пользователь не админ');
-    }
-
-    // Создать локального пользователя
-    const newUser: User = {
-      id: authUser.id,
-      student_id: student.id,
-      first_name: student.first_name,
-      last_name: student.last_name,
-      full_name: student.full_name,
-      room: student.room,
-      is_admin: student.is_admin,
-      is_super_admin: student.is_super_admin,
-    };
-
-    setUser(newUser);
-    setIsAdmin(student.is_admin);
-    setIsSuperAdmin(student.is_super_admin);
-    localStorage.setItem('laundryUser', JSON.stringify(newUser));
-    localStorage.setItem('laundryIsAdmin', student.is_admin.toString());
-    localStorage.setItem('laundryIsSuperAdmin', student.is_super_admin.toString());
-
-    console.log('✅ Admin logged in:', newUser.full_name, 'isAdmin:', student.is_admin, 'isSuperAdmin:', student.is_super_admin);
-    return newUser;
   };
 
   const value = {
@@ -2417,7 +2417,6 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     isSuperAdmin,
     setIsAdmin,
     setIsSuperAdmin,
-    verifyAdminKey,
     getUserQueueItem,
     isLoading,
     isNewUser,
