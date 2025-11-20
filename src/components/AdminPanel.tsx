@@ -9,7 +9,6 @@ export default function AdminPanel() {
     user,
     isAdmin, 
     setIsAdmin, 
-    verifyAdminKey, 
     adminLogin,
     queue,
     students,
