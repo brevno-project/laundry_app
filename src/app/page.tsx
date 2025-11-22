@@ -220,6 +220,7 @@ export default function Home() {
                 {(user || isAdmin) && (
                   <>
                     {!isAdmin && <UserForm />} {/* UserForm только для обычных пользователей */}
+                    {!isAdmin && !user?.telegram_chat_id && <TelegramSetup />} {/* TelegramSetup для пользователей без Telegram */}
                     <QueueList />
                   </>
                 )}

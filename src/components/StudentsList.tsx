@@ -89,8 +89,23 @@ export default function StudentsList() {
       return;
     }
     
+    if (!newRoom) {
+      alert('❌ Укажите комнату');
+      return;
+    }
+    
+    // ✅ Проверяем формат комнаты: только A или B + номер
+    const roomPattern = /^[AB]\d{3}$/i;
+    if (!roomPattern.test(newRoom)) {
+      alert('❌ Неверный формат комнаты!\nПримеры: A301, B402\nТолько блоки A и B');
+      return;
+    }
+    
+    // ✅ Приводим к верхнему регистру
+    const formattedRoom = newRoom.toUpperCase();
+    
     try {
-      await addStudent(newFirstName, newLastName, newRoom || undefined);
+      await addStudent(newFirstName, newLastName, formattedRoom);
       
       setShowAddModal(false);
       setNewFirstName('');
@@ -288,6 +303,19 @@ export default function StudentsList() {
             
             <div className="space-y-4">
               <div>
+                <label className="block text-sm font-bold mb-2 text-gray-900">Комната *</label>
+                <input
+                  type="text"
+                  value={newRoom}
+                  onChange={(e) => setNewRoom(e.target.value.toUpperCase())}
+                  placeholder="A301 или B402"
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+                  maxLength={4}
+                />
+                <p className="text-xs text-gray-500 mt-1">Только блоки A или B (например: A301, B402)</p>
+              </div>
+              
+              <div>
                 <label className="block text-sm font-bold mb-2 text-gray-900">Фамилия *</label>
                 <input
                   type="text"
@@ -306,17 +334,6 @@ export default function StudentsList() {
                   onChange={(e) => setNewFirstName(e.target.value)}
                   className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
                   placeholder="Иван"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-bold mb-2 text-gray-900">Комната (опционально)</label>
-                <input
-                  type="text"
-                  value={newRoom}
-                  onChange={(e) => setNewRoom(e.target.value)}
-                  placeholder="A301, B402, итд"
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
                 />
               </div>
             </div>
