@@ -165,7 +165,7 @@ const handleSaveEdit = async () => {
       case QueueStatus.WASHING:
         return { bg: 'bg-green-50', text: 'text-green-900', badge: '🟢 СТИРАЕТ', badgeColor: 'bg-green-400 text-green-900' };
       case QueueStatus.RETURNING_KEY:
-        return { bg: 'bg-orange-50', text: 'text-orange-900', badge: '🔑 ВОЗВРАЩАЕТ КЛЮЧ', badgeColor: 'bg-orange-400 text-orange-900' };
+        return { bg: 'bg-orange-50', text: 'text-orange-900', badge: '🏃 НЕСЕТ КЛЮЧ', badgeColor: 'bg-orange-400 text-orange-900' };
       case QueueStatus.DONE:
         return { bg: 'bg-emerald-50', text: 'text-emerald-900', badge: '✅ ПОСТИРАЛСЯ', badgeColor: 'bg-emerald-400 text-emerald-900' };
       default:
