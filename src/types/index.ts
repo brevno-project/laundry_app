@@ -68,6 +68,7 @@ export type QueueItem = {
   ready_at?: string; // Когда позвали за ключом
   key_issued_at?: string; // Когда выдали ключ
   washing_started_at?: string; // Когда начал стирать
+  washing_finished_at?: string; // Когда закончил стирать
   return_requested_at?: string; // Когда попросили вернуть ключ
   status: QueueStatus;
   scheduled_for_date: string; // '2025-11-02'
