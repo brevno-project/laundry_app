@@ -544,9 +544,9 @@ const handleSaveEdit = async () => {
                             </div>
 
                             {/* БЛОК: Действия со статусом */}
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="flex flex-col gap-2">
                               <button
-                                className="bg-blue-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-blue-700 shadow-sm"
+                                className="bg-blue-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-blue-700 shadow-sm w-full"
                                 onClick={async () => {
                                   try {
                                     if (!isAdmin) {
@@ -587,8 +587,10 @@ const handleSaveEdit = async () => {
                                 🔑 Ключ выдан
                               </button>
                               
+                              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                              
                               <button
-                                className="bg-green-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-green-700 shadow-sm"
+                                className="bg-green-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-green-700 shadow-sm w-full"
                                 onClick={async () => {
                                   try {
                                     if (!isAdmin) {
@@ -612,8 +614,10 @@ const handleSaveEdit = async () => {
                                 🟢 Стирает
                               </button>
                               
+                              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                              
                               <button
-                                className="bg-orange-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-700 shadow-sm"
+                                className="bg-orange-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-700 shadow-sm w-full"
                                 onClick={async () => {
                                   try {
                                     if (!isAdmin) {
@@ -637,8 +641,10 @@ const handleSaveEdit = async () => {
                                 🔑 Вернуть ключ
                               </button>
                               
+                              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                              
                               <button
-                                className="bg-emerald-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-emerald-700 shadow-sm"
+                                className="bg-emerald-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-emerald-700 shadow-sm w-full"
                                 onClick={async () => {
                                   try {
                                     if (!isAdmin) {
@@ -658,8 +664,10 @@ const handleSaveEdit = async () => {
                                 ✅ Завершить
                               </button>
                               
+                              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                              
                               <button
-                                className="bg-purple-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-purple-600 shadow-sm"
+                                className="bg-purple-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-purple-600 shadow-sm w-full"
                                 onClick={async () => {
                                   try {
                                     if (!isAdmin) {
