@@ -637,12 +637,35 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
 
       console.log(' API response:', data);
 
-      // 
-      const updatedUser = { ...user, telegram_chat_id: telegramCode };
-      setUser(updatedUser);
-      localStorage.setItem('laundryUser', JSON.stringify(updatedUser)); // 
+      // Проверяем что данные обновились в базе
+      if (isSupabaseConfigured && supabase) {
+        const { data: studentData, error: fetchError } = await supabase
+          .from('students')
+          .select('*')
+          .eq('id', user.student_id)
+          .single();
+        
+        if (fetchError) {
+          console.error('Error fetching updated student:', fetchError);
+        } else {
+          console.log('Updated student from DB:', studentData);
+          
+          const updatedUser: User = {
+            ...user,
+            telegram_chat_id: studentData.telegram_chat_id || undefined,
+          };
+          
+          setUser(updatedUser);
+          localStorage.setItem('laundryUser', JSON.stringify(updatedUser));
+          console.log('User updated with telegram_chat_id:', updatedUser.telegram_chat_id);
+        }
+      } else {
+        const updatedUser = { ...user, telegram_chat_id: telegramCode };
+        setUser(updatedUser);
+        localStorage.setItem('laundryUser', JSON.stringify(updatedUser));
+      }
 
-      console.log(' Telegram , Chat ID:', telegramCode);
+      console.log('Telegram connected, Chat ID:', telegramCode);
       return { success: true };
     } catch (error: any) {
       console.error(' Error linking Telegram:', error);
