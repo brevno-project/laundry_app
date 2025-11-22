@@ -51,7 +51,7 @@ export default function QueueTimers({ item }: QueueTimersProps) {
           break;
         case QueueStatus.RETURNING_KEY:
           startTime = item.return_requested_at ? new Date(item.return_requested_at) : null;
-          redZoneMinutes = 30 / SPEED_MULTIPLIER; // 30 секунд (было 30 минут)
+          redZoneMinutes = 5 / SPEED_MULTIPLIER; // 5 секунд (было 5 минут)
           break;
         default:
           return;
@@ -82,13 +82,15 @@ export default function QueueTimers({ item }: QueueTimersProps) {
 
   // Форматирование времени
   const formatTime = (minutes: number): string => {
-    const hours = Math.floor(minutes / 60);
-    const mins = Math.floor(minutes % 60);
+    const totalSeconds = Math.floor(minutes * 60);
+    const hours = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
     
     if (hours > 0) {
-      return `${hours}ч ${mins}м`;
+      return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
-    return `${mins}м`;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   // Определяем текст статуса
