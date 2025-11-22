@@ -554,6 +554,23 @@ const handleSaveEdit = async () => {
                                     });
                                     await new Promise(resolve => setTimeout(resolve, 100));
                                     await setQueueStatus(item.id, QueueStatus.KEY_ISSUED);
+                                    
+                                    // ✅ Отправляем Telegram уведомление
+                                    try {
+                                      await fetch('/api/telegram/notify', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                          type: 'key_issued',
+                                          full_name: item.full_name,
+                                          room: item.room,
+                                          student_id: item.student_id
+                                        })
+                                      });
+                                    } catch (err) {
+                                      console.error('❌ Error sending Telegram notification:', err);
+                                    }
+                                    
                                     alert(`✅ ${item.full_name} получил ключ!`);
                                   } catch (error) {
                                     console.error('❌ Ошибка:', error);
