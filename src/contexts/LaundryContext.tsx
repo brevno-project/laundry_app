@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { User, Student, QueueItem, MachineStatus, QueueStatus, MachineState, HistoryItem } from '@/types';
 import { sendTelegramNotification } from '@/lib/telegram';
 import { parseISO, format, addDays } from 'date-fns';
+import { ru } from 'date-fns/locale';
 import { formatInTimeZone } from 'date-fns-tz';
 import {
   get_local_queue,
@@ -38,7 +39,7 @@ const generateUserId = () => uuidv4();
 
 // Format date to local timezone
 export const formatDate = (dateString: string) => {
-  return formatInTimeZone(parseISO(dateString), TIMEZONE, 'HH:mm, dd MMM');
+  return formatInTimeZone(parseISO(dateString), TIMEZONE, 'HH:mm, dd MMMM yyyy', { locale: ru });
 };
 
 type LaundryContextType = {

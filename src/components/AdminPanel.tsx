@@ -46,8 +46,7 @@ export default function AdminPanel() {
   // Параметры записи в очередь (включая дату)
   const [queueWashCount, setQueueWashCount] = useState(1);
   const [queuePaymentType, setQueuePaymentType] = useState('money');
-  const [queueHour, setQueueHour] = useState('20');
-  const [queueMinute, setQueueMinute] = useState('00');
+
   const [queueDate, setQueueDate] = useState(''); // НОВОЕ ПОЛЕ
   
   // Форма добавления студента
@@ -259,15 +258,11 @@ export default function AdminPanel() {
     if (!selectedStudent) return;
     
     try {
-      const today = new Date();
-      today.setHours(parseInt(queueHour), parseInt(queueMinute), 0, 0);
-      const expectedFinishAt = today.toISOString();
-      
       await adminAddToQueue(
         selectedStudent.room || undefined,
         queueWashCount,
         queuePaymentType,
-        expectedFinishAt,
+        undefined, // expectedFinishAt больше не используется
         queueDate,
         selectedStudent.id,
       );
@@ -299,8 +294,6 @@ export default function AdminPanel() {
     setSelectedStudent(student);
     setQueueWashCount(1);
     setQueuePaymentType('money');
-    setQueueHour('20');
-    setQueueMinute('00');
     const today = new Date().toISOString().slice(0, 10);
     setQueueDate(today); // Устанавливаем сегодняшнюю дату по умолчанию
     setShowAddToQueue(true);
@@ -819,34 +812,7 @@ export default function AdminPanel() {
                 </select>
               </div>
               
-              <div>
-                <label className="block text-sm font-bold mb-2 text-gray-900">Закончит в</label>
-                <div className="flex gap-2">
-                  <select
-                    value={queueHour}
-                    onChange={(e) => setQueueHour(e.target.value)}
-                    className="flex-1 border-2 border-gray-300 rounded-lg p-2 text-gray-900"
-                  >
-                    {Array.from({ length: 24 }, (_, i) => i).map(hour => (
-                      <option key={hour} value={hour.toString().padStart(2, '0')}>
-                        {hour.toString().padStart(2, '0')}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="text-2xl text-gray-900">:</span>
-                  <select
-                    value={queueMinute}
-                    onChange={(e) => setQueueMinute(e.target.value)}
-                    className="flex-1 border-2 border-gray-300 rounded-lg p-2 text-gray-900"
-                  >
-                    {Array.from({ length: 60 }, (_, i) => i).map(minute => (
-                      <option key={minute} value={minute.toString().padStart(2, '0')}>
-                        {minute.toString().padStart(2, '0')}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+
             </div>
             
             <div className="flex gap-2 mt-4">

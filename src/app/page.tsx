@@ -216,6 +216,7 @@ export default function Home() {
                 {(user || isAdmin) && (
                   <>
                     {!isAdmin && <UserForm />} {/* UserForm только для обычных пользователей */}
+                    {!isAdmin && <TelegramSetup />} {/* TelegramSetup только для обычных пользователей */}
                     <QueueList />
                   </>
                 )}
