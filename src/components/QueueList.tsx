@@ -446,8 +446,11 @@ const handleSaveEdit = async () => {
                               className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm"
                               onClick={async () => {
                                 try {
+                                  console.log('🔑 Нажата кнопка Вернуть, item:', item);
                                   // ✅ Устанавливаем статус RETURNING_KEY
+                                  console.log('🔄 Устанавливаем статус RETURNING_KEY...');
                                   await setQueueStatus(item.id, QueueStatus.RETURNING_KEY);
+                                  console.log('✅ Статус установлен');
                                   await new Promise(resolve => setTimeout(resolve, 100));
                                   
                                   // ✅ Сохраняем комнату админа
