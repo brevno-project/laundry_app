@@ -528,7 +528,8 @@ export default function AdminPanel() {
 
                   {/* ========== ОПАСНЫЕ ДЕЙСТВИЯ ========== */}
                   <div className="border-t border-red-300 pt-2 mt-2">
-                  {isAdmin && student.is_registered && (isSuperAdmin || !student.is_admin && !student.is_super_admin) && (
+                  {/* ✅ Сбросить регистрацию - ТОЛЬКО СУПЕРАДМИН */}
+                  {isSuperAdmin && student.is_registered && !student.is_super_admin && (
                       <button
                         onClick={() => openResetConfirm(student)}
                         className="bg-orange-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-orange-600 w-full mb-1"
@@ -538,7 +539,8 @@ export default function AdminPanel() {
                       </button>
                     )}
 
-                    {isAdmin && !student.is_super_admin && student.is_banned && (
+                    {/* ✅ Разбанить - ТОЛЬКО СУПЕРАДМИН */}
+                    {isSuperAdmin && !student.is_super_admin && student.is_banned && (
                       <button
                         onClick={() => handleUnbanStudent(student.id)}
                         className="w-full px-4 py-2 rounded-lg text-sm font-bold bg-green-500 hover:bg-green-600 text-white mb-1"
@@ -547,7 +549,8 @@ export default function AdminPanel() {
                       </button>
                     )}
 
-                    {isAdmin && !student.is_super_admin && !student.is_banned && (
+                    {/* ✅ Забанить - ТОЛЬКО СУПЕРАДМИН */}
+                    {isSuperAdmin && !student.is_super_admin && !student.is_banned && (
                       <button
                         onClick={() => openBanModal(student)}
                         className="bg-red-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-red-600 w-full mb-1"
@@ -557,7 +560,8 @@ export default function AdminPanel() {
                       </button>
                     )}
 
-                    {isAdmin && !student.is_super_admin && (
+                    {/* ✅ Удалить - ТОЛЬКО СУПЕРАДМИН */}
+                    {isSuperAdmin && !student.is_super_admin && (
                       <button
                         onClick={() => openDeleteModal(student)}
                         className="bg-gray-700 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-gray-800 w-full"

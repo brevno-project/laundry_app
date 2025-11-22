@@ -1,9 +1,18 @@
 "use client";
 
 import { useLaundry } from '@/contexts/LaundryContext';
+import { useState } from 'react';
+import { Student } from '@/types';
 
 export default function StudentsList() {
-  const { students } = useLaundry();
+  const { students, isAdmin, user, updateStudent } = useLaundry();
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [editRoom, setEditRoom] = useState('');
+  const [editFirstName, setEditFirstName] = useState('');
+  const [editLastName, setEditLastName] = useState('');
+  
+  // Проверяем что пользователь - суперадмин
+  const isSuperAdmin = user && students.find(s => s.id === user.student_id)?.is_super_admin;
 
   if (!students || students.length === 0) {
     return (
@@ -14,58 +23,200 @@ export default function StudentsList() {
     );
   }
 
-  // Сортируем по фамилии
+  // ✅ Сортируем по блокам A/B, затем по комнатам, затем по фамилии
   const sortedStudents = [...students].sort((a, b) => {
+    // 1. Сначала по блоку (A перед B)
+    const blockA = a.room?.charAt(0) || 'Z';
+    const blockB = b.room?.charAt(0) || 'Z';
+    if (blockA !== blockB) {
+      return blockA.localeCompare(blockB);
+    }
+    
+    // 2. Затем по номеру комнаты
+    const roomA = parseInt(a.room?.slice(1) || '9999');
+    const roomB = parseInt(b.room?.slice(1) || '9999');
+    if (roomA !== roomB) {
+      return roomA - roomB;
+    }
+    
+    // 3. Затем по фамилии
     const lastNameA = a.last_name?.toLowerCase() || '';
     const lastNameB = b.last_name?.toLowerCase() || '';
     return lastNameA.localeCompare(lastNameB);
   });
+  
+  // Группируем по блокам
+  const blockA = sortedStudents.filter(s => s.room?.startsWith('A'));
+  const blockB = sortedStudents.filter(s => s.room?.startsWith('B'));
+  
+  const openEditModal = (student: Student) => {
+    setEditingStudent(student);
+    setEditRoom(student.room || '');
+    setEditFirstName(student.first_name || '');
+    setEditLastName(student.last_name || '');
+  };
+  
+  const handleSaveEdit = async () => {
+    if (!editingStudent) return;
+    
+    try {
+      await updateStudent(editingStudent.id, {
+        room: editRoom,
+        first_name: editFirstName,
+        last_name: editLastName,
+      });
+      
+      setEditingStudent(null);
+      alert('✅ Студент обновлен!');
+    } catch (error) {
+      console.error('❌ Error updating student:', error);
+      alert('❌ Ошибка обновления');
+    }
+  };
+  
+  const renderStudentRow = (student: Student, index: number) => (
+    <tr 
+      key={student.id} 
+      className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
+    >
+      <td className="p-3 text-gray-700">{index + 1}</td>
+      <td className="p-3 font-semibold text-gray-900">{student.last_name || '—'}</td>
+      <td className="p-3 text-gray-900">{student.first_name || '—'}</td>
+      <td className="p-3 text-gray-900">
+        {student.room ? (
+          <span className="bg-blue-100 text-blue-900 px-2 py-1 rounded font-semibold">
+            {student.room}
+          </span>
+        ) : (
+          <span className="text-gray-400">—</span>
+        )}
+      </td>
+      <td className="p-3">
+        {student.telegram_chat_id ? (
+          <span className="text-green-600 font-semibold">✅ Подключен</span>
+        ) : (
+          <span className="text-gray-400">❌ Не подключен</span>
+        )}
+      </td>
+      <td className="p-3">
+        {isAdmin && !student.is_super_admin && (
+          <button
+            onClick={() => openEditModal(student)}
+            className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+          >
+            ✏️ Редактировать
+          </button>
+        )}
+      </td>
+    </tr>
+  );
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-      <h2 className="text-2xl font-bold mb-4 text-gray-800">👥 Список студентов ({students.length})</h2>
-      
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-100 border-b-2 border-gray-300">
-              <th className="text-left p-3 font-bold text-gray-900">#</th>
-              <th className="text-left p-3 font-bold text-gray-900">Фамилия</th>
-              <th className="text-left p-3 font-bold text-gray-900">Имя</th>
-              <th className="text-left p-3 font-bold text-gray-900">Комната</th>
-              <th className="text-left p-3 font-bold text-gray-900">Telegram</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedStudents.map((student, index) => (
-              <tr 
-                key={student.id} 
-                className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
-              >
-                <td className="p-3 text-gray-700">{index + 1}</td>
-                <td className="p-3 font-semibold text-gray-900">{student.last_name || '—'}</td>
-                <td className="p-3 text-gray-900">{student.first_name || '—'}</td>
-                <td className="p-3 text-gray-900">
-                  {student.room ? (
-                    <span className="bg-blue-100 text-blue-900 px-2 py-1 rounded font-semibold">
-                      {student.room}
-                    </span>
-                  ) : (
-                    <span className="text-gray-400">—</span>
-                  )}
-                </td>
-                <td className="p-3">
-                  {student.telegram_chat_id ? (
-                    <span className="text-green-600 font-semibold">✅ Подключен</span>
-                  ) : (
-                    <span className="text-gray-400">❌ Не подключен</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <>
+      <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+        <h2 className="text-2xl font-bold mb-4 text-gray-800">👥 Список студентов ({students.length})</h2>
+        
+        {/* Блок A */}
+        <div className="mb-6">
+          <h3 className="text-xl font-bold mb-3 text-blue-700">🏢 Блок A ({blockA.length})</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-blue-100 border-b-2 border-blue-300">
+                  <th className="text-left p-3 font-bold text-gray-900">#</th>
+                  <th className="text-left p-3 font-bold text-gray-900">Фамилия</th>
+                  <th className="text-left p-3 font-bold text-gray-900">Имя</th>
+                  <th className="text-left p-3 font-bold text-gray-900">Комната</th>
+                  <th className="text-left p-3 font-bold text-gray-900">Telegram</th>
+                  {isAdmin && <th className="text-left p-3 font-bold text-gray-900">Действия</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {blockA.map((student, index) => renderStudentRow(student, index))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        {/* Блок B */}
+        <div>
+          <h3 className="text-xl font-bold mb-3 text-green-700">🏢 Блок B ({blockB.length})</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-green-100 border-b-2 border-green-300">
+                  <th className="text-left p-3 font-bold text-gray-900">#</th>
+                  <th className="text-left p-3 font-bold text-gray-900">Фамилия</th>
+                  <th className="text-left p-3 font-bold text-gray-900">Имя</th>
+                  <th className="text-left p-3 font-bold text-gray-900">Комната</th>
+                  <th className="text-left p-3 font-bold text-gray-900">Telegram</th>
+                  {isAdmin && <th className="text-left p-3 font-bold text-gray-900">Действия</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {blockB.map((student, index) => renderStudentRow(student, index))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-    </div>
+      
+      {/* Модальное окно редактирования */}
+      {editingStudent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">✏️ Редактировать студента</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold mb-2 text-gray-900">Фамилия</label>
+                <input
+                  type="text"
+                  value={editLastName}
+                  onChange={(e) => setEditLastName(e.target.value)}
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-bold mb-2 text-gray-900">Имя</label>
+                <input
+                  type="text"
+                  value={editFirstName}
+                  onChange={(e) => setEditFirstName(e.target.value)}
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-bold mb-2 text-gray-900">Комната</label>
+                <input
+                  type="text"
+                  value={editRoom}
+                  onChange={(e) => setEditRoom(e.target.value)}
+                  placeholder="A301, B402, итд"
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={() => setEditingStudent(null)}
+                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                className="flex-1 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700"
+              >
+                ✅ Сохранить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
