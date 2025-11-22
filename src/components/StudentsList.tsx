@@ -197,7 +197,7 @@ export default function StudentsList() {
         <div className="mb-6">
           <h3 className="text-xl font-bold mb-3 text-blue-700">🏢 Блок A ({blockA.length})</h3>
           
-          {/* Десктоп: таблица */}
+          {/* Десктоп: обычная таблица */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
@@ -216,45 +216,61 @@ export default function StudentsList() {
             </table>
           </div>
           
-          {/* Мобильные: карточки */}
-          <div className="md:hidden space-y-3">
-            {blockA.map((student, index) => (
-              <div key={student.id} className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="font-bold text-gray-900">#{index + 1}</div>
-                  <div className="text-sm">
-                    {student.telegram_chat_id ? (
-                      <span className="text-green-600">✅ Telegram</span>
-                    ) : (
-                      <span className="text-red-600">❌ Нет</span>
+          {/* Мобильные: компактная таблица */}
+          <div className="md:hidden overflow-x-auto">
+            <table className="w-full border-collapse text-xs">
+              <thead>
+                <tr className="bg-blue-100 border-b-2 border-blue-300">
+                  <th className="text-left p-1 font-bold text-gray-900">#</th>
+                  <th className="text-left p-1 font-bold text-gray-900">ФИО</th>
+                  <th className="text-left p-1 font-bold text-gray-900">🚪</th>
+                  <th className="text-left p-1 font-bold text-gray-900">TG</th>
+                  {isAdmin && <th className="text-left p-1 font-bold text-gray-900">⚙️</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {blockA.map((student, index) => (
+                  <tr key={student.id} className="border-b border-blue-200 hover:bg-blue-50">
+                    <td className="p-1 text-gray-900 font-semibold">{index + 1}</td>
+                    <td className="p-1 text-gray-900">
+                      <div className="font-semibold">{student.last_name}</div>
+                      <div className="text-gray-600">{student.first_name}</div>
+                    </td>
+                    <td className="p-1 text-gray-700 whitespace-nowrap">{student.room || '-'}</td>
+                    <td className="p-1 text-center">
+                      {student.telegram_chat_id ? (
+                        <span className="text-green-600">✅</span>
+                      ) : (
+                        <span className="text-red-600">❌</span>
+                      )}
+                    </td>
+                    {isAdmin && (
+                      <td className="p-1">
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => {
+                              setEditingStudent(student);
+                              setEditRoom(student.room || '');
+                              setEditFirstName(student.first_name);
+                              setEditLastName(student.last_name);
+                            }}
+                            className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => setDeletingStudent(student)}
+                            className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </td>
                     )}
-                  </div>
-                </div>
-                <div className="text-lg font-bold text-gray-900 mb-1">{student.last_name} {student.first_name}</div>
-                <div className="text-sm text-gray-700 mb-2">🚪 {student.room || 'Не указана'}</div>
-                {isAdmin && (
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={() => {
-                        setEditingStudent(student);
-                        setEditRoom(student.room || '');
-                        setEditFirstName(student.first_name);
-                        setEditLastName(student.last_name);
-                      }}
-                      className="flex-1 bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600"
-                    >
-                      ✏️ Редактировать
-                    </button>
-                    <button
-                      onClick={() => setDeletingStudent(student)}
-                      className="flex-1 bg-red-500 text-white px-3 py-2 rounded text-sm hover:bg-red-600"
-                    >
-                      🗑️ Удалить
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
         
@@ -262,7 +278,7 @@ export default function StudentsList() {
         <div>
           <h3 className="text-xl font-bold mb-3 text-green-700">🏢 Блок B ({blockB.length})</h3>
           
-          {/* Десктоп: таблица */}
+          {/* Десктоп: обычная таблица */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
@@ -281,45 +297,61 @@ export default function StudentsList() {
             </table>
           </div>
           
-          {/* Мобильные: карточки */}
-          <div className="md:hidden space-y-3">
-            {blockB.map((student, index) => (
-              <div key={student.id} className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="font-bold text-gray-900">#{index + 1}</div>
-                  <div className="text-sm">
-                    {student.telegram_chat_id ? (
-                      <span className="text-green-600">✅ Telegram</span>
-                    ) : (
-                      <span className="text-red-600">❌ Нет</span>
+          {/* Мобильные: компактная таблица */}
+          <div className="md:hidden overflow-x-auto">
+            <table className="w-full border-collapse text-xs">
+              <thead>
+                <tr className="bg-green-100 border-b-2 border-green-300">
+                  <th className="text-left p-1 font-bold text-gray-900">#</th>
+                  <th className="text-left p-1 font-bold text-gray-900">ФИО</th>
+                  <th className="text-left p-1 font-bold text-gray-900">🚪</th>
+                  <th className="text-left p-1 font-bold text-gray-900">TG</th>
+                  {isAdmin && <th className="text-left p-1 font-bold text-gray-900">⚙️</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {blockB.map((student, index) => (
+                  <tr key={student.id} className="border-b border-green-200 hover:bg-green-50">
+                    <td className="p-1 text-gray-900 font-semibold">{index + 1}</td>
+                    <td className="p-1 text-gray-900">
+                      <div className="font-semibold">{student.last_name}</div>
+                      <div className="text-gray-600">{student.first_name}</div>
+                    </td>
+                    <td className="p-1 text-gray-700 whitespace-nowrap">{student.room || '-'}</td>
+                    <td className="p-1 text-center">
+                      {student.telegram_chat_id ? (
+                        <span className="text-green-600">✅</span>
+                      ) : (
+                        <span className="text-red-600">❌</span>
+                      )}
+                    </td>
+                    {isAdmin && (
+                      <td className="p-1">
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => {
+                              setEditingStudent(student);
+                              setEditRoom(student.room || '');
+                              setEditFirstName(student.first_name);
+                              setEditLastName(student.last_name);
+                            }}
+                            className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => setDeletingStudent(student)}
+                            className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </td>
                     )}
-                  </div>
-                </div>
-                <div className="text-lg font-bold text-gray-900 mb-1">{student.last_name} {student.first_name}</div>
-                <div className="text-sm text-gray-700 mb-2">🚪 {student.room || 'Не указана'}</div>
-                {isAdmin && (
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={() => {
-                        setEditingStudent(student);
-                        setEditRoom(student.room || '');
-                        setEditFirstName(student.first_name);
-                        setEditLastName(student.last_name);
-                      }}
-                      className="flex-1 bg-green-500 text-white px-3 py-2 rounded text-sm hover:bg-green-600"
-                    >
-                      ✏️ Редактировать
-                    </button>
-                    <button
-                      onClick={() => setDeletingStudent(student)}
-                      className="flex-1 bg-red-500 text-white px-3 py-2 rounded text-sm hover:bg-red-600"
-                    >
-                      🗑️ Удалить
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

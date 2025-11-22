@@ -147,14 +147,23 @@ export default function StudentActions() {
   };
 
   return (
-    <div className="mb-6 w-full animate-slideDown">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-xl p-6 border-2 border-blue-400 animate-pulse-slow relative">
-        {/* Стрелка вниз */}
-        <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-blue-600 animate-bounce">
-          <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v10.586l3.293-3.293a1 1 0 111.414 1.414l-5 5a1 1 0 01-1.414 0l-5-5a1 1 0 111.414-1.414L9 14.586V4a1 1 0 011-1z" clipRule="evenodd" />
-          </svg>
+    <>
+      {/* Плавающая подсказка внизу экрана */}
+      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
+        <div className="bg-blue-600 text-white px-6 py-3 rounded-full shadow-2xl border-2 border-white flex items-center gap-2 animate-pulse-slow">
+          <span className="font-bold text-lg">⬆️ Прокрутите вверх</span>
         </div>
+      </div>
+      
+      {/* Кнопка студента */}
+      <div className="mb-6 w-full animate-slideDown">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-xl p-6 border-2 border-blue-400 animate-pulse-slow relative">
+          {/* Стрелка вниз */}
+          <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-blue-600 animate-bounce">
+            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v10.586l3.293-3.293a1 1 0 111.414 1.414l-5 5a1 1 0 01-1.414 0l-5-5a1 1 0 111.414-1.414L9 14.586V4a1 1 0 011-1z" clipRule="evenodd" />
+            </svg>
+          </div>
         {myQueueItem.status === QueueStatus.KEY_ISSUED && (
           <>
             <div className="text-center mb-4">
@@ -191,7 +200,8 @@ export default function StudentActions() {
             </button>
           </>
         )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
