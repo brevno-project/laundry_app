@@ -5,11 +5,20 @@ import { useState } from 'react';
 import { Student } from '@/types';
 
 export default function StudentsList() {
-  const { students, isAdmin, user, updateStudent } = useLaundry();
+  const { students, isAdmin, user, updateStudent, addStudent, deleteStudent } = useLaundry();
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [editRoom, setEditRoom] = useState('');
   const [editFirstName, setEditFirstName] = useState('');
   const [editLastName, setEditLastName] = useState('');
+  
+  // Состояния для добавления студента
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newFirstName, setNewFirstName] = useState('');
+  const [newLastName, setNewLastName] = useState('');
+  const [newRoom, setNewRoom] = useState('');
+  
+  // Состояние для удаления
+  const [deletingStudent, setDeletingStudent] = useState<Student | null>(null);
   
   // Проверяем что пользователь - суперадмин
   const isSuperAdmin = user && students.find(s => s.id === user.student_id)?.is_super_admin;
@@ -74,6 +83,39 @@ export default function StudentsList() {
     }
   };
   
+  const handleAddStudent = async () => {
+    if (!newFirstName || !newLastName) {
+      alert('❌ Заполните имя и фамилию');
+      return;
+    }
+    
+    try {
+      await addStudent(newFirstName, newLastName, newRoom || undefined);
+      
+      setShowAddModal(false);
+      setNewFirstName('');
+      setNewLastName('');
+      setNewRoom('');
+      alert('✅ Студент добавлен!');
+    } catch (error) {
+      console.error('❌ Error adding student:', error);
+      alert('❌ Ошибка добавления');
+    }
+  };
+  
+  const handleDeleteStudent = async () => {
+    if (!deletingStudent) return;
+    
+    try {
+      await deleteStudent(deletingStudent.id);
+      setDeletingStudent(null);
+      alert('✅ Студент удален!');
+    } catch (error) {
+      console.error('❌ Error deleting student:', error);
+      alert('❌ Ошибка удаления');
+    }
+  };
+  
   const renderStudentRow = (student: Student, index: number) => (
     <tr 
       key={student.id} 
@@ -99,14 +141,24 @@ export default function StudentsList() {
         )}
       </td>
       <td className="p-3">
-        {isAdmin && !student.is_super_admin && (
-          <button
-            onClick={() => openEditModal(student)}
-            className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
-          >
-            ✏️ Редактировать
-          </button>
-        )}
+        <div className="flex gap-2">
+          {isAdmin && !student.is_super_admin && (
+            <button
+              onClick={() => openEditModal(student)}
+              className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+            >
+              ✏️ Редактировать
+            </button>
+          )}
+          {isSuperAdmin && !student.is_super_admin && (
+            <button
+              onClick={() => setDeletingStudent(student)}
+              className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
+            >
+              🗑️ Удалить
+            </button>
+          )}
+        </div>
       </td>
     </tr>
   );
@@ -114,7 +166,17 @@ export default function StudentsList() {
   return (
     <>
       <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">👥 Список студентов ({students.length})</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-gray-800">👥 Список студентов ({students.length})</h2>
+          {isSuperAdmin && (
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600"
+            >
+              ➕ Добавить студента
+            </button>
+          )}
+        </div>
         
         {/* Блок A */}
         <div className="mb-6">
@@ -212,6 +274,100 @@ export default function StudentsList() {
                 className="flex-1 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700"
               >
                 ✅ Сохранить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Модальное окно добавления студента */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">➕ Добавить студента</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold mb-2 text-gray-900">Фамилия *</label>
+                <input
+                  type="text"
+                  value={newLastName}
+                  onChange={(e) => setNewLastName(e.target.value)}
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+                  placeholder="Иванов"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-bold mb-2 text-gray-900">Имя *</label>
+                <input
+                  type="text"
+                  value={newFirstName}
+                  onChange={(e) => setNewFirstName(e.target.value)}
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+                  placeholder="Иван"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-bold mb-2 text-gray-900">Комната (опционально)</label>
+                <input
+                  type="text"
+                  value={newRoom}
+                  onChange={(e) => setNewRoom(e.target.value)}
+                  placeholder="A301, B402, итд"
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={() => {
+                  setShowAddModal(false);
+                  setNewFirstName('');
+                  setNewLastName('');
+                  setNewRoom('');
+                }}
+                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handleAddStudent}
+                className="flex-1 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700"
+              >
+                ➕ Добавить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Модальное окно удаления студента */}
+      {deletingStudent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold text-red-700 mb-4">🗑️ Удалить студента?</h3>
+            
+            <p className="text-gray-700 mb-6">
+              Вы уверены что хотите удалить <span className="font-bold">{deletingStudent.full_name}</span>?
+              <br />
+              <span className="text-red-600 font-semibold">Это действие нельзя отменить!</span>
+            </p>
+            
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDeletingStudent(null)}
+                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handleDeleteStudent}
+                className="flex-1 bg-red-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-700"
+              >
+                🗑️ Удалить
               </button>
             </div>
           </div>
