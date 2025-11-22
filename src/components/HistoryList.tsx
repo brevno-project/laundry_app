@@ -2,6 +2,7 @@
 
 import { useLaundry } from '@/contexts/LaundryContext';
 import { formatDate } from '@/contexts/LaundryContext';
+import Timer from './Timer';
 
 export default function HistoryList() {
   const { history } = useLaundry();
@@ -25,6 +26,43 @@ export default function HistoryList() {
             className="p-4 bg-gradient-to-r from-gray-100 to-gray-50 rounded-md border-l-4 border-green-600 shadow-sm"
           >
             <p className="font-bold text-gray-900 text-base">{item.full_name} {item.room && `(Комната ${item.room})`}</p>
+            
+            {/* ✅ Таймеры истории */}
+            <div className="flex flex-wrap gap-2 mt-3 mb-2">
+              {item.ready_at && (
+                <Timer 
+                  startTime={item.ready_at} 
+                  endTime={item.key_issued_at}
+                  label="🏃 Шел за ключом" 
+                  color="yellow" 
+                />
+              )}
+              {item.key_issued_at && (
+                <Timer 
+                  startTime={item.key_issued_at} 
+                  endTime={item.washing_started_at}
+                  label="🔑 С ключом" 
+                  color="blue" 
+                />
+              )}
+              {item.washing_started_at && (
+                <Timer 
+                  startTime={item.washing_started_at} 
+                  endTime={item.return_requested_at || item.finished_at}
+                  label="🟢 Стирал" 
+                  color="green" 
+                />
+              )}
+              {item.return_requested_at && (
+                <Timer 
+                  startTime={item.return_requested_at} 
+                  endTime={item.finished_at}
+                  label="🏃 Нес ключ" 
+                  color="orange" 
+                />
+              )}
+            </div>
+            
             <div className="text-sm text-gray-700 mt-2 space-y-1">
               <p><span className="font-semibold">Начато:</span> {formatDate(item.started_at)}</p>
               <p><span className="font-semibold">Завершено:</span> {formatDate(item.finished_at)}</p>

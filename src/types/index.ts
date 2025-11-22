@@ -94,6 +94,11 @@ export type HistoryItem = {
   room?: string;
   started_at: string;
   finished_at: string;
+  // ✅ Таймеры
+  ready_at?: string;
+  key_issued_at?: string;
+  washing_started_at?: string;
+  return_requested_at?: string;
 };
 
 export type TelegramNotification = {

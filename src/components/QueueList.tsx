@@ -340,21 +340,43 @@ const handleSaveEdit = async () => {
                       </span>
                     </div>
                     
-                    {/* ✅ Таймеры для каждого статуса */}
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {item.ready_at && item.status === QueueStatus.READY && (
-                        <Timer startTime={item.ready_at} label="Идет за ключом" color="yellow" />
-                      )}
-                      {item.key_issued_at && item.status === QueueStatus.KEY_ISSUED && (
-                        <Timer startTime={item.key_issued_at} label="С ключом" color="blue" />
-                      )}
-                      {item.washing_started_at && item.status === QueueStatus.WASHING && (
-                        <Timer startTime={item.washing_started_at} label="Стирает" color="green" />
-                      )}
-                      {item.return_requested_at && item.status === QueueStatus.RETURNING_KEY && (
-                        <Timer startTime={item.return_requested_at} label="Несет ключ" color="orange" />
-                      )}
-                    </div>
+                    {/* ✅ Таймеры - показываем всю историю */}
+                    {(item.ready_at || item.key_issued_at || item.washing_started_at || item.return_requested_at) && (
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {item.ready_at && (
+                          <Timer 
+                            startTime={item.ready_at} 
+                            endTime={item.key_issued_at || (item.status !== QueueStatus.READY ? new Date().toISOString() : undefined)}
+                            label="🏃 Шел за ключом" 
+                            color="yellow" 
+                          />
+                        )}
+                        {item.key_issued_at && (
+                          <Timer 
+                            startTime={item.key_issued_at} 
+                            endTime={item.washing_started_at || (item.status !== QueueStatus.KEY_ISSUED ? new Date().toISOString() : undefined)}
+                            label="🔑 С ключом" 
+                            color="blue" 
+                          />
+                        )}
+                        {item.washing_started_at && (
+                          <Timer 
+                            startTime={item.washing_started_at} 
+                            endTime={item.return_requested_at || item.finished_at || (item.status !== QueueStatus.WASHING ? new Date().toISOString() : undefined)}
+                            label="🟢 Стирал" 
+                            color="green" 
+                          />
+                        )}
+                        {item.return_requested_at && (
+                          <Timer 
+                            startTime={item.return_requested_at} 
+                            endTime={item.finished_at || (item.status !== QueueStatus.RETURNING_KEY ? new Date().toISOString() : undefined)}
+                            label="🏃 Нес ключ" 
+                            color="orange" 
+                          />
+                        )}
+                      </div>
+                    )}
                     
                     {/* Инфо - компактная сетка */}
                     <div className="grid grid-cols-3 gap-2 mb-2 text-sm">
