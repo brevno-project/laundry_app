@@ -708,7 +708,7 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
       try {
         const { data, error } = await supabase
           .from('history')
-          .select('*')
+          .select('id, user_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, return_requested_at')
           .order('finished_at', { ascending: false })
           .limit(5);
         

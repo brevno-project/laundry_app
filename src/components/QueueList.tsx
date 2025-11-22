@@ -39,8 +39,6 @@ export default function QueueList() {
 const [editingItem, setEditingItem] = useState<any>(null);
 const [editWashCount, setEditWashCount] = useState(1);
 const [editPaymentType, setEditPaymentType] = useState('money');
-const [editHour, setEditHour] = useState('20');
-const [editMinute, setEditMinute] = useState('00');
 const [editDate, setEditDate] = useState('');
 
   const toggleSelect = (id: string) => {
@@ -52,17 +50,6 @@ const [editDate, setEditDate] = useState('');
     setEditingItem(item);
     setEditWashCount(item.wash_count || 1);
     setEditPaymentType(item.payment_type || 'money');
-    
-    // Парсим expectedFinishAt
-    if (item.expected_finish_at) {
-      const date = new Date(item.expected_finish_at);
-      setEditHour(date.getHours().toString().padStart(2, '0'));
-      setEditMinute(date.getMinutes().toString().padStart(2, '0'));
-    } else {
-      setEditHour('20');
-      setEditMinute('00');
-    }
-    
     setEditDate(item.queue_date || new Date().toISOString().slice(0, 10));
     setShowEditModal(true);
   };
@@ -77,14 +64,9 @@ const handleSaveEdit = async () => {
     return;
   }
   
-  const today = new Date();
-  today.setHours(parseInt(editHour), parseInt(editMinute), 0, 0);
-  const expectedFinishAt = today.toISOString();
-  
   await updateQueueItemDetails(editingItem.id, {
     wash_count: editWashCount,
     payment_type: editPaymentType,
-    expected_finish_at: expectedFinishAt,
     chosen_date: editDate,
   });
   
@@ -158,17 +140,17 @@ const handleSaveEdit = async () => {
   const getStatusDisplay = (status: QueueStatus) => {
     switch(status) {
       case QueueStatus.WAITING:
-        return { bg: 'bg-gray-50', text: 'text-gray-700', badge: '⏳ Ожидает', badgeColor: 'bg-gray-200 text-gray-700' };
+        return { bg: 'bg-gray-50', text: 'text-gray-700', badge: '⏳ Ожидание', badgeColor: 'bg-gray-200 text-gray-700' };
       case QueueStatus.READY:
-        return { bg: 'bg-yellow-50', text: 'text-yellow-900', badge: '🏃 ИДЕТ ЗА КЛЮЧОМ', badgeColor: 'bg-yellow-400 text-yellow-900' };
+        return { bg: 'bg-yellow-50', text: 'text-yellow-900', badge: '🏃 ЗА КЛЮЧОМ', badgeColor: 'bg-yellow-400 text-yellow-900' };
       case QueueStatus.KEY_ISSUED:
-        return { bg: 'bg-blue-50', text: 'text-blue-900', badge: '🔑 ПОЛУЧИЛ КЛЮЧ', badgeColor: 'bg-blue-400 text-blue-900' };
+        return { bg: 'bg-blue-50', text: 'text-blue-900', badge: '🔑 КЛЮЧ ПОЛУЧЕН', badgeColor: 'bg-blue-400 text-blue-900' };
       case QueueStatus.WASHING:
-        return { bg: 'bg-green-50', text: 'text-green-900', badge: '🟢 СТИРАЕТ', badgeColor: 'bg-green-400 text-green-900' };
+        return { bg: 'bg-green-50', text: 'text-green-900', badge: '🟢 СТИРКА', badgeColor: 'bg-green-400 text-green-900' };
       case QueueStatus.RETURNING_KEY:
-        return { bg: 'bg-orange-50', text: 'text-orange-900', badge: '🏃 НЕСЕТ КЛЮЧ', badgeColor: 'bg-orange-400 text-orange-900' };
+        return { bg: 'bg-orange-50', text: 'text-orange-900', badge: '🏃 ВОЗВРАТ КЛЮЧА', badgeColor: 'bg-orange-400 text-orange-900' };
       case QueueStatus.DONE:
-        return { bg: 'bg-emerald-50', text: 'text-emerald-900', badge: '✅ ПОСТИРАЛСЯ', badgeColor: 'bg-emerald-400 text-emerald-900' };
+        return { bg: 'bg-emerald-50', text: 'text-emerald-900', badge: '✅ ЗАВЕРШЕНО', badgeColor: 'bg-emerald-400 text-emerald-900' };
       default:
         return { bg: 'bg-white', text: 'text-gray-700', badge: status, badgeColor: 'bg-gray-200' };
     }
@@ -747,36 +729,6 @@ const handleSaveEdit = async () => {
             <option value="coupon">🎫 Купон</option>
             <option value="both">💵+🎫 Оба</option>
           </select>
-        </div>
-        
-        {/* Время окончания */}
-        <div>
-          <label className="block text-sm font-bold mb-2 text-gray-900">Закончит в</label>
-          <div className="flex gap-2">
-            <select
-              value={editHour}
-              onChange={(e) => setEditHour(e.target.value)}
-              className="flex-1 border-2 border-gray-300 rounded-lg p-2 text-gray-900"
-            >
-              {Array.from({ length: 24 }, (_, i) => i).map(hour => (
-                <option key={hour} value={hour.toString().padStart(2, '0')}>
-                  {hour.toString().padStart(2, '0')}
-                </option>
-              ))}
-            </select>
-            <span className="text-2xl text-gray-900">:</span>
-            <select
-              value={editMinute}
-              onChange={(e) => setEditMinute(e.target.value)}
-              className="flex-1 border-2 border-gray-300 rounded-lg p-2 text-gray-900"
-            >
-              {Array.from({ length: 60 }, (_, i) => i).map(minute => (
-                <option key={minute} value={minute.toString().padStart(2, '0')}>
-                  {minute.toString().padStart(2, '0')}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
       </div>
       
