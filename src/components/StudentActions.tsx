@@ -149,30 +149,29 @@ export default function StudentActions() {
     }
   };
 
+  const scrollToButton = () => {
+    const buttonElement = document.getElementById('student-action-button');
+    if (buttonElement) {
+      buttonElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
   return (
     <>
-      {/* Плавающая подсказка внизу экрана */}
-      {showScrollHint && (
-        <div 
-          className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 animate-bounce cursor-pointer"
-          onClick={() => setShowScrollHint(false)}
-        >
-          <div className="bg-blue-600 text-white px-6 py-3 rounded-full shadow-2xl border-2 border-white flex items-center gap-2 animate-pulse-slow hover:bg-blue-700 transition-colors">
-            <span className="font-bold text-lg">⬆️ Прокрутите вверх</span>
-            <span className="text-sm opacity-75">(нажмите чтобы скрыть)</span>
-          </div>
-        </div>
-      )}
+      {/* Компактная кнопка-стрелка вверху справа */}
+      <button
+        onClick={scrollToButton}
+        className="fixed top-20 right-4 z-50 bg-blue-600 text-white p-3 rounded-full shadow-2xl border-2 border-white hover:bg-blue-700 transition-all animate-pulse-slow"
+        title="Перейти к кнопке"
+      >
+        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M10 18a1 1 0 01-1-1V5.414l-3.293 3.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0l5 5a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 01-1 1z" clipRule="evenodd" />
+        </svg>
+      </button>
       
       {/* Кнопка студента */}
-      <div className="mb-6 w-full animate-slideDown">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-xl p-6 border-2 border-blue-400 animate-pulse-slow relative">
-          {/* Стрелка вниз */}
-          <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-blue-600 animate-bounce">
-            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v10.586l3.293-3.293a1 1 0 111.414 1.414l-5 5a1 1 0 01-1.414 0l-5-5a1 1 0 111.414-1.414L9 14.586V4a1 1 0 011-1z" clipRule="evenodd" />
-            </svg>
-          </div>
+      <div id="student-action-button" className="mb-6 w-full animate-slideDown">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-xl p-6 border-2 border-blue-400 animate-pulse-slow">
         {myQueueItem.status === QueueStatus.KEY_ISSUED && (
           <>
             <div className="text-center mb-4">

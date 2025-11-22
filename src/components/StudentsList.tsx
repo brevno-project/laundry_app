@@ -146,8 +146,8 @@ export default function StudentsList() {
         )}
         <tr className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
           <td className="p-3 text-gray-700">{index + 1}</td>
-          <td className="p-3 font-semibold text-gray-900">{student.last_name || '—'}</td>
           <td className="p-3 text-gray-900">{student.first_name || '—'}</td>
+          <td className="p-3 font-semibold text-gray-900">{student.last_name || '—'}</td>
           <td className="p-3 text-center text-gray-900">
             {student.room ? (
               <span className="bg-blue-100 text-blue-900 px-2 py-1 rounded font-semibold">
@@ -164,6 +164,23 @@ export default function StudentsList() {
               <span className="text-gray-400">❌ Не подключен</span>
             )}
           </td>
+          {isAdmin && (
+            <td className="p-3 text-center">
+              <input
+                type="checkbox"
+                checked={student.can_view_students || false}
+                onChange={async (e) => {
+                  try {
+                    await updateStudent(student.id, { can_view_students: e.target.checked });
+                  } catch (error) {
+                    console.error('❌ Error updating can_view_students:', error);
+                    alert('❌ Ошибка обновления');
+                  }
+                }}
+                className="w-5 h-5 cursor-pointer"
+              />
+            </td>
+          )}
           <td className="p-3">
             <div className="flex gap-2">
               {isAdmin && !student.is_super_admin && (
@@ -214,10 +231,11 @@ export default function StudentsList() {
               <thead>
                 <tr className="bg-blue-100 border-b-2 border-blue-300">
                   <th className="text-left p-3 font-bold text-gray-900">#</th>
-                  <th className="text-left p-3 font-bold text-gray-900">Фамилия</th>
                   <th className="text-left p-3 font-bold text-gray-900">Имя</th>
+                  <th className="text-left p-3 font-bold text-gray-900">Фамилия</th>
                   <th className="text-left p-3 font-bold text-gray-900">Комната</th>
                   <th className="text-left p-3 font-bold text-gray-900">Telegram</th>
+                  {isAdmin && <th className="text-left p-3 font-bold text-gray-900">Может видеть список</th>}
                   {isAdmin && <th className="text-left p-3 font-bold text-gray-900">Действия</th>}
                 </tr>
               </thead>
@@ -233,7 +251,7 @@ export default function StudentsList() {
               <thead>
                 <tr className="bg-blue-100 border-b-2 border-blue-300">
                   <th className="text-left p-1 font-bold text-gray-900">#</th>
-                  <th className="text-left p-1 font-bold text-gray-900">ФИО</th>
+                  <th className="text-left p-1 font-bold text-gray-900">Имя Фамилия</th>
                   <th className="text-center p-1 font-bold text-gray-900">🚪</th>
                   <th className="text-center p-1 font-bold text-gray-900">TG</th>
                   {isAdmin && <th className="text-left p-1 font-bold text-gray-900">Действия</th>}
@@ -273,7 +291,7 @@ export default function StudentsList() {
                                   setEditingStudent(student);
                                   setEditRoom(student.room || '');
                                   setEditFirstName(student.first_name);
-                                  setEditLastName(student.last_name);
+                                  setEditLastName(student.last_name || '');
                                 }}
                                 className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
                               >
@@ -307,10 +325,11 @@ export default function StudentsList() {
               <thead>
                 <tr className="bg-green-100 border-b-2 border-green-300">
                   <th className="text-left p-3 font-bold text-gray-900">#</th>
-                  <th className="text-left p-3 font-bold text-gray-900">Фамилия</th>
                   <th className="text-left p-3 font-bold text-gray-900">Имя</th>
+                  <th className="text-left p-3 font-bold text-gray-900">Фамилия</th>
                   <th className="text-left p-3 font-bold text-gray-900">Комната</th>
                   <th className="text-left p-3 font-bold text-gray-900">Telegram</th>
+                  {isAdmin && <th className="text-left p-3 font-bold text-gray-900">Может видеть список</th>}
                   {isAdmin && <th className="text-left p-3 font-bold text-gray-900">Действия</th>}
                 </tr>
               </thead>
@@ -326,7 +345,7 @@ export default function StudentsList() {
               <thead>
                 <tr className="bg-green-100 border-b-2 border-green-300">
                   <th className="text-left p-1 font-bold text-gray-900">#</th>
-                  <th className="text-left p-1 font-bold text-gray-900">ФИО</th>
+                  <th className="text-left p-1 font-bold text-gray-900">Имя Фамилия</th>
                   <th className="text-center p-1 font-bold text-gray-900">🚪</th>
                   <th className="text-center p-1 font-bold text-gray-900">TG</th>
                   {isAdmin && <th className="text-left p-1 font-bold text-gray-900">Действия</th>}
@@ -366,7 +385,7 @@ export default function StudentsList() {
                                   setEditingStudent(student);
                                   setEditRoom(student.room || '');
                                   setEditFirstName(student.first_name);
-                                  setEditLastName(student.last_name);
+                                  setEditLastName(student.last_name || '');
                                 }}
                                 className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
                               >

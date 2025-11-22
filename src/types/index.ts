@@ -3,7 +3,8 @@
 export type Student = {
   id: string;
   first_name: string;
-  last_name: string;
+  last_name?: string; // Фамилия необязательна
+  middle_name?: string; // Отчество необязательно
   full_name: string;
   room: string | null;
   is_registered: boolean;
@@ -13,9 +14,10 @@ export type Student = {
   is_banned?: boolean;
   banned_at?: string | null;
   ban_reason?: string | null;
-  user_id?: string; // 
+  user_id?: string;
   is_admin?: boolean;
   is_super_admin?: boolean;
+  can_view_students?: boolean; // Может ли студент видеть список студентов
 };
 
 export type StudentAuth = {
@@ -29,12 +31,14 @@ export type User = {
   id: string; // Это UUID из Supabase Auth (auth.users.id)
   student_id: string; // Это ID из таблицы students
   first_name: string;
-  last_name: string;
+  last_name?: string; // Фамилия необязательна
+  middle_name?: string; // Отчество необязательно
   full_name: string;
   room?: string;
   is_admin?: boolean;
   telegram_chat_id?: string;
   is_super_admin?: boolean;
+  can_view_students?: boolean; // Может ли студент видеть список студентов
 };
 
 export enum QueueStatus {
