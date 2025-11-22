@@ -4,6 +4,7 @@ import { useLaundry } from '@/contexts/LaundryContext';
 import { QueueStatus } from '@/types';
 import { sendTelegramNotification } from '@/lib/telegram';
 import { useState, useEffect } from 'react';
+import Timer from './Timer';
 
 export default function QueueList() {
   const { 
@@ -337,6 +338,22 @@ const handleSaveEdit = async () => {
                       <span className={`px-2 py-1 rounded-full text-xs font-bold ${statusDisplay.badgeColor} whitespace-nowrap`}>
                         {statusDisplay.badge}
                       </span>
+                    </div>
+                    
+                    {/* ✅ Таймеры для каждого статуса */}
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {item.ready_at && item.status === QueueStatus.READY && (
+                        <Timer startTime={item.ready_at} label="Идет за ключом" color="yellow" />
+                      )}
+                      {item.key_issued_at && item.status === QueueStatus.KEY_ISSUED && (
+                        <Timer startTime={item.key_issued_at} label="С ключом" color="blue" />
+                      )}
+                      {item.washing_started_at && item.status === QueueStatus.WASHING && (
+                        <Timer startTime={item.washing_started_at} label="Стирает" color="green" />
+                      )}
+                      {item.return_requested_at && item.status === QueueStatus.RETURNING_KEY && (
+                        <Timer startTime={item.return_requested_at} label="Несет ключ" color="orange" />
+                      )}
                     </div>
                     
                     {/* Инфо - компактная сетка */}
