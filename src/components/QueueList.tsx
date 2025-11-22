@@ -611,34 +611,7 @@ const handleSaveEdit = async () => {
                                   }
                                 }}
                               >
-                                🟢 Стирает
-                              </button>
-                              
-                              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
-                              
-                              <button
-                                className="bg-orange-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-700 shadow-sm w-full"
-                                onClick={async () => {
-                                  try {
-                                    if (!isAdmin) {
-                                      alert('❌ Только администратор может выполнять это действие');
-                                      return;
-                                    }
-                                    // ✅ Сохраняем время когда попросили вернуть ключ
-                                    await updateQueueItem(item.id, { 
-                                      return_key_alert: false,
-                                      return_requested_at: new Date().toISOString()
-                                    });
-                                    await new Promise(resolve => setTimeout(resolve, 100));
-                                    await setQueueStatus(item.id, QueueStatus.RETURNING_KEY);
-                                    alert(`✅ ${item.full_name} возвращает ключ!`);   
-                                  } catch (error) {
-                                    console.error('❌ Ошибка:', error);
-                                    alert('❌ Ошибка при запросе возврата ключа');
-                                  }
-                                }}
-                              >
-                                🔑 Вернуть ключ
+                                🟢 Начал(а) стирать
                               </button>
                               
                               <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
@@ -693,6 +666,9 @@ const handleSaveEdit = async () => {
                                 ⏳ В ожидание
                               </button>
                             </div>
+                            
+                            <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent my-2"></div>
+                            
                             {/* БЛОК: Удалить */}
                             <button
                               className="bg-red-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-red-700 shadow-sm w-full"
@@ -717,7 +693,7 @@ const handleSaveEdit = async () => {
                         {(isAdmin) && item.status === QueueStatus.WAITING && (
                           <button
                             onClick={() => openEditModal(item)}
-                            className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                            className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 w-full"
                             title="Редактировать параметры"
                           >
                             Редактировать

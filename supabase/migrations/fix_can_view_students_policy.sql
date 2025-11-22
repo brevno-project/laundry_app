@@ -11,7 +11,7 @@ USING (
   -- Суперадмин может обновлять всех
   EXISTS (
     SELECT 1 FROM students s
-    WHERE s.id = auth.uid()::text
+    WHERE s.id::uuid = auth.uid()
     AND s.is_super_admin = true
   )
   OR
@@ -19,7 +19,7 @@ USING (
   (
     EXISTS (
       SELECT 1 FROM students s
-      WHERE s.id = auth.uid()::text
+      WHERE s.id::uuid = auth.uid()
       AND s.is_admin = true
     )
     AND is_admin = false
@@ -27,13 +27,13 @@ USING (
   )
   OR
   -- Пользователь может обновлять себя (регистрация)
-  id = auth.uid()::text
+  id::uuid = auth.uid()
 )
 WITH CHECK (
   -- Суперадмин может обновлять всех
   EXISTS (
     SELECT 1 FROM students s
-    WHERE s.id = auth.uid()::text
+    WHERE s.id::uuid = auth.uid()
     AND s.is_super_admin = true
   )
   OR
@@ -41,7 +41,7 @@ WITH CHECK (
   (
     EXISTS (
       SELECT 1 FROM students s
-      WHERE s.id = auth.uid()::text
+      WHERE s.id::uuid = auth.uid()
       AND s.is_admin = true
     )
     AND is_admin = false
@@ -50,7 +50,7 @@ WITH CHECK (
   OR
   -- Пользователь может обновлять себя (только при регистрации)
   (
-    id = auth.uid()::text
+    id::uuid = auth.uid()
     AND is_registered = false
   )
 );
