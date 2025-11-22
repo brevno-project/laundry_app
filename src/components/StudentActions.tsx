@@ -51,69 +51,53 @@ export default function StudentActions() {
   const handleStartWashing = async () => {
     console.log('🟢 handleStartWashing: начало', { myQueueItem });
     try {
-      // Сохраняем время начала стирки
-      console.log('🟢 updateQueueItem: washing_started_at');
-      await updateQueueItem(myQueueItem.id, {
-        washing_started_at: new Date().toISOString()
+      // Отправляем Telegram уведомление админу
+      const response = await fetch('/api/telegram/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'washing_started_by_student',
+          full_name: myQueueItem.full_name,
+          room: myQueueItem.room,
+          student_id: myQueueItem.student_id,
+          queue_item_id: myQueueItem.id
+        })
       });
-      await new Promise(resolve => setTimeout(resolve, 100));
-      console.log('🟢 setQueueStatus: WASHING');
-      await setQueueStatus(myQueueItem.id, QueueStatus.WASHING);
 
-      // Отправляем Telegram уведомление
-      try {
-        await fetch('/api/telegram/notify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'washing_started_by_student',
-            full_name: myQueueItem.full_name,
-            room: myQueueItem.room,
-            student_id: myQueueItem.student_id
-          })
-        });
-      } catch (err) {
-        console.error('❌ Error sending Telegram notification:', err);
+      if (response.ok) {
+        alert('✅ Уведомление отправлено администратору!\nАдмин запустит таймер.');
+      } else {
+        alert('❌ Ошибка отправки уведомления');
       }
-
-      console.log('✅ Успех! Стирка началась');
-      alert('✅ Стирка началась! Таймер запущен.');
     } catch (error) {
       console.error('❌ Error в handleStartWashing:', error);
-      alert('❌ Ошибка при начале стирки: ' + (error as Error).message);
+      alert('❌ Ошибка: ' + (error as Error).message);
     }
   };
 
   const handleFinishWashing = async () => {
     try {
-      // Сохраняем время окончания стирки
-      await updateQueueItem(myQueueItem.id, {
-        washing_finished_at: new Date().toISOString()
+      // Отправляем Telegram уведомление админу
+      const response = await fetch('/api/telegram/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'washing_finished',
+          full_name: myQueueItem.full_name,
+          room: myQueueItem.room,
+          student_id: myQueueItem.student_id,
+          queue_item_id: myQueueItem.id
+        })
       });
-      await new Promise(resolve => setTimeout(resolve, 100));
-      // Переводим в WASHING_FINISHED - студент закончил, ждет админа
-      await setQueueStatus(myQueueItem.id, QueueStatus.WASHING_FINISHED);
 
-      // Отправляем Telegram уведомление
-      try {
-        await fetch('/api/telegram/notify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'washing_finished',
-            full_name: myQueueItem.full_name,
-            room: myQueueItem.room,
-            student_id: myQueueItem.student_id
-          })
-        });
-      } catch (err) {
-        console.error('❌ Error sending Telegram notification:', err);
+      if (response.ok) {
+        alert('✅ Уведомление отправлено администратору!\nЗаберите вещи и ждите когда админ позовет вернуть ключ.');
+      } else {
+        alert('❌ Ошибка отправки уведомления');
       }
-
-      alert('✅ Стирка завершена! Администратор получил уведомление.');
     } catch (error) {
       console.error('❌ Error:', error);
-      alert('❌ Ошибка при завершении стирки');
+      alert('❌ Ошибка: ' + (error as Error).message);
     }
   };
 
@@ -125,6 +109,7 @@ export default function StudentActions() {
             <div className="text-center mb-4">
               <h3 className="text-2xl font-bold text-white mb-2">🔑 Ключ выдан!</h3>
               <p className="text-blue-100">Идите к стиралке и нажмите кнопку когда начнете стирать</p>
+              <p className="text-blue-200 text-sm mt-2">ℹ️ Админ получит уведомление и запустит таймер</p>
             </div>
             <button
               onClick={handleStartWashing}
@@ -146,6 +131,7 @@ export default function StudentActions() {
                 {TEST_MODE && <div className="text-xs text-blue-200 mt-1">(TEST MODE - 60x)</div>}
               </div>
               <p className="text-blue-100 text-sm">Нажмите кнопку когда закончите стирать</p>
+              <p className="text-blue-200 text-sm mt-2">ℹ️ Админ получит уведомление</p>
             </div>
             <button
               onClick={handleFinishWashing}
