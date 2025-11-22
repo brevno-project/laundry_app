@@ -8,8 +8,6 @@ export default function UserForm() {
   const { user, joinQueue, logoutStudent, getUserQueueItem, queue, updateQueueItem,students } = useLaundry();
   const [washCount, setWashCount] = useState<number>(1);
   const [paymentType, setPaymentType] = useState<string>('money');
-  const [selectedHour, setSelectedHour] = useState<string>('20');
-  const [selectedMinute, setSelectedMinute] = useState<string>('00');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>(''); // ✅ Новое поле для выбора даты
   
@@ -56,21 +54,16 @@ export default function UserForm() {
     if (user?.full_name && !isInQueue && !isSubmitting) {
       setIsSubmitting(true);
       
-      const today = new Date();
-      today.setHours(parseInt(selectedHour), parseInt(selectedMinute), 0, 0);
-      const expectedFinishAt = today.toISOString();
-      
       console.log('Joining queue with:', {
         full_name: user.full_name,
         room: user.room,
         washCount,
         paymentType,
-        expectedFinishAt,
         chosenDate: selectedDate // ✅ Передаем выбранную дату
       });
       
-      // ✅ Передаем выбранную дату в joinQueue
-      await joinQueue(user.full_name, user.room, washCount, paymentType, expectedFinishAt, selectedDate);
+      // ✅ Передаем выбранную дату в joinQueue (без expectedFinishAt)
+      await joinQueue(user.full_name, user.room, washCount, paymentType, undefined, selectedDate);
       
       setTimeout(() => {
         setIsSubmitting(false);
@@ -187,61 +180,6 @@ export default function UserForm() {
                   <option value="coupon">🎫 Купон</option>
                   <option value="both">💵+🎫 Купон + Деньги</option>
                 </select>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-bold mb-2 text-gray-700">
-                  До какого времени закончу стирать
-                </label>
-                <div className="flex gap-3">
-                  {/* Часы */}
-                  <div className="flex-1">
-                    <label htmlFor="hour" className="block text-xs text-gray-600 mb-1">Часы</label>
-                    <select
-                      id="hour"
-                      value={selectedHour}
-                      onChange={(e) => {
-                        const newHour = e.target.value;
-                        setSelectedHour(newHour);
-                        // Если 22 часа, сбросить минуты на 00
-                        if (newHour === '22') {
-                          setSelectedMinute('00');
-                        }
-                      }}
-                      required
-                      className="w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 text-lg font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                    >
-                      {Array.from({ length: 23 }, (_, i) => i).map(hour => (
-                        <option key={hour} value={hour.toString().padStart(2, '0')}>
-                          {hour.toString().padStart(2, '0')}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div className="flex items-end pb-3 text-2xl font-bold text-gray-700">:</div>
-                  
-                  {/* Минуты */}
-                  <div className="flex-1">
-                    <label htmlFor="minute" className="block text-xs text-gray-600 mb-1">Минуты</label>
-                    <select
-                      id="minute"
-                      value={selectedMinute}
-                      onChange={(e) => setSelectedMinute(e.target.value)}
-                      required
-                      disabled={selectedHour === '22'}
-                      className="w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 text-lg font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    >
-                      {Array.from({ length: 60 }, (_, i) => i).map(minute => (
-                        <option key={minute} value={minute.toString().padStart(2, '0')}>
-                          {minute.toString().padStart(2, '0')}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <p className="text-xs text-red-600 font-bold mt-2">⚠️ Стирка должна закончиться до 22:00!</p>
-                <p className="text-sm text-blue-700 font-bold mt-1">🕒 Выбрано: {selectedHour}:{selectedMinute}</p>
               </div>
 
               <button
