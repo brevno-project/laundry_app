@@ -86,8 +86,8 @@ export default function StudentActions() {
   };
 
   return (
-    <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-2xl p-6 border-2 border-blue-400">
+    <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-6 px-4">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-2xl p-6 border-2 border-blue-400 w-full max-w-lg">
         {myQueueItem.status === QueueStatus.KEY_ISSUED && (
           <>
             <div className="text-center mb-4">
@@ -113,7 +113,7 @@ export default function StudentActions() {
               onClick={handleFinishWashing}
               className="w-full bg-red-600 text-white font-bold py-4 px-6 rounded-xl text-xl hover:bg-red-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              🔑 Закончил стирать - Вернуть ключ
+              ✅ Закончил стирать
             </button>
           </>
         )}
