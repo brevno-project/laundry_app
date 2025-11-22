@@ -14,6 +14,7 @@ import TelegramSetup from '@/components/TelegramSetup';
 import HistoryList from '@/components/HistoryList';
 import StudentsList from '@/components/StudentsList';
 import GlobalAlert from '@/components/GlobalAlert';
+import TelegramBanner from '@/components/TelegramBanner';
 
 export default function Home() {
   const { user, isLoading, logoutStudent, isAdmin, machineState, queue, isNewUser, setIsNewUser, students } = useLaundry();
@@ -162,6 +163,9 @@ export default function Home() {
         </nav>
       )}
 
+      {/* Полноэкранный баннер для подключения Telegram */}
+      <TelegramBanner />
+      
       {/* Глобальный баннер для всех студентов в очереди */}
       <GlobalAlert />
       
@@ -220,7 +224,6 @@ export default function Home() {
                 {(user || isAdmin) && (
                   <>
                     {!isAdmin && <UserForm />} {/* UserForm только для обычных пользователей */}
-                    {!isAdmin && !user?.telegram_chat_id && <TelegramSetup />} {/* TelegramSetup для пользователей без Telegram */}
                     <QueueList />
                   </>
                 )}
