@@ -7,11 +7,11 @@ interface QueueTimersProps {
   item: QueueItem;
 }
 
-// Режим тестирования: ускоряет время в 60 раз
-const TEST_MODE = process.env.NEXT_PUBLIC_TEST_MODE === 'true';
-const TIME_MULTIPLIER = TEST_MODE ? 60 : 1;
-
-console.log('🧪 QueueTimers TEST_MODE:', TEST_MODE, 'env:', process.env.NEXT_PUBLIC_TEST_MODE);
+// 🔴 ВРЕМЕННО: Красные зоны ускорены для тестирования
+// 30 минут → 30 секунд (0.5 минуты)
+// 80 минут → 80 секунд (1.33 минуты)
+// ЧТОБЫ ВЕРНУТЬ: умножьте все redZoneMinutes на 60
+const SPEED_MULTIPLIER = 60; // Ускорение времени
 
 /**
  * Компонент таймера с цветовой индикацией для каждого этапа очереди
@@ -35,23 +35,23 @@ export default function QueueTimers({ item }: QueueTimersProps) {
       switch (item.status) {
         case QueueStatus.READY:
           startTime = item.ready_at ? new Date(item.ready_at) : null;
-          redZoneMinutes = 30;
+          redZoneMinutes = 30 / SPEED_MULTIPLIER; // 30 секунд (было 30 минут)
           break;
         case QueueStatus.KEY_ISSUED:
           startTime = item.key_issued_at ? new Date(item.key_issued_at) : null;
-          redZoneMinutes = 30;
+          redZoneMinutes = 30 / SPEED_MULTIPLIER; // 30 секунд (было 30 минут)
           break;
         case QueueStatus.WASHING:
           startTime = item.washing_started_at ? new Date(item.washing_started_at) : null;
-          redZoneMinutes = (item.wash_count || 1) * 80; // 80 минут на стирку
+          redZoneMinutes = ((item.wash_count || 1) * 80) / SPEED_MULTIPLIER; // 80 секунд на стирку (было 80 минут)
           break;
         case QueueStatus.WASHING_FINISHED:
           startTime = item.washing_finished_at ? new Date(item.washing_finished_at) : null;
-          redZoneMinutes = 30; // 30 минут чтобы админ позвал вернуть ключ
+          redZoneMinutes = 30 / SPEED_MULTIPLIER; // 30 секунд (было 30 минут)
           break;
         case QueueStatus.RETURNING_KEY:
           startTime = item.return_requested_at ? new Date(item.return_requested_at) : null;
-          redZoneMinutes = 30;
+          redZoneMinutes = 30 / SPEED_MULTIPLIER; // 30 секунд (было 30 минут)
           break;
         default:
           return;
@@ -61,7 +61,7 @@ export default function QueueTimers({ item }: QueueTimersProps) {
 
       const now = new Date();
       const elapsedMs = now.getTime() - startTime.getTime();
-      const elapsedMinutes = elapsedMs / 60000 / TIME_MULTIPLIER;
+      const elapsedMinutes = elapsedMs / 60000;
 
       setElapsed(elapsedMinutes);
 
@@ -124,7 +124,6 @@ export default function QueueTimers({ item }: QueueTimersProps) {
     <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border-2 ${colorClasses[color as keyof typeof colorClasses]} font-semibold text-sm`}>
       <span className="text-xs">{getStatusText()}:</span>
       <span className="font-bold">{formatTime(elapsed)}</span>
-      {TEST_MODE && <span className="text-xs opacity-50">(TEST)</span>}
     </div>
   );
 }

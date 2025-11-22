@@ -4,23 +4,30 @@ import { useLaundry } from '@/contexts/LaundryContext';
 import { QueueStatus } from '@/types';
 import { useEffect, useState } from 'react';
 
-// Режим тестирования
-const TEST_MODE = process.env.NEXT_PUBLIC_TEST_MODE === 'true';
-const TIME_MULTIPLIER = TEST_MODE ? 60 : 1;
-
-console.log('🧪 TEST_MODE:', TEST_MODE, 'env:', process.env.NEXT_PUBLIC_TEST_MODE, 'multiplier:', TIME_MULTIPLIER);
-
 /**
  * Кнопки действий для студента
  * - "Начал стирать" когда KEY_ISSUED
  * - "Закончил стирать" когда WASHING
  */
+// Лимит уведомлений
+const NOTIFICATION_COOLDOWN = 5 * 60 * 1000; // 5 минут
+const MAX_NOTIFICATIONS = 3;
+
+interface NotificationState {
+  count: number;
+  lastSent: number | null;
+}
+
 export default function StudentActions() {
-  const { user, queue, setQueueStatus, updateQueueItem } = useLaundry();
+  const { user, queue } = useLaundry();
 
   // ✅ ВСЕ ХУКИ ДОЛЖНЫ БЫТЬ В НАЧАЛЕ, ДО ЛЮБЫХ УСЛОВИЙ!
   // Таймер стирки
   const [washingTime, setWashingTime] = useState<string>('0:00');
+  
+  // Состояние уведомлений
+  const [startNotifications, setStartNotifications] = useState<NotificationState>({ count: 0, lastSent: null });
+  const [finishNotifications, setFinishNotifications] = useState<NotificationState>({ count: 0, lastSent: null });
   
   // Находим текущую запись студента
   const myQueueItem = queue.find(
@@ -34,8 +41,8 @@ export default function StudentActions() {
         const startTime = new Date(myQueueItem.washing_started_at!);
         const now = new Date();
         const elapsedMs = now.getTime() - startTime.getTime();
-        const elapsedMinutes = Math.floor(elapsedMs / 60000 / TIME_MULTIPLIER);
-        const elapsedSeconds = Math.floor((elapsedMs / 1000 / TIME_MULTIPLIER) % 60);
+        const elapsedMinutes = Math.floor(elapsedMs / 60000);
+        const elapsedSeconds = Math.floor((elapsedMs / 1000) % 60);
         
         setWashingTime(`${elapsedMinutes}:${elapsedSeconds.toString().padStart(2, '0')}`);
       }, 1000);
@@ -43,12 +50,40 @@ export default function StudentActions() {
       return () => clearInterval(interval);
     }
   }, [myQueueItem]);
+  
+  // Проверка можно ли отправить уведомление
+  const canSendNotification = (state: NotificationState): { canSend: boolean; reason?: string } => {
+    if (state.count >= MAX_NOTIFICATIONS) {
+      return { canSend: false, reason: `Достигнут лимит уведомлений (${MAX_NOTIFICATIONS})` };
+    }
+    
+    if (state.lastSent) {
+      const timeSinceLastSent = Date.now() - state.lastSent;
+      if (timeSinceLastSent < NOTIFICATION_COOLDOWN) {
+        const remainingSeconds = Math.ceil((NOTIFICATION_COOLDOWN - timeSinceLastSent) / 1000);
+        const remainingMinutes = Math.floor(remainingSeconds / 60);
+        const seconds = remainingSeconds % 60;
+        return { 
+          canSend: false, 
+          reason: `Подождите ${remainingMinutes}:${seconds.toString().padStart(2, '0')}` 
+        };
+      }
+    }
+    
+    return { canSend: true };
+  };
 
   // Early returns ПОСЛЕ всех хуков
   if (!user) return null;
   if (!myQueueItem) return null;
 
   const handleStartWashing = async () => {
+    const check = canSendNotification(startNotifications);
+    if (!check.canSend) {
+      alert('❌ ' + check.reason);
+      return;
+    }
+    
     console.log('🟢 handleStartWashing: начало', { myQueueItem });
     try {
       // Отправляем Telegram уведомление админу
@@ -65,7 +100,9 @@ export default function StudentActions() {
       });
 
       if (response.ok) {
-        alert('✅ Уведомление отправлено администратору!\nАдмин запустит таймер.');
+        setStartNotifications({ count: startNotifications.count + 1, lastSent: Date.now() });
+        const remaining = MAX_NOTIFICATIONS - startNotifications.count - 1;
+        alert(`✅ Уведомление отправлено администратору!\nАдмин запустит таймер.\n\nОсталось уведомлений: ${remaining}`);
       } else {
         alert('❌ Ошибка отправки уведомления');
       }
@@ -76,6 +113,12 @@ export default function StudentActions() {
   };
 
   const handleFinishWashing = async () => {
+    const check = canSendNotification(finishNotifications);
+    if (!check.canSend) {
+      alert('❌ ' + check.reason);
+      return;
+    }
+    
     try {
       // Отправляем Telegram уведомление админу
       const response = await fetch('/api/telegram/notify', {
@@ -91,7 +134,9 @@ export default function StudentActions() {
       });
 
       if (response.ok) {
-        alert('✅ Уведомление отправлено администратору!\nЗаберите вещи и ждите когда админ позовет вернуть ключ.');
+        setFinishNotifications({ count: finishNotifications.count + 1, lastSent: Date.now() });
+        const remaining = MAX_NOTIFICATIONS - finishNotifications.count - 1;
+        alert(`✅ Уведомление отправлено администратору!\nЗаберите вещи и ждите когда админ позовет вернуть ключ.\n\nОсталось уведомлений: ${remaining}`);
       } else {
         alert('❌ Ошибка отправки уведомления');
       }
@@ -102,8 +147,8 @@ export default function StudentActions() {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-6 px-4">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-2xl p-6 border-2 border-blue-400 w-full max-w-lg">
+    <div className="mb-6 w-full">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-xl p-6 border-2 border-blue-400">
         {myQueueItem.status === QueueStatus.KEY_ISSUED && (
           <>
             <div className="text-center mb-4">
@@ -128,7 +173,6 @@ export default function StudentActions() {
               <div className="bg-white/20 rounded-xl py-3 px-6 mb-3">
                 <div className="text-blue-100 text-sm mb-1">Время стирки:</div>
                 <div className="text-4xl font-black text-white">{washingTime}</div>
-                {TEST_MODE && <div className="text-xs text-blue-200 mt-1">(TEST MODE - 60x)</div>}
               </div>
               <p className="text-blue-100 text-sm">Нажмите кнопку когда закончите стирать</p>
               <p className="text-blue-200 text-sm mt-2">ℹ️ Админ получит уведомление</p>
