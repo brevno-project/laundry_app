@@ -47,12 +47,15 @@ export default function StudentActions() {
   if (!myQueueItem) return null;
 
   const handleStartWashing = async () => {
+    console.log('🟢 handleStartWashing: начало', { myQueueItem });
     try {
       // Сохраняем время начала стирки
+      console.log('🟢 updateQueueItem: washing_started_at');
       await updateQueueItem(myQueueItem.id, {
         washing_started_at: new Date().toISOString()
       });
       await new Promise(resolve => setTimeout(resolve, 100));
+      console.log('🟢 setQueueStatus: WASHING');
       await setQueueStatus(myQueueItem.id, QueueStatus.WASHING);
 
       // Отправляем Telegram уведомление
@@ -71,10 +74,11 @@ export default function StudentActions() {
         console.error('❌ Error sending Telegram notification:', err);
       }
 
+      console.log('✅ Успех! Стирка началась');
       alert('✅ Стирка началась! Таймер запущен.');
     } catch (error) {
-      console.error('❌ Error:', error);
-      alert('❌ Ошибка при начале стирки');
+      console.error('❌ Error в handleStartWashing:', error);
+      alert('❌ Ошибка при начале стирки: ' + (error as Error).message);
     }
   };
 

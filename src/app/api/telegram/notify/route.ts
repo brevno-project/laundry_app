@@ -132,10 +132,10 @@ async function formatMessage(notification: TelegramNotification): Promise<string
       return `🔑 *КЛЮЧ ВЫДАН!*\n\n👤 ${full_name}${roomInfo}\n📢 Идите к стиралке!\n\n📱 Не забудьте нажать "Начал стирать" в приложении`;
     
     case 'washing_started_by_student':
-      return `🌀 *СТИРКА НАЧАЛАСЬ!*\n\n👤 ${full_name}${roomInfo}\n📢 Стирайте спокойно!\n\n⏰ Не забудьте забрать вещи после стирки`;
+      return `🌀 *СТУДЕНТ НАЧАЛ СТИРАТЬ!*\n\n👤 ${full_name}${roomInfo}\n✅ Нажал кнопку "Начал стирать"\n\n⏱️ Таймер запущен`;
     
     case 'washing_finished':
-      return `✅ *СТИРКА ЗАВЕРШЕНА!*\n\n👤 ${full_name}${roomInfo}\n🧹 Заберите вещи из стиралки!\n🔑 Верните ключ администратору!`;
+      return `✅ *СТУДЕНТ ЗАКОНЧИЛ СТИРАТЬ!*\n\n👤 ${full_name}${roomInfo}\n✅ Нажал кнопку "Закончил стирать"\n\n🔑 Нажмите "Вернуть ключ" чтобы позвать его`;
     
     case 'return_key_reminder':
       return `⚠️ *НАПОМИНАНИЕ!*\n\n👤 ${full_name}${roomInfo}\n🔑 Пожалуйста, верните ключ!\n\n⏱️ Другие студенты ждут своей очереди!`;
@@ -195,8 +195,12 @@ export async function POST(request: NextRequest) {
     let success = false;
 
     // ✅ Уведомления, которые идут ТОЛЬКО студенту
-    const studentOnlyNotifications = ['admin_call_for_key', 'admin_return_key'];
+    const studentOnlyNotifications = ['admin_call_for_key', 'admin_return_key', 'key_issued'];
     const isStudentOnly = studentOnlyNotifications.includes(notification.type);
+    
+    // ✅ Уведомления, которые идут ТОЛЬКО админу
+    const adminOnlyNotifications = ['washing_started_by_student', 'washing_finished'];
+    const isAdminOnly = adminOnlyNotifications.includes(notification.type);
 
     // Отправить админу (только если это НЕ student-only уведомление)
     if (!isStudentOnly && TELEGRAM_ADMIN_CHAT_ID) {
@@ -205,8 +209,8 @@ export async function POST(request: NextRequest) {
       success = adminSuccess;
     }
 
-    // Отправить студенту (если есть telegram_chat_id)
-    if (notification.student_id) {
+    // Отправить студенту (если есть telegram_chat_id И это НЕ admin-only уведомление)
+    if (notification.student_id && !isAdminOnly) {
       const studentChatId = await getStudentTelegramChatId(notification.student_id);
       if (studentChatId) {
         console.log('📤 Sending to student:', studentChatId);
