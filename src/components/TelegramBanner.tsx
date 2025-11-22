@@ -85,7 +85,7 @@ export default function TelegramBanner() {
             </li>
             <li className="flex items-start gap-2">
               <span className="font-bold">4.</span>
-              <span>Вставьте Chat ID ниже и нажмите "Подключить"</span>
+              <span>Вставьте Chat ID ниже и нажмите &quot;Подключить&quot;</span>
             </li>
           </ol>
         </div>
