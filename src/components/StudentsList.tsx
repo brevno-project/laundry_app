@@ -150,7 +150,7 @@ export default function StudentsList() {
               ✏️ Редактировать
             </button>
           )}
-          {isSuperAdmin && !student.is_super_admin && (
+          {isAdmin && !student.is_super_admin && (
             <button
               onClick={() => setDeletingStudent(student)}
               className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
@@ -168,7 +168,7 @@ export default function StudentsList() {
       <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-gray-800">👥 Список студентов ({students.length})</h2>
-          {isSuperAdmin && (
+          {isAdmin && (
             <button
               onClick={() => setShowAddModal(true)}
               className="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600"
