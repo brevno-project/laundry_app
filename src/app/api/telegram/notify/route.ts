@@ -16,7 +16,11 @@ type NotificationType =
   | 'washing_done'
   | 'admin_call_for_key'
   | 'admin_key_issued'
-  | 'admin_return_key';
+  | 'admin_return_key'
+  | 'key_issued'  // Ключ выдан студенту
+  | 'washing_started_by_student'  // Студент нажал "Начал стирать"
+  | 'washing_finished'  // Студент нажал "Закончил стирать"
+  | 'return_key_reminder';  // Напоминание вернуть ключ
 
 interface TelegramNotification {
   type: NotificationType;
@@ -123,6 +127,18 @@ async function formatMessage(notification: TelegramNotification): Promise<string
         return `⏰ *ВЕРНИТЕ КЛЮЧ!*\n\n👤 ${full_name}${timeInfo}\n\n🏠 Верните ключ в комнату: *${adminInfo.room}*\n👨‍💼 Админ: ${adminInfo.full_name}\n\n⚡ Как можно скорее!`;
       }
       return `⚠️ ОШИБКА: Не удалось получить комнату админа`;
+    
+    case 'key_issued':
+      return `🔑 *КЛЮЧ ВЫДАН!*\n\n👤 ${full_name}${roomInfo}\n📢 Идите к стиралке!\n\n📱 Не забудьте нажать "Начал стирать" в приложении`;
+    
+    case 'washing_started_by_student':
+      return `🌀 *СТИРКА НАЧАЛАСЬ!*\n\n👤 ${full_name}${roomInfo}\n📢 Стирайте спокойно!\n\n⏰ Не забудьте забрать вещи после стирки`;
+    
+    case 'washing_finished':
+      return `✅ *СТИРКА ЗАВЕРШЕНА!*\n\n👤 ${full_name}${roomInfo}\n🧹 Заберите вещи из стиралки!\n🔑 Верните ключ администратору!`;
+    
+    case 'return_key_reminder':
+      return `⚠️ *НАПОМИНАНИЕ!*\n\n👤 ${full_name}${roomInfo}\n🔑 Пожалуйста, верните ключ!\n\n⏱️ Другие студенты ждут своей очереди!`;
     
     default:
       return `📋 Обновление очереди`;
