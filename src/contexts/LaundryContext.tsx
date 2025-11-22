@@ -1015,6 +1015,16 @@ const adminAddToQueue = async (
 
     console.log('✅ Admin inserting queue item:', newItem);
     console.log('✅ user_id (may be null):', newItem.user_id);
+    
+    // ✅ Проверяем сессию Supabase
+    const { data: sessionData } = await supabase.auth.getSession();
+    console.log('✅ Supabase session:', sessionData?.session?.user?.email);
+    
+    if (!sessionData?.session) {
+      console.error('❌ No Supabase session!');
+      alert('❌ Нет сессии Supabase. Перезайдите как админ.');
+      return;
+    }
 
     const { error } = await supabase.from('queue').insert(newItem);
 
