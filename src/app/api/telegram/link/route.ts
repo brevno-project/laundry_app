@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +18,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!supabaseUrl || !supabaseAnonKey) {
+    if (!supabaseUrl || !supabaseKey) {
       console.error('❌ Supabase not configured');
       return NextResponse.json(
         { error: 'База данных не настроена' },
@@ -27,15 +26,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Используем service_role ключ для обхода RLS политик
-    const supabase = supabaseServiceKey 
-      ? createClient(supabaseUrl, supabaseServiceKey, {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        })
-      : createClient(supabaseUrl, supabaseAnonKey);
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Проверить текущее значение
     const { data: currentData } = await supabase
@@ -56,6 +47,16 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('❌ Error updating telegram_chat_id:', error);
+      console.error('❌ Error details:', JSON.stringify(error, null, 2));
+      
+      // Проверяем есть ли проблема с RLS
+      if (error.message?.includes('policy') || error.code === '42501') {
+        return NextResponse.json(
+          { error: 'Ошибка прав доступа. Проверьте RLS политики в Supabase.' },
+          { status: 403 }
+        );
+      }
+      
       return NextResponse.json(
         { error: 'Ошибка обновления базы данных: ' + error.message },
         { status: 500 }
