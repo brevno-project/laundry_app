@@ -707,14 +707,15 @@ const handleSaveEdit = async () => {
         {/* Количество стирок */}
         <div>
           <label className="block text-sm font-bold mb-2 text-gray-900">Количество стирок</label>
-          <input
-            type="number"
-            min="1"
-            max="10"
+          <select
             value={editWashCount}
             onChange={(e) => setEditWashCount(Number(e.target.value))}
-            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
-          />
+            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 font-semibold"
+          >
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+              <option key={num} value={num}>{num}</option>
+            ))}
+          </select>
         </div>
         
         {/* Способ оплаты */}
