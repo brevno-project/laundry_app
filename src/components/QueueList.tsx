@@ -5,6 +5,7 @@ import { QueueStatus } from '@/types';
 import { sendTelegramNotification } from '@/lib/telegram';
 import { useState, useEffect } from 'react';
 import Timer from './Timer';
+import QueueTimers from './QueueTimers';
 
 export default function QueueList() {
   const { 
@@ -320,6 +321,11 @@ const handleSaveEdit = async () => {
                       <span className={`px-2 py-1 rounded-full text-xs font-bold ${statusDisplay.badgeColor} whitespace-nowrap`}>
                         {statusDisplay.badge}
                       </span>
+                    </div>
+                    
+                    {/* ✅ Таймер с цветовой индикацией */}
+                    <div className="mb-2">
+                      <QueueTimers item={item} />
                     </div>
                     
                     {/* ✅ Таймеры - показываем всю историю */}
