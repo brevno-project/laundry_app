@@ -16,14 +16,34 @@ const TIME_MULTIPLIER = TEST_MODE ? 60 : 1;
 export default function StudentActions() {
   const { user, queue, setQueueStatus, updateQueueItem } = useLaundry();
 
-  if (!user) return null;
-
+  // ✅ ВСЕ ХУКИ ДОЛЖНЫ БЫТЬ В НАЧАЛЕ, ДО ЛЮБЫХ УСЛОВИЙ!
+  // Таймер стирки
+  const [washingTime, setWashingTime] = useState<string>('0:00');
+  
   // Находим текущую запись студента
   const myQueueItem = queue.find(
-    item => item.student_id === user.student_id &&
+    item => item.student_id === user?.student_id &&
     [QueueStatus.KEY_ISSUED, QueueStatus.WASHING].includes(item.status as QueueStatus)
   );
+  
+  useEffect(() => {
+    if (myQueueItem?.status === QueueStatus.WASHING && myQueueItem.washing_started_at) {
+      const interval = setInterval(() => {
+        const startTime = new Date(myQueueItem.washing_started_at!);
+        const now = new Date();
+        const elapsedMs = now.getTime() - startTime.getTime();
+        const elapsedMinutes = Math.floor(elapsedMs / 60000 / TIME_MULTIPLIER);
+        const elapsedSeconds = Math.floor((elapsedMs / 1000 / TIME_MULTIPLIER) % 60);
+        
+        setWashingTime(`${elapsedMinutes}:${elapsedSeconds.toString().padStart(2, '0')}`);
+      }, 1000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [myQueueItem]);
 
+  // Early returns ПОСЛЕ всех хуков
+  if (!user) return null;
   if (!myQueueItem) return null;
 
   const handleStartWashing = async () => {
@@ -90,25 +110,6 @@ export default function StudentActions() {
       alert('❌ Ошибка при завершении стирки');
     }
   };
-
-  // Таймер стирки
-  const [washingTime, setWashingTime] = useState<string>('0:00');
-  
-  useEffect(() => {
-    if (myQueueItem?.status === QueueStatus.WASHING && myQueueItem.washing_started_at) {
-      const interval = setInterval(() => {
-        const startTime = new Date(myQueueItem.washing_started_at!);
-        const now = new Date();
-        const elapsedMs = now.getTime() - startTime.getTime();
-        const elapsedMinutes = Math.floor(elapsedMs / 60000 / TIME_MULTIPLIER);
-        const elapsedSeconds = Math.floor((elapsedMs / 1000 / TIME_MULTIPLIER) % 60);
-        
-        setWashingTime(`${elapsedMinutes}:${elapsedSeconds.toString().padStart(2, '0')}`);
-      }, 1000);
-      
-      return () => clearInterval(interval);
-    }
-  }, [myQueueItem]);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-6 px-4">
