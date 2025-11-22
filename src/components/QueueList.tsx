@@ -613,6 +613,31 @@ const handleSaveEdit = async () => {
                               </button>
                               
                               <button
+                                className="bg-orange-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-700 shadow-sm"
+                                onClick={async () => {
+                                  try {
+                                    if (!isAdmin) {
+                                      alert('❌ Только администратор может выполнять это действие');
+                                      return;
+                                    }
+                                    // ✅ Сохраняем время когда попросили вернуть ключ
+                                    await updateQueueItem(item.id, { 
+                                      return_key_alert: false,
+                                      return_requested_at: new Date().toISOString()
+                                    });
+                                    await new Promise(resolve => setTimeout(resolve, 100));
+                                    await setQueueStatus(item.id, QueueStatus.RETURNING_KEY);
+                                    alert(`✅ ${item.full_name} возвращает ключ!`);   
+                                  } catch (error) {
+                                    console.error('❌ Ошибка:', error);
+                                    alert('❌ Ошибка при запросе возврата ключа');
+                                  }
+                                }}
+                              >
+                                🔑 Вернуть ключ
+                              </button>
+                              
+                              <button
                                 className="bg-emerald-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-emerald-700 shadow-sm"
                                 onClick={async () => {
                                   try {

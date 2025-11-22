@@ -43,8 +43,12 @@ export default function QueueTimers({ item }: QueueTimersProps) {
           startTime = item.washing_started_at ? new Date(item.washing_started_at) : null;
           redZoneMinutes = (item.wash_count || 1) * 80; // 80 минут на стирку
           break;
-        case QueueStatus.RETURNING_KEY:
+        case QueueStatus.WASHING_FINISHED:
           startTime = item.washing_finished_at ? new Date(item.washing_finished_at) : null;
+          redZoneMinutes = 30; // 30 минут чтобы админ позвал вернуть ключ
+          break;
+        case QueueStatus.RETURNING_KEY:
+          startTime = item.return_requested_at ? new Date(item.return_requested_at) : null;
           redZoneMinutes = 30;
           break;
         default:
@@ -94,6 +98,8 @@ export default function QueueTimers({ item }: QueueTimersProps) {
         return 'Ключ выдан';
       case QueueStatus.WASHING:
         return 'Стирка';
+      case QueueStatus.WASHING_FINISHED:
+        return 'Стирка завершена';
       case QueueStatus.RETURNING_KEY:
         return 'Возврат ключа';
       default:
@@ -108,7 +114,7 @@ export default function QueueTimers({ item }: QueueTimersProps) {
     red: 'bg-red-100 text-red-800 border-red-300 animate-pulse'
   };
 
-  if (![QueueStatus.READY, QueueStatus.KEY_ISSUED, QueueStatus.WASHING, QueueStatus.RETURNING_KEY].includes(item.status as QueueStatus)) {
+  if (![QueueStatus.READY, QueueStatus.KEY_ISSUED, QueueStatus.WASHING, QueueStatus.WASHING_FINISHED, QueueStatus.RETURNING_KEY].includes(item.status as QueueStatus)) {
     return null;
   }
 

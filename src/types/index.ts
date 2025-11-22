@@ -42,6 +42,7 @@ export enum QueueStatus {
   READY = 'ready',
   KEY_ISSUED = 'key_issued',
   WASHING = 'washing',
+  WASHING_FINISHED = 'washing_finished', // Студент закончил стирать, ждет когда админ позовет вернуть ключ
   RETURNING_KEY = 'returning_key',
   DONE = 'done',
 }

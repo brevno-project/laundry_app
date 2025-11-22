@@ -2,6 +2,11 @@
 
 import { useLaundry } from '@/contexts/LaundryContext';
 import { QueueStatus } from '@/types';
+import { useEffect, useState } from 'react';
+
+// Режим тестирования
+const TEST_MODE = process.env.NEXT_PUBLIC_TEST_MODE === 'true';
+const TIME_MULTIPLIER = TEST_MODE ? 60 : 1;
 
 /**
  * Кнопки действий для студента
@@ -60,7 +65,8 @@ export default function StudentActions() {
         washing_finished_at: new Date().toISOString()
       });
       await new Promise(resolve => setTimeout(resolve, 100));
-      await setQueueStatus(myQueueItem.id, QueueStatus.RETURNING_KEY);
+      // Переводим в WASHING_FINISHED - студент закончил, ждет админа
+      await setQueueStatus(myQueueItem.id, QueueStatus.WASHING_FINISHED);
 
       // Отправляем Telegram уведомление
       try {
@@ -78,12 +84,31 @@ export default function StudentActions() {
         console.error('❌ Error sending Telegram notification:', err);
       }
 
-      alert('✅ Стирка завершена! Заберите вещи и верните ключ.');
+      alert('✅ Стирка завершена! Администратор получил уведомление.');
     } catch (error) {
       console.error('❌ Error:', error);
       alert('❌ Ошибка при завершении стирки');
     }
   };
+
+  // Таймер стирки
+  const [washingTime, setWashingTime] = useState<string>('0:00');
+  
+  useEffect(() => {
+    if (myQueueItem?.status === QueueStatus.WASHING && myQueueItem.washing_started_at) {
+      const interval = setInterval(() => {
+        const startTime = new Date(myQueueItem.washing_started_at!);
+        const now = new Date();
+        const elapsedMs = now.getTime() - startTime.getTime();
+        const elapsedMinutes = Math.floor(elapsedMs / 60000 / TIME_MULTIPLIER);
+        const elapsedSeconds = Math.floor((elapsedMs / 1000 / TIME_MULTIPLIER) % 60);
+        
+        setWashingTime(`${elapsedMinutes}:${elapsedSeconds.toString().padStart(2, '0')}`);
+      }, 1000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [myQueueItem]);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-6 px-4">
@@ -107,7 +132,13 @@ export default function StudentActions() {
           <>
             <div className="text-center mb-4">
               <h3 className="text-2xl font-bold text-white mb-2">🌀 Стирка идет!</h3>
-              <p className="text-blue-100">Нажмите кнопку когда закончите стирать</p>
+              {/* Таймер стирки */}
+              <div className="bg-white/20 rounded-xl py-3 px-6 mb-3">
+                <div className="text-blue-100 text-sm mb-1">Время стирки:</div>
+                <div className="text-4xl font-black text-white">{washingTime}</div>
+                {TEST_MODE && <div className="text-xs text-blue-200 mt-1">(TEST MODE - 60x)</div>}
+              </div>
+              <p className="text-blue-100 text-sm">Нажмите кнопку когда закончите стирать</p>
             </div>
             <button
               onClick={handleFinishWashing}
