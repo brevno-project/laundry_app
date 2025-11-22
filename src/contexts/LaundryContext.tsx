@@ -802,7 +802,7 @@ const joinQueue = async (
       .select('id')
       .eq('student_id', user.student_id)
       .eq('queue_date', targetDate)
-      .in('status', ['WAITING', 'READY', 'KEY_ISSUED', 'WASHING']);
+      .in('status', ['waiting', 'ready', 'key_issued', 'washing', 'returning_key']);
 
     if (existingEntry && existingEntry.length > 0) {
       alert('Вы уже в очереди на эту дату');

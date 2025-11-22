@@ -10,8 +10,8 @@ interface FullScreenAlertProps {
 }
 
 export default function FullScreenAlert({ status, needsToReturnKey, adminRoom, onClose }: FullScreenAlertProps) {
-  // ✅ ПРИОРИТЕТ 1: "Принеси ключ" - показывается ВСЕГДА если флаг установлен
-  if (needsToReturnKey) {
+  // ✅ ПРИОРИТЕТ 1: "Принеси ключ" - показывается ВСЕГДА если флаг установлен ИЛИ статус RETURNING_KEY
+  if (needsToReturnKey || status === QueueStatus.RETURNING_KEY) {
     return (
       <div className="fixed inset-0 bg-orange-500 z-50 flex items-center justify-center p-4 animate-pulse">
         <div className="text-center">
