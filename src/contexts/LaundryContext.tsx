@@ -1686,7 +1686,7 @@ const startWashing = async (queueItemId: string) => {
   // Обновить данные студента
   const updateStudent = async (
     studentId: string,
-    updates: { first_name?: string; last_name?: string; room?: string }
+    updates: { first_name?: string; last_name?: string; middle_name?: string; room?: string; can_view_students?: boolean }
 ) => {
   console.log('✏️ updateStudent called:', { studentId, updates, isAdmin, user: user?.full_name });
   
@@ -1707,17 +1707,22 @@ const startWashing = async (queueItemId: string) => {
 
     const updateData: any = {};
     
-    if (updates.first_name !== undefined || updates.last_name !== undefined) {
+    if (updates.first_name !== undefined || updates.last_name !== undefined || updates.middle_name !== undefined) {
       const newFirstName = updates.first_name !== undefined ? updates.first_name : targetStudent.first_name;
-      const newLastName = updates.last_name !== undefined ? updates.last_name : targetStudent.last_name;
+      const newLastName = updates.last_name !== undefined ? updates.last_name : (targetStudent.last_name || '');
+      const newMiddleName = updates.middle_name !== undefined ? updates.middle_name : (targetStudent.middle_name || '');
       
-      updateData.full_name = newLastName ? `${newFirstName} ${newLastName}` : newFirstName;
+      // Формируем full_name: Имя Фамилия Отчество
+      const nameParts = [newFirstName, newLastName, newMiddleName].filter(Boolean);
+      updateData.full_name = nameParts.join(' ');
       
       if (updates.first_name !== undefined) updateData.first_name = newFirstName;
-      if (updates.last_name !== undefined) updateData.last_name = newLastName || '';
+      if (updates.last_name !== undefined) updateData.last_name = newLastName || null;
+      if (updates.middle_name !== undefined) updateData.middle_name = newMiddleName || null;
     }
 
     if (updates.room !== undefined) updateData.room = updates.room;
+    if (updates.can_view_students !== undefined) updateData.can_view_students = updates.can_view_students;
 
     console.log('📝 Update data:', updateData);
     
