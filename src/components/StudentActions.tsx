@@ -38,6 +38,29 @@ export default function StudentActions() {
     [QueueStatus.KEY_ISSUED, QueueStatus.WASHING].includes(item.status as QueueStatus)
   );
   
+  // Загружаем счетчики уведомлений из localStorage при смене queue_item
+  useEffect(() => {
+    if (!myQueueItem) return;
+    
+    const startKey = `notifications_start_${myQueueItem.id}`;
+    const finishKey = `notifications_finish_${myQueueItem.id}`;
+    
+    const savedStart = localStorage.getItem(startKey);
+    const savedFinish = localStorage.getItem(finishKey);
+    
+    if (savedStart) {
+      setStartNotifications(JSON.parse(savedStart));
+    } else {
+      setStartNotifications({ count: 0, lastSent: null });
+    }
+    
+    if (savedFinish) {
+      setFinishNotifications(JSON.parse(savedFinish));
+    } else {
+      setFinishNotifications({ count: 0, lastSent: null });
+    }
+  }, [myQueueItem?.id]);
+  
   useEffect(() => {
     if (myQueueItem?.status === QueueStatus.WASHING && myQueueItem.washing_started_at) {
       const interval = setInterval(() => {
@@ -103,8 +126,13 @@ export default function StudentActions() {
       });
 
       if (response.ok) {
-        setStartNotifications({ count: startNotifications.count + 1, lastSent: Date.now() });
-        const remaining = MAX_NOTIFICATIONS - startNotifications.count - 1;
+        const newState = { count: startNotifications.count + 1, lastSent: Date.now() };
+        setStartNotifications(newState);
+        // Сохраняем в localStorage
+        if (myQueueItem) {
+          localStorage.setItem(`notifications_start_${myQueueItem.id}`, JSON.stringify(newState));
+        }
+        const remaining = MAX_NOTIFICATIONS - newState.count;
         alert(`✅ Уведомление отправлено администратору!\nАдмин запустит таймер.\n\nОсталось уведомлений: ${remaining}`);
       } else {
         alert('❌ Ошибка отправки уведомления');
@@ -137,8 +165,13 @@ export default function StudentActions() {
       });
 
       if (response.ok) {
-        setFinishNotifications({ count: finishNotifications.count + 1, lastSent: Date.now() });
-        const remaining = MAX_NOTIFICATIONS - finishNotifications.count - 1;
+        const newState = { count: finishNotifications.count + 1, lastSent: Date.now() };
+        setFinishNotifications(newState);
+        // Сохраняем в localStorage
+        if (myQueueItem) {
+          localStorage.setItem(`notifications_finish_${myQueueItem.id}`, JSON.stringify(newState));
+        }
+        const remaining = MAX_NOTIFICATIONS - newState.count;
         alert(`✅ Уведомление отправлено администратору!\nЗаберите вещи и ждите когда админ позовет вернуть ключ.\n\nОсталось уведомлений: ${remaining}`);
       } else {
         alert('❌ Ошибка отправки уведомления');
