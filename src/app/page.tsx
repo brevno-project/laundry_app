@@ -12,6 +12,7 @@ import AdminLogin from '@/components/AdminLogin';
 
 import TelegramSetup from '@/components/TelegramSetup';
 import HistoryList from '@/components/HistoryList';
+import StudentsList from '@/components/StudentsList';
 
 export default function Home() {
   const { user, isLoading, logoutStudent, isAdmin, machineState, queue, isNewUser, setIsNewUser, students } = useLaundry();
@@ -134,6 +135,18 @@ export default function Home() {
               >
                 📜 История
               </button>
+            {isAdmin && (
+              <button
+                onClick={() => setActiveTab('students')}
+                className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
+                  activeTab === 'students'
+                    ? 'border-blue-600 text-blue-600 bg-blue-50'
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                👥 Студенты
+              </button>
+            )}
             <button
               onClick={() => setActiveTab('settings')}
               className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
@@ -215,6 +228,13 @@ export default function Home() {
         {activeTab === 'history' && (
           <div className="space-y-4">
             <HistoryList />
+          </div>
+        )}
+
+        {/* Студенты */}
+        {activeTab === 'students' && isAdmin && (
+          <div className="space-y-4">
+            <StudentsList />
           </div>
         )}
 
