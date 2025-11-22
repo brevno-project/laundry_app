@@ -7,20 +7,14 @@ interface QueueTimersProps {
   item: QueueItem;
 }
 
-// 🔴 ВРЕМЕННО: Красные зоны ускорены для тестирования
-// 30 минут → 30 секунд (0.5 минуты)
-// 80 минут → 80 секунд (1.33 минуты)
-// ЧТОБЫ ВЕРНУТЬ: умножьте все redZoneMinutes на 60
-const SPEED_MULTIPLIER = 60; // Ускорение времени
-
 /**
  * Компонент таймера с цветовой индикацией для каждого этапа очереди
  * 
- * Красные зоны:
- * - READY (позвать за ключом): 30 минут
- * - KEY_ISSUED (выдан ключ): 30 минут
- * - WASHING (стирка): wash_count × 80 минут
- * - RETURNING_KEY (возврат ключа): 30 минут
+ * Зоны:
+ * - READY (позвать за ключом): 15 мин красная
+ * - KEY_ISSUED (выдан ключ до стирки): 5 мин красная
+ * - WASHING (стирка): 80 мин желтая, 120 мин красная
+ * - RETURNING_KEY (принести ключ): 5 мин красная
  */
 export default function QueueTimers({ item }: QueueTimersProps) {
   const [elapsed, setElapsed] = useState(0);
@@ -29,29 +23,31 @@ export default function QueueTimers({ item }: QueueTimersProps) {
   useEffect(() => {
     const interval = setInterval(() => {
       let startTime: Date | null = null;
-      let redZoneMinutes = 30; // По умолчанию 30 минут
+      let redZoneMinutes = 15;
+      let yellowZoneMinutes = 0; // Желтая зона (только для стирки)
 
-      // Определяем время начала и красную зону в зависимости от статуса
+      // Определяем время начала и зоны в зависимости от статуса
       switch (item.status) {
         case QueueStatus.READY:
           startTime = item.ready_at ? new Date(item.ready_at) : null;
-          redZoneMinutes = 30 / SPEED_MULTIPLIER; // 30 секунд (было 30 минут)
+          redZoneMinutes = 15; // 15 минут красная зона
           break;
         case QueueStatus.KEY_ISSUED:
           startTime = item.key_issued_at ? new Date(item.key_issued_at) : null;
-          redZoneMinutes = 30 / SPEED_MULTIPLIER; // 30 секунд (было 30 минут)
+          redZoneMinutes = 5; // 5 минут красная зона
           break;
         case QueueStatus.WASHING:
           startTime = item.washing_started_at ? new Date(item.washing_started_at) : null;
-          redZoneMinutes = ((item.wash_count || 1) * 80) / SPEED_MULTIPLIER; // 80 секунд на стирку (было 80 минут)
+          yellowZoneMinutes = (item.wash_count || 1) * 80; // 80 минут на стирку - желтая
+          redZoneMinutes = (item.wash_count || 1) * 120; // 120 минут - красная
           break;
         case QueueStatus.WASHING_FINISHED:
           startTime = item.washing_finished_at ? new Date(item.washing_finished_at) : null;
-          redZoneMinutes = 30 / SPEED_MULTIPLIER; // 30 секунд (было 30 минут)
+          redZoneMinutes = 5; // 5 минут красная зона
           break;
         case QueueStatus.RETURNING_KEY:
           startTime = item.return_requested_at ? new Date(item.return_requested_at) : null;
-          redZoneMinutes = 5 / SPEED_MULTIPLIER; // 5 секунд (было 5 минут)
+          redZoneMinutes = 5; // 5 минут красная зона
           break;
         default:
           return;
@@ -66,12 +62,10 @@ export default function QueueTimers({ item }: QueueTimersProps) {
       setElapsed(elapsedMinutes);
 
       // Цветовая индикация
-      const yellowZone = redZoneMinutes * 0.6; // 60% от красной зоны
-      
       if (elapsedMinutes >= redZoneMinutes) {
         setColor('red');
-      } else if (elapsedMinutes >= yellowZone) {
-        setColor('yellow');
+      } else if (yellowZoneMinutes > 0 && elapsedMinutes >= yellowZoneMinutes) {
+        setColor('yellow'); // Желтая зона (только для стирки)
       } else {
         setColor('green');
       }

@@ -50,7 +50,7 @@ export default function StudentAuth() {
       setError('');
     } catch (err: any) {
       setError(err.message || (
-        selectedStudent.is_registered ? 'Неверный пароль' : 'Ошибка регистрации'
+        selectedStudent.is_registered ? 'Неправильный пароль' : 'Ошибка регистрации'
       ));
     } finally {
       setLoading(false);

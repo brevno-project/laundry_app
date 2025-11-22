@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Student } from '@/types';
 
 export default function StudentsList() {
-  const { students, isAdmin, user, updateStudent, addStudent, deleteStudent } = useLaundry();
+  const { students, isAdmin, user, updateStudent, addStudent, deleteStudent, loadStudents } = useLaundry();
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [editRoom, setEditRoom] = useState('');
   const [editFirstName, setEditFirstName] = useState('');
@@ -167,7 +167,7 @@ export default function StudentsList() {
               <span className="text-gray-400">❌ Не подключен</span>
             )}
           </td>
-          {isAdmin && (
+          {isSuperAdmin && (
             <td className="p-3 text-center">
               <input
                 type="checkbox"
@@ -175,6 +175,7 @@ export default function StudentsList() {
                 onChange={async (e) => {
                   try {
                     await updateStudent(student.id, { can_view_students: e.target.checked });
+                    loadStudents(); // Перезагружаем список
                   } catch (error) {
                     console.error('❌ Error updating can_view_students:', error);
                     alert('❌ Ошибка обновления');
@@ -238,7 +239,7 @@ export default function StudentsList() {
                   <th className="text-left p-3 font-bold text-gray-900">Фамилия</th>
                   <th className="text-left p-3 font-bold text-gray-900">Комната</th>
                   <th className="text-left p-3 font-bold text-gray-900">Telegram</th>
-                  {isAdmin && <th className="text-left p-3 font-bold text-gray-900">Может видеть список</th>}
+                  {isSuperAdmin && <th className="text-left p-3 font-bold text-gray-900">Может видеть список</th>}
                   {isAdmin && <th className="text-left p-3 font-bold text-gray-900">Действия</th>}
                 </tr>
               </thead>
@@ -332,7 +333,7 @@ export default function StudentsList() {
                   <th className="text-left p-3 font-bold text-gray-900">Фамилия</th>
                   <th className="text-left p-3 font-bold text-gray-900">Комната</th>
                   <th className="text-left p-3 font-bold text-gray-900">Telegram</th>
-                  {isAdmin && <th className="text-left p-3 font-bold text-gray-900">Может видеть список</th>}
+                  {isSuperAdmin && <th className="text-left p-3 font-bold text-gray-900">Может видеть список</th>}
                   {isAdmin && <th className="text-left p-3 font-bold text-gray-900">Действия</th>}
                 </tr>
               </thead>

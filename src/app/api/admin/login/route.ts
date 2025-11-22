@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     // Проверяем пароль
     if (password !== ADMIN_PASSWORD) {
       return NextResponse.json(
-        { error: 'Неверный пароль' },
+        { error: 'Неправильный пароль' },
         { status: 401 }
       );
     }
