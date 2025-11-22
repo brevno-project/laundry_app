@@ -111,9 +111,9 @@ export default function StudentActions() {
             </div>
             <button
               onClick={handleFinishWashing}
-              className="w-full bg-white text-blue-700 font-bold py-4 px-6 rounded-xl text-xl hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="w-full bg-red-600 text-white font-bold py-4 px-6 rounded-xl text-xl hover:bg-red-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              ✅ Закончил стирать
+              🔑 Закончил стирать - Вернуть ключ
             </button>
           </>
         )}
