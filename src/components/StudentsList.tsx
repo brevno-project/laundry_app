@@ -186,11 +186,11 @@ export default function StudentsList() {
             </td>
           )}
           <td className="p-3">
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
               {isAdmin && !student.is_super_admin && (
                 <button
                   onClick={() => openEditModal(student)}
-                  className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+                  className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 w-full"
                 >
                   ✏️ Редактировать
                 </button>
@@ -198,7 +198,7 @@ export default function StudentsList() {
               {isAdmin && !student.is_super_admin && (
                 <button
                   onClick={() => setDeletingStudent(student)}
-                  className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
+                  className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600 w-full"
                 >
                   🗑️ Удалить
                 </button>
@@ -289,21 +289,16 @@ export default function StudentsList() {
                         </td>
                         {isAdmin && (
                           <td className="p-1">
-                            <div className="flex gap-1">
+                            <div className="flex flex-col gap-1">
                               <button
-                                onClick={() => {
-                                  setEditingStudent(student);
-                                  setEditRoom(student.room || '');
-                                  setEditFirstName(student.first_name);
-                                  setEditLastName(student.last_name || '');
-                                }}
-                                className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
+                                onClick={() => openEditModal(student)}
+                                className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600 w-full"
                               >
                                 ✏️
                               </button>
                               <button
                                 onClick={() => setDeletingStudent(student)}
-                                className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
+                                className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 w-full"
                               >
                                 🗑️
                               </button>
