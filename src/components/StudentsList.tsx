@@ -149,8 +149,9 @@ export default function StudentsList() {
         )}
         <tr className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
           <td className="p-3 text-gray-700">{index + 1}</td>
-          <td className="p-3 text-gray-900">{student.first_name || '—'}</td>
-          <td className="p-3 font-semibold text-gray-900">{student.last_name || '—'}</td>
+          <td className="p-3 text-gray-900">
+            {[student.first_name, student.last_name, student.middle_name].filter(Boolean).join(' ') || '—'}
+          </td>
           <td className="p-3 text-center text-gray-900">
             {student.room ? (
               <span className="bg-blue-100 text-blue-900 px-2 py-1 rounded font-semibold">
@@ -167,24 +168,7 @@ export default function StudentsList() {
               <span className="text-gray-400">❌ Не подключен</span>
             )}
           </td>
-          {isSuperAdmin && (
-            <td className="p-3 text-center">
-              <input
-                type="checkbox"
-                checked={student.can_view_students || false}
-                onChange={async (e) => {
-                  try {
-                    await updateStudent(student.id, { can_view_students: e.target.checked });
-                    loadStudents(); // Перезагружаем список
-                  } catch (error) {
-                    console.error('❌ Error updating can_view_students:', error);
-                    alert('❌ Ошибка обновления');
-                  }
-                }}
-                className="w-5 h-5 cursor-pointer"
-              />
-            </td>
-          )}
+
           <td className="p-3">
             <div className="flex gap-2">
               {isAdmin && !student.is_super_admin && (
@@ -234,13 +218,11 @@ export default function StudentsList() {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-blue-100 border-b-2 border-blue-300">
-                  <th className="text-left p-3 font-bold text-gray-900">#</th>
-                  <th className="text-left p-3 font-bold text-gray-900">Имя</th>
-                  <th className="text-left p-3 font-bold text-gray-900">Фамилия</th>
-                  <th className="text-left p-3 font-bold text-gray-900">Комната</th>
-                  <th className="text-left p-3 font-bold text-gray-900">Telegram</th>
-                  {isSuperAdmin && <th className="text-left p-3 font-bold text-gray-900">Может видеть список</th>}
-                  {isAdmin && <th className="text-left p-3 font-bold text-gray-900">Действия</th>}
+                  <th className="text-left p-3 font-bold text-gray-900 w-12">#</th>
+                  <th className="text-left p-3 font-bold text-gray-900 w-64">ФИО</th>
+                  <th className="text-left p-3 font-bold text-gray-900 w-24">Комната</th>
+                  <th className="text-left p-3 font-bold text-gray-900 w-32">Telegram</th>
+                  {isAdmin && <th className="text-left p-3 font-bold text-gray-900 w-48">Действия</th>}
                 </tr>
               </thead>
               <tbody>
