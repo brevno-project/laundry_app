@@ -8,6 +8,8 @@ import { useEffect, useState } from 'react';
 const TEST_MODE = process.env.NEXT_PUBLIC_TEST_MODE === 'true';
 const TIME_MULTIPLIER = TEST_MODE ? 60 : 1;
 
+console.log('🧪 TEST_MODE:', TEST_MODE, 'env:', process.env.NEXT_PUBLIC_TEST_MODE, 'multiplier:', TIME_MULTIPLIER);
+
 /**
  * Кнопки действий для студента
  * - "Начал стирать" когда KEY_ISSUED

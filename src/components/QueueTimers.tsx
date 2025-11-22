@@ -11,6 +11,8 @@ interface QueueTimersProps {
 const TEST_MODE = process.env.NEXT_PUBLIC_TEST_MODE === 'true';
 const TIME_MULTIPLIER = TEST_MODE ? 60 : 1;
 
+console.log('🧪 QueueTimers TEST_MODE:', TEST_MODE, 'env:', process.env.NEXT_PUBLIC_TEST_MODE);
+
 /**
  * Компонент таймера с цветовой индикацией для каждого этапа очереди
  * 
