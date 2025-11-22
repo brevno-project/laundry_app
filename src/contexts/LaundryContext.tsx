@@ -1219,6 +1219,11 @@ const startWashing = async (queueItemId: string) => {
         room: queueItem.room || undefined,
         started_at: machineState.started_at || new Date().toISOString(),
         finished_at: new Date().toISOString(),
+        // ✅ Таймеры
+        ready_at: queueItem.ready_at,
+        key_issued_at: queueItem.key_issued_at,
+        washing_started_at: queueItem.washing_started_at,
+        return_requested_at: queueItem.return_requested_at,
       };
       
       const { error: historyError } = await supabase
