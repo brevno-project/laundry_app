@@ -64,6 +64,11 @@ export type QueueItem = {
   admin_message?: string;
   return_key_alert?: boolean;
   admin_room?: string; // ✅ Комната админа который позвал
+  // ✅ Таймеры для каждого этапа
+  ready_at?: string; // Когда позвали за ключом
+  key_issued_at?: string; // Когда выдали ключ
+  washing_started_at?: string; // Когда начал стирать
+  return_requested_at?: string; // Когда попросили вернуть ключ
   status: QueueStatus;
   scheduled_for_date: string; // '2025-11-02'
   queue_date: string; // '2025-11-03'
