@@ -2,7 +2,6 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
-import FullScreenAlert from './FullScreenAlert';
 
 export default function UserForm() {
   const { user, joinQueue, logoutStudent, getUserQueueItem, queue, updateQueueItem,students } = useLaundry();
@@ -75,26 +74,7 @@ export default function UserForm() {
     logoutStudent();
   };
 
-  // ✅ Получаем комнату админа из базы
-  const getAdminRoom = () => {
-    return existingQueueItem?.admin_room || 'A501';
-  };
 
-  // Полноэкранное уведомление когда зовут
-  if (existingQueueItem?.status === 'ready') {
-    return <FullScreenAlert status={existingQueueItem.status} adminRoom={getAdminRoom()} />;
-  }
-
-  // Полноэкранное уведомление "Принеси ключ" - БЕЗ кнопки закрытия
-  if (existingQueueItem?.return_key_alert) {
-    return (
-      <FullScreenAlert 
-        status={existingQueueItem.status} 
-        needsToReturnKey={true}
-        adminRoom={getAdminRoom()}
-      />
-    );
-  }
 
   return (
     <div className="space-y-4">

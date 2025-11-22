@@ -13,6 +13,7 @@ import AdminLogin from '@/components/AdminLogin';
 import TelegramSetup from '@/components/TelegramSetup';
 import HistoryList from '@/components/HistoryList';
 import StudentsList from '@/components/StudentsList';
+import GlobalAlert from '@/components/GlobalAlert';
 
 export default function Home() {
   const { user, isLoading, logoutStudent, isAdmin, machineState, queue, isNewUser, setIsNewUser, students } = useLaundry();
@@ -161,6 +162,9 @@ export default function Home() {
         </nav>
       )}
 
+      {/* Глобальный баннер для всех студентов в очереди */}
+      <GlobalAlert />
+      
       {/* Основной контент */}
       <div className="w-full p-3">
         {activeTab === 'main' && (
