@@ -411,10 +411,11 @@ const handleSaveEdit = async () => {
                               className="bg-yellow-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-yellow-600 shadow-sm"
                               onClick={async () => {
                                 try {
-                                  // ✅ Сохраняем комнату админа
+                                  // ✅ Сохраняем комнату админа и время вызова
                                   await updateQueueItem(item.id, { 
                                     return_key_alert: false,
-                                    admin_room: user?.room // ✅ Комната админа
+                                    admin_room: user?.room, // ✅ Комната админа
+                                    ready_at: new Date().toISOString() // ✅ Время когда позвали
                                   });
                                   await new Promise(resolve => setTimeout(resolve, 100));
                                   await setQueueStatus(item.id, QueueStatus.READY);
@@ -446,17 +447,15 @@ const handleSaveEdit = async () => {
                               className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm"
                               onClick={async () => {
                                 try {
-                                  console.log('🔑 Нажата кнопка Вернуть, item:', item);
                                   // ✅ Устанавливаем статус RETURNING_KEY
-                                  console.log('🔄 Устанавливаем статус RETURNING_KEY...');
                                   await setQueueStatus(item.id, QueueStatus.RETURNING_KEY);
-                                  console.log('✅ Статус установлен');
                                   await new Promise(resolve => setTimeout(resolve, 100));
                                   
-                                  // ✅ Сохраняем комнату админа
+                                  // ✅ Сохраняем комнату админа и время запроса
                                   await updateQueueItem(item.id, { 
                                     return_key_alert: true,
-                                    admin_room: user?.room // ✅ Комната админа
+                                    admin_room: user?.room, // ✅ Комната админа
+                                    return_requested_at: new Date().toISOString() // ✅ Время когда попросили вернуть
                                   });
                                   
                                   // ✅ КРИТИЧНО: Передаём admin_student_id, НЕ передаём room студента
@@ -518,10 +517,14 @@ const handleSaveEdit = async () => {
                                       alert('❌ Только администратор может выполнять это действие');
                                       return;
                                     }
-                                    await updateQueueItem(item.id, { return_key_alert: false });
-                                    await new Promise(resolve => setTimeout(resolve, 200));
-                                    await startWashing(item.id);
-                                    alert(`✅ ${item.full_name} забрал ключ и начал стирку!`);
+                                    // ✅ Устанавливаем статус KEY_ISSUED и сохраняем время
+                                    await updateQueueItem(item.id, { 
+                                      return_key_alert: false,
+                                      key_issued_at: new Date().toISOString() // ✅ Время выдачи ключа
+                                    });
+                                    await new Promise(resolve => setTimeout(resolve, 100));
+                                    await setQueueStatus(item.id, QueueStatus.KEY_ISSUED);
+                                    alert(`✅ ${item.full_name} получил ключ!`);
                                   } catch (error) {
                                     console.error('❌ Ошибка:', error);
                                     alert('❌ Ошибка при выдаче ключа');
@@ -539,8 +542,12 @@ const handleSaveEdit = async () => {
                                       alert('❌ Только администратор может выполнять это действие');
                                       return;
                                     }
-                                    await updateQueueItem(item.id, { return_key_alert: false });
-                                    await new Promise(resolve => setTimeout(resolve, 200));
+                                    // ✅ Сохраняем время начала стирки
+                                    await updateQueueItem(item.id, { 
+                                      return_key_alert: false,
+                                      washing_started_at: new Date().toISOString() // ✅ Время начала стирки
+                                    });
+                                    await new Promise(resolve => setTimeout(resolve, 100));
                                     await startWashing(item.id);
                                     alert(`✅ ${item.full_name} стирает!`);   
                                   } catch (error) {
