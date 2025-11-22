@@ -11,6 +11,7 @@ export default function StudentsList() {
   const [editRoom, setEditRoom] = useState('');
   const [editFirstName, setEditFirstName] = useState('');
   const [editLastName, setEditLastName] = useState('');
+  const [editMiddleName, setEditMiddleName] = useState('');
   
   // Состояния для добавления студента
   const [showAddModal, setShowAddModal] = useState(false);
@@ -64,6 +65,7 @@ export default function StudentsList() {
     setEditRoom(student.room || '');
     setEditFirstName(student.first_name || '');
     setEditLastName(student.last_name || '');
+    setEditMiddleName(student.middle_name || '');
   };
   
   const handleSaveEdit = async () => {
@@ -73,7 +75,8 @@ export default function StudentsList() {
       await updateStudent(editingStudent.id, {
         room: editRoom,
         first_name: editFirstName,
-        last_name: editLastName,
+        last_name: editLastName || undefined,
+        middle_name: editMiddleName || undefined,
       });
       
       setEditingStudent(null);
@@ -428,11 +431,23 @@ export default function StudentsList() {
               </div>
               
               <div>
-                <label className="block text-sm font-bold mb-2 text-gray-900">Имя</label>
+                <label className="block text-sm font-bold mb-2 text-gray-900">Имя *</label>
                 <input
                   type="text"
                   value={editFirstName}
                   onChange={(e) => setEditFirstName(e.target.value)}
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-bold mb-2 text-gray-900">Отчество (необязательно)</label>
+                <input
+                  type="text"
+                  value={editMiddleName}
+                  onChange={(e) => setEditMiddleName(e.target.value)}
+                  placeholder="Можно оставить пустым"
                   className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
                 />
               </div>
