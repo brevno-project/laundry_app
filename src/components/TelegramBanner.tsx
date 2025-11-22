@@ -3,45 +3,34 @@
 import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 
+interface TelegramBannerProps {
+  onGoToSettings: () => void;
+}
+
 /**
  * Полноэкранный баннер для подключения Telegram
- * Показывается при входе для всех пользователей без Telegram
+ * Показывается при входе для пользователей без Telegram (не админов)
  */
-export default function TelegramBanner() {
-  const { user, linkTelegram } = useLaundry();
-  const [chatId, setChatId] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+export default function TelegramBanner({ onGoToSettings }: TelegramBannerProps) {
+  const { user, isAdmin } = useLaundry();
   const [dismissed, setDismissed] = useState(false);
 
-  // Не показываем если Telegram уже подключен или баннер закрыт
-  if (!user || user.telegram_chat_id || dismissed) {
+  // Не показываем если:
+  // - Пользователь не вошел
+  // - Telegram уже подключен
+  // - Пользователь - админ
+  // - Баннер закрыт
+  if (!user || user.telegram_chat_id || isAdmin || dismissed) {
     return null;
   }
 
-  const handleConnect = async () => {
-    if (!chatId.trim()) {
-      setError('Введите Chat ID');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-
-    const result = await linkTelegram(chatId.trim());
-
-    if (result.success) {
-      alert('✅ Telegram успешно подключен!');
-      setDismissed(true);
-    } else {
-      setError(result.error || 'Ошибка подключения');
-    }
-
-    setLoading(false);
-  };
-
   const handleDismiss = () => {
     setDismissed(true);
+  };
+  
+  const handleGoToSettings = () => {
+    setDismissed(true);
+    onGoToSettings();
   };
 
   return (
@@ -57,64 +46,30 @@ export default function TelegramBanner() {
         </button>
 
         {/* Заголовок */}
-        <div className="mb-6">
+        <div className="text-center mb-6">
+          <div className="text-6xl mb-4">📱</div>
           <h2 className="text-2xl font-bold text-white mb-2">
-            📱 Подключите Telegram
+            Подключите Telegram
           </h2>
-          <p className="text-gray-400 text-sm">
-            Получайте уведомления когда вас позовут
+          <p className="text-gray-400">
+            Получайте уведомления когда вас позовут за ключом
           </p>
         </div>
 
-        {/* Инструкция */}
-        <div className="bg-gray-800 rounded-lg p-4 mb-4 text-sm">
-          <ol className="space-y-2 text-gray-300">
-            <li>1. Найдите <span className="text-blue-400 font-semibold">@LaundryNotifyBot</span> в Telegram</li>
-            <li>2. Нажмите <span className="text-blue-400 font-semibold">/start</span></li>
-            <li>3. Скопируйте Chat ID из сообщения</li>
-          </ol>
-        </div>
-
-        {/* Поле ввода */}
-        <div className="space-y-3">
-          <div>
-            <label className="block text-gray-300 font-semibold mb-2 text-sm">
-              Chat ID:
-            </label>
-            <input
-              type="text"
-              value={chatId}
-              onChange={(e) => {
-                setChatId(e.target.value);
-                setError('');
-              }}
-              placeholder="123456789"
-              className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-blue-500 focus:outline-none"
-              disabled={loading}
-            />
-          </div>
-
-          {error && (
-            <div className="bg-red-900 border border-red-700 text-red-200 p-2 rounded text-sm">
-              {error}
-            </div>
-          )}
-
-          <div className="flex gap-2">
-            <button
-              onClick={handleDismiss}
-              className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 rounded-lg transition-colors"
-            >
-              Позже
-            </button>
-            <button
-              onClick={handleConnect}
-              disabled={loading || !chatId.trim()}
-              className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Подключение...' : 'Подключить'}
-            </button>
-          </div>
+        {/* Кнопки */}
+        <div className="flex gap-3">
+          <button
+            onClick={handleDismiss}
+            className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 rounded-lg transition-colors"
+          >
+            Позже
+          </button>
+          <button
+            onClick={handleGoToSettings}
+            className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-lg transition-colors"
+          >
+            Перейти в настройки
+          </button>
         </div>
       </div>
     </div>

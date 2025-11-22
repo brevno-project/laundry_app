@@ -164,7 +164,7 @@ export default function Home() {
       )}
 
       {/* Полноэкранный баннер для подключения Telegram */}
-      <TelegramBanner />
+      <TelegramBanner onGoToSettings={() => setActiveTab('settings')} />
       
       {/* Глобальный баннер для всех студентов в очереди */}
       <GlobalAlert />
