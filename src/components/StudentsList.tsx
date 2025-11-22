@@ -1,5 +1,6 @@
 "use client";
 
+import React from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import { useState } from 'react';
 import { Student } from '@/types';
@@ -131,52 +132,62 @@ export default function StudentsList() {
     }
   };
   
-  const renderStudentRow = (student: Student, index: number) => (
-    <tr 
-      key={student.id} 
-      className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
-    >
-      <td className="p-3 text-gray-700">{index + 1}</td>
-      <td className="p-3 font-semibold text-gray-900">{student.last_name || '—'}</td>
-      <td className="p-3 text-gray-900">{student.first_name || '—'}</td>
-      <td className="p-3 text-gray-900">
-        {student.room ? (
-          <span className="bg-blue-100 text-blue-900 px-2 py-1 rounded font-semibold">
-            {student.room}
-          </span>
-        ) : (
-          <span className="text-gray-400">—</span>
+  const renderStudentRow = (student: Student, index: number, students: Student[]) => {
+    // Проверяем нужен ли разделитель (комната изменилась)
+    const prevStudent = index > 0 ? students[index - 1] : null;
+    const showDivider = prevStudent && prevStudent.room !== student.room;
+    
+    return (
+      <React.Fragment key={student.id}>
+        {showDivider && (
+          <tr className="bg-gradient-to-r from-transparent via-gray-300 to-transparent">
+            <td colSpan={6} className="h-1"></td>
+          </tr>
         )}
-      </td>
-      <td className="p-3">
-        {student.telegram_chat_id ? (
-          <span className="text-green-600 font-semibold">✅ Подключен</span>
-        ) : (
-          <span className="text-gray-400">❌ Не подключен</span>
-        )}
-      </td>
-      <td className="p-3">
-        <div className="flex gap-2">
-          {isAdmin && !student.is_super_admin && (
-            <button
-              onClick={() => openEditModal(student)}
-              className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
-            >
-              ✏️ Редактировать
-            </button>
-          )}
-          {isAdmin && !student.is_super_admin && (
-            <button
-              onClick={() => setDeletingStudent(student)}
-              className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
-            >
-              🗑️ Удалить
-            </button>
-          )}
-        </div>
-      </td>
-    </tr>
-  );
+        <tr className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+          <td className="p-3 text-gray-700">{index + 1}</td>
+          <td className="p-3 font-semibold text-gray-900">{student.last_name || '—'}</td>
+          <td className="p-3 text-gray-900">{student.first_name || '—'}</td>
+          <td className="p-3 text-center text-gray-900">
+            {student.room ? (
+              <span className="bg-blue-100 text-blue-900 px-2 py-1 rounded font-semibold">
+                {student.room}
+              </span>
+            ) : (
+              <span className="text-gray-400">—</span>
+            )}
+          </td>
+          <td className="p-3 text-center">
+            {student.telegram_chat_id ? (
+              <span className="text-green-600 font-semibold">✅ Подключен</span>
+            ) : (
+              <span className="text-gray-400">❌ Не подключен</span>
+            )}
+          </td>
+          <td className="p-3">
+            <div className="flex gap-2">
+              {isAdmin && !student.is_super_admin && (
+                <button
+                  onClick={() => openEditModal(student)}
+                  className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+                >
+                  ✏️ Редактировать
+                </button>
+              )}
+              {isAdmin && !student.is_super_admin && (
+                <button
+                  onClick={() => setDeletingStudent(student)}
+                  className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
+                >
+                  🗑️ Удалить
+                </button>
+              )}
+            </div>
+          </td>
+        </tr>
+      </React.Fragment>
+    );
+  };
 
   return (
     <>
@@ -211,7 +222,7 @@ export default function StudentsList() {
                 </tr>
               </thead>
               <tbody>
-                {blockA.map((student, index) => renderStudentRow(student, index))}
+                {blockA.map((student, index) => renderStudentRow(student, index, blockA))}
               </tbody>
             </table>
           </div>
@@ -223,52 +234,64 @@ export default function StudentsList() {
                 <tr className="bg-blue-100 border-b-2 border-blue-300">
                   <th className="text-left p-1 font-bold text-gray-900">#</th>
                   <th className="text-left p-1 font-bold text-gray-900">ФИО</th>
-                  <th className="text-left p-1 font-bold text-gray-900">🚪</th>
-                  <th className="text-left p-1 font-bold text-gray-900">TG</th>
-                  {isAdmin && <th className="text-left p-1 font-bold text-gray-900">⚙️</th>}
+                  <th className="text-center p-1 font-bold text-gray-900">🚪</th>
+                  <th className="text-center p-1 font-bold text-gray-900">TG</th>
+                  {isAdmin && <th className="text-left p-1 font-bold text-gray-900">Действия</th>}
                 </tr>
               </thead>
               <tbody>
-                {blockA.map((student, index) => (
-                  <tr key={student.id} className="border-b border-blue-200 hover:bg-blue-50">
-                    <td className="p-1 text-gray-900 font-semibold">{index + 1}</td>
-                    <td className="p-1 text-gray-900">
-                      <div className="font-semibold">{student.last_name}</div>
-                      <div className="text-gray-600">{student.first_name}</div>
-                    </td>
-                    <td className="p-1 text-gray-700 whitespace-nowrap">{student.room || '-'}</td>
-                    <td className="p-1 text-center">
-                      {student.telegram_chat_id ? (
-                        <span className="text-green-600">✅</span>
-                      ) : (
-                        <span className="text-red-600">❌</span>
+                {blockA.map((student, index) => {
+                  const prevStudent = index > 0 ? blockA[index - 1] : null;
+                  const showDivider = prevStudent && prevStudent.room !== student.room;
+                  
+                  return (
+                    <React.Fragment key={student.id}>
+                      {showDivider && (
+                        <tr className="bg-gradient-to-r from-transparent via-blue-300 to-transparent">
+                          <td colSpan={isAdmin ? 5 : 4} className="h-0.5"></td>
+                        </tr>
                       )}
-                    </td>
-                    {isAdmin && (
-                      <td className="p-1">
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => {
-                              setEditingStudent(student);
-                              setEditRoom(student.room || '');
-                              setEditFirstName(student.first_name);
-                              setEditLastName(student.last_name);
-                            }}
-                            className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            onClick={() => setDeletingStudent(student)}
-                            className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                ))}
+                      <tr className="border-b border-blue-200 hover:bg-blue-50">
+                        <td className="p-1 text-gray-900 font-semibold">{index + 1}</td>
+                        <td className="p-1 text-gray-900">
+                          <div className="font-semibold">{student.last_name}</div>
+                          <div className="text-gray-600">{student.first_name}</div>
+                        </td>
+                        <td className="p-1 text-center text-gray-700 whitespace-nowrap">{student.room || '-'}</td>
+                        <td className="p-1 text-center">
+                          {student.telegram_chat_id ? (
+                            <span className="text-green-600">✅</span>
+                          ) : (
+                            <span className="text-red-600">❌</span>
+                          )}
+                        </td>
+                        {isAdmin && (
+                          <td className="p-1">
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => {
+                                  setEditingStudent(student);
+                                  setEditRoom(student.room || '');
+                                  setEditFirstName(student.first_name);
+                                  setEditLastName(student.last_name);
+                                }}
+                                className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                onClick={() => setDeletingStudent(student)}
+                                className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -292,7 +315,7 @@ export default function StudentsList() {
                 </tr>
               </thead>
               <tbody>
-                {blockB.map((student, index) => renderStudentRow(student, index))}
+                {blockB.map((student, index) => renderStudentRow(student, index, blockB))}
               </tbody>
             </table>
           </div>
@@ -304,52 +327,64 @@ export default function StudentsList() {
                 <tr className="bg-green-100 border-b-2 border-green-300">
                   <th className="text-left p-1 font-bold text-gray-900">#</th>
                   <th className="text-left p-1 font-bold text-gray-900">ФИО</th>
-                  <th className="text-left p-1 font-bold text-gray-900">🚪</th>
-                  <th className="text-left p-1 font-bold text-gray-900">TG</th>
-                  {isAdmin && <th className="text-left p-1 font-bold text-gray-900">⚙️</th>}
+                  <th className="text-center p-1 font-bold text-gray-900">🚪</th>
+                  <th className="text-center p-1 font-bold text-gray-900">TG</th>
+                  {isAdmin && <th className="text-left p-1 font-bold text-gray-900">Действия</th>}
                 </tr>
               </thead>
               <tbody>
-                {blockB.map((student, index) => (
-                  <tr key={student.id} className="border-b border-green-200 hover:bg-green-50">
-                    <td className="p-1 text-gray-900 font-semibold">{index + 1}</td>
-                    <td className="p-1 text-gray-900">
-                      <div className="font-semibold">{student.last_name}</div>
-                      <div className="text-gray-600">{student.first_name}</div>
-                    </td>
-                    <td className="p-1 text-gray-700 whitespace-nowrap">{student.room || '-'}</td>
-                    <td className="p-1 text-center">
-                      {student.telegram_chat_id ? (
-                        <span className="text-green-600">✅</span>
-                      ) : (
-                        <span className="text-red-600">❌</span>
+                {blockB.map((student, index) => {
+                  const prevStudent = index > 0 ? blockB[index - 1] : null;
+                  const showDivider = prevStudent && prevStudent.room !== student.room;
+                  
+                  return (
+                    <React.Fragment key={student.id}>
+                      {showDivider && (
+                        <tr className="bg-gradient-to-r from-transparent via-green-300 to-transparent">
+                          <td colSpan={isAdmin ? 5 : 4} className="h-0.5"></td>
+                        </tr>
                       )}
-                    </td>
-                    {isAdmin && (
-                      <td className="p-1">
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => {
-                              setEditingStudent(student);
-                              setEditRoom(student.room || '');
-                              setEditFirstName(student.first_name);
-                              setEditLastName(student.last_name);
-                            }}
-                            className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            onClick={() => setDeletingStudent(student)}
-                            className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                ))}
+                      <tr className="border-b border-green-200 hover:bg-green-50">
+                        <td className="p-1 text-gray-900 font-semibold">{index + 1}</td>
+                        <td className="p-1 text-gray-900">
+                          <div className="font-semibold">{student.last_name}</div>
+                          <div className="text-gray-600">{student.first_name}</div>
+                        </td>
+                        <td className="p-1 text-center text-gray-700 whitespace-nowrap">{student.room || '-'}</td>
+                        <td className="p-1 text-center">
+                          {student.telegram_chat_id ? (
+                            <span className="text-green-600">✅</span>
+                          ) : (
+                            <span className="text-red-600">❌</span>
+                          )}
+                        </td>
+                        {isAdmin && (
+                          <td className="p-1">
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => {
+                                  setEditingStudent(student);
+                                  setEditRoom(student.room || '');
+                                  setEditFirstName(student.first_name);
+                                  setEditLastName(student.last_name);
+                                }}
+                                className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                onClick={() => setDeletingStudent(student)}
+                                className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>

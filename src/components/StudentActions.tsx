@@ -29,6 +29,9 @@ export default function StudentActions() {
   const [startNotifications, setStartNotifications] = useState<NotificationState>({ count: 0, lastSent: null });
   const [finishNotifications, setFinishNotifications] = useState<NotificationState>({ count: 0, lastSent: null });
   
+  // Состояние видимости badge
+  const [showScrollHint, setShowScrollHint] = useState(true);
+  
   // Находим текущую запись студента
   const myQueueItem = queue.find(
     item => item.student_id === user?.student_id &&
@@ -149,11 +152,17 @@ export default function StudentActions() {
   return (
     <>
       {/* Плавающая подсказка внизу экрана */}
-      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
-        <div className="bg-blue-600 text-white px-6 py-3 rounded-full shadow-2xl border-2 border-white flex items-center gap-2 animate-pulse-slow">
-          <span className="font-bold text-lg">⬆️ Прокрутите вверх</span>
+      {showScrollHint && (
+        <div 
+          className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 animate-bounce cursor-pointer"
+          onClick={() => setShowScrollHint(false)}
+        >
+          <div className="bg-blue-600 text-white px-6 py-3 rounded-full shadow-2xl border-2 border-white flex items-center gap-2 animate-pulse-slow hover:bg-blue-700 transition-colors">
+            <span className="font-bold text-lg">⬆️ Прокрутите вверх</span>
+            <span className="text-sm opacity-75">(нажмите чтобы скрыть)</span>
+          </div>
         </div>
-      </div>
+      )}
       
       {/* Кнопка студента */}
       <div className="mb-6 w-full animate-slideDown">
