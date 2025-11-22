@@ -492,7 +492,8 @@ const handleSaveEdit = async () => {
                                     await updateQueueItem(item.id, { return_key_alert: false });
                                     await new Promise(resolve => setTimeout(resolve, 100));
                                     
-                                    if (item.status === QueueStatus.READY) {
+                                    // ✅ Сбрасываем статус если он READY или RETURNING_KEY
+                                    if (item.status === QueueStatus.READY || item.status === QueueStatus.RETURNING_KEY) {
                                       await setQueueStatus(item.id, QueueStatus.WAITING);
                                     }
                                     

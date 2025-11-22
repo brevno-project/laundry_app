@@ -1817,7 +1817,7 @@ const updateAdminKey = async (newKey: string) => {
   const getUserQueueItem = (): QueueItem | undefined => {
     if (!user) return undefined;
     return queue.find(item => item.student_id === user.student_id && 
-                     (item.status === QueueStatus.WAITING || item.status === QueueStatus.READY || item.status === QueueStatus.KEY_ISSUED || item.status === QueueStatus.WASHING));
+                     (item.status === QueueStatus.WAITING || item.status === QueueStatus.READY || item.status === QueueStatus.KEY_ISSUED || item.status === QueueStatus.WASHING || item.status === QueueStatus.RETURNING_KEY));
   };
 
   // Leave the queue
