@@ -492,7 +492,13 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
       password
     });
 
-    if (authError) throw authError;
+    if (authError) {
+      // Русифицируем ошибки Supabase
+      if (authError.message === 'Invalid login credentials') {
+        throw new Error('Неверный пароль');
+      }
+      throw new Error(authError.message || 'Ошибка входа');
+    }
     if (!authData.user) throw new Error('Не удалось войти');
 
     const newUser: User = {

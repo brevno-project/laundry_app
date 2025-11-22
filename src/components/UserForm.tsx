@@ -134,16 +134,16 @@ export default function UserForm() {
                 <label htmlFor="washCount" className="block text-sm font-bold mb-2 text-gray-700">
                   Количество стирок
                 </label>
-                <input
+                <select
                   id="washCount"
-                  type="number"
-                  min="1"
-                  max="10"
                   value={washCount}
                   onChange={(e) => setWashCount(Number(e.target.value))}
-                  className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                />
-                <p className="text-xs text-gray-500 mt-1">От 1 до 10 стирок</p>
+                  className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 font-semibold"
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                    <option key={num} value={num}>{num}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="mb-4">

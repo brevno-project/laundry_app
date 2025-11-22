@@ -13,23 +13,23 @@ interface TelegramBannerProps {
  */
 export default function TelegramBanner({ onGoToSettings }: TelegramBannerProps) {
   const { user, isAdmin } = useLaundry();
-  const [dismissed, setDismissed] = useState(false);
+  const [showBanner, setShowBanner] = useState(true);
 
   // Не показываем если:
   // - Пользователь не вошел
   // - Telegram уже подключен
   // - Пользователь - админ
-  // - Баннер закрыт
-  if (!user || user.telegram_chat_id || isAdmin || dismissed) {
+  // - Баннер временно закрыт (до следующего входа)
+  if (!user || user.telegram_chat_id || isAdmin || !showBanner) {
     return null;
   }
 
   const handleDismiss = () => {
-    setDismissed(true);
+    setShowBanner(false);
   };
   
   const handleGoToSettings = () => {
-    setDismissed(true);
+    setShowBanner(false);
     onGoToSettings();
   };
 
