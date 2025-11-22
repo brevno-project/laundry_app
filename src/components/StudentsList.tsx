@@ -12,6 +12,7 @@ export default function StudentsList() {
   const [editFirstName, setEditFirstName] = useState('');
   const [editLastName, setEditLastName] = useState('');
   const [editMiddleName, setEditMiddleName] = useState('');
+  const [editCanViewStudents, setEditCanViewStudents] = useState(false);
   
   // Состояния для добавления студента
   const [showAddModal, setShowAddModal] = useState(false);
@@ -66,6 +67,7 @@ export default function StudentsList() {
     setEditFirstName(student.first_name || '');
     setEditLastName(student.last_name || '');
     setEditMiddleName(student.middle_name || '');
+    setEditCanViewStudents(student.can_view_students || false);
   };
   
   const handleSaveEdit = async () => {
@@ -77,6 +79,7 @@ export default function StudentsList() {
         first_name: editFirstName,
         last_name: editLastName || undefined,
         middle_name: editMiddleName || undefined,
+        can_view_students: isSuperAdmin ? editCanViewStudents : undefined,
       });
       
       setEditingStudent(null);
@@ -88,8 +91,8 @@ export default function StudentsList() {
   };
   
   const handleAddStudent = async () => {
-    if (!newFirstName || !newLastName) {
-      alert('❌ Заполните имя и фамилию');
+    if (!newFirstName.trim()) {
+      alert('❌ Укажите имя');
       return;
     }
     
@@ -258,8 +261,7 @@ export default function StudentsList() {
                       <tr className="border-b border-blue-200 hover:bg-blue-50">
                         <td className="p-1 text-gray-900 font-semibold">{index + 1}</td>
                         <td className="p-1 text-gray-900">
-                          <div className="font-semibold">{student.last_name}</div>
-                          <div className="text-gray-600">{student.first_name}</div>
+                          {[student.first_name, student.last_name, student.middle_name].filter(Boolean).join(' ') || '-'}
                         </td>
                         <td className="p-1 text-center text-gray-700 whitespace-nowrap">{student.room || '-'}</td>
                         <td className="p-1 text-center">
@@ -347,8 +349,7 @@ export default function StudentsList() {
                       <tr className="border-b border-green-200 hover:bg-green-50">
                         <td className="p-1 text-gray-900 font-semibold">{index + 1}</td>
                         <td className="p-1 text-gray-900">
-                          <div className="font-semibold">{student.last_name}</div>
-                          <div className="text-gray-600">{student.first_name}</div>
+                          {[student.first_name, student.last_name, student.middle_name].filter(Boolean).join(' ') || '-'}
                         </td>
                         <td className="p-1 text-center text-gray-700 whitespace-nowrap">{student.room || '-'}</td>
                         <td className="p-1 text-center">
@@ -362,12 +363,7 @@ export default function StudentsList() {
                           <td className="p-1">
                             <div className="flex gap-1">
                               <button
-                                onClick={() => {
-                                  setEditingStudent(student);
-                                  setEditRoom(student.room || '');
-                                  setEditFirstName(student.first_name);
-                                  setEditLastName(student.last_name || '');
-                                }}
+                                onClick={() => openEditModal(student)}
                                 className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
                               >
                                 ✏️
@@ -440,6 +436,21 @@ export default function StudentsList() {
                   className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
                 />
               </div>
+              
+              {isSuperAdmin && (
+                <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+                  <input
+                    type="checkbox"
+                    id="canViewStudents"
+                    checked={editCanViewStudents}
+                    onChange={(e) => setEditCanViewStudents(e.target.checked)}
+                    className="w-5 h-5 cursor-pointer"
+                  />
+                  <label htmlFor="canViewStudents" className="text-sm font-semibold text-gray-900 cursor-pointer">
+                    👁️ Может видеть список студентов
+                  </label>
+                </div>
+              )}
             </div>
             
             <div className="flex gap-2 mt-6">
