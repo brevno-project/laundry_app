@@ -56,7 +56,7 @@ export default function Timer({ startTime, endTime, label, color = 'blue' }: Tim
 
   return (
     <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg border-2 ${colorClasses[color]} ${isStopped ? 'opacity-75' : ''}`}>
-      <span className="text-xs font-semibold">{label}:</span>
+      <span className="text-xs font-semibold w-24 flex-shrink-0">{label}</span>
       <span className="text-sm font-mono font-bold">{isStopped ? '⏸️' : '⏱️'} {elapsed}</span>
     </div>
   );

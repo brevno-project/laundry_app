@@ -347,7 +347,7 @@ const handleSaveEdit = async () => {
                           <Timer 
                             startTime={item.ready_at} 
                             endTime={item.key_issued_at || (item.status !== QueueStatus.READY ? new Date().toISOString() : undefined)}
-                            label="🏃 Шел за ключом" 
+                            label="🏃 За ключом" 
                             color="yellow" 
                           />
                         )}
@@ -363,7 +363,7 @@ const handleSaveEdit = async () => {
                           <Timer 
                             startTime={item.washing_started_at} 
                             endTime={item.return_requested_at || item.finished_at || (item.status !== QueueStatus.WASHING ? new Date().toISOString() : undefined)}
-                            label="🟢 Стирал" 
+                            label="🟢 Стирка" 
                             color="green" 
                           />
                         )}
@@ -371,7 +371,7 @@ const handleSaveEdit = async () => {
                           <Timer 
                             startTime={item.return_requested_at} 
                             endTime={item.finished_at || (item.status !== QueueStatus.RETURNING_KEY ? new Date().toISOString() : undefined)}
-                            label="🏃 Нес ключ" 
+                            label="🏃 Возврат ключа" 
                             color="orange" 
                           />
                         )}

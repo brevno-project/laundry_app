@@ -33,7 +33,7 @@ export default function HistoryList() {
                 <Timer 
                   startTime={item.ready_at} 
                   endTime={item.key_issued_at}
-                  label="🏃 Шел за ключом" 
+                  label="🏃 За ключом" 
                   color="yellow" 
                 />
               )}
@@ -49,7 +49,7 @@ export default function HistoryList() {
                 <Timer 
                   startTime={item.washing_started_at} 
                   endTime={item.return_requested_at || item.finished_at}
-                  label="🟢 Стирал" 
+                  label="🟢 Стирка" 
                   color="green" 
                 />
               )}
@@ -57,7 +57,7 @@ export default function HistoryList() {
                 <Timer 
                   startTime={item.return_requested_at} 
                   endTime={item.finished_at}
-                  label="🏃 Нес ключ" 
+                  label="🏃 Возврат ключа" 
                   color="orange" 
                 />
               )}
