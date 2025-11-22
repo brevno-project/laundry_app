@@ -488,11 +488,20 @@ const handleSaveEdit = async () => {
                                       alert('❌ Только администратор может отменить уведомления');
                                       return;
                                     }
-                                    await updateQueueItem(item.id, { return_key_alert: false });
+                                    
+                                    // ✅ Очищаем ВСЕ поля связанные с уведомлениями
+                                    await updateQueueItem(item.id, { 
+                                      return_key_alert: false,
+                                      admin_room: undefined,
+                                      ready_at: undefined,
+                                      return_requested_at: undefined
+                                    });
                                     await new Promise(resolve => setTimeout(resolve, 100));
                                     
-                                    // ✅ Сбрасываем статус если он READY или RETURNING_KEY
-                                    if (item.status === QueueStatus.READY || item.status === QueueStatus.RETURNING_KEY) {
+                                    // ✅ Сбрасываем статус если он READY, KEY_ISSUED или RETURNING_KEY
+                                    if (item.status === QueueStatus.READY || 
+                                        item.status === QueueStatus.KEY_ISSUED ||
+                                        item.status === QueueStatus.RETURNING_KEY) {
                                       await setQueueStatus(item.id, QueueStatus.WAITING);
                                     }
                                     
