@@ -237,7 +237,7 @@ export default function AdminPanel() {
   const openEditModal = (student: Student) => {
     setSelectedStudent(student);
     setEditFirstname(student.first_name);
-    setEditLastname(student.last_name);
+    setEditLastname(student.last_name || '');
     setEditRoom(student.room || '');
     setShowEditStudent(true);
   };
