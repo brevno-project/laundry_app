@@ -520,10 +520,10 @@ export default function AdminPanel() {
                   {(isSuperAdmin || !student.is_admin && !student.is_super_admin) && (
                     <button
                       onClick={() => openEditModal(student)}
-                      className="bg-blue-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-blue-600 w-full"
+                      className="bg-blue-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-blue-600 w-full flex items-center justify-center gap-1"
                       title="Редактировать"
                     >
-                      ✏️ Редактировать
+                      <EditIcon className="w-4 h-4" />Редактировать
                     </button>
                   )}
 
@@ -633,7 +633,7 @@ export default function AdminPanel() {
       {showEditStudent && selectedStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-900 mb-4"> Редактировать</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><EditIcon className="w-5 h-5" />Редактировать студента</h3>
             <div className="space-y-3">
               <input
                 type="text"
