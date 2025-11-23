@@ -31,7 +31,7 @@ export default function StudentsList() {
   if (!students || students.length === 0) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2"><ListIcon className="w-7 h-7" />Список студентов</h2>
+        <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2"><ListIcon className="w-8 h-8" />Список студентов</h2>
         <p className="text-gray-700 text-lg">Студентов нет.</p>
       </div>
     );
@@ -203,7 +203,7 @@ export default function StudentsList() {
     <>
       <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><ListIcon className="w-7 h-7" />Список студентов ({students.length})</h2>
+          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><ListIcon className="w-8 h-8" />Список студентов ({students.length})</h2>
           {isAdmin && (
             <button
               onClick={() => setShowAddModal(true)}
