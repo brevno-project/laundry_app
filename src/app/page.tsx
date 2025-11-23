@@ -218,6 +218,15 @@ export default function Home() {
                   {/* Базовый фон */}
                   <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-600"></div>
                   
+                  {/* Тонкая сетка (паттерн) */}
+                  <div 
+                    className="absolute inset-0 opacity-10"
+                    style={{
+                      backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, white 2px, white 3px), repeating-linear-gradient(90deg, transparent, transparent 2px, white 2px, white 3px)',
+                      backgroundSize: '30px 30px',
+                    }}
+                  ></div>
+                  
                   {/* Волна с блеском */}
                   <div 
                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
@@ -234,7 +243,7 @@ export default function Home() {
                   `}</style>
                   
                   <div className="relative p-6">
-                    <div className="flex items-center space-x-4 mb-3">
+                    <div className="flex items-center space-x-4 mb-4">
                       {/* Иконка стиральной машины */}
                       <svg className="w-12 h-12 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M18 2.01L6 2c-1.11 0-2 .89-2 2v16c0 1.11.89 2 2 2h12c1.11 0 2-.89 2-2V4c0-1.11-.89-1.99-2-1.99zM18 20H6v-9.02h12V20zm0-11H6V4h12v5zM8 5h1.5v1.5H8V5zm3.5 0H13v1.5h-1.5V5z"/>
@@ -242,26 +251,32 @@ export default function Home() {
                       </svg>
                       <div className="text-2xl font-bold text-white">Занята</div>
                     </div>
-                    {machineState.current_queue_item_id && (() => {
-                      const currentItem = queue.find(item => item.id === machineState.current_queue_item_id);
-                      if (currentItem) {
-                        return (
-                          <div className="mt-3 pt-3 border-t border-red-300/30">
-                            <div className="text-xs text-red-100 uppercase tracking-wide">Стирает</div>
-                            <div className="text-base font-semibold text-white mt-1">
-                              {currentItem.full_name}
+                    
+                    {/* Полупрозрачная карточка с информацией */}
+                    {(machineState.current_queue_item_id || machineState.expected_finish_at) && (
+                      <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 space-y-3">
+                        {machineState.current_queue_item_id && (() => {
+                          const currentItem = queue.find(item => item.id === machineState.current_queue_item_id);
+                          if (currentItem) {
+                            return (
+                              <div>
+                                <div className="text-xs text-white/70 font-medium uppercase tracking-wider mb-1">Стирает</div>
+                                <div className="text-2xl font-bold text-white">
+                                  {currentItem.full_name}
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
+                        {machineState.expected_finish_at && (
+                          <div className="pt-3 border-t border-white/20">
+                            <div className="text-xs text-white/70 font-medium uppercase tracking-wider mb-1">Окончание</div>
+                            <div className="text-xl font-bold text-white">
+                              {new Date(machineState.expected_finish_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
                             </div>
                           </div>
-                        );
-                      }
-                      return null;
-                    })()}
-                    {machineState.expected_finish_at && (
-                      <div className="mt-3 pt-3 border-t border-red-300/30">
-                        <div className="text-xs text-red-100 uppercase tracking-wide">Окончание</div>
-                        <div className="text-base font-semibold text-white mt-1">
-                          {new Date(machineState.expected_finish_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
-                        </div>
+                        )}
                       </div>
                     )}
                   </div>
