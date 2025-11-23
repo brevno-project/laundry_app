@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import { Student } from '@/types';
-import { CalendarIcon } from '@/components/Icons';
+import { CalendarIcon, DoorIcon, DeleteIcon, CheckIcon, CloseIcon, EditIcon, BellIcon, UserIcon } from '@/components/Icons';
 
 export default function AdminPanel() {
   const { 
@@ -354,9 +354,9 @@ export default function AdminPanel() {
         <h2 className="text-2xl font-bold text-white"> Панель админа</h2>
         <button
           onClick={handleAdminLogout}
-          className="bg-purple-800 hover:bg-purple-900 text-white text-sm font-semibold px-3 py-2 rounded transition-colors"
+          className="bg-purple-800 hover:bg-purple-900 text-white text-sm font-semibold px-3 py-2 rounded transition-colors flex items-center gap-2"
         >
-          Выйти
+          <DoorIcon className="w-4 h-4" />Выйти
         </button>
       </div>
       
@@ -366,9 +366,9 @@ export default function AdminPanel() {
         {!showConfirmClear ? (
           <button
             onClick={() => setShowConfirmClear(true)}
-            className="w-full bg-red-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-red-700 transition-colors shadow-md"
+            className="w-full bg-red-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-red-700 transition-colors shadow-md flex items-center justify-center gap-2"
           >
-            Очистить очередь
+            <DeleteIcon className="w-5 h-5" />Очистить очередь
           </button>
         ) : (
           <div className="bg-white p-4 rounded-md border-2 border-red-400">
@@ -376,16 +376,16 @@ export default function AdminPanel() {
             <div className="flex gap-2">
               <button
                 onClick={() => setShowConfirmClear(false)}
-                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
+                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700 flex items-center justify-center gap-2"
               >
-                Отмена
+                <CloseIcon className="w-4 h-4" />Отмена
               </button>
               
               <button
                 onClick={handleClearQueueConfirm}
-                className="flex-1 bg-red-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-700"
+                className="flex-1 bg-red-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-700 flex items-center justify-center gap-2"
               >
-                Да, очистить
+                <CheckIcon className="w-4 h-4" />Да, очистить
               </button>
               
             </div>
