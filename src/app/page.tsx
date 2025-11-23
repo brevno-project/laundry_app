@@ -20,6 +20,7 @@ export default function Home() {
   const { user, isLoading, logoutStudent, isAdmin, machineState, queue, isNewUser, setIsNewUser, students } = useLaundry();
   const [activeTab, setActiveTab] = React.useState('main');
   const [showTelegramModal, setShowTelegramModal] = React.useState(false);
+  const [showScrollButton, setShowScrollButton] = React.useState(false);
 
   // ✅ Проверка: показывать модалку ТОЛЬКО для новых пользователей
   React.useEffect(() => {
@@ -37,6 +38,27 @@ export default function Home() {
       setShowTelegramModal(true);
     }
   }, [user, isAdmin, isNewUser]);
+
+  // ✅ Отслеживание скролла для кнопки "Вверх"
+  React.useEffect(() => {
+    const handleScroll = () => {
+      // Показываем кнопку при скролле вниз более 300px
+      if (window.scrollY > 300) {
+        setShowScrollButton(true);
+      } else {
+        setShowScrollButton(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // ✅ Функция скролла вверх
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setShowScrollButton(false);
+  };
 
   // ✅ Функция закрытия модалки (переход в настройки)
   const handleTelegramSetup = () => {
@@ -179,7 +201,7 @@ export default function Home() {
             <TimeBanner />
             
             {/* Статус машины */}
-            <div className="mb-6">
+            <div className="mb-6 max-w-3xl mx-auto">
               <h3 className="text-lg font-semibold mb-3 text-gray-700">Статус машины</h3>
               {machineState.status === 'idle' ? (
                 <div className="relative overflow-hidden rounded-xl shadow-lg min-h-[120px]">
@@ -351,6 +373,19 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* Кнопка "Вверх" */}
+      {showScrollButton && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all duration-300 z-50 animate-bounce"
+          aria-label="Прокрутить вверх"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }
