@@ -133,9 +133,7 @@ export default function StudentAuth() {
 
       <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
         <div className="flex items-center gap-3">
-          <div className="bg-blue-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-2xl">
-            <UserIcon className="w-6 h-6" />
-          </div>
+          <Avatar type={(selectedStudent?.avatar_type as AvatarType) || 'default'} className="w-14 h-14" />
           <div>
             <div className="font-black text-xl text-gray-900">{selectedStudent?.full_name}</div>
             {selectedStudent?.room && (

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import Avatar, { AVATAR_OPTIONS, AvatarType } from './Avatar';
 import { supabase as supabaseClient } from '@/lib/supabase';
@@ -9,6 +9,13 @@ export default function AvatarSelector() {
   const { user, loadStudents } = useLaundry();
   const [selectedAvatar, setSelectedAvatar] = useState<AvatarType>((user?.avatar_type as AvatarType) || 'default');
   const [isSaving, setIsSaving] = useState(false);
+
+  // ✅ Обновляем selectedAvatar когда меняется user
+  useEffect(() => {
+    if (user?.avatar_type) {
+      setSelectedAvatar(user.avatar_type as AvatarType);
+    }
+  }, [user?.avatar_type]);
 
   const handleSave = async () => {
     if (!user) return;

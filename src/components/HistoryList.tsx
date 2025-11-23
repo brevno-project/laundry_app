@@ -3,6 +3,7 @@
 import { useLaundry } from '@/contexts/LaundryContext';
 import { formatDate } from '@/contexts/LaundryContext';
 import Timer from './Timer';
+import { HistoryIcon, KeyIcon, BellIcon, WashingIcon } from './Icons';
 
 export default function HistoryList() {
   const { history } = useLaundry();
@@ -10,7 +11,7 @@ export default function HistoryList() {
   if (history.length === 0) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">📜 История</h2>
+        <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2"><HistoryIcon className="w-6 h-6" />История</h2>
         <p className="text-gray-700 text-lg">История пуста.</p>
       </div>
     );
@@ -18,7 +19,7 @@ export default function HistoryList() {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-      <h2 className="text-2xl font-bold mb-4 text-gray-800">📜 История</h2>
+      <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2"><HistoryIcon className="w-6 h-6" />История</h2>
       <div className="space-y-3">
         {history.map((item) => (
           <div 
@@ -33,7 +34,7 @@ export default function HistoryList() {
                 <Timer 
                   startTime={item.ready_at} 
                   endTime={item.key_issued_at}
-                  label="🏃 За ключом" 
+                  label="За ключом" 
                   color="yellow" 
                 />
               )}
@@ -41,7 +42,7 @@ export default function HistoryList() {
                 <Timer 
                   startTime={item.key_issued_at} 
                   endTime={item.washing_started_at}
-                  label="🔑 С ключом" 
+                  label="С ключом" 
                   color="blue" 
                 />
               )}
@@ -49,7 +50,7 @@ export default function HistoryList() {
                 <Timer 
                   startTime={item.washing_started_at} 
                   endTime={item.return_requested_at || item.finished_at}
-                  label="🟢 Стирка" 
+                  label="Стирка" 
                   color="green" 
                 />
               )}
@@ -57,7 +58,7 @@ export default function HistoryList() {
                 <Timer 
                   startTime={item.return_requested_at} 
                   endTime={item.finished_at}
-                  label="🏃 Возврат ключа" 
+                  label="Возврат ключа" 
                   color="orange" 
                 />
               )}
