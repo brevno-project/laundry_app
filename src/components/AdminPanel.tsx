@@ -510,14 +510,15 @@ export default function AdminPanel() {
                   </div>
 
                   {/* ========== БЕЗОПАСНЫЕ ДЕЙСТВИЯ ========== */}
-                  {(isSuperAdmin || student.id === user?.student_id || (!student.is_admin && !student.is_super_admin)) && (
+                  {/* Супер-админ: может всех кроме других супер-админов | Админ: себя или обычных студентов */}
+                  {(isSuperAdmin ? !student.is_super_admin : (student.id === user?.student_id || (!student.is_admin && !student.is_super_admin))) && (
                     <button onClick={() => openAddToQueueModal(student)}
                       className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-2 w-full">
                       <CalendarIcon className="w-4 h-4" />Поставить в очередь
                     </button>
                   )}
 
-                  {(isSuperAdmin || student.id === user?.student_id || (!student.is_admin && !student.is_super_admin)) && (
+                  {(isSuperAdmin ? !student.is_super_admin : (student.id === user?.student_id || (!student.is_admin && !student.is_super_admin))) && (
                     <button
                       onClick={() => openEditModal(student)}
                       className="bg-blue-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-blue-600 w-full flex items-center justify-center gap-1"

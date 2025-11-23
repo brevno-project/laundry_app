@@ -179,7 +179,8 @@ export default function StudentsList() {
 
           <td className="p-3">
             <div className="flex gap-2">
-              {isAdmin && (student.id === user?.student_id || !student.is_super_admin) && (
+              {/* Супер-админ: может всех кроме других супер-админов | Админ: себя или обычных студентов */}
+              {isAdmin && (isSuperAdmin ? !student.is_super_admin : (student.id === user?.student_id || (!student.is_admin && !student.is_super_admin))) && (
                 <button
                   onClick={() => openEditModal(student)}
                   className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
