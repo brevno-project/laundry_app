@@ -480,78 +480,6 @@ const handleSaveEdit = async () => {
                               <BellIcon className="w-4 h-4" />Позвать
                             </button>
 
-                            {/* КНОПКА: Вернуть ключ */}
-                            <button
-                              className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm flex items-center justify-center gap-1"
-                              onClick={async () => {
-                                try {
-                                  // ✅ Устанавливаем статус RETURNING_KEY
-                                  await setQueueStatus(item.id, QueueStatus.RETURNING_KEY);
-                                  await new Promise(resolve => setTimeout(resolve, 100));
-                                  
-                                  // ✅ Сохраняем комнату админа и время запроса
-                                  await updateQueueItem(item.id, { 
-                                    return_key_alert: true,
-                                    admin_room: user?.room, // ✅ Комната админа
-                                    return_requested_at: new Date().toISOString() // ✅ Время когда попросили вернуть
-                                  });
-                                  
-                                  // ✅ КРИТИЧНО: Передаём admin_student_id, НЕ передаём room студента
-                                  const success = await sendTelegramNotification({
-                                    type: 'admin_return_key',
-                                    full_name: item.full_name,
-                                    student_id: item.student_id,
-                                    expected_finish_at: item.expected_finish_at,
-                                    admin_student_id: user?.student_id,  // ✅ ID админа
-                                  });
-                                  
-                                  alert(success 
-                                    ? `✅ ${item.full_name} попросили вернуть ключ!` 
-                                    : `⚠️ ${item.full_name} не подключил Telegram`
-                                  );
-                                } catch (error) {
-                                  console.error('❌ Ошибка:', error);
-                                  alert('❌ Ошибка отправки уведомления');
-                                }
-                              }}
-                            >
-                              <BellIcon className="w-4 h-4" />Вернуть
-                            </button>
-                              
-                              <button
-                                className="bg-gray-400 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-gray-500 shadow-sm flex items-center justify-center gap-1"
-                                onClick={async () => {
-                                  try {
-                                    if (!isAdmin) {
-                                      alert('❌ Только администратор может отменить уведомления');
-                                      return;
-                                    }
-                                    
-                                    // ✅ Очищаем ВСЕ поля связанные с уведомлениями
-                                    await updateQueueItem(item.id, { 
-                                      return_key_alert: false,
-                                      admin_room: undefined,
-                                      ready_at: undefined,
-                                      return_requested_at: undefined
-                                    });
-                                    await new Promise(resolve => setTimeout(resolve, 100));
-                                    
-                                    // ✅ Сбрасываем статус если он READY, KEY_ISSUED или RETURNING_KEY
-                                    if (item.status === QueueStatus.READY || 
-                                        item.status === QueueStatus.KEY_ISSUED ||
-                                        item.status === QueueStatus.RETURNING_KEY) {
-                                      await setQueueStatus(item.id, QueueStatus.WAITING);
-                                    }
-                                    
-                                    alert(`✅ Уведомления отменены для ${item.full_name}`);
-                                  } catch (error) {
-                                    console.error('❌ Ошибка:', error);
-                                    alert('❌ Ошибка отмены уведомлений');
-                                  }
-                                }}
-                              >
-                                <BellOffIcon className="w-4 h-4" />Отменить
-                              </button>
                             </div>
 
                             {/* БЛОК: Действия со статусом */}
@@ -595,7 +523,7 @@ const handleSaveEdit = async () => {
                                   }
                                 }}
                               >
-                                <KeyIcon className="w-4 h-4" />Ключ выдан
+                                <KeyIcon className="w-4 h-4" />Выдать ключ
                               </button>
                               
                               <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
@@ -622,7 +550,79 @@ const handleSaveEdit = async () => {
                                   }
                                 }}
                               >
-                                <WashingIcon className="w-4 h-4" />Начал(а) стирать
+                                <WashingIcon className="w-4 h-4" />Стирать
+                              </button>
+                              
+                              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                              
+                              {/* КНОПКА: Вернуть ключ */}
+                              <button
+                                className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm w-full flex items-center justify-center gap-1"
+                                onClick={async () => {
+                                  try {
+                                    // ✅ Устанавливаем статус RETURNING_KEY
+                                    await setQueueStatus(item.id, QueueStatus.RETURNING_KEY);
+                                    await new Promise(resolve => setTimeout(resolve, 100));
+                                    
+                                    // ✅ Сохраняем комнату админа и время запроса
+                                    await updateQueueItem(item.id, { 
+                                      return_key_alert: true,
+                                      admin_room: user?.room,
+                                      return_requested_at: new Date().toISOString()
+                                    });
+                                    
+                                    const success = await sendTelegramNotification({
+                                      type: 'admin_return_key',
+                                      full_name: item.full_name,
+                                      student_id: item.student_id,
+                                      expected_finish_at: item.expected_finish_at,
+                                      admin_student_id: user?.student_id,
+                                    });
+                                    
+                                    alert(success 
+                                      ? `✅ ${item.full_name} попросили вернуть ключ!` 
+                                      : `⚠️ ${item.full_name} не подключил Telegram`
+                                    );
+                                  } catch (error) {
+                                    console.error('❌ Ошибка:', error);
+                                    alert('❌ Ошибка отправки уведомления');
+                                  }
+                                }}
+                              >
+                                <BellIcon className="w-4 h-4" />Вернуть ключ
+                              </button>
+                              
+                              <button
+                                className="bg-gray-400 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-gray-500 shadow-sm w-full flex items-center justify-center gap-1"
+                                onClick={async () => {
+                                  try {
+                                    if (!isAdmin) {
+                                      alert('❌ Только администратор может отменить уведомления');
+                                      return;
+                                    }
+                                    
+                                    await updateQueueItem(item.id, { 
+                                      return_key_alert: false,
+                                      admin_room: undefined,
+                                      ready_at: undefined,
+                                      return_requested_at: undefined
+                                    });
+                                    await new Promise(resolve => setTimeout(resolve, 100));
+                                    
+                                    if (item.status === QueueStatus.READY || 
+                                        item.status === QueueStatus.KEY_ISSUED ||
+                                        item.status === QueueStatus.RETURNING_KEY) {
+                                      await setQueueStatus(item.id, QueueStatus.WAITING);
+                                    }
+                                    
+                                    alert(`✅ Уведомления отменены для ${item.full_name}`);
+                                  } catch (error) {
+                                    console.error('❌ Ошибка:', error);
+                                    alert('❌ Ошибка отмены уведомлений');
+                                  }
+                                }}
+                              >
+                                <BellOffIcon className="w-4 h-4" />Отменить уведомления
                               </button>
                               
                               <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
