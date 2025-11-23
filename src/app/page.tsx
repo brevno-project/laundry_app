@@ -184,45 +184,64 @@ export default function Home() {
               <h3 className="text-lg font-semibold mb-3 text-gray-700">Статус машины</h3>
               {machineState.status === 'idle' ? (
                 <div className="relative overflow-hidden rounded-xl shadow-lg">
-                  {/* Переливающийся фон */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-green-400 via-green-500 to-green-600"></div>
+                  {/* Базовый фон */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-green-600"></div>
+                  
+                  {/* Волна с блеском */}
                   <div 
-                    className="absolute inset-0 bg-gradient-to-tr from-green-300 via-transparent to-green-400 opacity-60"
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
                     style={{
-                      animation: 'shimmer 4s ease-in-out infinite',
+                      animation: 'wave 6s ease-in-out infinite',
+                      width: '200%',
                     }}
                   ></div>
                   <style jsx>{`
-                    @keyframes shimmer {
-                      0%, 100% { transform: translateX(-100%) translateY(-100%); }
-                      50% { transform: translateX(100%) translateY(100%); }
+                    @keyframes wave {
+                      0% { transform: translateX(-100%); }
+                      100% { transform: translateX(50%); }
                     }
                   `}</style>
                   
-                  <div className="relative p-6">
-                    <div className="text-2xl font-bold text-white mb-2">Свободна</div>
-                    <div className="text-green-50 text-sm">Можно записаться в очередь</div>
+                  <div className="relative p-6 flex items-center space-x-4">
+                    {/* Иконка стиральной машины */}
+                    <svg className="w-12 h-12 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M18 2.01L6 2c-1.11 0-2 .89-2 2v16c0 1.11.89 2 2 2h12c1.11 0 2-.89 2-2V4c0-1.11-.89-1.99-2-1.99zM18 20H6v-9.02h12V20zm0-11H6V4h12v5zM8 5h1.5v1.5H8V5zm3.5 0H13v1.5h-1.5V5z"/>
+                      <circle cx="12" cy="15" r="3.5"/>
+                    </svg>
+                    <div className="flex-1">
+                      <div className="text-2xl font-bold text-white">Свободна</div>
+                    </div>
                   </div>
                 </div>
               ) : (
                 <div className="relative overflow-hidden rounded-xl shadow-lg">
-                  {/* Переливающийся фон */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-red-400 via-red-500 to-red-600"></div>
+                  {/* Базовый фон */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-600"></div>
+                  
+                  {/* Волна с блеском */}
                   <div 
-                    className="absolute inset-0 bg-gradient-to-tr from-red-300 via-transparent to-red-400 opacity-60"
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
                     style={{
-                      animation: 'shimmer 4s ease-in-out infinite',
+                      animation: 'wave 6s ease-in-out infinite',
+                      width: '200%',
                     }}
                   ></div>
                   <style jsx>{`
-                    @keyframes shimmer {
-                      0%, 100% { transform: translateX(-100%) translateY(-100%); }
-                      50% { transform: translateX(100%) translateY(100%); }
+                    @keyframes wave {
+                      0% { transform: translateX(-100%); }
+                      100% { transform: translateX(50%); }
                     }
                   `}</style>
                   
                   <div className="relative p-6">
-                    <div className="text-2xl font-bold text-white mb-3">Занята</div>
+                    <div className="flex items-center space-x-4 mb-3">
+                      {/* Иконка стиральной машины */}
+                      <svg className="w-12 h-12 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M18 2.01L6 2c-1.11 0-2 .89-2 2v16c0 1.11.89 2 2 2h12c1.11 0 2-.89 2-2V4c0-1.11-.89-1.99-2-1.99zM18 20H6v-9.02h12V20zm0-11H6V4h12v5zM8 5h1.5v1.5H8V5zm3.5 0H13v1.5h-1.5V5z"/>
+                        <circle cx="12" cy="15" r="3.5"/>
+                      </svg>
+                      <div className="text-2xl font-bold text-white">Занята</div>
+                    </div>
                     {machineState.current_queue_item_id && (() => {
                       const currentItem = queue.find(item => item.id === machineState.current_queue_item_id);
                       if (currentItem) {
