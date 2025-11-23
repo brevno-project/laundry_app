@@ -890,6 +890,7 @@ const joinQueue = async (
       scheduled_for_date: targetDate,
       queue_date: targetDate,
       queue_position: nextPos,
+      avatar_type: user.avatar_type || 'default', // ✅ Копируем аватар из профиля
     };
 
     console.log('✅ Inserting new queue item:', newItem);
@@ -1042,6 +1043,7 @@ const adminAddToQueue = async (
       admin_message: null,
       return_key_alert: false,
       created_at: new Date().toISOString(),
+      avatar_type: student.avatar_type || 'default', // ✅ Копируем аватар студента
     };
 
     console.log('✅ Admin inserting queue item:', newItem);
