@@ -596,6 +596,7 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
             registered_at: null,
             user_id: null,
             telegram_chat_id: null, // ✅ Сбрасываем Telegram
+            avatar_type: 'default', // ✅ Сбрасываем аватар
             // НЕ СБРАСЫВАЕМ is_banned и ban_reason - они остаются!
           })
           .eq('id', studentId);

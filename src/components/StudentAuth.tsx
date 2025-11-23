@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import { Student } from '@/types';
 import { DoorIcon, CheckIcon, CloseIcon, UserIcon } from '@/components/Icons';
+import Avatar, { AvatarType } from '@/components/Avatar';
 
 export default function StudentAuth() {
   const { students, registerStudent, loginStudent } = useLaundry();
@@ -88,11 +89,14 @@ export default function StudentAuth() {
                 className="w-full bg-white hover:bg-blue-100 border-3 border-gray-400 hover:border-blue-600 rounded-lg p-4 text-left transition-all shadow-md hover:shadow-xl"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-black text-xl text-gray-900">{student.full_name}</div>
-                    {student.room && (
-                      <div className="text-base text-gray-700 font-bold flex items-center gap-1"><DoorIcon className="w-4 h-4" /> Комната {student.room}</div>
-                    )}
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <Avatar type={(student.avatar_type as AvatarType) || 'default'} className="w-12 h-12" />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-black text-xl text-gray-900">{student.full_name}</div>
+                      {student.room && (
+                        <div className="text-base text-gray-700 font-bold flex items-center gap-1"><DoorIcon className="w-4 h-4" /> Комната {student.room}</div>
+                      )}
+                    </div>
                   </div>
                   <div className="flex-shrink-0">
                     {student.is_registered ? (
