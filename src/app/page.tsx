@@ -12,7 +12,7 @@ import TelegramSetup from '@/components/TelegramSetup';
 import HistoryList from '@/components/HistoryList';
 import StudentsList from '@/components/StudentsList';
 import GlobalAlert from '@/components/GlobalAlert';
-import { HomeIcon, HistoryIcon, PeopleIcon, SettingsIcon, WashingIcon } from '@/components/Icons';
+import { HomeIcon, HistoryIcon, PeopleIcon, SettingsIcon, WashingIcon, DoorIcon } from '@/components/Icons';
 import TelegramBanner from '@/components/TelegramBanner';
 import StudentActions from '@/components/StudentActions';
 
@@ -203,13 +203,13 @@ export default function Home() {
       <StudentActions />
       
       {/* Основной контент */}
-      <div className="w-full p-3">
+      <div className="w-full">
         {activeTab === 'main' && (
           <div className="space-y-4">
             <TimeBanner />
             
             {/* Статус машины */}
-            <div className="mb-6 max-w-3xl mx-auto">
+            <div className="mb-6 max-w-3xl mx-auto px-3">
               <h3 className="text-lg font-semibold mb-3 text-gray-700">Статус машины</h3>
               {machineState.status === 'idle' ? (
                 <div className="relative overflow-hidden rounded-xl shadow-lg min-h-[120px]">
@@ -336,7 +336,7 @@ export default function Home() {
                 {/* Показываем пользовательские компоненты если есть пользователь ИЛИ админ */}
                 {(user || isAdmin) && (
                   <>
-                    {!isAdmin && <UserForm />} {/* UserForm только для обычных пользователей */}
+                    {!isAdmin && <div className="px-3"><UserForm /></div>} {/* UserForm только для обычных пользователей */}
                     <QueueList />
                   </>
                 )}
@@ -373,9 +373,9 @@ export default function Home() {
                   setIsNewUser(false);
                   localStorage.removeItem('needsTelegramSetup');
                 }}
-                className="w-full bg-red-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-red-600 shadow-sm"
+                className="w-full bg-red-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-red-600 shadow-sm flex items-center justify-center gap-2"
               >
-                🚪 Выйти из аккаунта
+                <DoorIcon className="w-5 h-5" />Выйти из аккаунта
               </button>
             </div>
           </div>
