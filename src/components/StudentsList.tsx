@@ -5,7 +5,7 @@ import { useLaundry } from '@/contexts/LaundryContext';
 import { useState } from 'react';
 import { Student } from '@/types';
 import { ListIcon, RoomIcon, DoorIcon, TelegramIcon, CheckIcon, CloseIcon, EditIcon, DeleteIcon } from '@/components/Icons';
-import Avatar from '@/components/Avatar';
+import Avatar, { AvatarType } from '@/components/Avatar';
 
 export default function StudentsList() {
   const { students, isAdmin, user, updateStudent, addStudent, deleteStudent, loadStudents } = useLaundry();
@@ -155,7 +155,10 @@ export default function StudentsList() {
         <tr className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
           <td className="p-3 text-gray-700">{index + 1}</td>
           <td className="p-3 text-gray-900">
-            {[student.first_name, student.last_name, student.middle_name].filter(Boolean).join(' ') || '—'}
+            <div className="flex items-center gap-3">
+              <Avatar type={(student.avatar_type as AvatarType) || 'default'} className="w-10 h-10" />
+              <span>{[student.first_name, student.last_name, student.middle_name].filter(Boolean).join(' ') || '—'}</span>
+            </div>
           </td>
           <td className="p-3 text-center text-gray-900">
             {student.room ? (
@@ -270,7 +273,10 @@ export default function StudentsList() {
                       <tr className="border-b border-blue-200 hover:bg-blue-50">
                         <td className="p-1 text-gray-900 font-semibold">{index + 1}</td>
                         <td className="p-1 text-gray-900">
-                          {[student.first_name, student.last_name, student.middle_name].filter(Boolean).join(' ') || '-'}
+                          <div className="flex items-center gap-2">
+                            <Avatar type={(student.avatar_type as AvatarType) || 'default'} className="w-8 h-8" />
+                            <span className="text-xs">{[student.first_name, student.last_name, student.middle_name].filter(Boolean).join(' ') || '-'}</span>
+                          </div>
                         </td>
                         <td className="p-1 text-center text-gray-700 whitespace-nowrap">{student.room || '-'}</td>
                         <td className="p-1 text-center">
@@ -363,7 +369,10 @@ export default function StudentsList() {
                       <tr className="border-b border-green-200 hover:bg-green-50">
                         <td className="p-1 text-gray-900 font-semibold">{index + 1}</td>
                         <td className="p-1 text-gray-900">
-                          {[student.first_name, student.last_name, student.middle_name].filter(Boolean).join(' ') || '-'}
+                          <div className="flex items-center gap-2">
+                            <Avatar type={(student.avatar_type as AvatarType) || 'default'} className="w-8 h-8" />
+                            <span className="text-xs">{[student.first_name, student.last_name, student.middle_name].filter(Boolean).join(' ') || '-'}</span>
+                          </div>
                         </td>
                         <td className="p-1 text-center text-gray-700 whitespace-nowrap">{student.room || '-'}</td>
                         <td className="p-1 text-center">

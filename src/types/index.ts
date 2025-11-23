@@ -19,6 +19,7 @@ export type Student = {
   is_super_admin?: boolean;
   can_view_students?: boolean; // Может ли студент видеть список студентов
   avatar?: string; // SVG аватар (default, male1, male2, female1, female2, etc.)
+  avatar_type?: string; // Тип аватара
 };
 
 export type StudentAuth = {
@@ -41,6 +42,7 @@ export type User = {
   is_super_admin?: boolean;
   can_view_students?: boolean; // Может ли студент видеть список студентов
   avatar?: string; // SVG аватар
+  avatar_type?: string; // Тип аватара
 };
 
 export enum QueueStatus {

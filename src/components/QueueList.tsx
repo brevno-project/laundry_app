@@ -688,7 +688,7 @@ const handleSaveEdit = async () => {
                                 }
                               }}
                             >
-                              🗑️ Удалить из очереди
+                              <DeleteIcon className="w-4 h-4" />Удалить из очереди
                             </button>
                           </div>
                         )}
@@ -698,10 +698,10 @@ const handleSaveEdit = async () => {
                         {(isAdmin) && item.status === QueueStatus.WAITING && (
                           <button
                             onClick={() => openEditModal(item)}
-                            className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 w-full"
+                            className="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 w-full flex items-center justify-center gap-2 font-semibold shadow-sm"
                             title="Редактировать параметры"
                           >
-                            Редактировать
+                            <EditIcon className="w-4 h-4" />Редактировать
                           </button>
                         )}
                             
