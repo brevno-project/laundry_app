@@ -223,7 +223,7 @@ export default function StudentsList() {
           
           {/* Десктоп: обычная таблица */}
           <div className="hidden md:block overflow-x-auto">
-            <table className="w-full border-collapse table-fixed">
+            <table className="w-full border-collapse table-fixed max-w-7xl mx-auto">
               <colgroup>
                 <col className="w-16" />
                 <col className="w-auto" />
@@ -319,7 +319,7 @@ export default function StudentsList() {
           
           {/* Десктоп: обычная таблица */}
           <div className="hidden md:block overflow-x-auto">
-            <table className="w-full border-collapse table-fixed">
+            <table className="w-full border-collapse table-fixed max-w-7xl mx-auto">
               <colgroup>
                 <col className="w-16" />
                 <col className="w-auto" />
