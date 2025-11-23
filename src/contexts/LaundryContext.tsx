@@ -1687,7 +1687,7 @@ const startWashing = async (queueItemId: string) => {
   // Обновить данные студента
   const updateStudent = async (
     studentId: string,
-    updates: { first_name?: string; last_name?: string; middle_name?: string; room?: string; can_view_students?: boolean }
+    updates: { first_name?: string; last_name?: string; middle_name?: string; room?: string; can_view_students?: boolean; avatar_type?: string }
 ) => {
   console.log('✏️ updateStudent called:', { studentId, updates, isAdmin, user: user?.full_name });
   
@@ -1724,6 +1724,7 @@ const startWashing = async (queueItemId: string) => {
 
     if (updates.room !== undefined) updateData.room = updates.room;
     if (updates.can_view_students !== undefined) updateData.can_view_students = updates.can_view_students;
+    if (updates.avatar_type !== undefined) updateData.avatar_type = updates.avatar_type;
 
     console.log('📝 Update data:', updateData);
     
