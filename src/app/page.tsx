@@ -180,33 +180,58 @@ export default function Home() {
             <TimeBanner />
             
             {/* Статус машины */}
-            <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4">
-              <h3 className="text-lg font-bold mb-3 text-gray-800">Статус машины</h3>
+            <div className="mb-4">
+              <h3 className="text-xl font-bold mb-3 text-gray-800">🏭 Статус машины</h3>
               {machineState.status === 'idle' ? (
-                <div className="bg-green-50 border-2 border-green-500 rounded-lg p-3 text-center">
-                  <div className="text-3xl mb-1">✅</div>
-                  <div className="text-lg font-bold text-green-900">Машина свободна</div>
+                <div className="relative bg-gradient-to-br from-green-400 via-green-500 to-green-600 p-6 rounded-2xl shadow-2xl border-2 border-green-300 overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+                  <div className="relative flex flex-col items-center space-y-3">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-green-300 rounded-full blur-xl animate-pulse"></div>
+                      <div className="relative bg-gradient-to-br from-green-700 to-green-800 rounded-full p-4 shadow-xl">
+                        <div className="text-6xl animate-bounce" style={{animationDuration: '2s'}}>✅</div>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-black text-white drop-shadow-lg">🎉 МАШИНА СВОБОДНА</div>
+                      <div className="text-green-100 text-lg font-semibold mt-2">Можно записаться в очередь</div>
+                    </div>
+                  </div>
                 </div>
               ) : (
-                <div className="bg-red-50 border-2 border-red-500 rounded-lg p-3 text-center">
-                  <div className="text-3xl mb-1">🔴</div>
-                  <div className="text-lg font-bold text-red-900">Машина занята</div>
-                  {machineState.current_queue_item_id && (() => {
-                    const currentItem = queue.find(item => item.id === machineState.current_queue_item_id);
-                    if (currentItem) {
-                      return (
-                        <div className="text-sm text-red-700 mt-1 font-bold">
-                          🧑 Стирает: {currentItem.full_name}
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
-                  {machineState.expected_finish_at && (
-                    <div className="text-sm text-red-700 mt-1">
-                      Закончит: {new Date(machineState.expected_finish_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                <div className="relative bg-gradient-to-br from-red-500 via-red-600 to-red-700 p-6 rounded-2xl shadow-2xl border-2 border-red-400 overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse"></div>
+                  <div className="relative flex flex-col items-center space-y-3">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-red-400 rounded-full blur-xl animate-pulse"></div>
+                      <div className="relative bg-gradient-to-br from-red-800 to-red-900 rounded-full p-4 shadow-lg">
+                        <div className="text-6xl animate-bounce">🟥</div>
+                      </div>
                     </div>
-                  )}
+                    <div className="text-center">
+                      <div className="text-3xl font-black text-white drop-shadow-lg">🚫 МАШИНА ЗАНЯТА</div>
+                      {machineState.current_queue_item_id && (() => {
+                        const currentItem = queue.find(item => item.id === machineState.current_queue_item_id);
+                        if (currentItem) {
+                          return (
+                            <div className="bg-red-800/50 backdrop-blur-sm rounded-xl px-4 py-2 mt-3">
+                              <div className="text-white text-xl font-bold">
+                                🧑‍🦼 Стирает: {currentItem.full_name}
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+                      {machineState.expected_finish_at && (
+                        <div className="bg-yellow-400 rounded-lg px-4 py-2 mt-3">
+                          <div className="text-gray-900 text-lg font-bold">
+                            ⏱️ Закончит: {new Date(machineState.expected_finish_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
