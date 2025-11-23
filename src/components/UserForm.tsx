@@ -2,6 +2,7 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
+import { CalendarIcon } from '@/components/Icons';
 
 export default function UserForm() {
   const { user, joinQueue, logoutStudent, getUserQueueItem, queue, updateQueueItem,students } = useLaundry();
@@ -165,9 +166,13 @@ export default function UserForm() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-blue-700 transition-colors shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-blue-700 transition-colors shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {isSubmitting ? '⏳ Добавление...' : 'Встать в очередь'}
+                {isSubmitting ? (
+                  <>Добавление...</>
+                ) : (
+                  <><CalendarIcon className="w-5 h-5" />Встать в очередь</>
+                )}
               </button>
             </>
           ) : (

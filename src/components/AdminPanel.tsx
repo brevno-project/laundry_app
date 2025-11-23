@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import { Student } from '@/types';
+import { CalendarIcon } from '@/components/Icons';
 
 export default function AdminPanel() {
   const { 
@@ -511,8 +512,8 @@ export default function AdminPanel() {
                   {/* ========== БЕЗОПАСНЫЕ ДЕЙСТВИЯ ========== */}
                   {(isSuperAdmin || (!student.is_admin && !student.is_super_admin)) && (
                     <button onClick={() => openAddToQueueModal(student)}
-                      className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-1 w-full">
-                      Поставить в очередь
+                      className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-2 w-full">
+                      <CalendarIcon className="w-4 h-4" />Поставить в очередь
                     </button>
                   )}
 
