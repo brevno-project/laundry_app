@@ -12,7 +12,7 @@ import TelegramSetup from '@/components/TelegramSetup';
 import HistoryList from '@/components/HistoryList';
 import StudentsList from '@/components/StudentsList';
 import GlobalAlert from '@/components/GlobalAlert';
-import { HomeIcon, HistoryIcon, PeopleIcon, SettingsIcon } from '@/components/Icons';
+import { HomeIcon, HistoryIcon, PeopleIcon, SettingsIcon, WashingIcon } from '@/components/Icons';
 import TelegramBanner from '@/components/TelegramBanner';
 import StudentActions from '@/components/StudentActions';
 
@@ -133,7 +133,7 @@ export default function Home() {
       {/* Заголовок */}
       <header className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 shadow-lg sticky top-0 z-10">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white">🧺 Очередь на стирку</h1>
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2"><WashingIcon className="w-7 h-7" />Очередь на стирку</h1>
           {user && (
             <p className="text-sm text-blue-100 mt-1">
               Вы вошли как: <span className="font-semibold">{user.full_name}</span>

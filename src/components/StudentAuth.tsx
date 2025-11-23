@@ -96,13 +96,13 @@ export default function StudentAuth() {
                   </div>
                   <div className="flex-shrink-0">
                     {student.is_registered ? (
-                      <span className="bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-md whitespace-nowrap">
-                        <CheckIcon className="w-4 h-4" />
-                      </span>
+                      <div className="bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md">
+                        <CheckIcon className="w-5 h-5" />
+                      </div>
                     ) : (
-                      <span className="bg-yellow-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-md whitespace-nowrap">
+                      <div className="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
                         NEW
-                      </span>
+                      </div>
                     )}
                   </div>
                 </div>

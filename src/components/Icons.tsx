@@ -86,7 +86,7 @@ export const TelegramIcon = ({ className = "w-5 h-5" }: IconProps) => (
 
 export const DoorIcon = ({ className = "w-5 h-5" }: IconProps) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+    <path d="M19 19V5c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v14H3v2h18v-2h-2zm-8-6c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/>
   </svg>
 );
 
