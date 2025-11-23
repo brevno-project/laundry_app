@@ -183,52 +183,68 @@ export default function Home() {
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-3 text-gray-700">Статус машины</h3>
               {machineState.status === 'idle' ? (
-                <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex items-center space-x-4">
-                    {/* Пульсирующий индикатор */}
-                    <div className="relative flex-shrink-0">
-                      <div className="w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
-                      <div className="absolute inset-0 w-4 h-4 bg-green-400 rounded-full animate-ping"></div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-xl font-semibold text-gray-900">Свободна</div>
-                      <div className="text-sm text-gray-500 mt-1">Можно записаться в очередь</div>
-                    </div>
+                <div className="relative overflow-hidden rounded-xl shadow-lg">
+                  {/* Переливающийся фон */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-green-400 via-green-500 to-green-600"></div>
+                  <div 
+                    className="absolute inset-0 bg-gradient-to-tr from-green-300 via-transparent to-green-400 opacity-60"
+                    style={{
+                      animation: 'shimmer 4s ease-in-out infinite',
+                    }}
+                  ></div>
+                  <style jsx>{`
+                    @keyframes shimmer {
+                      0%, 100% { transform: translateX(-100%) translateY(-100%); }
+                      50% { transform: translateX(100%) translateY(100%); }
+                    }
+                  `}</style>
+                  
+                  <div className="relative p-6">
+                    <div className="text-2xl font-bold text-white mb-2">Свободна</div>
+                    <div className="text-green-50 text-sm">Можно записаться в очередь</div>
                   </div>
                 </div>
               ) : (
-                <div className="bg-white border border-red-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex items-start space-x-4">
-                    {/* Пульсирующий индикатор */}
-                    <div className="relative flex-shrink-0 mt-1">
-                      <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
-                      <div className="absolute inset-0 w-4 h-4 bg-red-400 rounded-full animate-ping"></div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-xl font-semibold text-gray-900">Занята</div>
-                      {machineState.current_queue_item_id && (() => {
-                        const currentItem = queue.find(item => item.id === machineState.current_queue_item_id);
-                        if (currentItem) {
-                          return (
-                            <div className="mt-3 pt-3 border-t border-gray-100">
-                              <div className="text-sm text-gray-500">Стирает</div>
-                              <div className="text-base font-medium text-gray-900 mt-1">
-                                {currentItem.full_name}
-                              </div>
+                <div className="relative overflow-hidden rounded-xl shadow-lg">
+                  {/* Переливающийся фон */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-red-400 via-red-500 to-red-600"></div>
+                  <div 
+                    className="absolute inset-0 bg-gradient-to-tr from-red-300 via-transparent to-red-400 opacity-60"
+                    style={{
+                      animation: 'shimmer 4s ease-in-out infinite',
+                    }}
+                  ></div>
+                  <style jsx>{`
+                    @keyframes shimmer {
+                      0%, 100% { transform: translateX(-100%) translateY(-100%); }
+                      50% { transform: translateX(100%) translateY(100%); }
+                    }
+                  `}</style>
+                  
+                  <div className="relative p-6">
+                    <div className="text-2xl font-bold text-white mb-3">Занята</div>
+                    {machineState.current_queue_item_id && (() => {
+                      const currentItem = queue.find(item => item.id === machineState.current_queue_item_id);
+                      if (currentItem) {
+                        return (
+                          <div className="mt-3 pt-3 border-t border-red-300/30">
+                            <div className="text-xs text-red-100 uppercase tracking-wide">Стирает</div>
+                            <div className="text-base font-semibold text-white mt-1">
+                              {currentItem.full_name}
                             </div>
-                          );
-                        }
-                        return null;
-                      })()}
-                      {machineState.expected_finish_at && (
-                        <div className="mt-3 pt-3 border-t border-gray-100">
-                          <div className="text-sm text-gray-500">Окончание</div>
-                          <div className="text-base font-medium text-gray-900 mt-1">
-                            {new Date(machineState.expected_finish_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
                           </div>
+                        );
+                      }
+                      return null;
+                    })()}
+                    {machineState.expected_finish_at && (
+                      <div className="mt-3 pt-3 border-t border-red-300/30">
+                        <div className="text-xs text-red-100 uppercase tracking-wide">Окончание</div>
+                        <div className="text-base font-semibold text-white mt-1">
+                          {new Date(machineState.expected_finish_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
