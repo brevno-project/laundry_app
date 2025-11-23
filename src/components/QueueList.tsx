@@ -641,7 +641,7 @@ const handleSaveEdit = async () => {
                               <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
                               
                               <button
-                                className="bg-purple-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-purple-600 shadow-sm w-full"
+                                className="bg-purple-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-purple-600 shadow-sm w-full flex items-center justify-center gap-1"
                                 onClick={async () => {
                                   try {
                                     if (!isAdmin) {
@@ -664,7 +664,7 @@ const handleSaveEdit = async () => {
                                   }
                                 }}
                               >
-                                ⏳ В ожидание
+                                <WaitIcon className="w-4 h-4" />В ожидание
                               </button>
                             </div>
                             
@@ -672,7 +672,7 @@ const handleSaveEdit = async () => {
                             
                             {/* БЛОК: Удалить */}
                             <button
-                              className="bg-red-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-red-700 shadow-sm w-full"
+                              className="bg-red-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-red-700 shadow-sm w-full flex items-center justify-center gap-1"
                               onClick={async () => {
                                 if (!isAdmin) {
                                   alert('❌ Только администратор может выполнять это действие');
