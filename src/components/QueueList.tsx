@@ -618,7 +618,7 @@ const handleSaveEdit = async () => {
                               <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
                               
                               <button
-                                className="bg-emerald-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-emerald-700 shadow-sm w-full"
+                                className="bg-emerald-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-emerald-700 shadow-sm w-full flex items-center justify-center gap-1"
                                 onClick={async () => {
                                   try {
                                     if (!isAdmin) {
@@ -635,7 +635,7 @@ const handleSaveEdit = async () => {
                                   }
                                 }}
                               >
-                                ✅ Завершить
+                                <CheckIcon className="w-4 h-4" />Завершить
                               </button>
                               
                               <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
