@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import { Student } from '@/types';
+import { DoorIcon, CheckIcon, CloseIcon, UserIcon } from '@/components/Icons';
 
 export default function StudentAuth() {
   const { students, registerStudent, loginStudent } = useLaundry();
@@ -70,14 +71,14 @@ export default function StudentAuth() {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="🔍 Поиск по имени или комнате..."
+          placeholder="Поиск по имени или комнате..."
           className="w-full p-4 rounded-lg border-2 border-blue-400 bg-white text-gray-900 text-xl font-semibold mb-4 focus:border-blue-600 focus:ring-2 focus:ring-blue-300 placeholder:text-gray-600"
         />
 
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {filteredStudents.length === 0 ? (
             <div className="text-center py-8 text-gray-900">
-              <p className="text-xl font-bold">🔍 Ничего не найдено</p>
+              <p className="text-xl font-bold">Ничего не найдено</p>
             </div>
           ) : (
             filteredStudents.map((student) => (
@@ -90,17 +91,17 @@ export default function StudentAuth() {
                   <div className="flex-1 min-w-0">
                     <div className="font-black text-xl text-gray-900">{student.full_name}</div>
                     {student.room && (
-                      <div className="text-base text-gray-700 font-bold">🚪 Комната {student.room}</div>
+                      <div className="text-base text-gray-700 font-bold flex items-center gap-1"><DoorIcon className="w-4 h-4" /> Комната {student.room}</div>
                     )}
                   </div>
                   <div className="flex-shrink-0">
                     {student.is_registered ? (
                       <span className="bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-md whitespace-nowrap">
-                        ✅
+                        <CheckIcon className="w-4 h-4" />
                       </span>
                     ) : (
                       <span className="bg-yellow-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-md whitespace-nowrap">
-                        🆕
+                        NEW
                       </span>
                     )}
                   </div>
@@ -129,7 +130,7 @@ export default function StudentAuth() {
       <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="bg-blue-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-2xl">
-            👤
+            <UserIcon className="w-6 h-6" />
           </div>
           <div>
             <div className="font-black text-xl text-gray-900">{selectedStudent?.full_name}</div>
@@ -174,7 +175,7 @@ export default function StudentAuth() {
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
-            ❌ {error}
+            <CloseIcon className="w-5 h-5 inline-block mr-1" />{error}
           </div>
         )}
 

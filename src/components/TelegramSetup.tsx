@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
+import { CheckIcon, CloseIcon, TelegramIcon } from '@/components/Icons';
 
 export default function TelegramSetup() {
   const { user, linkTelegram, setIsNewUser } = useLaundry();
@@ -39,7 +40,7 @@ export default function TelegramSetup() {
     return (
       <div className="bg-green-50 border-2 border-green-500 rounded-lg p-4">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-2xl">✅</span>
+          <CheckIcon className="w-6 h-6 text-green-600" />
           <h3 className="font-bold text-lg text-green-900">Telegram подключен!</h3>
         </div>
         <p className="text-green-800 mb-3">Вы будете получать уведомления в Telegram</p>
@@ -53,7 +54,7 @@ export default function TelegramSetup() {
   return (
     <div className="bg-yellow-50 border-2 border-yellow-500 rounded-lg p-4">
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-3xl">📱</span>
+        <TelegramIcon className="w-8 h-8 text-blue-600" />
         <h3 className="font-bold text-xl text-yellow-900">Подключите уведомления</h3>
       </div>
 
@@ -65,7 +66,7 @@ export default function TelegramSetup() {
               <p className="font-bold text-gray-900 mb-2">
                 Шаг 1: Откройте бота <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline font-semibold">@userinfobot</a>
               </p>
-              <p className="text-sm text-gray-600 italic">💡 Chat ID один для всех ботов!</p>
+              <p className="text-sm text-gray-600 italic">Chat ID один для всех ботов!</p>
             </div>
           </div>
         </div>
@@ -87,7 +88,7 @@ export default function TelegramSetup() {
               <p className="text-gray-700 mb-1">
                 Шаг 3: Откройте нашего бота <a href="https://t.me/keiin_dorm_laundry_bot" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline font-semibold">@keiin_dorm_laundry_bot</a>
               </p>
-              <p className="text-sm text-gray-600">⚠️ Напишите боту /start!</p>
+              <p className="text-sm text-gray-600">Напишите боту /start!</p>
             </div>
           </div>
         </div>
@@ -111,13 +112,13 @@ export default function TelegramSetup() {
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-3">
-          ❌ {error}
+          <CloseIcon className="w-5 h-5 inline-block mr-1" />{error}
         </div>
       )}
 
       {success && (
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-3">
-          ✅ Telegram успешно подключен!
+          <CheckIcon className="w-5 h-5 inline-block mr-1" />Telegram успешно подключен!
         </div>
       )}
 
@@ -126,11 +127,11 @@ export default function TelegramSetup() {
         disabled={loading || !chatId.trim()}
         className="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-lg text-lg"
       >
-        {loading ? '⏳ Подключение...' : '✅ Подключить уведомления'}
+        {loading ? 'Подключение...' : 'Подключить уведомления'}
       </button>
 
       <p className="text-xs text-gray-600 mt-3 text-center">
-        💡 Подключите Telegram для уведомлений
+        Подключите Telegram для уведомлений
       </p>
     </div>
   );
