@@ -472,7 +472,7 @@ const handleSaveEdit = async () => {
 
                             {/* КНОПКА: Вернуть ключ */}
                             <button
-                              className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm"
+                              className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm flex items-center justify-center gap-1"
                               onClick={async () => {
                                 try {
                                   // ✅ Устанавливаем статус RETURNING_KEY
@@ -505,11 +505,11 @@ const handleSaveEdit = async () => {
                                 }
                               }}
                             >
-                              🔔 Вернуть
+                              <BellIcon className="w-4 h-4" />Вернуть
                             </button>
                               
                               <button
-                                className="bg-gray-400 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-gray-500 shadow-sm"
+                                className="bg-gray-400 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-gray-500 shadow-sm flex items-center justify-center gap-1"
                                 onClick={async () => {
                                   try {
                                     if (!isAdmin) {
@@ -540,14 +540,14 @@ const handleSaveEdit = async () => {
                                   }
                                 }}
                               >
-                                🔕 Отменить
+                                <BellOffIcon className="w-4 h-4" />Отменить
                               </button>
                             </div>
 
                             {/* БЛОК: Действия со статусом */}
                             <div className="flex flex-col gap-2">
                               <button
-                                className="bg-blue-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-blue-700 shadow-sm w-full"
+                                className="bg-blue-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-blue-700 shadow-sm w-full flex items-center justify-center gap-1"
                                 onClick={async () => {
                                   try {
                                     if (!isAdmin) {
@@ -585,13 +585,13 @@ const handleSaveEdit = async () => {
                                   }
                                 }}
                               >
-                                🔑 Ключ выдан
+                                <KeyIcon className="w-4 h-4" />Ключ выдан
                               </button>
                               
                               <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
                               
                               <button
-                                className="bg-green-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-green-700 shadow-sm w-full"
+                                className="bg-green-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-green-700 shadow-sm w-full flex items-center justify-center gap-1"
                                 onClick={async () => {
                                   try {
                                     if (!isAdmin) {
@@ -612,7 +612,7 @@ const handleSaveEdit = async () => {
                                   }
                                 }}
                               >
-                                🟢 Начал(а) стирать
+                                <WashingIcon className="w-4 h-4" />Начал(а) стирать
                               </button>
                               
                               <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
