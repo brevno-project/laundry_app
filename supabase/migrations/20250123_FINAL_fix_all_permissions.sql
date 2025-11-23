@@ -85,6 +85,7 @@ DROP POLICY IF EXISTS "History is readable by everyone" ON history;
 DROP POLICY IF EXISTS "Authenticated users can insert history" ON history;
 DROP POLICY IF EXISTS history_select_public ON history;
 DROP POLICY IF EXISTS history_insert_admin ON history;
+DROP POLICY IF EXISTS history_insert_authenticated ON history;
 DROP POLICY IF EXISTS history_delete_super_admin ON history;
 
 -- ========================================
