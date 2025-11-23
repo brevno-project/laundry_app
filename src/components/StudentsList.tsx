@@ -313,16 +313,21 @@ export default function StudentsList() {
           
           {/* Десктоп: обычная таблица */}
           <div className="hidden md:block overflow-x-auto">
-            <table className="w-full border-collapse">
+            <table className="w-full border-collapse table-fixed">
+              <colgroup>
+                <col className="w-16" />
+                <col className="w-auto" />
+                <col className="w-28" />
+                <col className="w-36" />
+                {isAdmin && <col className="w-56" />}
+              </colgroup>
               <thead>
                 <tr className="bg-green-100 border-b-2 border-green-300">
                   <th className="text-left p-3 font-bold text-gray-900">#</th>
-                  <th className="text-left p-3 font-bold text-gray-900">Имя</th>
-                  <th className="text-left p-3 font-bold text-gray-900">Фамилия</th>
-                  <th className="text-left p-3 font-bold text-gray-900">Комната</th>
-                  <th className="text-left p-3 font-bold text-gray-900">Telegram</th>
-                  {isSuperAdmin && <th className="text-left p-3 font-bold text-gray-900">Может видеть список</th>}
-                  {isAdmin && <th className="text-left p-3 font-bold text-gray-900">Действия</th>}
+                  <th className="text-left p-3 font-bold text-gray-900">ФИО</th>
+                  <th className="text-center p-3 font-bold text-gray-900">Комната</th>
+                  <th className="text-center p-3 font-bold text-gray-900">Telegram</th>
+                  {isAdmin && <th className="text-center p-3 font-bold text-gray-900">Действия</th>}
                 </tr>
               </thead>
               <tbody>
