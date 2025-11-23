@@ -6,6 +6,7 @@ import { sendTelegramNotification } from '@/lib/telegram';
 import { useState, useEffect } from 'react';
 import Timer from './Timer';
 import QueueTimers from './QueueTimers';
+import { CalendarIcon } from '@/components/Icons';
 
 export default function QueueList() {
   const { 
@@ -175,7 +176,7 @@ const handleSaveEdit = async () => {
     return (
       <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-800">📋 Очередь</h2>
+          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><CalendarIcon className="w-6 h-6" />Очередь</h2>
         </div>
       </div>
     );
@@ -189,7 +190,7 @@ const handleSaveEdit = async () => {
       {/* Header */}
       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-t-lg">
         <h2 className="text-xl font-bold text-gray-800">
-          📋 Очередь ({queuedItems.length})
+          <CalendarIcon className="w-5 h-5 inline-block mr-1" />Очередь ({queuedItems.length})
         </h2>
       </div>
       

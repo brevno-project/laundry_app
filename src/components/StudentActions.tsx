@@ -191,17 +191,6 @@ export default function StudentActions() {
 
   return (
     <>
-      {/* Компактная кнопка-стрелка вверху справа */}
-      <button
-        onClick={scrollToButton}
-        className="fixed top-20 right-4 z-50 bg-blue-600 text-white p-3 rounded-full shadow-2xl border-2 border-white hover:bg-blue-700 transition-all animate-pulse-slow"
-        title="Перейти к кнопке"
-      >
-        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M10 18a1 1 0 01-1-1V5.414l-3.293 3.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0l5 5a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 01-1 1z" clipRule="evenodd" />
-        </svg>
-      </button>
-      
       {/* Кнопка студента */}
       <div id="student-action-button" className="mb-6 w-full animate-slideDown">
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-xl p-6 border-2 border-blue-400 animate-pulse-slow">

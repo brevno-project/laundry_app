@@ -4,7 +4,7 @@ import React from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import { useState } from 'react';
 import { Student } from '@/types';
-import { PeopleIcon, RoomIcon, CheckIcon, CloseIcon, EditIcon, DeleteIcon } from '@/components/Icons';
+import { ListIcon, RoomIcon, DoorIcon, TelegramIcon, CheckIcon, CloseIcon, EditIcon, DeleteIcon } from '@/components/Icons';
 import Avatar from '@/components/Avatar';
 
 export default function StudentsList() {
@@ -31,7 +31,7 @@ export default function StudentsList() {
   if (!students || students.length === 0) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2"><PeopleIcon className="w-6 h-6" />Список студентов</h2>
+        <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2"><ListIcon className="w-7 h-7" />Список студентов</h2>
         <p className="text-gray-700 text-lg">Студентов нет.</p>
       </div>
     );
@@ -203,7 +203,7 @@ export default function StudentsList() {
     <>
       <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><PeopleIcon className="w-6 h-6" />Список студентов ({students.length})</h2>
+          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><ListIcon className="w-7 h-7" />Список студентов ({students.length})</h2>
           {isAdmin && (
             <button
               onClick={() => setShowAddModal(true)}
@@ -249,9 +249,9 @@ export default function StudentsList() {
               <thead>
                 <tr className="bg-blue-100 border-b-2 border-blue-300">
                   <th className="text-left p-1 font-bold text-gray-900">#</th>
-                  <th className="text-left p-1 font-bold text-gray-900">Имя Фамилия</th>
-                  <th className="text-center p-1 font-bold text-gray-900">🚪</th>
-                  <th className="text-center p-1 font-bold text-gray-900">TG</th>
+                  <th className="text-left p-1 font-bold text-gray-900">ФИО</th>
+                  <th className="text-center p-1 font-bold text-gray-900"><DoorIcon className="w-5 h-5 inline-block" /></th>
+                  <th className="text-center p-1 font-bold text-gray-900"><TelegramIcon className="w-5 h-5 inline-block" /></th>
                   {isAdmin && <th className="text-left p-1 font-bold text-gray-900">Действия</th>}
                 </tr>
               </thead>
@@ -275,9 +275,9 @@ export default function StudentsList() {
                         <td className="p-1 text-center text-gray-700 whitespace-nowrap">{student.room || '-'}</td>
                         <td className="p-1 text-center">
                           {student.telegram_chat_id ? (
-                            <span className="text-green-600">✅</span>
+                            <TelegramIcon className="w-5 h-5 text-blue-500" />
                           ) : (
-                            <span className="text-red-600">❌</span>
+                            <CloseIcon className="w-5 h-5 text-gray-400" />
                           )}
                         </td>
                         {isAdmin && (
@@ -337,9 +337,9 @@ export default function StudentsList() {
               <thead>
                 <tr className="bg-green-100 border-b-2 border-green-300">
                   <th className="text-left p-1 font-bold text-gray-900">#</th>
-                  <th className="text-left p-1 font-bold text-gray-900">Имя Фамилия</th>
-                  <th className="text-center p-1 font-bold text-gray-900">🚪</th>
-                  <th className="text-center p-1 font-bold text-gray-900">TG</th>
+                  <th className="text-left p-1 font-bold text-gray-900">ФИО</th>
+                  <th className="text-center p-1 font-bold text-gray-900"><DoorIcon className="w-5 h-5 inline-block" /></th>
+                  <th className="text-center p-1 font-bold text-gray-900"><TelegramIcon className="w-5 h-5 inline-block" /></th>
                   {isAdmin && <th className="text-left p-1 font-bold text-gray-900">Действия</th>}
                 </tr>
               </thead>
@@ -363,9 +363,9 @@ export default function StudentsList() {
                         <td className="p-1 text-center text-gray-700 whitespace-nowrap">{student.room || '-'}</td>
                         <td className="p-1 text-center">
                           {student.telegram_chat_id ? (
-                            <span className="text-green-600">✅</span>
+                            <TelegramIcon className="w-5 h-5 text-blue-500" />
                           ) : (
-                            <span className="text-red-600">❌</span>
+                            <CloseIcon className="w-5 h-5 text-gray-400" />
                           )}
                         </td>
                         {isAdmin && (
