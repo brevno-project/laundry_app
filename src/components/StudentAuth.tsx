@@ -135,14 +135,14 @@ export default function StudentAuth() {
           <div>
             <div className="font-black text-xl text-gray-900">{selectedStudent?.full_name}</div>
             {selectedStudent?.room && (
-              <div className="text-sm text-gray-900 font-medium">🚪 Комната {selectedStudent.room}</div>
+              <div className="text-sm text-gray-900 font-medium flex items-center gap-1"><DoorIcon className="w-4 h-4" />Комната {selectedStudent.room}</div>
             )}
           </div>
         </div>
       </div>
 
       <h2 className="text-2xl font-black mb-2 text-gray-900">
-        {selectedStudent?.is_registered ? '🔐 Вход' : '🆕 Первый раз?'}
+        {selectedStudent?.is_registered ? 'Вход' : 'Первый раз?'}
       </h2>
       <p className="text-gray-900 mb-6 font-medium">
         {selectedStudent?.is_registered 
@@ -184,8 +184,8 @@ export default function StudentAuth() {
           disabled={loading || !password}
           className="w-full bg-blue-600 text-white font-bold py-4 px-6 rounded-lg hover:bg-blue-700 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg"
         >
-          {loading ? '⏳ Загрузка...' : (
-            selectedStudent?.is_registered ? '🔐 Войти' : '🆕 Зарегистрироваться'
+          {loading ? 'Загрузка...' : (
+            selectedStudent?.is_registered ? 'Войти' : 'Зарегистрироваться'
           )}
         </button>
       </div>

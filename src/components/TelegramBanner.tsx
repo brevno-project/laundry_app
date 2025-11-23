@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
+import { TelegramIcon } from '@/components/Icons';
 
 interface TelegramBannerProps {
   onGoToSettings: () => void;
@@ -51,7 +52,7 @@ export default function TelegramBanner({ onGoToSettings }: TelegramBannerProps) 
 
         {/* Заголовок */}
         <div className="text-center mb-6">
-          <div className="text-6xl mb-4">📱</div>
+          <div className="mb-4"><TelegramIcon className="w-16 h-16 text-blue-400 mx-auto" /></div>
           <h2 className="text-2xl font-bold text-white mb-2">
             Подключите Telegram
           </h2>
