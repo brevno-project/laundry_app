@@ -19,9 +19,25 @@ import AvatarSelector from '@/components/AvatarSelector';
 
 export default function Home() {
   const { user, isLoading, logoutStudent, isAdmin, machineState, queue, isNewUser, setIsNewUser, students } = useLaundry();
-  const [activeTab, setActiveTab] = React.useState('main');
+  
+  // ✅ Восстанавливаем activeTab из localStorage
+  const [activeTab, setActiveTab] = React.useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('activeTab') || 'main';
+    }
+    return 'main';
+  });
+  
   const [showTelegramModal, setShowTelegramModal] = React.useState(false);
   const [showScrollButton, setShowScrollButton] = React.useState(false);
+
+  // ✅ Сохраняем activeTab в localStorage при изменении
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('activeTab', tab);
+    }
+  };
 
   // ✅ Проверка: показывать модалку ТОЛЬКО для новых пользователей
   React.useEffect(() => {
@@ -149,7 +165,7 @@ export default function Home() {
         <nav className="bg-white border-b shadow-sm sticky top-14 z-10">
           <div className="flex">
             <button
-              onClick={() => setActiveTab('main')}
+              onClick={() => handleTabChange('main')}
               className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
                 activeTab === 'main'
                   ? 'border-blue-600 text-blue-600 bg-blue-50'
@@ -159,7 +175,7 @@ export default function Home() {
               <HomeIcon className="w-5 h-5 inline-block mr-2" />Главная
             </button>
               <button
-                onClick={() => setActiveTab('history')}
+                onClick={() => handleTabChange('history')}
                 className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
                   activeTab === 'history'
                     ? 'border-blue-600 text-blue-600 bg-blue-50'
@@ -170,7 +186,7 @@ export default function Home() {
               </button>
             {isAdmin && (
               <button
-                onClick={() => setActiveTab('students')}
+                onClick={() => handleTabChange('students')}
                 className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
                   activeTab === 'students'
                     ? 'border-blue-600 text-blue-600 bg-blue-50'
@@ -181,7 +197,7 @@ export default function Home() {
               </button>
             )}
             <button
-              onClick={() => setActiveTab('settings')}
+              onClick={() => handleTabChange('settings')}
               className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
                 activeTab === 'settings'
                   ? 'border-blue-600 text-blue-600 bg-blue-50'
