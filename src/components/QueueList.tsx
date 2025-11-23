@@ -6,7 +6,7 @@ import { sendTelegramNotification } from '@/lib/telegram';
 import { useState, useEffect } from 'react';
 import Timer from './Timer';
 import QueueTimers from './QueueTimers';
-import { CalendarIcon } from '@/components/Icons';
+import { CalendarIcon, BellIcon, KeyIcon, WashingIcon, BellOffIcon, WaitIcon, CheckIcon, DeleteIcon, EditIcon } from '@/components/Icons';
 
 export default function QueueList() {
   const { 
@@ -436,7 +436,7 @@ const handleSaveEdit = async () => {
                             <div className="grid grid-cols-3 gap-2">
                             {/* КНОПКА: Позвать */}
                             <button
-                              className="bg-yellow-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-yellow-600 shadow-sm"
+                              className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm flex items-center justify-center gap-1"
                               onClick={async () => {
                                 try {
                                   // ✅ Сохраняем комнату админа и время вызова
@@ -467,7 +467,7 @@ const handleSaveEdit = async () => {
                                 }
                               }}
                             >
-                              🔔 Позвать
+                              <BellIcon className="w-4 h-4" />Позвать
                             </button>
 
                             {/* КНОПКА: Вернуть ключ */}
