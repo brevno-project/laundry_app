@@ -183,9 +183,18 @@ export default function Home() {
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-3 text-gray-700">Статус машины</h3>
               {machineState.status === 'idle' ? (
-                <div className="relative overflow-hidden rounded-xl shadow-lg">
+                <div className="relative overflow-hidden rounded-xl shadow-lg min-h-[120px]">
                   {/* Базовый фон */}
                   <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-green-600"></div>
+                  
+                  {/* Тонкая сетка (паттерн) */}
+                  <div 
+                    className="absolute inset-0 opacity-10"
+                    style={{
+                      backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, white 2px, white 3px), repeating-linear-gradient(90deg, transparent, transparent 2px, white 2px, white 3px)',
+                      backgroundSize: '30px 30px',
+                    }}
+                  ></div>
                   
                   {/* Волна с блеском */}
                   <div 
@@ -214,7 +223,7 @@ export default function Home() {
                   </div>
                 </div>
               ) : (
-                <div className="relative overflow-hidden rounded-xl shadow-lg">
+                <div className="relative overflow-hidden rounded-xl shadow-lg min-h-[120px]">
                   {/* Базовый фон */}
                   <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-600"></div>
                   
