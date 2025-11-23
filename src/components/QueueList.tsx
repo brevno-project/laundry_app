@@ -253,9 +253,9 @@ const handleSaveEdit = async () => {
         </div>
       )}
       
-      <div className="p-2 space-y-4">
+      <div className="space-y-4">
         {sortedDates.map(dateKey => (
-          <div key={dateKey} className="border-t-4 border-blue-200 pt-2">
+          <div key={dateKey} className="border-t-4 border-blue-200 pt-2 px-2">
             {/* ✅ Заголовок даты */}
             <h3 className="text-lg font-bold text-blue-900 mb-2 sticky top-0 bg-white z-10 py-1">
               {formatDateHeader(dateKey)}
