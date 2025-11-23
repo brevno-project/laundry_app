@@ -148,12 +148,12 @@ CREATE POLICY students_update_admin ON students
   USING (
     public.is_admin() 
     AND NOT public.is_super_admin()
-    AND (SELECT is_super_admin FROM students WHERE id = students.id) = FALSE
+    AND students.is_super_admin = FALSE
   )
   WITH CHECK (
     public.is_admin() 
     AND NOT public.is_super_admin()
-    AND (SELECT is_super_admin FROM students WHERE id = students.id) = FALSE
+    AND students.is_super_admin = FALSE
   );
 
 -- DELETE: суперадмин может удалять всех (кроме себя)
@@ -172,7 +172,7 @@ CREATE POLICY students_delete_admin ON students
   USING (
     public.is_admin() 
     AND NOT public.is_super_admin()
-    AND (SELECT is_super_admin FROM students WHERE id = students.id) = FALSE
+    AND students.is_super_admin = FALSE
   );
 
 -- ========================================
@@ -206,7 +206,7 @@ CREATE POLICY queue_insert_admin ON queue
     AND NOT public.is_super_admin()
     AND (
       student_id IS NULL 
-      OR (SELECT is_super_admin FROM students WHERE id = queue.student_id) = FALSE
+      OR NOT EXISTS (SELECT 1 FROM students s WHERE s.id = queue.student_id AND s.is_super_admin = TRUE)
     )
   );
 
@@ -233,7 +233,7 @@ CREATE POLICY queue_update_admin ON queue
     AND NOT public.is_super_admin()
     AND (
       student_id IS NULL 
-      OR (SELECT is_super_admin FROM students WHERE id = queue.student_id) = FALSE
+      OR NOT EXISTS (SELECT 1 FROM students s WHERE s.id = queue.student_id AND s.is_super_admin = TRUE)
     )
   )
   WITH CHECK (
@@ -241,7 +241,7 @@ CREATE POLICY queue_update_admin ON queue
     AND NOT public.is_super_admin()
     AND (
       student_id IS NULL 
-      OR (SELECT is_super_admin FROM students WHERE id = queue.student_id) = FALSE
+      OR NOT EXISTS (SELECT 1 FROM students s WHERE s.id = queue.student_id AND s.is_super_admin = TRUE)
     )
   );
 
@@ -266,7 +266,7 @@ CREATE POLICY queue_delete_admin ON queue
     AND NOT public.is_super_admin()
     AND (
       student_id IS NULL 
-      OR (SELECT is_super_admin FROM students WHERE id = queue.student_id) = FALSE
+      OR NOT EXISTS (SELECT 1 FROM students s WHERE s.id = queue.student_id AND s.is_super_admin = TRUE)
     )
   );
 

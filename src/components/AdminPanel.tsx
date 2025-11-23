@@ -518,7 +518,12 @@ export default function AdminPanel() {
                     </button>
                   )}
 
-                  {(isSuperAdmin ? !student.is_super_admin : (student.id === user?.student_id || (!student.is_admin && !student.is_super_admin))) && (
+                  {/* Кнопка Редактировать: админы могут редактировать всех кроме суперадминов */}
+                  {(
+                    (isSuperAdmin || isAdmin) 
+                      ? !student.is_super_admin  // админы могут редактировать всех кроме суперадминов
+                      : student.id === user?.student_id  // пользователи могут редактировать только себя
+                  ) && (
                     <button
                       onClick={() => openEditModal(student)}
                       className="bg-blue-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-blue-600 w-full flex items-center justify-center gap-1"
