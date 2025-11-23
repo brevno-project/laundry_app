@@ -156,9 +156,9 @@ export default function UserForm() {
                   onChange={(e) => setPaymentType(e.target.value)}
                   className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                 >
-                  <option value="money">💵 Деньги</option>
+                  <option value="money">Деньги</option>
                   <option value="coupon">🎫 Купон</option>
-                  <option value="both">💵+🎫 Купон + Деньги</option>
+                  <option value="both">Купон + Деньги</option>
                 </select>
               </div>
 
@@ -173,7 +173,7 @@ export default function UserForm() {
           ) : (
             <div className="bg-blue-50 border-2 border-blue-300 rounded-md p-4">
               <p className="text-blue-800 font-bold text-center text-lg">
-                ✅ Вы в очереди!
+                Вы в очереди!
               </p>
               <p className="text-blue-600 font-black text-center mt-2 text-3xl">
                 Позиция #{queuePosition}
