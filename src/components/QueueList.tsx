@@ -6,7 +6,7 @@ import { sendTelegramNotification } from '@/lib/telegram';
 import { useState, useEffect } from 'react';
 import Timer from './Timer';
 import QueueTimers from './QueueTimers';
-import { CalendarIcon, BellIcon, KeyIcon, WashingIcon, BellOffIcon, WaitIcon, CheckIcon, DeleteIcon, EditIcon } from '@/components/Icons';
+import { CalendarIcon, BellIcon, KeyIcon, WashingIcon, BellOffIcon, WaitIcon, CheckIcon, DeleteIcon, EditIcon, TicketIcon, MoneyIcon } from '@/components/Icons';
 
 export default function QueueList() {
   const { 
@@ -375,10 +375,14 @@ const handleSaveEdit = async () => {
                       </div>
                       <div className="flex flex-col">
                         <span className="text-xs text-gray-600">Оплата</span>
-                        <span className="text-sm font-bold text-gray-900">
-                          {item.payment_type === 'coupon' ? '🎫 Купон' : 
-                           item.payment_type === 'both' ? '💵+🎫' : 
-                           '💵 Деньги'}
+                        <span className="text-sm font-bold text-gray-900 flex items-center gap-1">
+                          {item.payment_type === 'coupon' ? (
+                            <><TicketIcon className="w-4 h-4 text-purple-600" />Купон</>
+                          ) : item.payment_type === 'both' ? (
+                            <><MoneyIcon className="w-4 h-4 text-green-600" /><TicketIcon className="w-4 h-4 text-purple-600" /></>
+                          ) : (
+                            <><MoneyIcon className="w-4 h-4 text-green-600" />Деньги</>
+                          )}
                         </span>
                       </div>
                       {/* Время */}
