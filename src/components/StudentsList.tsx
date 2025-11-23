@@ -201,8 +201,8 @@ export default function StudentsList() {
 
   return (
     <>
-      <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-white rounded-lg shadow-lg border border-gray-200">
+        <div className="flex items-center justify-between mb-4 px-4 pt-4">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><ListIcon className="w-8 h-8" />Список студентов ({students.length})</h2>
           {isAdmin && (
             <button
@@ -216,7 +216,7 @@ export default function StudentsList() {
         
         {/* Блок A */}
         <div className="mb-6">
-          <h3 className="text-xl font-bold mb-3 text-blue-700 flex items-center gap-2"><RoomIcon className="w-5 h-5" />Блок A ({blockA.length})</h3>
+          <h3 className="text-xl font-bold mb-3 text-blue-700 flex items-center gap-2 px-4"><RoomIcon className="w-5 h-5" />Блок A ({blockA.length})</h3>
           
           {/* Десктоп: обычная таблица */}
           <div className="hidden md:block overflow-x-auto">
@@ -308,8 +308,8 @@ export default function StudentsList() {
         </div>
         
         {/* Блок B */}
-        <div>
-          <h3 className="text-xl font-bold mb-3 text-green-700 flex items-center gap-2"><RoomIcon className="w-5 h-5" />Блок B ({blockB.length})</h3>
+        <div className="pb-4">
+          <h3 className="text-xl font-bold mb-3 text-green-700 flex items-center gap-2 px-4"><RoomIcon className="w-5 h-5" />Блок B ({blockB.length})</h3>
           
           {/* Десктоп: обычная таблица */}
           <div className="hidden md:block overflow-x-auto">
