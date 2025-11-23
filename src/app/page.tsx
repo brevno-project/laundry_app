@@ -362,8 +362,8 @@ export default function Home() {
 
         {/* Настройки */}
         {activeTab === 'settings' && user && (
-          <div className="space-y-4 px-3">
-            {!isAdmin && <AvatarSelector />}
+          <div className="w-full space-y-4 px-3">
+            <AvatarSelector />
             {!isAdmin && <TelegramSetup />}
             
             <div className="bg-white p-4 rounded-lg shadow-sm">

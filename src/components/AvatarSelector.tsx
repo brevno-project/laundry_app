@@ -6,7 +6,7 @@ import Avatar, { AVATAR_OPTIONS, AvatarType } from './Avatar';
 import { supabase as supabaseClient } from '@/lib/supabase';
 
 export default function AvatarSelector() {
-  const { user, updateStudent } = useLaundry();
+  const { user, loadStudents } = useLaundry();
   const [selectedAvatar, setSelectedAvatar] = useState<AvatarType>((user?.avatar_type as AvatarType) || 'default');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -24,8 +24,8 @@ export default function AvatarSelector() {
       
       if (error) throw error;
       
-      // Обновляем локальное состояние
-      window.location.reload();
+      // Обновляем данные через контекст
+      await loadStudents();
       alert('✅ Аватар обновлен!');
     } catch (error) {
       console.error('Error updating avatar:', error);
