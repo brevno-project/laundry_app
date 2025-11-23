@@ -168,9 +168,9 @@ export default function StudentsList() {
           </td>
           <td className="p-3 text-center">
             {student.telegram_chat_id ? (
-              <span className="text-green-600 font-semibold">✅ Подключен</span>
+              <span className="text-green-600 font-semibold flex items-center gap-1"><CheckIcon className="w-4 h-4" />Подключен</span>
             ) : (
-              <span className="text-gray-400">❌ Не подключен</span>
+              <span className="text-gray-400 flex items-center gap-1"><CloseIcon className="w-4 h-4" />Не подключен</span>
             )}
           </td>
 
@@ -181,7 +181,7 @@ export default function StudentsList() {
                   onClick={() => openEditModal(student)}
                   className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
                 >
-                  ✏️ Редактировать
+                  <EditIcon className="w-4 h-4 inline-block mr-1" />Редактировать
                 </button>
               )}
               {isAdmin && !student.is_super_admin && (
@@ -189,7 +189,7 @@ export default function StudentsList() {
                   onClick={() => setDeletingStudent(student)}
                   className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
                 >
-                  🗑️ Удалить
+                  <DeleteIcon className="w-4 h-4 inline-block mr-1" />Удалить
                 </button>
               )}
             </div>
@@ -287,13 +287,13 @@ export default function StudentsList() {
                                 onClick={() => openEditModal(student)}
                                 className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
                               >
-                                ✏️
+                                <EditIcon className="w-3 h-3" />
                               </button>
                               <button
                                 onClick={() => setDeletingStudent(student)}
                                 className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
                               >
-                                🗑️
+                                <DeleteIcon className="w-3 h-3" />
                               </button>
                             </div>
                           </td>
@@ -309,7 +309,7 @@ export default function StudentsList() {
         
         {/* Блок B */}
         <div>
-          <h3 className="text-xl font-bold mb-3 text-green-700">🏢 Блок B ({blockB.length})</h3>
+          <h3 className="text-xl font-bold mb-3 text-green-700 flex items-center gap-2"><RoomIcon className="w-5 h-5" />Блок B ({blockB.length})</h3>
           
           {/* Десктоп: обычная таблица */}
           <div className="hidden md:block overflow-x-auto">
@@ -375,13 +375,13 @@ export default function StudentsList() {
                                 onClick={() => openEditModal(student)}
                                 className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
                               >
-                                ✏️
+                                <EditIcon className="w-3 h-3" />
                               </button>
                               <button
                                 onClick={() => setDeletingStudent(student)}
                                 className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
                               >
-                                🗑️
+                                <DeleteIcon className="w-3 h-3" />
                               </button>
                             </div>
                           </td>
