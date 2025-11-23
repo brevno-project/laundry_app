@@ -8,12 +8,11 @@ import UserForm from '@/components/UserForm';
 import QueueList from '@/components/QueueList';
 import AdminPanel from '@/components/AdminPanel';
 import AdminLogin from '@/components/AdminLogin';
-
-
 import TelegramSetup from '@/components/TelegramSetup';
 import HistoryList from '@/components/HistoryList';
 import StudentsList from '@/components/StudentsList';
 import GlobalAlert from '@/components/GlobalAlert';
+import { HomeIcon, HistoryIcon, PeopleIcon, SettingsIcon } from '@/components/Icons';
 import TelegramBanner from '@/components/TelegramBanner';
 import StudentActions from '@/components/StudentActions';
 
@@ -126,7 +125,7 @@ export default function Home() {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              🏠 Главная
+              <HomeIcon className="w-5 h-5 inline-block mr-2" />Главная
             </button>
               <button
                 onClick={() => setActiveTab('history')}
@@ -136,7 +135,7 @@ export default function Home() {
                     : 'border-transparent text-gray-600 hover:text-gray-900'
                 }`}
               >
-                📜 История
+                <HistoryIcon className="w-5 h-5 inline-block mr-2" />История
               </button>
             {isAdmin && (
               <button
@@ -147,7 +146,7 @@ export default function Home() {
                     : 'border-transparent text-gray-600 hover:text-gray-900'
                 }`}
               >
-                👥 Студенты
+                <PeopleIcon className="w-5 h-5 inline-block mr-2" />Студенты
               </button>
             )}
             <button
@@ -158,7 +157,7 @@ export default function Home() {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              ⚙️ Настройки
+              <SettingsIcon className="w-5 h-5 inline-block mr-2" />Настройки
             </button>
           </div>
         </nav>
@@ -211,13 +210,15 @@ export default function Home() {
                     }
                   `}</style>
                   
-                  <div className="relative p-6 flex items-center justify-center space-x-4">
-                    {/* Иконка стиральной машины */}
-                    <svg className="w-12 h-12 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M18 2.01L6 2c-1.11 0-2 .89-2 2v16c0 1.11.89 2 2 2h12c1.11 0 2-.89 2-2V4c0-1.11-.89-1.99-2-1.99zM18 20H6v-9.02h12V20zm0-11H6V4h12v5zM8 5h1.5v1.5H8V5zm3.5 0H13v1.5h-1.5V5z"/>
-                      <circle cx="12" cy="15" r="3.5"/>
-                    </svg>
-                    <div className="text-2xl font-bold text-white">Свободна</div>
+                  <div className="relative p-6">
+                    <div className="flex items-center justify-center space-x-4 mb-4">
+                      {/* Иконка стиральной машины */}
+                      <svg className="w-12 h-12 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M18 2.01L6 2c-1.11 0-2 .89-2 2v16c0 1.11.89 2 2 2h12c1.11 0 2-.89 2-2V4c0-1.11-.89-1.99-2-1.99zM18 20H6v-9.02h12V20zm0-11H6V4h12v5zM8 5h1.5v1.5H8V5zm3.5 0H13v1.5h-1.5V5z"/>
+                        <circle cx="12" cy="15" r="3.5"/>
+                      </svg>
+                      <div className="text-2xl font-bold text-white">Свободна</div>
+                    </div>
                   </div>
                 </div>
               ) : (
