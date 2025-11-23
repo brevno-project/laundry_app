@@ -83,6 +83,7 @@ export type QueueItem = {
   scheduled_for_date: string; // '2025-11-02'
   queue_date: string; // '2025-11-03'
   queue_position: number; // 1,2,3...
+  avatar_type?: string; // Тип аватара
 };
 
 export enum MachineStatus {

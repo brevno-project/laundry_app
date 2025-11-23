@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import Timer from './Timer';
 import QueueTimers from './QueueTimers';
 import { CalendarIcon, BellIcon, KeyIcon, WashingIcon, BellOffIcon, WaitIcon, CheckIcon, DeleteIcon, EditIcon, TicketIcon, MoneyIcon } from '@/components/Icons';
+import Avatar, { AvatarType } from '@/components/Avatar';
 
 export default function QueueList() {
   const { 
@@ -315,8 +316,13 @@ const handleSaveEdit = async () => {
                               </span>
                             )}
                           </div>
-                          <div className="font-bold text-lg text-gray-900">{item.full_name}</div>
-                          {item.room && <div className="text-xs text-gray-600">Комната {item.room}</div>}
+                          <div className="flex items-center gap-2">
+                            <Avatar type={(item.avatar_type as AvatarType) || 'default'} className="w-10 h-10" />
+                            <div>
+                              <div className="font-bold text-lg text-gray-900">{item.full_name}</div>
+                              {item.room && <div className="text-xs text-gray-600">Комната {item.room}</div>}
+                            </div>
+                          </div>
                         </div>
                       </div>
                       <span className={`px-2 py-1 rounded-full text-xs font-bold ${statusDisplay.badgeColor} whitespace-nowrap`}>

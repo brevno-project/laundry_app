@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import Avatar, { AVATAR_OPTIONS, AvatarType } from './Avatar';
-import { createBrowserClient } from '@/lib/supabase';
+import { supabase as supabaseClient } from '@/lib/supabase';
 
 export default function AvatarSelector() {
   const { user, updateStudent } = useLaundry();
@@ -15,8 +15,9 @@ export default function AvatarSelector() {
     
     setIsSaving(true);
     try {
-      const supabase = createBrowserClient();
-      const { error } = await supabase
+      if (!supabaseClient) throw new Error('Supabase не настроен');
+      
+      const { error } = await supabaseClient
         .from('students')
         .update({ avatar_type: selectedAvatar })
         .eq('id', user.student_id);

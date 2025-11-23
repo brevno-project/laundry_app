@@ -206,7 +206,7 @@ export default function Home() {
       {/* Основной контент */}
       <div className="w-full">
         {activeTab === 'main' && (
-          <div className="space-y-4">
+          <div className="w-full space-y-4">
             <TimeBanner />
             
             {/* Статус машины */}
@@ -348,14 +348,14 @@ export default function Home() {
         
         {/* История */}
         {activeTab === 'history' && (
-          <div className="space-y-4">
+          <div className="w-full space-y-4">
             <HistoryList />
           </div>
         )}
 
         {/* Студенты */}
         {activeTab === 'students' && isAdmin && (
-          <div className="space-y-4">
+          <div className="w-full space-y-4">
             <StudentsList />
           </div>
         )}
