@@ -112,7 +112,7 @@ export default function UserForm() {
               {/* ✅ НОВОЕ ПОЛЕ: Выбор даты */}
               <div className="mb-4">
                 <label htmlFor="selectedDate" className="block text-sm font-bold mb-2 text-gray-700">
-                  📅 Выберите дату стирки
+                  Выберите дату стирки
                 </label>
                 <select
                   id="selectedDate"
@@ -157,7 +157,7 @@ export default function UserForm() {
                   className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                 >
                   <option value="money">Деньги</option>
-                  <option value="coupon">🎫 Купон</option>
+                  <option value="coupon">Купон</option>
                   <option value="both">Купон + Деньги</option>
                 </select>
               </div>
@@ -181,7 +181,7 @@ export default function UserForm() {
               {/* ✅ Показываем дату записи */}
               {existingQueueItem?.scheduled_for_date && (
                 <p className="text-blue-600 text-center mt-2">
-                  📅 Записаны на: {new Date(existingQueueItem.scheduled_for_date).toLocaleDateString('ru-RU', {
+                  Записаны на: {new Date(existingQueueItem.scheduled_for_date).toLocaleDateString('ru-RU', {
                     weekday: 'short',
                     day: 'numeric',
                     month: 'numeric'

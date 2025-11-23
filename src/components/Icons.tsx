@@ -101,3 +101,34 @@ export const UserIcon = ({ className = "w-5 h-5" }: IconProps) => (
     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
   </svg>
 );
+
+export const KeyIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+    <path d="M12.65 10C11.7 7.31 8.9 5.5 5.77 6.12c-2.29.46-4.15 2.29-4.63 4.58C.32 14.57 3.26 18 7 18c2.61 0 4.83-1.67 5.65-4H17v2c0 1.1.9 2 2 2s2-.9 2-2v-2c1.1 0 2-.9 2-2s-.9-2-2-2h-8.35zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+  </svg>
+);
+
+export const BellIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+    <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
+  </svg>
+);
+
+export const BellOffIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+    <path d="M20 18.69L7.84 6.14 5.27 3.49 4 4.76l2.8 2.8v.01c-.52.99-.8 2.16-.8 3.42v5l-2 2v1h13.73l2 2L21 19.72l-1-1.03zM12 22c1.11 0 2-.89 2-2h-4c0 1.11.89 2 2 2zm6-7.32V11c0-3.08-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68c-.15.03-.29.08-.42.12-.1.03-.2.07-.3.11h-.01c-.01 0-.01 0-.02.01-.23.09-.46.2-.68.31 0 0-.01 0-.01.01L18 14.68z"/>
+  </svg>
+);
+
+export const WashingIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+    <path d="M18 2.01L6 2c-1.11 0-2 .89-2 2v16c0 1.11.89 2 2 2h12c1.11 0 2-.89 2-2V4c0-1.11-.89-1.99-2-1.99zM18 20H6v-9.02h12V20zm0-11H6V4h12v5zM8 5h1.5v1.5H8V5zm3.5 0H13v1.5h-1.5V5z"/>
+    <circle cx="12" cy="15" r="2.5"/>
+  </svg>
+);
+
+export const WaitIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"/>
+  </svg>
+);
