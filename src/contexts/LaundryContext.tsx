@@ -969,9 +969,9 @@ const adminAddToQueue = async (
     return;
   }
   
-  // ПРОВЕРКА: обычный админ не может ставить в очередь админов и супер-админов
-  if (!isSuperAdmin && (student.is_admin || student.is_super_admin)) {
-    alert('Только супер-админ может добавлять админов в очередь');
+  // ПРОВЕРКА: обычный админ не может ставить в очередь супер-админов
+  if (!isSuperAdmin && student.is_super_admin) {
+    alert('Только супер-админ может добавлять супер-админов в очередь');
     return;
   }
   
@@ -1567,9 +1567,9 @@ const startWashing = async (queueItemId: string) => {
         throw new Error('Студент не найден');
       }
 
-      // ПРОВЕРКА: обычный админ не может банить админов и супер-админов
-      if (!isSuperAdmin && (targetStudent.is_admin || targetStudent.is_super_admin)) {
-        throw new Error('Только супер-админ может банить админов');
+      // ПРОВЕРКА: обычный админ не может банить супер-админов
+      if (!isSuperAdmin && targetStudent.is_super_admin) {
+        throw new Error('Только супер-админ может банить супер-админов');
       }
       
       // ПРОВЕРКА: нельзя банить супер-админов (даже супер-админу)
@@ -1712,9 +1712,9 @@ const startWashing = async (queueItemId: string) => {
       throw new Error('Студент не найден');
     }
     
-    // ПРОВЕРКА: обычный админ не может редактировать админов и супер-админов
-    if (!isSuperAdmin && (targetStudent.is_admin || targetStudent.is_super_admin)) {
-      throw new Error('Только супер-админ может редактировать админов');
+    // ПРОВЕРКА: обычный админ не может редактировать супер-админов
+    if (!isSuperAdmin && targetStudent.is_super_admin) {
+      throw new Error('Только супер-админ может редактировать супер-админов');
     }
 
     const updateData: any = {};
