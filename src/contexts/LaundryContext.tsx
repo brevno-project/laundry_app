@@ -798,27 +798,43 @@ const joinQueue = async (
 
   console.log('📝 Current user:', { id: user.id, student_id: user.student_id, name: user.full_name });
 
-  // ПРОВЕРКА БАНА
+  // ПРОВЕРКА БАНА С RETRY
   try {
-    const { data: studentData } = await supabase
-      .from('students')
-      .select('is_banned, ban_reason, user_id')
-      .eq('id', user.student_id)
-      .single();
-
-    if (studentData?.is_banned) {
-      const banReason = studentData.ban_reason || 'Не указана';
-      alert(`Вы забанены. Причина: ${banReason}`);
+    let studentData: any = null;
+    let attempts = 0;
+    const maxAttempts = 3;
+    
+    while (attempts < maxAttempts) {
+      const { data } = await supabase
+        .from('students')
+        .select('is_banned, ban_reason, user_id')
+        .eq('id', user.student_id)
+        .single();
+      
+      if (data?.user_id === user.id) {
+        studentData = data;
+        console.log('✅ user_id verified');
+        break;
+      }
+      
+      if (attempts < maxAttempts - 1) {
+        console.warn(`⚠️ Attempt ${attempts + 1}: waiting for sync...`);
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      attempts++;
+    }
+    
+    if (!studentData || studentData.user_id !== user.id) {
+      console.error('❌ user_id mismatch!');
+      alert('Ошибка синхронизации. Попробуйте снова.');
       logoutStudent();
       return;
     }
 
-    if (studentData?.user_id !== user.id) {
-      console.error('❌ user_id mismatch!', { 
-        studentUserId: studentData?.user_id, 
-        currentUserId: user.id 
-      });
-      alert('Ошибка синхронизации данных');
+    if (studentData.is_banned) {
+      const banReason = studentData.ban_reason || 'Не указана';
+      alert(`Вы забанены. Причина: ${banReason}`);
       logoutStudent();
       return;
     }
