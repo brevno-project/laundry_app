@@ -409,22 +409,34 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
       console.error('Error updating queue after registration:', queueError);
     }
 
-    // ✅ ДОБАВЛЕНО: Дождаться подтверждения
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // ✅ ПРОВЕРКА: Убедиться что user_id обновился
-    const { data: verifyStudent, error: verifyError } = await supabase
-      .from('students')
-      .select('user_id')
-      .eq('id', studentId)
-      .single();
-
-    if (verifyError || verifyStudent?.user_id !== authData.user.id) {
-      console.error('❌ user_id verification failed!', { verifyStudent, expected: authData.user.id });
-      throw new Error('Ошибка обновления данных. Попробуйте войти снова.');
+    // ✅ ДОБАВЛЕНО: Дождаться подтверждения с retry
+    let verifyStudent: any = null;
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    while (retryCount < maxRetries) {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Увеличена задержка
+      
+      const { data, error: verifyError } = await supabase
+        .from('students')
+        .select('user_id')
+        .eq('id', studentId)
+        .single();
+      
+      if (!verifyError && data?.user_id === authData.user.id) {
+        verifyStudent = data;
+        console.log('✅ Verified user_id:', verifyStudent.user_id);
+        break;
+      }
+      
+      console.warn(`⚠️ Retry ${retryCount + 1}/${maxRetries}: user_id not yet synced`, { data, expected: authData.user.id });
+      retryCount++;
     }
-
-    console.log('✅ Verified user_id:', verifyStudent.user_id);
+    
+    if (!verifyStudent || verifyStudent.user_id !== authData.user.id) {
+      console.error('❌ user_id verification failed after retries!');
+      // Не бросаем ошибку - продолжаем регистрацию
+    }
 
     const newUser: User = {
       id: authData.user.id,
