@@ -4,6 +4,8 @@ import React from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import { useState } from 'react';
 import { Student } from '@/types';
+import { PeopleIcon, RoomIcon, CheckIcon, CloseIcon, EditIcon, DeleteIcon } from '@/components/Icons';
+import Avatar from '@/components/Avatar';
 
 export default function StudentsList() {
   const { students, isAdmin, user, updateStudent, addStudent, deleteStudent, loadStudents } = useLaundry();

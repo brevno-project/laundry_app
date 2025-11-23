@@ -210,15 +210,13 @@ export default function Home() {
                     }
                   `}</style>
                   
-                  <div className="relative p-6">
-                    <div className="flex items-center justify-center space-x-4 mb-4">
-                      {/* Иконка стиральной машины */}
-                      <svg className="w-12 h-12 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M18 2.01L6 2c-1.11 0-2 .89-2 2v16c0 1.11.89 2 2 2h12c1.11 0 2-.89 2-2V4c0-1.11-.89-1.99-2-1.99zM18 20H6v-9.02h12V20zm0-11H6V4h12v5zM8 5h1.5v1.5H8V5zm3.5 0H13v1.5h-1.5V5z"/>
-                        <circle cx="12" cy="15" r="3.5"/>
-                      </svg>
-                      <div className="text-2xl font-bold text-white">Свободна</div>
-                    </div>
+                  <div className="relative p-6 flex flex-col items-center justify-center">
+                    {/* Иконка стиральной машины */}
+                    <svg className="w-16 h-16 text-white mb-3" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M18 2.01L6 2c-1.11 0-2 .89-2 2v16c0 1.11.89 2 2 2h12c1.11 0 2-.89 2-2V4c0-1.11-.89-1.99-2-1.99zM18 20H6v-9.02h12V20zm0-11H6V4h12v5zM8 5h1.5v1.5H8V5zm3.5 0H13v1.5h-1.5V5z"/>
+                      <circle cx="12" cy="15" r="3.5"/>
+                    </svg>
+                    <div className="text-2xl font-bold text-white">Свободна</div>
                   </div>
                 </div>
               ) : (
