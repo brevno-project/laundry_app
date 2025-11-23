@@ -31,7 +31,7 @@ export default function StudentsList() {
   if (!students || students.length === 0) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">👥 Список студентов</h2>
+        <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2"><PeopleIcon className="w-6 h-6" />Список студентов</h2>
         <p className="text-gray-700 text-lg">Студентов нет.</p>
       </div>
     );
@@ -203,20 +203,20 @@ export default function StudentsList() {
     <>
       <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-gray-800">👥 Список студентов ({students.length})</h2>
+          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><PeopleIcon className="w-6 h-6" />Список студентов ({students.length})</h2>
           {isAdmin && (
             <button
               onClick={() => setShowAddModal(true)}
               className="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600"
             >
-              ➕ Добавить студента
+              + Добавить студента
             </button>
           )}
         </div>
         
         {/* Блок A */}
         <div className="mb-6">
-          <h3 className="text-xl font-bold mb-3 text-blue-700">🏢 Блок A ({blockA.length})</h3>
+          <h3 className="text-xl font-bold mb-3 text-blue-700 flex items-center gap-2"><RoomIcon className="w-5 h-5" />Блок A ({blockA.length})</h3>
           
           {/* Десктоп: обычная таблица */}
           <div className="hidden md:block overflow-x-auto">
