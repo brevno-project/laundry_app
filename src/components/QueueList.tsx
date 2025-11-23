@@ -442,8 +442,8 @@ const handleSaveEdit = async () => {
                         {/* Кнопки админа */}
                         {isAdmin && (
                           <div className="space-y-2">
-                            {/* БЛОК: Уведомления */}
-                            <div className="grid grid-cols-3 gap-2">
+                            {/* БЛОК: Основные действия */}
+                            <div className="flex flex-col gap-2">
                             {/* КНОПКА: Позвать */}
                             <button
                               className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm flex items-center justify-center gap-1"
