@@ -131,7 +131,6 @@ export default function Home() {
                 onClick={() => {
                   console.log('⏭️ Skipping telegram setup...');
                   setShowTelegramModal(false);
-                  setIsNewUser(false);
                   localStorage.setItem('needsTelegramSetup', 'false');
                 }}
                 className="w-full bg-gray-400 text-white font-bold py-3 px-6 rounded-xl hover:bg-gray-500 transition-all"

@@ -5,7 +5,7 @@ import { useLaundry } from '@/contexts/LaundryContext';
 import { CheckIcon, CloseIcon, TelegramIcon } from '@/components/Icons';
 
 export default function TelegramSetup() {
-  const { user, linkTelegram, setIsNewUser } = useLaundry();
+  const { user, linkTelegram } = useLaundry();
   const [chatId, setChatId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -27,7 +27,6 @@ export default function TelegramSetup() {
       setSuccess(true);
       setShowGuide(false);
       setChatId('');
-      setIsNewUser(false);
       localStorage.setItem('needsTelegramSetup', 'false');
     } else {
       setError(result.error || 'Ошибка подключения');
