@@ -119,11 +119,13 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     const storedUser = localStorage.getItem('laundryUser');
     const storedIsAdmin = localStorage.getItem('laundryIsAdmin') === 'true';
     const storedIsSuperAdmin = localStorage.getItem('laundryIsSuperAdmin') === 'true';
+    const storedIsNewUser = localStorage.getItem('laundryIsNewUser') === 'true';
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
     setIsAdmin(storedIsAdmin);
     setIsSuperAdmin(storedIsSuperAdmin);
+    setIsNewUser(storedIsNewUser);
 
     // Initial data fetch
     loadStudents(); // Load students list
@@ -208,6 +210,11 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('laundryUser', JSON.stringify(user));
     }
   }, [user]);
+  
+  // Save isNewUser status to localStorage
+  useEffect(() => {
+    localStorage.setItem('laundryIsNewUser', isNewUser.toString());
+  }, [isNewUser]);
   
   // Save admin status to localStorage
   useEffect(() => {
@@ -353,7 +360,10 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
       localStorage.setItem('laundryIsAdmin', isAdminUser.toString());
       localStorage.setItem('laundryIsSuperAdmin', isSuperAdminUser.toString());
       
+      // ✅ НОВЫЙ ПОЛЬЗОВАТЕЛЬ: устанавливаем флаг для специальной обработки
+      setIsNewUser(true);
       setUser(newUser);
+
       localStorage.setItem('laundryUser', JSON.stringify(newUser));
       await loadStudents();
       console.log('✅ Student registered successfully:', newUser.full_name);
@@ -456,6 +466,7 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
     localStorage.setItem('laundryIsAdmin', isAdminUser.toString());
     localStorage.setItem('laundryIsSuperAdmin', isSuperAdminUser.toString());
     
+    setIsNewUser(true);
     setUser(newUser);
     localStorage.setItem('laundryUser', JSON.stringify(newUser));
     await loadStudents();
@@ -532,6 +543,9 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
     localStorage.setItem('laundryIsAdmin', isAdminUser.toString());
     localStorage.setItem('laundryIsSuperAdmin', isSuperAdminUser.toString());
 
+    // ✅ СУЩЕСТВУЮЩИЙ ПОЛЬЗОВАТЕЛЬ: сбрасываем флаг нового пользователя
+    setIsNewUser(false);
+
     setUser(newUser);
     localStorage.setItem('laundryUser', JSON.stringify(newUser));
 
@@ -551,9 +565,11 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
     setUser(null);
     setIsAdmin(false);
     setIsSuperAdmin(false);
+    setIsNewUser(false); // ✅ СБРАСЫВАЕМ ФЛАГ ПРИ ВЫХОДЕ
     localStorage.removeItem('laundryUser');
     localStorage.removeItem('laundryIsAdmin');
     localStorage.removeItem('laundryIsSuperAdmin');
+    localStorage.removeItem('laundryIsNewUser'); // ✅ УДАЛЯЕМ ИЗ localStorage
     console.log('👋 Student logged out');
   };
 
@@ -2486,6 +2502,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
 
       const newUser: User = result.user;
 
+      setIsNewUser(false); // Админы - существующие пользователи
       setUser(newUser);
       setIsAdmin(newUser.is_admin || false);
       setIsSuperAdmin(newUser.is_super_admin || false);
