@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import { Student } from '@/types';
-import { DoorIcon, CheckIcon, CloseIcon, UserIcon } from '@/components/Icons';
+import { DoorIcon, CheckIcon, CloseIcon } from '@/components/Icons';
 import Avatar, { AvatarType } from '@/components/Avatar';
 
 export default function StudentAuth() {

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import { Student } from '@/types';
-import { CalendarIcon, DoorIcon, DeleteIcon, CheckIcon, CloseIcon, EditIcon, BellIcon, UserIcon } from '@/components/Icons';
+import { CalendarIcon, DoorIcon, DeleteIcon, CheckIcon, CloseIcon, EditIcon } from '@/components/Icons';
 
 export default function AdminPanel() {
   const { 

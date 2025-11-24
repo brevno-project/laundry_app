@@ -59,7 +59,7 @@ export default function StudentActions() {
     } else {
       setFinishNotifications({ count: 0, lastSent: null });
     }
-  }, [myQueueItem?.id]);
+  }, [user,myQueueItem?.id]);
   
   useEffect(() => {
     if (myQueueItem?.status === QueueStatus.WASHING && myQueueItem.washing_started_at) {

@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/lib/supabase';
 import { User, Student, QueueItem, MachineStatus, QueueStatus, MachineState, HistoryItem } from '@/types';
 import { sendTelegramNotification } from '@/lib/telegram';
-import { parseISO, format, addDays } from 'date-fns';
+import { parseISO, format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { formatInTimeZone } from 'date-fns-tz';
 import {
@@ -15,7 +15,6 @@ import {
   save_local_queue,
   save_local_machine_state,
   save_local_history,
-  add_to_local_queue,
   remove_from_local_queue,
   update_local_queue_item,
   start_local_washing,
@@ -33,9 +32,6 @@ const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // Check if Supabase is configured
 const isSupabaseConfigured = !!SUPABASE_URL && !!SUPABASE_KEY && !!supabase;
-
-// Generate a user ID for local storage
-const generateUserId = () => uuidv4();
 
 // Format date to local timezone
 export const formatDate = (dateString: string) => {
@@ -202,7 +198,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         // Continue without real-time updates
       }
     }
-  }, []);
+  }, [isSupabaseConfigured, supabase]);
 
   // Save user to localStorage when changed
   useEffect(() => {
@@ -362,6 +358,7 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
       
       // ✅ НОВЫЙ ПОЛЬЗОВАТЕЛЬ: устанавливаем флаг для специальной обработки
       setIsNewUser(true);
+      localStorage.setItem('laundryIsNewUser', 'true');
       setUser(newUser);
 
       localStorage.setItem('laundryUser', JSON.stringify(newUser));
@@ -467,6 +464,7 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
     localStorage.setItem('laundryIsSuperAdmin', isSuperAdminUser.toString());
     
     setIsNewUser(true);
+    localStorage.setItem('laundryIsNewUser', 'true');
     setUser(newUser);
     localStorage.setItem('laundryUser', JSON.stringify(newUser));
     await loadStudents();
@@ -977,12 +975,13 @@ const joinQueue = async (
       throw error;
     }
 
-    console.log('✅ Successfully added to queue');
+    console.log(' Successfully added to queue');
 
-    // ✅ СБРОС ФЛАГА: После первого успешного действия новый пользователь становится обычным
+    // СБРОС ФЛАГА: После первого успешного действия новый пользователь становится обычным
     if (isNewUser) {
       setIsNewUser(false);
-      console.log('👶 New user flag reset - now a regular user');
+      localStorage.setItem('laundryIsNewUser', 'false');
+      console.log(' New user flag reset - now a regular user');
     }
 
     await sendTelegramNotification({
@@ -1234,7 +1233,7 @@ const migrateOldQueueItems = async () => {
       
       if (alert) {
         // Trigger alert and Telegram notification
-        sendTelegramNotification({ type: 'admin_return_key', message: '' });
+        sendTelegramNotification({ type: 'admin_return_key' });
       }
     } catch (error) {
       console.error(' Error updating return key alert:', error);
@@ -2274,8 +2273,9 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
       }
     }
   } catch (err: any) {
-    console.error('');
-    alert('');
+    console.error('Error transferring items:', err);
+    alert('Ошибка переноса');
+    return;
   }
 };
 
@@ -2344,7 +2344,6 @@ const transferSelectedToDate = async (selectedIds: string[], targetDateStr: stri
 
 // Вспомогательная функция для красивого отображения даты
 const formatDateForAlert = (dateStr: string) => {
-  const date = new Date(dateStr + 'T00:00:00');
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   

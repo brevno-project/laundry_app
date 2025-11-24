@@ -8,7 +8,7 @@ import { ListIcon, RoomIcon, DoorIcon, TelegramIcon, CheckIcon, CloseIcon, EditI
 import Avatar, { AvatarType } from '@/components/Avatar';
 
 export default function StudentsList() {
-  const { students, isAdmin, user, updateStudent, addStudent, deleteStudent, loadStudents } = useLaundry();
+  const { students, isAdmin, user, updateStudent, addStudent, deleteStudent } = useLaundry();
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [editRoom, setEditRoom] = useState('');
   const [editFirstName, setEditFirstName] = useState('');

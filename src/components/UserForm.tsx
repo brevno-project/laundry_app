@@ -5,7 +5,7 @@ import { useLaundry } from '@/contexts/LaundryContext';
 import { CalendarIcon } from '@/components/Icons';
 
 export default function UserForm() {
-  const { user, joinQueue, logoutStudent, getUserQueueItem, queue, updateQueueItem,students } = useLaundry();
+  const { user, joinQueue, logoutStudent, getUserQueueItem, queue } = useLaundry();
   const [washCount, setWashCount] = useState<number>(1);
   const [paymentType, setPaymentType] = useState<string>('money');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,12 +70,6 @@ export default function UserForm() {
       }, 2000);
     }
   };
-
-  const handleLogout = () => {
-    logoutStudent();
-  };
-
-
 
   return (
     <div className="space-y-4">

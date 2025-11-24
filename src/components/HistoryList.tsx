@@ -3,7 +3,7 @@
 import { useLaundry } from '@/contexts/LaundryContext';
 import { formatDate } from '@/contexts/LaundryContext';
 import Timer from './Timer';
-import { HistoryIcon, KeyIcon, BellIcon, WashingIcon } from './Icons';
+import { HistoryIcon } from './Icons';
 
 export default function HistoryList() {
   const { history } = useLaundry();
