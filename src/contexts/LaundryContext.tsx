@@ -770,6 +770,8 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
 
   // ФУНКЦИЯ 1: joinQueue ( 
 // ========================================
+// ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ
+// ========================================
 
 const joinQueue = async (
   name: string,
@@ -798,50 +800,74 @@ const joinQueue = async (
 
   console.log('📝 Current user:', { id: user.id, student_id: user.student_id, name: user.full_name });
 
-  // ПРОВЕРКА БАНА С RETRY
-  try {
-    let studentData: any = null;
-    let attempts = 0;
-    const maxAttempts = 3;
-    
-    while (attempts < maxAttempts) {
-      const { data } = await supabase
+  // ✅ ИСПРАВЛЕНИЕ: Разделить логику для новых и существующих пользователей
+  if (!isNewUser) {
+    // 🔒 СТРОГАЯ ПРОВЕРКА для существующих пользователей
+    try {
+      let studentData: any = null;
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (attempts < maxAttempts) {
+        const { data } = await supabase
+          .from('students')
+          .select('is_banned, ban_reason, user_id')
+          .eq('id', user.student_id)
+          .single();
+        
+        if (data?.user_id === user.id) {
+          studentData = data;
+          console.log('✅ user_id verified');
+          break;
+        }
+        
+        if (attempts < maxAttempts - 1) {
+          console.warn(`⚠️ Attempt ${attempts + 1}: waiting for sync...`);
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        attempts++;
+      }
+      
+      if (!studentData || studentData.user_id !== user.id) {
+        console.error('❌ user_id mismatch!');
+        alert('Ошибка синхронизации. Попробуйте снова.');
+        logoutStudent();
+        return;
+      }
+
+      if (studentData.is_banned) {
+        const banReason = studentData.ban_reason || 'Не указана';
+        alert(`Вы забанены. Причина: ${banReason}`);
+        logoutStudent();
+        return;
+      }
+    } catch (err) {
+      console.error('Error checking ban status:', err);
+      alert('Ошибка проверки статуса');
+      return;
+    }
+  } else {
+    // 🆕 ПРОСТАЯ ПРОВЕРКА для новых пользователей (только бан)
+    try {
+      const { data: studentData } = await supabase
         .from('students')
-        .select('is_banned, ban_reason, user_id')
+        .select('is_banned, ban_reason')
         .eq('id', user.student_id)
         .single();
       
-      if (data?.user_id === user.id) {
-        studentData = data;
-        console.log('✅ user_id verified');
-        break;
+      if (studentData?.is_banned) {
+        const banReason = studentData.ban_reason || 'Не указана';
+        alert(`Вы забанены. Причина: ${banReason}`);
+        logoutStudent();
+        return;
       }
       
-      if (attempts < maxAttempts - 1) {
-        console.warn(`⚠️ Attempt ${attempts + 1}: waiting for sync...`);
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-      
-      attempts++;
+      console.log('✅ New user ban check passed');
+    } catch (err) {
+      console.error('Error checking ban status for new user:', err);
+      // Для новых пользователей продолжаем, даже если проверка не удалась
     }
-    
-    if (!studentData || studentData.user_id !== user.id) {
-      console.error('❌ user_id mismatch!');
-      alert('Ошибка синхронизации. Попробуйте снова.');
-      logoutStudent();
-      return;
-    }
-
-    if (studentData.is_banned) {
-      const banReason = studentData.ban_reason || 'Не указана';
-      alert(`Вы забанены. Причина: ${banReason}`);
-      logoutStudent();
-      return;
-    }
-  } catch (err) {
-    console.error('Error checking ban status:', err);
-    alert('Ошибка проверки статуса');
-    return;
   }
 
   if (isJoining) {
@@ -936,6 +962,12 @@ const joinQueue = async (
     }
 
     console.log('✅ Successfully added to queue');
+
+    // ✅ СБРОС ФЛАГА: После первого успешного действия новый пользователь становится обычным
+    if (isNewUser) {
+      setIsNewUser(false);
+      console.log('👶 New user flag reset - now a regular user');
+    }
 
     await sendTelegramNotification({
       type: 'joined',
@@ -1046,7 +1078,7 @@ const adminAddToQueue = async (
       .select('id')
       .eq('student_id', student.id)
       .eq('queue_date', targetDate)
-      .in('status', ['WAITING', 'READY', 'KEY_ISSUED', 'WASHING']);
+      .in('status', ['waiting', 'ready', 'key_issued', 'washing']);
 
     if (existingStudent && existingStudent.length > 0) {
       alert(`${student.full_name} уже в очереди на эту дату`);
@@ -1365,7 +1397,7 @@ const startWashing = async (queueItemId: string) => {
         .from('queue')
         .update({ status: QueueStatus.WAITING })
         .eq('id', queueItemId);
-      
+
       if (updateError) throw updateError;
       
       // Reset machine state
@@ -1825,7 +1857,7 @@ const deleteStudent = async (studentId: string) => {
 
     if (queueError) {
       console.error('❌ Queue delete error:', queueError);
-      // Не бросаем ошибку, продолжаем удаление
+      // Не бросаем ошибку - продолжаем удаление
     }
 
     // 2. Удалить из истории (если есть)
