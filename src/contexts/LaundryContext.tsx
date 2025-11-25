@@ -33,6 +33,13 @@ const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 // Check if Supabase is configured
 const isSupabaseConfigured = !!SUPABASE_URL && !!SUPABASE_KEY && !!supabase;
 
+// ✅ ДОБАВИТЬ ЛОГИРОВАНИЕ ДЛЯ ДИАГНОСТИКИ ПРОБЛЕМ
+console.log('🔧 Supabase Configuration Check:');
+console.log('  - NEXT_PUBLIC_SUPABASE_URL exists:', !!SUPABASE_URL);
+console.log('  - NEXT_PUBLIC_SUPABASE_ANON_KEY exists:', !!SUPABASE_KEY);
+console.log('  - Supabase client created:', !!supabase);
+console.log('  - isSupabaseConfigured:', isSupabaseConfigured);
+
 // Format date to local timezone
 export const formatDate = (dateString: string) => {
   return formatInTimeZone(parseISO(dateString), TIMEZONE, 'HH:mm, dd MMMM yyyy', { locale: ru });
@@ -123,11 +130,19 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     setIsSuperAdmin(storedIsSuperAdmin);
     setIsNewUser(storedIsNewUser);
 
-    // Initial data fetch
-    loadStudents(); // Load students list
-    fetchQueue();
-    fetchMachineState();
-    fetchHistory();
+    // Initial data fetch - only load from Supabase if configured, otherwise use localStorage fallback
+    if (isSupabaseConfigured) {
+      loadStudents(); // Load students list
+      fetchQueue();
+      fetchMachineState();
+      fetchHistory();
+    } else {
+      console.log('⚠️ Supabase not configured - loading from localStorage only');
+      setQueue(get_local_queue());
+      setMachineState(get_local_machine_state());
+      setHistory(get_local_history());
+      loadStudents(); // This will handle local fallback
+    }
     
     setIsLoading(false);
     
