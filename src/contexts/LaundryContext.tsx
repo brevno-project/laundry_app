@@ -103,9 +103,28 @@ type LaundryContextType = {
 const LaundryContext = createContext<LaundryContextType | undefined>(undefined);
 
 export function LaundryProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(false);
+  // Initialize states with localStorage fallback (fixes SSR hydration issues)
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('laundryUser');
+      return stored ? JSON.parse(stored) : null;
+    }
+    return null;
+  });
+  
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('laundryIsAdmin') === 'true';
+    }
+    return false;
+  });
+  
+  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('laundryIsSuperAdmin') === 'true';
+    }
+    return false;
+  });
   const [students, setStudents] = useState<Student[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [machineState, setMachineState] = useState<MachineState>({
@@ -113,23 +132,16 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   });
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isNewUser, setIsNewUser] = useState(false);
+  const [isNewUser, setIsNewUser] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('laundryIsNewUser') === 'true';
+    }
+    return false;
+  });
   const [isJoining, setIsJoining] = useState(false);
 
-  // Initialize user from localStorage
+  // Load data and setup subscriptions on mount
   useEffect(() => {
-    
-    const storedUser = localStorage.getItem('laundryUser');
-    const storedIsAdmin = localStorage.getItem('laundryIsAdmin') === 'true';
-    const storedIsSuperAdmin = localStorage.getItem('laundryIsSuperAdmin') === 'true';
-    const storedIsNewUser = localStorage.getItem('laundryIsNewUser') === 'true';
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsAdmin(storedIsAdmin);
-    setIsSuperAdmin(storedIsSuperAdmin);
-    setIsNewUser(storedIsNewUser);
-
     // Initial data fetch - only load from Supabase if configured, otherwise use localStorage fallback
     if (isSupabaseConfigured) {
       loadStudents(); // Load students list
