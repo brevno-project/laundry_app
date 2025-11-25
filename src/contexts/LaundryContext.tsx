@@ -145,11 +145,11 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         const queueSubscription = supabase
           .channel('queue-changes')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'queue' }, payload => {
-            console.log('🔄 QUEUE CHANGE DETECTED:', payload);
+            console.log(' QUEUE CHANGE DETECTED:', payload);
             fetchQueue();
           })
           .subscribe((status) => {
-            console.log('📡 Queue subscription status:', status);
+            console.log(' Queue subscription status:', status);
           });
         
         // Subscribe to machine state changes
@@ -209,7 +209,11 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   
   // Save isNewUser status to localStorage
   useEffect(() => {
-    localStorage.setItem('laundryIsNewUser', isNewUser.toString());
+    if (isNewUser) {
+      localStorage.setItem('laundryIsNewUser', 'true');
+    } else {
+      localStorage.removeItem('laundryIsNewUser');
+    }
   }, [isNewUser]);
   
   // Save admin status to localStorage
@@ -264,7 +268,7 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
     const shortId = studentId.slice(0, 8);
     const email = `student-${shortId}@example.com`;
     
-    console.log('📝 Registering with email:', email);
+    console.log(' Registering with email:', email);
     
     // Попытка регистрации
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -281,7 +285,7 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
 
     // Если пользователь уже существует - залогиниться
     if (authError && (authError.message.includes('already registered') || authError.message.includes('User already registered'))) {
-      console.log('⚠️ User already exists, trying to login...');
+      console.log(' User already exists, trying to login...');
       
       const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
         email,
@@ -296,15 +300,15 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
         throw new Error('Не удалось войти');
       }
 
-      // ✅ Определить authUser для обеих веток
+      // Определить authUser для обеих веток
       const authUser = authData?.user || loginData?.user;
       if (!authUser) {
         throw new Error('Не удалось создать/войти в аккаунт');
       }
       
-      // ✅ КРИТИЧНО: Обновить user_id В ТРАНЗАКЦИИ
+      // КРИТИЧНО: Обновить user_id В ТРАНЗАКЦИИ
       
-      // ✅ Обновить запись студента
+      // Обновить запись студента
       const { error: updateError } = await supabase
         .from('students')
         .update({
@@ -315,12 +319,12 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
         .eq('id', studentId);
 
       if (updateError) {
-        console.error('❌ Update error:', updateError);
+        console.error(' Update error:', updateError);
         throw updateError;
       }
 
-      console.log('✅ Student registered with user_id:', authUser.id);
-      // ✅ ОБНОВИТЬ ЗАПИСИ В ОЧЕРЕДИ
+      console.log(' Student registered with user_id:', authUser.id);
+      // ОБНОВИТЬ ЗАПИСИ В ОЧЕРЕДИ
       try {
         const { error: queueUpdateError } = await supabase
           .from('queue')
@@ -331,7 +335,7 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
         if (queueUpdateError) {
           console.error('Error updating queue user_ids:', queueUpdateError);
         } else {
-          console.log('✅ Updated queue records with new user_id');
+          console.log(' Updated queue records with new user_id');
           await fetchQueue();
         }
       } catch (queueError) {
@@ -356,7 +360,7 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
       localStorage.setItem('laundryIsAdmin', isAdminUser.toString());
       localStorage.setItem('laundryIsSuperAdmin', isSuperAdminUser.toString());
       
-      // ✅ НОВЫЙ ПОЛЬЗОВАТЕЛЬ: устанавливаем флаг для специальной обработки
+      // НОВЫЙ ПОЛЬЗОВАТЕЛЬ: устанавливаем флаг для специальной обработки
       setIsNewUser(true);
       localStorage.setItem('laundryIsNewUser', 'true');
       setUser(newUser);
@@ -980,8 +984,8 @@ const joinQueue = async (
     // СБРОС ФЛАГА: После первого успешного действия новый пользователь становится обычным
     if (isNewUser) {
       setIsNewUser(false);
-      localStorage.setItem('laundryIsNewUser', 'false');
-      console.log(' New user flag reset - now a regular user');
+      localStorage.removeItem('laundryIsNewUser');
+      console.log('👶 New user flag reset - now a regular user');
     }
 
     await sendTelegramNotification({
