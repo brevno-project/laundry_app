@@ -144,6 +144,15 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       loadStudents(); // This will handle local fallback
     }
     
+    console.log('✅ Initial data loading completed');
+    console.log('📊 Loaded state:', {
+      studentsCount: students.length,
+      queueLength: queue.length,
+      machineState: machineState.status,
+      historyLength: history.length,
+      isLoading: false
+    });
+    
     setIsLoading(false);
     
     // Only set up Supabase subscriptions if properly configured

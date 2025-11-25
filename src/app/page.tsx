@@ -20,6 +20,15 @@ import AvatarSelector from '@/components/AvatarSelector';
 export default function Home() {
   const { user, isLoading, logoutStudent, isAdmin, machineState, queue, isNewUser, setIsNewUser, students } = useLaundry();
   
+  console.log('🏠 Home component render:', {
+    isLoading,
+    user: !!user,
+    userName: user?.full_name,
+    isAdmin,
+    queueLength: queue?.length,
+    studentsCount: students?.length
+  });
+  
   // ✅ Восстанавливаем activeTab из localStorage
   const [activeTab, setActiveTab] = React.useState(() => {
     if (typeof window !== 'undefined') {
