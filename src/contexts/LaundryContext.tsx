@@ -209,11 +209,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   
   // Save isNewUser status to localStorage
   useEffect(() => {
-    if (isNewUser) {
-      localStorage.setItem('laundryIsNewUser', 'true');
-    } else {
-      localStorage.removeItem('laundryIsNewUser');
-    }
+    localStorage.setItem('laundryIsNewUser', isNewUser.toString());
   }, [isNewUser]);
   
   // Save admin status to localStorage
@@ -362,7 +358,7 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
       
       // НОВЫЙ ПОЛЬЗОВАТЕЛЬ: устанавливаем флаг для специальной обработки
       setIsNewUser(true);
-      localStorage.setItem('laundryIsNewUser', 'true');
+      // localStorage будет обновлен в useEffect
       setUser(newUser);
 
       localStorage.setItem('laundryUser', JSON.stringify(newUser));
@@ -468,7 +464,7 @@ const registerStudent = async (studentId: string, password: string): Promise<Use
     localStorage.setItem('laundryIsSuperAdmin', isSuperAdminUser.toString());
     
     setIsNewUser(true);
-    localStorage.setItem('laundryIsNewUser', 'true');
+    // localStorage будет обновлен в useEffect
     setUser(newUser);
     localStorage.setItem('laundryUser', JSON.stringify(newUser));
     await loadStudents();
@@ -981,10 +977,10 @@ const joinQueue = async (
 
     console.log(' Successfully added to queue');
 
-    // СБРОС ФЛАГА: После первого успешного действия новый пользователь становится обычным
+    // ✅ СБРОС ФЛАГА: После первого успешного действия новый пользователь становится обычным
     if (isNewUser) {
       setIsNewUser(false);
-      localStorage.removeItem('laundryIsNewUser');
+      // localStorage будет обновлен в useEffect
       console.log('👶 New user flag reset - now a regular user');
     }
 
