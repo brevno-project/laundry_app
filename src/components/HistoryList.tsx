@@ -8,6 +8,15 @@ import { HistoryIcon } from './Icons';
 export default function HistoryList() {
   const { history } = useLaundry();
 
+  // Функция для определения цвета таймера в зависимости от времени
+  const getTimerColor = (startTime: string, endTime: string | null | undefined, redZoneMinutes: number): 'yellow' | 'blue' | 'green' | 'orange' => {
+    if (!endTime) return 'green';
+    const start = new Date(startTime).getTime();
+    const end = new Date(endTime).getTime();
+    const elapsedMinutes = (end - start) / 60000;
+    return elapsedMinutes > redZoneMinutes ? 'orange' : 'green';
+  };
+
   if (history.length === 0) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
@@ -35,7 +44,7 @@ export default function HistoryList() {
                   startTime={item.ready_at} 
                   endTime={item.key_issued_at}
                   label="За ключом" 
-                  color="yellow" 
+                  color={getTimerColor(item.ready_at, item.key_issued_at, 15)}
                 />
               )}
               {item.key_issued_at && (
@@ -43,7 +52,7 @@ export default function HistoryList() {
                   startTime={item.key_issued_at} 
                   endTime={item.washing_started_at}
                   label="С ключом" 
-                  color="blue" 
+                  color={getTimerColor(item.key_issued_at, item.washing_started_at, 5)}
                 />
               )}
               {item.washing_started_at && (
@@ -51,7 +60,7 @@ export default function HistoryList() {
                   startTime={item.washing_started_at} 
                   endTime={item.return_requested_at || item.finished_at}
                   label="Стирка" 
-                  color="green" 
+                  color={getTimerColor(item.washing_started_at, item.return_requested_at || item.finished_at, 120)}
                 />
               )}
               {item.return_requested_at && (
@@ -59,7 +68,7 @@ export default function HistoryList() {
                   startTime={item.return_requested_at} 
                   endTime={item.finished_at}
                   label="Возврат ключа" 
-                  color="orange" 
+                  color={getTimerColor(item.return_requested_at, item.finished_at, 5)}
                 />
               )}
             </div>
