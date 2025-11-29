@@ -34,14 +34,24 @@ export default function HistoryList() {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-      <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2"><HistoryIcon className="w-6 h-6" />История</h2>
-      <div className="space-y-3">
+      <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+        <HistoryIcon className="w-7 h-7" />
+        История
+      </h2>
+      <div className="space-y-4">
         {history.map((item) => (
           <div 
             key={item.id} 
-            className="p-4 bg-gradient-to-r from-gray-100 to-gray-50 rounded-md border-l-4 border-green-600 shadow-sm"
+            className="p-5 bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl border-l-4 border-green-500 shadow-md hover:shadow-lg transition-shadow"
           >
-            <p className="font-bold text-gray-900 text-base">{item.full_name} {item.room && `(Комната ${item.room})`}</p>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-gray-900 text-lg">{item.full_name}</h3>
+              {item.room && (
+                <span className="text-sm font-medium text-gray-600 bg-gray-200 px-3 py-1 rounded-full">
+                  Комната {item.room}
+                </span>
+              )}
+            </div>
             
             {/* ✅ Таймеры истории */}
             <div className="flex flex-wrap gap-2 mt-3 mb-2">
@@ -79,9 +89,15 @@ export default function HistoryList() {
               )}
             </div>
             
-            <div className="text-sm text-gray-700 mt-2 space-y-1">
-              <p><span className="font-semibold">Начато:</span> {formatDate(item.started_at)}</p>
-              <p><span className="font-semibold">Завершено:</span> {formatDate(item.finished_at)}</p>
+            <div className="grid grid-cols-2 gap-3 mt-3 text-sm">
+              <div className="bg-blue-50 p-2 rounded-lg border border-blue-200">
+                <span className="font-semibold text-blue-900 block mb-1">Начато:</span>
+                <span className="text-gray-700">{formatDate(item.started_at)}</span>
+              </div>
+              <div className="bg-green-50 p-2 rounded-lg border border-green-200">
+                <span className="font-semibold text-green-900 block mb-1">Завершено:</span>
+                <span className="text-gray-700">{formatDate(item.finished_at)}</span>
+              </div>
             </div>
           </div>
         ))}
