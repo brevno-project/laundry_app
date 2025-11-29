@@ -172,7 +172,8 @@ export default function Home() {
               >
                 <HistoryIcon className="w-5 h-5 inline-block mr-2" />История
               </button>
-            {isAdmin && (
+            {/* Вкладка Студенты доступна админам и пользователям с флагом can_view_students */}
+            {(isAdmin || (user && students.find(s => s.id === user.student_id)?.can_view_students)) && (
               <button
                 onClick={() => handleTabChange('students')}
                 className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
@@ -357,8 +358,8 @@ export default function Home() {
           </div>
         )}
 
-        {/* Студенты */}
-        {activeTab === 'students' && isAdmin && (
+        {/* Студенты - доступно админам и пользователям с can_view_students */}
+        {activeTab === 'students' && (isAdmin || (user && students.find(s => s.id === user.student_id)?.can_view_students)) && (
           <div className="w-full space-y-4">
             <StudentsList />
           </div>

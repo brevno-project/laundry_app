@@ -4,7 +4,7 @@ import React from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import { useState } from 'react';
 import { Student } from '@/types';
-import { ListIcon, RoomIcon, DoorIcon, TelegramIcon, CheckIcon, CloseIcon, EditIcon, DeleteIcon } from '@/components/Icons';
+import { ListIcon, RoomIcon, DoorIcon, TelegramIcon, CheckIcon, CloseIcon, EditIcon, DeleteIcon, PeopleIcon } from '@/components/Icons';
 import Avatar, { AvatarType } from '@/components/Avatar';
 
 export default function StudentsList() {
@@ -482,8 +482,8 @@ export default function StudentsList() {
                     onChange={(e) => setEditCanViewStudents(e.target.checked)}
                     className="w-5 h-5 cursor-pointer"
                   />
-                  <label htmlFor="canViewStudents" className="text-sm font-semibold text-gray-900 cursor-pointer">
-                    👁️ Может видеть список студентов
+                  <label htmlFor="canViewStudents" className="text-sm font-semibold text-gray-900 cursor-pointer flex items-center gap-1">
+                    <PeopleIcon className="w-4 h-4" />Может видеть список студентов
                   </label>
                 </div>
               )}
