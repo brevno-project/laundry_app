@@ -85,7 +85,7 @@ export default function AvatarSelector() {
             key={option.value}
             onClick={() => setSelectedAvatar(option.value)}
             className={`p-2 rounded-lg transition-all ${
-              currentAvatar === option.value
+              selectedAvatar === option.value
                 ? 'bg-blue-100 border-2 border-blue-500 scale-110'
                 : 'bg-gray-50 border-2 border-transparent hover:border-gray-300 hover:scale-105'
             }`}

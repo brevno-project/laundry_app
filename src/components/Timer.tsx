@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { PauseIcon, TimerIcon } from '@/components/Icons';
 
 interface TimerProps {
   startTime: string; // ISO timestamp
@@ -48,16 +49,19 @@ export default function Timer({ startTime, endTime, label, color = 'blue' }: Tim
   }, [startTime, endTime]);
 
   const colorClasses = {
-    yellow: 'bg-yellow-100 text-yellow-900 border-yellow-300',
-    blue: 'bg-blue-100 text-blue-900 border-blue-300',
-    green: 'bg-green-100 text-green-900 border-green-300',
-    orange: 'bg-orange-100 text-orange-900 border-orange-300',
+    yellow: 'bg-yellow-50 text-yellow-900 border-yellow-400 shadow-yellow-200',
+    blue: 'bg-blue-50 text-blue-900 border-blue-400 shadow-blue-200',
+    green: 'bg-green-50 text-green-900 border-green-400 shadow-green-200',
+    orange: 'bg-orange-50 text-orange-900 border-orange-400 shadow-orange-200',
   };
 
+  const Icon = isStopped ? PauseIcon : TimerIcon;
+
   return (
-    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg border-2 ${colorClasses[color]} ${isStopped ? 'opacity-75' : ''}`}>
-      <span className="text-xs font-semibold w-32 flex-shrink-0">{label}</span>
-      <span className="text-sm font-mono font-bold">{isStopped ? '⏸️' : '⏱️'} {elapsed}</span>
+    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 shadow-md ${colorClasses[color]} ${isStopped ? 'opacity-80' : 'animate-pulse-slow'}`}>
+      <Icon className="w-5 h-5 flex-shrink-0" />
+      <span className="text-xs font-semibold flex-shrink-0">{label}</span>
+      <span className="text-base font-mono font-bold">{elapsed}</span>
     </div>
   );
 }

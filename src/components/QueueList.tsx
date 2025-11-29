@@ -6,7 +6,7 @@ import { sendTelegramNotification } from '@/lib/telegram';
 import { useState, useEffect } from 'react';
 import Timer from './Timer';
 import QueueTimers from './QueueTimers';
-import { CalendarIcon, BellIcon, KeyIcon, WashingIcon, BellOffIcon, WaitIcon, CheckIcon, DeleteIcon, EditIcon, TicketIcon, MoneyIcon } from '@/components/Icons';
+import { CalendarIcon, BellIcon, KeyIcon, WashingIcon, BellOffIcon, WaitIcon, CheckIcon, DeleteIcon, EditIcon, TicketIcon, MoneyIcon, HourglassIcon, CloseIcon } from '@/components/Icons';
 import Avatar, { AvatarType } from '@/components/Avatar';
 
 export default function QueueList() {
