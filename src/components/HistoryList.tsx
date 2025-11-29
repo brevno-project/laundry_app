@@ -47,7 +47,7 @@ export default function HistoryList() {
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-bold text-gray-900 text-lg">{item.full_name}</h3>
               {item.room && (
-                <span className="text-sm font-medium text-gray-600 bg-gray-200 px-3 py-1 rounded-full">
+                <span className="text-sm font-semibold text-indigo-700 bg-indigo-100 px-3 py-1 rounded-full border border-indigo-200">
                   Комната {item.room}
                 </span>
               )}
@@ -89,13 +89,13 @@ export default function HistoryList() {
               )}
             </div>
             
-            <div className="grid grid-cols-2 gap-3 mt-3 text-sm">
-              <div className="bg-blue-50 p-2 rounded-lg border border-blue-200">
-                <span className="font-semibold text-blue-900 block mb-1">Начато:</span>
+            <div className="space-y-2 mt-3 text-sm">
+              <div className="flex items-center gap-2 bg-blue-50 p-2 rounded-lg border border-blue-200">
+                <span className="font-semibold text-blue-900 min-w-[90px]">Начато:</span>
                 <span className="text-gray-700">{formatDate(item.started_at)}</span>
               </div>
-              <div className="bg-green-50 p-2 rounded-lg border border-green-200">
-                <span className="font-semibold text-green-900 block mb-1">Завершено:</span>
+              <div className="flex items-center gap-2 bg-green-50 p-2 rounded-lg border border-green-200">
+                <span className="font-semibold text-green-900 min-w-[90px]">Завершено:</span>
                 <span className="text-gray-700">{formatDate(item.finished_at)}</span>
               </div>
             </div>

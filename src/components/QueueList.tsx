@@ -106,14 +106,14 @@ const handleSaveEdit = async () => {
     itemDate.setHours(0, 0, 0, 0);
     
     if (itemDate.getTime() === today.getTime()) {
-      return '📅 Сегодня, ' + dayNames[date.getDay()] + ' ' + date.getDate() + '.' + (date.getMonth() + 1);
+      return 'Сегодня, ' + dayNames[date.getDay()] + ' ' + date.getDate() + '.' + (date.getMonth() + 1);
     }
     
     if (itemDate.getTime() === tomorrow.getTime()) {
-      return '📅 Завтра, ' + dayNames[date.getDay()] + ' ' + date.getDate() + '.' + (date.getMonth() + 1);
+      return 'Завтра, ' + dayNames[date.getDay()] + ' ' + date.getDate() + '.' + (date.getMonth() + 1);
     }
     
-    return '📅 ' + dayNames[date.getDay()] + ', ' + date.getDate() + '.' + (date.getMonth() + 1);
+    return dayNames[date.getDay()] + ', ' + date.getDate() + '.' + (date.getMonth() + 1);
   };
 
   // Добавь эту функцию в начало компонента QueueList:
@@ -200,7 +200,8 @@ const handleSaveEdit = async () => {
       {isAdmin && selectedItems.length > 0 && (
         <div className="bg-blue-50 border-2 border-blue-500 rounded-lg p-3 m-3">
           <h4 className="font-bold text-blue-900 mb-2 text-sm">
-            📅 Перенести выбранных ({selectedItems.length})
+            <CalendarIcon className="w-4 h-4 inline-block mr-1" />
+            Перенести выбранных ({selectedItems.length})
           </h4>
   
           <div className="grid grid-cols-3 gap-2">
@@ -734,7 +735,10 @@ const handleSaveEdit = async () => {
             <div className="space-y-3">
               {/* Дата стирки */}
               <div>
-                <label className="block text-sm font-bold mb-2 text-gray-900">📅 Дата стирки</label>
+                <label className="block text-sm font-bold mb-2 text-gray-900 flex items-center gap-1">
+                  <CalendarIcon className="w-4 h-4" />
+                  Дата стирки
+                </label>
           <select
             value={editDate}
             onChange={(e) => setEditDate(e.target.value)}
