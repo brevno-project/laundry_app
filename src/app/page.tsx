@@ -112,6 +112,38 @@ export default function Home() {
     );
   }
 
+  console.log('🏠 Home component render:', {
+    isLoading,
+    user: !!user,
+    userName: user?.full_name,
+    isAdmin,
+    queueLength: queue?.length,
+    studentsCount: students?.length
+  });
+
+  // ✅ КРИТИЧНЫЙ FIX: Показывать UI даже без пользователя - пусть пользователь сам выберет себя из списка
+  // Раньше: if (!user) return <div>Выберите себя из списка</div>
+  // Теперь: показываем UI всегда, но контент зависит от user
+  // Дополнительная проверка - если user восстановлен, но не найден в students, он будет сброшен в LaundryContext
+  
+  // Дополнительное логирование для production debugging
+  console.log('🔍 Home render details:', {
+    hasUser: !!user,
+    userStudentId: user?.student_id,
+    studentsLoaded: students.length > 0,
+    firstStudentId: students[0]?.id,
+    userFoundInStudents: user ? students.some(s => s.id === user.student_id) : false
+  });
+  
+  // ✅ ДОБАВЛЕНО: Финальное логирование о статусе Home компонента
+  console.log('🏠 Home component status:', {
+    isLoading,
+    showStudentAuth: !user,
+    showMainUI: !!user,
+    studentsCount: students.length,
+    queueLength: queue.length
+  });
+
   return (
     <div className="min-h-screen w-full bg-gray-50">
       {/* ✅ МОДАЛЬНОЕ ОКНО - Подключите Telegram */}

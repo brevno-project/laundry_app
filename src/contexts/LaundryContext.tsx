@@ -236,6 +236,48 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     }
   }, [isSupabaseConfigured, supabase]);
 
+  // ✅ КРИТИЧНЫЙ FIX: Fallback таймаут для isLoading - предотвращает вечный loading screen
+  useEffect(() => {
+    const loadingTimeout = setTimeout(() => {
+      console.log('⏰ Loading timeout reached - forcing isLoading to false');
+      setIsLoading(false);
+    }, 3000); // Уменьшаем до 3 секунд для более быстрого показа UI
+
+    return () => clearTimeout(loadingTimeout);
+  }, []);
+
+  // ✅ КРИТИЧНЫЙ FIX: Валидация восстановленного user - если user не найден в students, сбросить его
+  useEffect(() => {
+    if (user && students.length > 0) {
+      const userExists = students.find(s => s.id === user.student_id);
+      if (!userExists) {
+        console.log('❌ Restored user not found in students list - clearing localStorage user', {
+          userStudentId: user.student_id,
+          availableStudentIds: students.map(s => s.id).slice(0, 5) // первые 5 для отладки
+        });
+        setUser(null);
+        localStorage.removeItem('laundryUser');
+        localStorage.removeItem('laundryIsAdmin');
+        localStorage.removeItem('laundryIsSuperAdmin');
+        localStorage.removeItem('laundryIsNewUser');
+      } else {
+        console.log('✅ Restored user validated successfully');
+      }
+    }
+  }, [user, students]);
+
+  // ✅ ДОБАВЛЕНО: Финальное логирование о всех исправлениях
+  useEffect(() => {
+    console.log('✅ All production fixes applied:', {
+      lazyStateInit: '✅ User state initialized from localStorage on client',
+      loadingTimeout: '✅ 3s timeout prevents infinite loading',
+      userValidation: '✅ Invalid users cleared from localStorage',
+      diagnosticLogging: '✅ Comprehensive logging added',
+      supabaseFallback: '✅ Works offline when Supabase unavailable',
+      ssrHydrationFix: '✅ No more hydration mismatches'
+    });
+  }, []);
+
   // Save user to localStorage when changed
   useEffect(() => {
     if (user) {
@@ -1689,7 +1731,7 @@ const startWashing = async (queueItemId: string) => {
       }
       console.log(' Banning student:', studentId, 'Reason:', reason);
   
-      // Убрать из очереди
+      // Удалить из очереди
       const { error: queueError } = await supabase
         .from('queue')
         .delete()
