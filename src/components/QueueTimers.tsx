@@ -31,11 +31,13 @@ export default function QueueTimers({ item }: QueueTimersProps) {
       switch (item.status) {
         case QueueStatus.READY:
           startTime = item.ready_at ? new Date(item.ready_at) : null;
+          yellowZoneMinutes = 5; // 5 минут желтая зона
           redZoneMinutes = 15; // 15 минут красная зона
           break;
         case QueueStatus.KEY_ISSUED:
           startTime = item.key_issued_at ? new Date(item.key_issued_at) : null;
-          redZoneMinutes = 5; // 5 минут красная зона
+          yellowZoneMinutes = 5; // 5 минут желтая зона
+          redZoneMinutes = 15; // 15 минут красная зона
           break;
         case QueueStatus.WASHING:
           startTime = item.washing_started_at ? new Date(item.washing_started_at) : null;
@@ -44,11 +46,13 @@ export default function QueueTimers({ item }: QueueTimersProps) {
           break;
         case QueueStatus.WASHING_FINISHED:
           startTime = item.washing_finished_at ? new Date(item.washing_finished_at) : null;
-          redZoneMinutes = 5; // 5 минут красная зона
+          yellowZoneMinutes = 5; // 5 минут желтая зона
+          redZoneMinutes = 15; // 15 минут красная зона
           break;
         case QueueStatus.RETURNING_KEY:
           startTime = item.return_requested_at ? new Date(item.return_requested_at) : null;
-          redZoneMinutes = 5; // 5 минут красная зона
+          yellowZoneMinutes = 5; // 5 минут желтая зона
+          redZoneMinutes = 15; // 15 минут красная зона
           break;
         default:
           return;

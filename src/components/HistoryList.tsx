@@ -47,7 +47,7 @@ export default function HistoryList() {
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-bold text-gray-900 text-lg">{item.full_name}</h3>
               {item.room && (
-                <span className="text-sm font-semibold text-gray-900 bg-gray-100 px-3 py-1 rounded-full border border-gray-300">
+                <span className="text-sm font-medium text-gray-600">
                   Комната {item.room}
                 </span>
               )}

@@ -139,25 +139,90 @@ const handleSaveEdit = async () => {
   
   return dates;
 };
-  // Функция для получения цвета и текста статуса
-  const getStatusDisplay = (status: QueueStatus) => {
-    switch(status) {
-      case QueueStatus.WAITING:
-        return { bg: 'bg-gray-50', text: 'text-gray-700', badge: '⏳ Ожидание', badgeColor: 'bg-gray-200 text-gray-700' };
-      case QueueStatus.READY:
-        return { bg: 'bg-yellow-50', text: 'text-yellow-900', badge: '🏃 ЗА КЛЮЧОМ', badgeColor: 'bg-yellow-400 text-yellow-900' };
-      case QueueStatus.KEY_ISSUED:
-        return { bg: 'bg-blue-50', text: 'text-blue-900', badge: '🔑 КЛЮЧ ПОЛУЧЕН', badgeColor: 'bg-blue-400 text-blue-900' };
-      case QueueStatus.WASHING:
-        return { bg: 'bg-green-50', text: 'text-green-900', badge: '🟢 СТИРКА', badgeColor: 'bg-green-400 text-green-900' };
-      case QueueStatus.RETURNING_KEY:
-        return { bg: 'bg-orange-50', text: 'text-orange-900', badge: '🏃 ВОЗВРАТ КЛЮЧА', badgeColor: 'bg-orange-400 text-orange-900' };
-      case QueueStatus.DONE:
-        return { bg: 'bg-emerald-50', text: 'text-emerald-900', badge: '✅ ЗАВЕРШЕНО', badgeColor: 'bg-emerald-400 text-emerald-900' };
-      default:
-        return { bg: 'bg-white', text: 'text-gray-700', badge: status, badgeColor: 'bg-gray-200' };
-    }
-  };
+    // Функция для получения цвета и текста статуса с SVG иконками
+    const getStatusDisplay = (status: QueueStatus) => {
+      switch(status) {
+        case QueueStatus.WAITING:
+          return { 
+            bg: 'bg-gray-50', 
+            text: 'text-gray-700', 
+            badge: (
+              <span className="flex items-center gap-1.5">
+                <HourglassIcon className="w-4 h-4" />
+                Ожидание
+              </span>
+            ), 
+            badgeColor: 'bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 font-semibold shadow-sm' 
+          };
+        case QueueStatus.READY:
+          return { 
+            bg: 'bg-yellow-50', 
+            text: 'text-yellow-900', 
+            badge: (
+              <span className="flex items-center gap-1.5">
+                <HourglassIcon className="w-4 h-4" />
+                ЗА КЛЮЧОМ
+              </span>
+            ), 
+            badgeColor: 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 font-bold shadow-md' 
+          };
+        case QueueStatus.KEY_ISSUED:
+          return { 
+            bg: 'bg-blue-50', 
+            text: 'text-blue-900', 
+            badge: (
+              <span className="flex items-center gap-1.5">
+                <KeyIcon className="w-4 h-4" />
+                КЛЮЧ ПОЛУЧЕН
+              </span>
+            ), 
+            badgeColor: 'bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold shadow-md' 
+          };
+        case QueueStatus.WASHING:
+          return { 
+            bg: 'bg-green-50', 
+            text: 'text-green-900', 
+            badge: (
+              <span className="flex items-center gap-1.5">
+                <WashingIcon className="w-4 h-4" />
+                СТИРКА
+              </span>
+            ), 
+            badgeColor: 'bg-gradient-to-r from-green-400 to-green-500 text-white font-bold shadow-md' 
+          };
+        case QueueStatus.RETURNING_KEY:
+          return { 
+            bg: 'bg-orange-50', 
+            text: 'text-orange-900', 
+            badge: (
+              <span className="flex items-center gap-1.5">
+                <KeyIcon className="w-4 h-4" />
+                ВОЗВРАТ КЛЮЧА
+              </span>
+            ), 
+            badgeColor: 'bg-gradient-to-r from-orange-400 to-orange-500 text-white font-bold shadow-md' 
+          };
+        case QueueStatus.DONE:
+          return { 
+            bg: 'bg-emerald-50', 
+            text: 'text-emerald-900', 
+            badge: (
+              <span className="flex items-center gap-1.5">
+                <CheckIcon className="w-4 h-4" />
+                ЗАВЕРШЕНО
+              </span>
+            ), 
+            badgeColor: 'bg-gradient-to-r from-emerald-400 to-emerald-500 text-white font-bold shadow-md' 
+          };
+        default:
+          return { 
+            bg: 'bg-white', 
+            text: 'text-gray-700', 
+            badge: status, 
+            badgeColor: 'bg-gray-200' 
+          };
+      }
+    };
   
   // Queue items including washing and done
   const queuedItems = queue.filter((item: any) =>  
