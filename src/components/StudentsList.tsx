@@ -290,18 +290,23 @@ export default function StudentsList() {
                         {isAdmin && (
                           <td className="p-1">
                             <div className="flex gap-1">
-                              <button
-                                onClick={() => openEditModal(student)}
-                                className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
-                              >
-                                <EditIcon className="w-3 h-3" />
-                              </button>
-                              <button
-                                onClick={() => setDeletingStudent(student)}
-                                className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
-                              >
-                                <DeleteIcon className="w-3 h-3" />
-                              </button>
+                              {/* Админы могут редактировать всех кроме суперадминов */}
+                              {!student.is_super_admin && (
+                                <button
+                                  onClick={() => openEditModal(student)}
+                                  className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
+                                >
+                                  <EditIcon className="w-3 h-3" />
+                                </button>
+                              )}
+                              {!student.is_super_admin && (
+                                <button
+                                  onClick={() => setDeletingStudent(student)}
+                                  className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
+                                >
+                                  <DeleteIcon className="w-3 h-3" />
+                                </button>
+                              )}
                             </div>
                           </td>
                         )}
@@ -386,18 +391,23 @@ export default function StudentsList() {
                         {isAdmin && (
                           <td className="p-1">
                             <div className="flex gap-1">
-                              <button
-                                onClick={() => openEditModal(student)}
-                                className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
-                              >
-                                <EditIcon className="w-3 h-3" />
-                              </button>
-                              <button
-                                onClick={() => setDeletingStudent(student)}
-                                className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
-                              >
-                                <DeleteIcon className="w-3 h-3" />
-                              </button>
+                              {/* Админы могут редактировать всех кроме суперадминов */}
+                              {!student.is_super_admin && (
+                                <button
+                                  onClick={() => openEditModal(student)}
+                                  className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+                                >
+                                  <EditIcon className="w-3 h-3" />
+                                </button>
+                              )}
+                              {!student.is_super_admin && (
+                                <button
+                                  onClick={() => setDeletingStudent(student)}
+                                  className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
+                                >
+                                  <DeleteIcon className="w-3 h-3" />
+                                </button>
+                              )}
                             </div>
                           </td>
                         )}

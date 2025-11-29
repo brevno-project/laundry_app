@@ -81,6 +81,34 @@ async function getStudentTelegramChatId(student_id?: string): Promise<string | n
   return data.telegram_chat_id;
 }
 
+// ✅ Получить telegram_chat_id всех админов
+async function getAllAdminChatIds(): Promise<string[]> {
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('❌ Missing Supabase config');
+    return [];
+  }
+  
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  
+  const { data, error } = await supabase
+    .from('students')
+    .select('telegram_chat_id')
+    .eq('is_admin', true)
+    .not('telegram_chat_id', 'is', null);
+  
+  if (error) {
+    console.error('❌ Error getting admin chat IDs:', error);
+    return [];
+  }
+  
+  const chatIds = data
+    .map(student => student.telegram_chat_id)
+    .filter((id): id is string => id !== null && id !== undefined);
+  
+  console.log('✅ Found admin chat IDs:', chatIds.length);
+  return chatIds;
+}
+
 // Форматирование сообщения
 async function formatMessage(notification: TelegramNotification): Promise<string> {
   const { type, full_name, room, wash_count, payment_type, queue_length, expected_finish_at, admin_student_id } = notification;
@@ -202,11 +230,22 @@ export async function POST(request: NextRequest) {
     const adminOnlyNotifications = ['washing_started_by_student', 'washing_finished'];
     const isAdminOnly = adminOnlyNotifications.includes(notification.type);
 
-    // Отправить админу (только если это НЕ student-only уведомление)
-    if (!isStudentOnly && TELEGRAM_ADMIN_CHAT_ID) {
-      console.log('📤 Sending to admin:', TELEGRAM_ADMIN_CHAT_ID);
-      const adminSuccess = await sendTelegramMessage(TELEGRAM_ADMIN_CHAT_ID, message);
-      success = adminSuccess;
+    // ✅ Отправить ВСЕМ админам (только если это НЕ student-only уведомление)
+    if (!isStudentOnly) {
+      const adminChatIds = await getAllAdminChatIds();
+      console.log(`📤 Sending to ${adminChatIds.length} admins`);
+      
+      for (const chatId of adminChatIds) {
+        const adminSuccess = await sendTelegramMessage(chatId, message);
+        success = success || adminSuccess;
+      }
+      
+      // Также отправить главному админу (если указан в .env)
+      if (TELEGRAM_ADMIN_CHAT_ID && !adminChatIds.includes(TELEGRAM_ADMIN_CHAT_ID)) {
+        console.log('📤 Sending to main admin:', TELEGRAM_ADMIN_CHAT_ID);
+        const mainAdminSuccess = await sendTelegramMessage(TELEGRAM_ADMIN_CHAT_ID, message);
+        success = success || mainAdminSuccess;
+      }
     }
 
     // Отправить студенту (если есть telegram_chat_id И это НЕ admin-only уведомление)
