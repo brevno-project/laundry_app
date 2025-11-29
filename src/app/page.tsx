@@ -12,7 +12,7 @@ import TelegramSetup from '@/components/TelegramSetup';
 import HistoryList from '@/components/HistoryList';
 import StudentsList from '@/components/StudentsList';
 import GlobalAlert from '@/components/GlobalAlert';
-import { ListIcon, HistoryIcon, PeopleIcon, SettingsIcon, WashingIcon, DoorIcon } from '@/components/Icons';
+import { HomeIcon, HistoryIcon, PeopleIcon, SettingsIcon, WashingIcon, DoorIcon, ListIcon } from '@/components/Icons';
 import TelegramBanner from '@/components/TelegramBanner';
 import StudentActions from '@/components/StudentActions';
 import AvatarSelector from '@/components/AvatarSelector';
@@ -138,7 +138,7 @@ export default function Home() {
       {/* Заголовок */}
       <header className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 shadow-lg sticky top-0 z-10">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white flex items-center justify-center gap-2"><WashingIcon className="w-7 h-7" />Очередь на стирку</h1>
+          <h1 className="text-2xl font-bold text-white flex items-center justify-center gap-2"><ListIcon className="w-7 h-7" />Очередь на стирку</h1>
           {user && (
             <p className="text-sm text-blue-100 mt-1">
               Вы вошли как: <span className="font-semibold">{user.full_name}</span>
@@ -160,7 +160,7 @@ export default function Home() {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              <ListIcon className="w-5 h-5 inline-block mr-2" />Главная
+              <HomeIcon className="w-5 h-5 inline-block mr-2" />Главная
             </button>
               <button
                 onClick={() => handleTabChange('history')}
@@ -341,7 +341,7 @@ export default function Home() {
                 {/* Показываем пользовательские компоненты если есть пользователь ИЛИ админ */}
                 {(user || isAdmin) && (
                   <>
-                    {!isAdmin && <div className="px-3"><UserForm /></div>} {/* UserForm только для обычных пользователей */}
+                    <div className="px-3"><UserForm /></div> {/* Админы тоже могут вставать в очередь */}
                     <QueueList />
                   </>
                 )}

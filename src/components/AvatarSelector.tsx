@@ -7,19 +7,19 @@ import { supabase as supabaseClient } from '@/lib/supabase';
 
 export default function AvatarSelector() {
   const { user, loadStudents, setUser, fetchQueue } = useLaundry();
-  const [selectedAvatar, setSelectedAvatar] = useState<AvatarType>('default');
+  // ✅ Инициализируем сразу из user.avatar_type
+  const [selectedAvatar, setSelectedAvatar] = useState<AvatarType>(
+    (user?.avatar_type as AvatarType) || 'default'
+  );
   const [isSaving, setIsSaving] = useState(false);
 
-  // ✅ Синхронизируем selectedAvatar с user.avatar_type ТОЛЬКО при изменении avatar_type
+  // ✅ Синхронизируем selectedAvatar при изменении user.avatar_type
   useEffect(() => {
-    if (user && user.avatar_type) {
+    if (user?.avatar_type) {
       const avatarType = user.avatar_type as AvatarType;
-      // Обновляем только если аватар реально изменился
-      if (avatarType !== selectedAvatar) {
-        setSelectedAvatar(avatarType);
-      }
+      setSelectedAvatar(avatarType);
     }
-  }, [user?.avatar_type]); // Следим только за avatar_type
+  }, [user?.avatar_type]);
 
   const handleSave = async () => {
     if (!user) return;

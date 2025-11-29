@@ -510,19 +510,19 @@ export default function AdminPanel() {
                   </div>
 
                   {/* ========== БЕЗОПАСНЫЕ ДЕЙСТВИЯ ========== */}
-                  {/* Админы могут ставить в очередь всех кроме суперадминов */}
-                  {(isSuperAdmin || isAdmin) && !student.is_super_admin && (
+                  {/* Суперадмин может ставить себя в очередь */}
+                  {(isSuperAdmin || isAdmin) && (!student.is_super_admin || (student.is_super_admin && user && student.id === user.student_id)) && (
                     <button onClick={() => openAddToQueueModal(student)}
                       className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-2 w-full">
                       <CalendarIcon className="w-4 h-4" />Поставить в очередь
                     </button>
                   )}
 
-                  {/* Кнопка Редактировать: админы могут редактировать всех кроме суперадминов */}
+                  {/* Суперадмин может редактировать себя */}
                   {(
                     (isSuperAdmin || isAdmin) 
-                      ? !student.is_super_admin  // админы могут редактировать всех кроме суперадминов
-                      : student.id === user?.student_id  // пользователи могут редактировать только себя
+                      ? (!student.is_super_admin || (student.is_super_admin && user && student.id === user.student_id))
+                      : student.id === user?.student_id
                   ) && (
                     <button
                       onClick={() => openEditModal(student)}
@@ -535,8 +535,8 @@ export default function AdminPanel() {
 
                   {/* ========== ОПАСНЫЕ ДЕЙСТВИЯ ========== */}
                   <div className="border-t border-red-300 pt-2 mt-2">
-                  {/* ✅ Сбросить регистрацию - ТОЛЬКО СУПЕРАДМИН */}
-                  {isSuperAdmin && student.is_registered && !student.is_super_admin && (
+                  {/* ✅ Сбросить регистрацию - СУПЕРАДМИН может сбросить себя */}
+                  {isSuperAdmin && student.is_registered && (!student.is_super_admin || (student.is_super_admin && user && student.id === user.student_id)) && (
                       <button
                         onClick={() => openResetConfirm(student)}
                         className="bg-orange-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-orange-600 w-full mb-1"
@@ -546,8 +546,8 @@ export default function AdminPanel() {
                       </button>
                     )}
 
-                    {/* ✅ Разбанить - ТОЛЬКО СУПЕРАДМИН */}
-                    {isSuperAdmin && !student.is_super_admin && student.is_banned && (
+                    {/* ✅ Разбанить - СУПЕРАДМИН может разбанить себя */}
+                    {isSuperAdmin && (!student.is_super_admin || (student.is_super_admin && user && student.id === user.student_id)) && student.is_banned && (
                       <button
                         onClick={() => handleUnbanStudent(student.id)}
                         className="w-full px-4 py-2 rounded-lg text-sm font-bold bg-green-500 hover:bg-green-600 text-white mb-1"
@@ -556,8 +556,8 @@ export default function AdminPanel() {
                       </button>
                     )}
 
-                    {/* ✅ Забанить - ТОЛЬКО СУПЕРАДМИН */}
-                    {isSuperAdmin && !student.is_super_admin && !student.is_banned && (
+                    {/* ✅ Забанить - СУПЕРАДМИН может забанить себя */}
+                    {isSuperAdmin && (!student.is_super_admin || (student.is_super_admin && user && student.id === user.student_id)) && !student.is_banned && (
                       <button
                         onClick={() => openBanModal(student)}
                         className="bg-red-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-red-600 w-full mb-1"
