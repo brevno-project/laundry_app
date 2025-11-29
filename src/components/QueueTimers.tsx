@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { QueueItem, QueueStatus } from '@/types';
+import { KeyIcon, WashingIcon, HourglassIcon } from '@/components/Icons';
 
 interface QueueTimersProps {
   item: QueueItem;
@@ -87,21 +88,21 @@ export default function QueueTimers({ item }: QueueTimersProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Определяем текст статуса
-  const getStatusText = (): string => {
+  // Определяем текст статуса и иконку
+  const getStatusInfo = (): { text: string; Icon: React.ComponentType<{ className?: string }> } => {
     switch (item.status) {
       case QueueStatus.READY:
-        return 'Ожидание ключа';
+        return { text: 'Ожидание ключа', Icon: HourglassIcon };
       case QueueStatus.KEY_ISSUED:
-        return 'Ключ выдан';
+        return { text: 'Ключ выдан', Icon: KeyIcon };
       case QueueStatus.WASHING:
-        return 'Стирка';
+        return { text: 'Стирка', Icon: WashingIcon };
       case QueueStatus.WASHING_FINISHED:
-        return 'Стирка завершена';
+        return { text: 'Стирка завершена', Icon: WashingIcon };
       case QueueStatus.RETURNING_KEY:
-        return 'Возврат ключа';
+        return { text: 'Возврат ключа', Icon: KeyIcon };
       default:
-        return '';
+        return { text: '', Icon: HourglassIcon };
     }
   };
 
@@ -116,9 +117,12 @@ export default function QueueTimers({ item }: QueueTimersProps) {
     return null;
   }
 
+  const { text, Icon } = getStatusInfo();
+
   return (
-    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border-2 ${colorClasses[color as keyof typeof colorClasses]} font-semibold text-sm`}>
-      <span className="text-xs">{getStatusText()}:</span>
+    <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-full border-2 shadow-sm ${colorClasses[color as keyof typeof colorClasses]} font-semibold text-sm`}>
+      <Icon className="w-4 h-4 flex-shrink-0" />
+      <span className="text-xs">{text}:</span>
       <span className="font-bold">{formatTime(elapsed)}</span>
     </div>
   );

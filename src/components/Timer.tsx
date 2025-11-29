@@ -58,7 +58,7 @@ export default function Timer({ startTime, endTime, label, color = 'blue' }: Tim
   const Icon = isStopped ? PauseIcon : TimerIcon;
 
   return (
-    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 shadow-md ${colorClasses[color]} ${isStopped ? 'opacity-80' : 'animate-pulse-slow'}`}>
+    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 shadow-md ${colorClasses[color]} ${isStopped ? 'opacity-80' : ''}`}>
       <Icon className="w-5 h-5 flex-shrink-0" />
       <span className="text-xs font-semibold flex-shrink-0">{label}</span>
       <span className="text-base font-mono font-bold">{elapsed}</span>

@@ -350,14 +350,8 @@ export default function AdminPanel() {
 
   return (
     <div className="bg-purple-700 p-6 rounded-lg shadow-lg border-2 border-purple-800">
-      <div className="flex justify-between items-center mb-4">
+      <div className="mb-4">
         <h2 className="text-2xl font-bold text-white"> Панель админа</h2>
-        <button
-          onClick={handleAdminLogout}
-          className="bg-purple-800 hover:bg-purple-900 text-white text-sm font-semibold px-3 py-2 rounded transition-colors flex items-center gap-2"
-        >
-          <DoorIcon className="w-4 h-4" />Выйти
-        </button>
       </div>
       
       <div className="space-y-4">
