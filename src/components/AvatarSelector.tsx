@@ -6,7 +6,7 @@ import Avatar, { AVATAR_OPTIONS, AvatarType } from './Avatar';
 import { supabase as supabaseClient } from '@/lib/supabase';
 
 export default function AvatarSelector() {
-  const { user, loadStudents, setUser } = useLaundry();
+  const { user, loadStudents, setUser, fetchQueue } = useLaundry();
   const [selectedAvatar, setSelectedAvatar] = useState<AvatarType>('default');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -25,21 +25,34 @@ export default function AvatarSelector() {
     try {
       if (!supabaseClient) throw new Error('Supabase не настроен');
       
-      const { error } = await supabaseClient
+      // ✅ Обновляем аватар в таблице students
+      const { error: studentError } = await supabaseClient
         .from('students')
         .update({ avatar_type: selectedAvatar })
         .eq('id', user.student_id);
       
-      if (error) throw error;
+      if (studentError) throw studentError;
+      
+      // ✅ Обновляем аватар во всех записях очереди этого пользователя
+      const { error: queueError } = await supabaseClient
+        .from('queue')
+        .update({ avatar_type: selectedAvatar })
+        .eq('student_id', user.student_id);
+      
+      if (queueError) {
+        console.warn('Warning updating queue avatars:', queueError);
+        // Не прерываем процесс, так как основное обновление успешно
+      }
       
       // ✅ Обновляем user объект сразу
       const updatedUser = { ...user, avatar_type: selectedAvatar };
       setUser(updatedUser);
       localStorage.setItem('user', JSON.stringify(updatedUser));
       
-      // Обновляем список студентов
+      // Обновляем список студентов и очередь
       await loadStudents();
-      alert('✅ Аватар обновлен!');
+      await fetchQueue();
+      alert('✅ Аватар обновлен везде!');
     } catch (error) {
       console.error('Error updating avatar:', error);
       alert('❌ Ошибка обновления аватара');

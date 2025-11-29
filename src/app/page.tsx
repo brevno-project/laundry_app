@@ -37,7 +37,6 @@ export default function Home() {
     return 'main';
   });
   
-  const [showTelegramModal, setShowTelegramModal] = React.useState(false);
   const [showScrollButton, setShowScrollButton] = React.useState(false);
 
   // ✅ Сохраняем activeTab в localStorage при изменении
@@ -59,22 +58,7 @@ export default function Home() {
     }
   }, [user, activeTab]);
 
-  // ✅ Проверка: показывать модалку ТОЛЬКО для новых пользователей
-  React.useEffect(() => {
-    console.log('🔍 Checking telegram setup:', { 
-      user: !!user, 
-      userName: user?.full_name,
-      isAdmin, 
-      telegramChatId: user?.telegram_chat_id,
-      isNewUser
-    });
-  
-    // ✅ Показываем ТОЛЬКО для новых пользователей без Telegram
-    if (user && !isAdmin && isNewUser && !user.telegram_chat_id) {
-      console.log('✅ Showing Telegram modal for new user!');
-      setShowTelegramModal(true);
-    }
-  }, [user, isAdmin, isNewUser]);
+
 
   // ✅ Отслеживание скролла для кнопки "Вверх" (только для пользователей в очереди)
   React.useEffect(() => {
@@ -105,15 +89,7 @@ export default function Home() {
     setShowScrollButton(false);
   };
 
-  // ✅ Функция закрытия модалки (переход в настройки)
-  const handleTelegramSetup = () => {
-    console.log('📱 Redirecting to settings...');
-    setShowTelegramModal(false);
-    setActiveTab('settings');
-  };
-
   console.log('🎰 Machine State:', machineState);
-  console.log('🚨 showTelegramModal:', showTelegramModal);
 
   if (isLoading) {
     return (
@@ -157,46 +133,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen w-full bg-gray-50">
-      {/* ✅ МОДАЛЬНОЕ ОКНО - Подключите Telegram */}
-      {showTelegramModal && user && !user.telegram_chat_id && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl shadow-2xl max-w-lg w-full p-8 border-4 border-yellow-400 animate-pulse">
-            <div className="text-center mb-6">
-              <div className="text-8xl mb-4 animate-bounce">📱</div>
-              <h2 className="text-3xl font-black text-gray-900 mb-3">
-                Подключите уведомления!
-              </h2>
-              <p className="text-lg text-gray-700 font-semibold">
-                Чтобы получать уведомления когда вас позовут, нужно подключить Telegram
-              </p>
-            </div>
 
-            <div className="space-y-4">
-              <button
-                onClick={handleTelegramSetup}
-                className="w-full bg-green-600 text-white font-black py-4 px-6 rounded-xl hover:bg-green-700 transition-all shadow-lg text-xl"
-              >
-                ✅ Подключить сейчас
-              </button>
-              
-              <button
-                onClick={() => {
-                  console.log('⏭️ Skipping telegram setup...');
-                  setShowTelegramModal(false);
-                  localStorage.setItem('needsTelegramSetup', 'false');
-                }}
-                className="w-full bg-gray-400 text-white font-bold py-3 px-6 rounded-xl hover:bg-gray-500 transition-all"
-              >
-                Пропустить (не рекомендуется)
-              </button>
-            </div>
-
-            <p className="text-sm text-gray-600 mt-4 text-center">
-              💡 Вы всегда можете подключить позже в настройках
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* Заголовок */}
       <header className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 shadow-lg sticky top-0 z-10">

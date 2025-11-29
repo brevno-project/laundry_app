@@ -317,7 +317,7 @@ const handleSaveEdit = async () => {
                             )}
                           </div>
                           <div className="flex items-center gap-2">
-                            <Avatar type={(item.avatar_type as AvatarType) || 'default'} className="w-10 h-10" />
+                            <Avatar type={(item.avatar_type as AvatarType) || 'default'} className="w-14 h-14" />
                             <div>
                               <div className="font-bold text-lg text-gray-900">{item.full_name}</div>
                               {item.room && <div className="text-xs text-gray-600">Комната {item.room}</div>}
