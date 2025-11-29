@@ -433,9 +433,10 @@ const handleSaveEdit = async () => {
                         {isCurrentUser && item.status === QueueStatus.WAITING && (
                           <button
                             onClick={() => leaveQueue(item.id)}
-                            className="bg-red-500 text-white font-semibold py-2 px-3 rounded-lg hover:bg-red-600 shadow-sm text-sm w-full"
+                            className="bg-red-500 text-white font-semibold py-2 px-3 rounded-lg hover:bg-red-600 shadow-sm text-sm w-full flex items-center justify-center gap-2"
                           >
-                            ❌ Покинуть очередь
+                            <CloseIcon className="w-4 h-4" />
+                            Покинуть очередь
                           </button>
                         )}
                         

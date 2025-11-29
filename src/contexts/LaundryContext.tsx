@@ -617,6 +617,7 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
       full_name: studentData.full_name,
       room: studentData.room || undefined,
       telegram_chat_id: studentData.telegram_chat_id || undefined,
+      avatar_type: studentData.avatar_type || 'default',
     };
 
     const isAdminUser = studentData.is_admin || false;
