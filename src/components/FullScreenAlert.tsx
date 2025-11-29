@@ -1,7 +1,7 @@
 'use client';
 
 import { QueueStatus } from '@/types';
-import { MoneyIcon } from '@/components/Icons';
+import { MoneyIcon, BellIcon } from '@/components/Icons';
 
 interface FullScreenAlertProps {
   status: QueueStatus;
@@ -16,7 +16,7 @@ export default function FullScreenAlert({ status, needsToReturnKey, adminRoom, o
     return (
       <div className="fixed inset-0 bg-orange-500 z-50 flex items-center justify-center p-4 animate-pulse">
         <div className="text-center">
-          <div className="text-9xl mb-8">🔔</div>
+          <BellIcon className="w-40 h-40 mx-auto mb-8 text-orange-900" />
           <h1 className="text-6xl font-black text-orange-900 mb-4">
             ПРИНЕСИТЕ КЛЮЧ!
           </h1>
@@ -37,7 +37,7 @@ export default function FullScreenAlert({ status, needsToReturnKey, adminRoom, o
     return (
       <div className="fixed inset-0 bg-yellow-400 z-50 flex items-center justify-center p-4 animate-pulse">
         <div className="text-center">
-          <div className="text-9xl mb-8">🔔</div>
+          <BellIcon className="w-40 h-40 mx-auto mb-8 text-yellow-900" />
           <h1 className="text-6xl font-black text-yellow-900 mb-4">
             ВАС ЗОВУТ!
           </h1>

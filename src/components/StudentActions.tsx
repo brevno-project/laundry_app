@@ -3,6 +3,7 @@
 import { useLaundry } from '@/contexts/LaundryContext';
 import { QueueStatus } from '@/types';
 import { useEffect, useState } from 'react';
+import { KeyIcon, WashingIcon, CheckIcon } from '@/components/Icons';
 
 /**
  * Кнопки действий для студента
@@ -197,7 +198,10 @@ export default function StudentActions() {
         {myQueueItem.status === QueueStatus.KEY_ISSUED && (
           <>
             <div className="text-center mb-4">
-              <h3 className="text-2xl font-bold text-white mb-2">🔑 Ключ выдан!</h3>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <KeyIcon className="w-8 h-8 text-white" />
+                <h3 className="text-2xl font-bold text-white">Ключ выдан!</h3>
+              </div>
               <p className="text-blue-100">Идите к стиралке и нажмите кнопку когда начнете стирать</p>
               <p className="text-blue-200 text-sm mt-2">ℹ️ Админ получит уведомление и запустит таймер</p>
             </div>
@@ -205,7 +209,10 @@ export default function StudentActions() {
               onClick={handleStartWashing}
               className="w-full bg-white text-blue-700 font-bold py-4 px-6 rounded-xl text-xl hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              🌀 Начал стирать
+              <div className="flex items-center justify-center gap-2">
+                <WashingIcon className="w-5 h-5" />
+                Начал стирать
+              </div>
             </button>
           </>
         )}
@@ -213,7 +220,10 @@ export default function StudentActions() {
         {myQueueItem.status === QueueStatus.WASHING && (
           <>
             <div className="text-center mb-4">
-              <h3 className="text-2xl font-bold text-white mb-2">🌀 Стирка идет!</h3>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <WashingIcon className="w-8 h-8 text-white" />
+                <h3 className="text-2xl font-bold text-white">Стирка идет!</h3>
+              </div>
               {/* Таймер стирки */}
               <div className="bg-white/20 rounded-xl py-3 px-6 mb-3">
                 <div className="text-blue-100 text-sm mb-1">Время стирки:</div>
@@ -226,7 +236,10 @@ export default function StudentActions() {
               onClick={handleFinishWashing}
               className="w-full bg-red-600 text-white font-bold py-4 px-6 rounded-xl text-xl hover:bg-red-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              ✅ Закончил стирать
+              <div className="flex items-center justify-center gap-2">
+                <CheckIcon className="w-5 h-5" />
+                Закончил стирать
+              </div>
             </button>
           </>
         )}
