@@ -48,6 +48,17 @@ export default function Home() {
     }
   };
 
+  // ✅ ТЫ FIX: Сбрасываем activeTab на 'main' когда нет пользователя
+  React.useEffect(() => {
+    if (!user && activeTab !== 'main') {
+      console.log('🔄 Resetting activeTab to main because user is not logged in');
+      setActiveTab('main');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('activeTab', 'main');
+      }
+    }
+  }, [user, activeTab]);
+
   // ✅ Проверка: показывать модалку ТОЛЬКО для новых пользователей
   React.useEffect(() => {
     console.log('🔍 Checking telegram setup:', { 
