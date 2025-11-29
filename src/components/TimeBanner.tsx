@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getLaundryTimeStatus, TimeStatus } from '@/lib/timeHelper';
+import { EditIcon } from '@/components/Icons';
 
 export default function TimeBanner() {
   const [timeStatus, setTimeStatus] = useState<TimeStatus>(getLaundryTimeStatus());
@@ -38,8 +39,8 @@ export default function TimeBanner() {
         </p>
       </div>
       {timeStatus.isClosed && (
-        <p className="text-white text-sm text-center mt-2">
-          📝 Записаться в очередь можно в любое время
+        <p className="text-white text-sm text-center mt-2 flex items-center justify-center gap-1">
+          <EditIcon className="w-4 h-4" />Записаться в очередь можно в любое время
         </p>
       )}
     </div>

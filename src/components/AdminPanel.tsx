@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import { Student } from '@/types';
-import { CalendarIcon, DoorIcon, DeleteIcon, CheckIcon, CloseIcon, EditIcon } from '@/components/Icons';
+import { CalendarIcon, DoorIcon, DeleteIcon, CheckIcon, CloseIcon, EditIcon, RefreshIcon, BanIcon, BellIcon } from '@/components/Icons';
 
 export default function AdminPanel() {
   const { 
@@ -407,7 +407,7 @@ export default function AdminPanel() {
                 }}
                 className="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-blue-700 transition-colors shadow-md"
               >
-                📱 Отправить тестовое уведомление
+                <BellIcon className="w-5 h-5 inline-block mr-2" />Отправить тестовое уведомление
               </button>
             )}
           </div>
@@ -495,7 +495,8 @@ export default function AdminPanel() {
                   </div>
                   
                   {/* ========== УПРАВЛЕНИЕ АДМИНАМИ ========== */}
-                  {isSuperAdmin && (
+                  {/* Скрываем кнопку снять админа для суперадмина когда он смотрит на себя */}
+                  {isSuperAdmin && !(student.is_super_admin && user && student.id === user.student_id) && (
                     <button onClick={() => handleToggleAdmin(student.id, !student.is_admin)}
                     className={`w-full px-4 py-2 text-sm font-bold text-white mb-2 rounded-none ${
                       student.is_admin 
@@ -535,35 +536,35 @@ export default function AdminPanel() {
 
                   {/* ========== ОПАСНЫЕ ДЕЙСТВИЯ ========== */}
                   <div className="border-t border-red-300 pt-2 mt-2">
-                  {/* ✅ Сбросить регистрацию - СУПЕРАДМИН может сбросить себя */}
-                  {isSuperAdmin && student.is_registered && (!student.is_super_admin || (student.is_super_admin && user && student.id === user.student_id)) && (
+                  {/* ✅ Сбросить регистрацию - Скрываем для суперадмина когда он смотрит на себя */}
+                  {isSuperAdmin && student.is_registered && !student.is_super_admin && (
                       <button
                         onClick={() => openResetConfirm(student)}
                         className="bg-orange-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-orange-600 w-full mb-1"
                         title="Сбросить регистрацию"
                       >
-                        🔄 Сбросить регистрацию
+                        <RefreshIcon className="w-4 h-4 inline-block mr-1" />Сбросить регистрацию
                       </button>
                     )}
 
-                    {/* ✅ Разбанить - СУПЕРАДМИН может разбанить себя */}
-                    {isSuperAdmin && (!student.is_super_admin || (student.is_super_admin && user && student.id === user.student_id)) && student.is_banned && (
+                    {/* ✅ Разбанить - Скрываем для суперадмина когда он смотрит на себя */}
+                    {isSuperAdmin && !student.is_super_admin && student.is_banned && (
                       <button
                         onClick={() => handleUnbanStudent(student.id)}
                         className="w-full px-4 py-2 rounded-lg text-sm font-bold bg-green-500 hover:bg-green-600 text-white mb-1"
                       >
-                        ✅ Разбанить студента
+                        <CheckIcon className="w-4 h-4 inline-block mr-1" />Разбанить студента
                       </button>
                     )}
 
-                    {/* ✅ Забанить - СУПЕРАДМИН может забанить себя */}
-                    {isSuperAdmin && (!student.is_super_admin || (student.is_super_admin && user && student.id === user.student_id)) && !student.is_banned && (
+                    {/* ✅ Забанить - Скрываем для суперадмина когда он смотрит на себя */}
+                    {isSuperAdmin && !student.is_super_admin && !student.is_banned && (
                       <button
                         onClick={() => openBanModal(student)}
                         className="bg-red-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-red-600 w-full mb-1"
                         title="Забанить"
                       >
-                        🚫 Забанить студента
+                        <BanIcon className="w-4 h-4 inline-block mr-1" />Забанить студента
                       </button>
                     )}
 
