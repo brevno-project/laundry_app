@@ -6,7 +6,7 @@ import { sendTelegramNotification } from '@/lib/telegram';
 import { useState, useEffect } from 'react';
 import Timer from './Timer';
 import QueueTimers from './QueueTimers';
-import { CalendarIcon, BellIcon, KeyIcon, WashingIcon, BellOffIcon, WaitIcon, CheckIcon, DeleteIcon, EditIcon, TicketIcon, MoneyIcon, HourglassIcon, CloseIcon } from '@/components/Icons';
+import { CalendarIcon, BellIcon, KeyIcon, WashingIcon, BellOffIcon, WaitIcon, CheckIcon, DeleteIcon, EditIcon, TicketIcon, MoneyIcon, HourglassIcon, CloseIcon, BackIcon, ForwardIcon } from '@/components/Icons';
 import Avatar, { AvatarType } from '@/components/Avatar';
 
 export default function QueueList() {
@@ -215,7 +215,7 @@ const handleSaveEdit = async () => {
               }}
               className="bg-red-500 text-white font-semibold py-2 px-2 rounded-lg hover:bg-red-600 text-xs"
             >
-              ⬅️ Назад
+              <BackIcon className="w-4 h-4" /> Назад
             </button>
     
             {/* Сегодня */}
@@ -240,7 +240,7 @@ const handleSaveEdit = async () => {
               }}
               className="bg-blue-500 text-white font-semibold py-2 px-2 rounded-lg hover:bg-blue-600 text-xs"
             >
-              Вперед ➡️
+              Вперед <ForwardIcon className="w-4 h-4" />
             </button>
           </div>
   
