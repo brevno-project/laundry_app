@@ -198,15 +198,15 @@ export default function StudentActions() {
         {myQueueItem.status === QueueStatus.KEY_ISSUED && (
           <>
             <div className="text-center mb-4">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <KeyIcon className="w-8 h-8 text-white" />
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <KeyIcon className="w-7 h-7 text-white flex-shrink-0" />
                 <h3 className="text-2xl font-bold text-white">Ключ выдан!</h3>
               </div>
               <p className="text-blue-100">Идите к стиралке и нажмите кнопку когда начнете стирать</p>
-              <p className="text-blue-200 text-sm mt-2 flex items-center gap-1">
-                <InfoIcon className="w-4 h-4" />
-                Админ получит уведомление и запустит таймер
-              </p>
+              <div className="flex items-center justify-center gap-1 text-blue-200 text-sm mt-2">
+                <InfoIcon className="w-4 h-4 flex-shrink-0" />
+                <span>Админ получит уведомление и запустит таймер</span>
+              </div>
             </div>
             <button
               onClick={handleStartWashing}
@@ -220,20 +220,17 @@ export default function StudentActions() {
         {myQueueItem.status === QueueStatus.WASHING && (
           <>
             <div className="text-center mb-4">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <WashingIcon className="w-8 h-8 text-white" />
-                <h3 className="text-2xl font-bold text-white">Стирка идет!</h3>
-              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Стирка идет!</h3>
               {/* Таймер стирки */}
               <div className="bg-white/20 rounded-xl py-3 px-6 mb-3">
                 <div className="text-blue-100 text-sm mb-1">Время стирки:</div>
                 <div className="text-4xl font-black text-white">{washingTime}</div>
               </div>
               <p className="text-blue-100 text-sm">Нажмите кнопку когда закончите стирать</p>
-              <p className="text-blue-200 text-sm mt-2 flex items-center gap-1">
-                <InfoIcon className="w-4 h-4" />
-                Админ получит уведомление
-              </p>
+              <div className="flex items-center justify-center gap-1 text-blue-200 text-sm mt-2">
+                <InfoIcon className="w-4 h-4 flex-shrink-0" />
+                <span>Админ получит уведомление</span>
+              </div>
             </div>
             <button
               onClick={handleFinishWashing}

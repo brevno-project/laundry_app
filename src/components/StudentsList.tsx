@@ -498,9 +498,10 @@ export default function StudentsList() {
               </button>
               <button
                 onClick={handleSaveEdit}
-                className="flex-1 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700"
+                className="flex-1 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2"
               >
-                ✅ Сохранить
+                <CheckIcon className="w-5 h-5" />
+                Сохранить
               </button>
             </div>
           </div>
