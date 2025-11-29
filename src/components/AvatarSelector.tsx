@@ -7,16 +7,17 @@ import { supabase as supabaseClient } from '@/lib/supabase';
 
 export default function AvatarSelector() {
   const { user, loadStudents, setUser, fetchQueue } = useLaundry();
-  // ✅ Используем локальное состояние только для выбора, а отображаем из user
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // ✅ Всегда используем аватар напрямую из user, без локального состояния
   const currentAvatar = (user?.avatar_type as AvatarType) || 'default';
   const [selectedAvatar, setSelectedAvatar] = useState<AvatarType>(currentAvatar);
-  const [isSaving, setIsSaving] = useState(false);
 
-  // ✅ Синхронизируем selectedAvatar с user.avatar_type при изменении
+  // ✅ Синхронизируем selectedAvatar с user.avatar_type при каждом изменении
   useEffect(() => {
-    if (user?.avatar_type) {
-      const avatarType = user.avatar_type as AvatarType;
-      console.log('👤 Syncing avatar from user:', avatarType);
+    const avatarType = (user?.avatar_type as AvatarType) || 'default';
+    console.log('👤 Syncing avatar from user:', avatarType, 'current selected:', selectedAvatar);
+    if (avatarType !== selectedAvatar) {
       setSelectedAvatar(avatarType);
     }
   }, [user?.avatar_type]);
@@ -70,10 +71,10 @@ export default function AvatarSelector() {
       
       {/* Текущий аватар */}
       <div className="flex items-center gap-4 mb-4 p-3 bg-gray-50 rounded-lg">
-        <Avatar type={selectedAvatar} className="w-16 h-16" />
+        <Avatar type={currentAvatar} className="w-16 h-16" />
         <div>
           <p className="text-sm text-gray-600">Текущий аватар</p>
-          <p className="font-semibold text-gray-900">{AVATAR_OPTIONS.find(opt => opt.value === selectedAvatar)?.label}</p>
+          <p className="font-semibold text-gray-900">{AVATAR_OPTIONS.find(opt => opt.value === currentAvatar)?.label}</p>
         </div>
       </div>
 
@@ -84,7 +85,7 @@ export default function AvatarSelector() {
             key={option.value}
             onClick={() => setSelectedAvatar(option.value)}
             className={`p-2 rounded-lg transition-all ${
-              selectedAvatar === option.value
+              currentAvatar === option.value
                 ? 'bg-blue-100 border-2 border-blue-500 scale-110'
                 : 'bg-gray-50 border-2 border-transparent hover:border-gray-300 hover:scale-105'
             }`}

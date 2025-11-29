@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getLaundryTimeStatus, TimeStatus } from '@/lib/timeHelper';
-import { EditIcon } from '@/components/Icons';
+import { EditIcon, ClockIcon, WarningIcon } from '@/components/Icons';
 
 export default function TimeBanner() {
   const [timeStatus, setTimeStatus] = useState<TimeStatus>(getLaundryTimeStatus());
@@ -31,11 +31,16 @@ export default function TimeBanner() {
     }
   };
 
+  // Удаляем emoji из сообщения и добавляем SVG иконки
+  const messageWithoutEmoji = timeStatus.message.replace(/[⏰⚠️]/g, '').trim();
+  const Icon = timeStatus.isClosed ? ClockIcon : WarningIcon;
+
   return (
     <div className={`${getBannerStyle()} border-2 p-4 rounded-lg shadow-lg mb-6`}>
-      <div className="flex items-center justify-center">
+      <div className="flex items-center justify-center gap-2">
+        <Icon className="w-6 h-6 text-white" />
         <p className="text-white font-bold text-lg text-center">
-          {timeStatus.message}
+          {messageWithoutEmoji}
         </p>
       </div>
       {timeStatus.isClosed && (
