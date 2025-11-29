@@ -7,31 +7,19 @@ import { supabase as supabaseClient } from '@/lib/supabase';
 
 export default function AvatarSelector() {
   const { user, loadStudents, setUser, fetchQueue } = useLaundry();
-  // ✅ Не инициализируем сразу, ждем загрузки user
-  const [selectedAvatar, setSelectedAvatar] = useState<AvatarType>('default');
+  // ✅ Используем локальное состояние только для выбора, а отображаем из user
+  const currentAvatar = (user?.avatar_type as AvatarType) || 'default';
+  const [selectedAvatar, setSelectedAvatar] = useState<AvatarType>(currentAvatar);
   const [isSaving, setIsSaving] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
 
-  // ✅ Инициализируем selectedAvatar когда user загрузился
+  // ✅ Синхронизируем selectedAvatar с user.avatar_type при изменении
   useEffect(() => {
-    if (user && !isInitialized) {
-      const avatarType = (user.avatar_type as AvatarType) || 'default';
-      console.log('👤 Initializing avatar from user:', avatarType);
-      setSelectedAvatar(avatarType);
-      setIsInitialized(true);
-    }
-  }, [user, isInitialized]);
-
-  // ✅ Обновляем selectedAvatar при изменении avatar_type
-  useEffect(() => {
-    if (user?.avatar_type && isInitialized) {
+    if (user?.avatar_type) {
       const avatarType = user.avatar_type as AvatarType;
-      if (avatarType !== selectedAvatar) {
-        console.log('🔄 Updating avatar from user change:', avatarType);
-        setSelectedAvatar(avatarType);
-      }
+      console.log('👤 Syncing avatar from user:', avatarType);
+      setSelectedAvatar(avatarType);
     }
-  }, [user?.avatar_type, isInitialized]);
+  }, [user?.avatar_type]);
 
   const handleSave = async () => {
     if (!user) return;

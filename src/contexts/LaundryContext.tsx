@@ -1909,6 +1909,22 @@ const startWashing = async (queueItemId: string) => {
 
     console.log('✅ Student updated:', studentId, data);
     await loadStudents();
+    // ✅ Если обновленный студент - это текущий пользователь, обновляем его данные
+    if (user && user.student_id === studentId && data && data[0]) {
+      const updatedStudent = data[0];
+      const updatedUser = {
+        ...user,
+        full_name: updatedStudent.full_name,
+        room: updatedStudent.room,
+        avatar_type: updatedStudent.avatar_type,
+        can_view_students: updatedStudent.can_view_students
+      };
+      console.log('🔄 Updating current user data:', updatedUser);
+      setUser(updatedUser);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+    }
   } catch (error: any) {
     console.error('❌ Error updating student:', error);
     throw error;

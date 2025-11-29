@@ -1,6 +1,7 @@
 'use client';
 
 import { QueueStatus } from '@/types';
+import { MoneyIcon } from '@/components/Icons';
 
 interface FullScreenAlertProps {
   status: QueueStatus;
@@ -44,8 +45,8 @@ export default function FullScreenAlert({ status, needsToReturnKey, adminRoom, o
             {/* ✅ ИСПРАВЛЕНО: Используем adminRoom */}
             Подойдите в {adminRoom || 'A501'} за ключом
           </p>
-          <p className="text-2xl font-semibold text-yellow-700">
-            💵 Возьмите деньги/купон
+          <p className="text-2xl font-semibold text-yellow-700 flex items-center justify-center gap-2">
+            <MoneyIcon className="w-8 h-8" />Возьмите деньги/купон
           </p>
         </div>
       </div>
