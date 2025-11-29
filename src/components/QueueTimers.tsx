@@ -108,9 +108,9 @@ export default function QueueTimers({ item }: QueueTimersProps) {
 
   // Цвета для индикации
   const colorClasses = {
-    green: 'bg-green-100 text-green-800 border-green-300',
-    yellow: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    red: 'bg-red-100 text-red-800 border-red-300 animate-pulse'
+    green: 'bg-green-50 text-green-900 border-green-400 shadow-green-200',
+    yellow: 'bg-yellow-50 text-yellow-900 border-yellow-400 shadow-yellow-200',
+    red: 'bg-red-50 text-red-900 border-red-400 shadow-red-200 animate-pulse'
   };
 
   if (![QueueStatus.READY, QueueStatus.KEY_ISSUED, QueueStatus.WASHING, QueueStatus.WASHING_FINISHED, QueueStatus.RETURNING_KEY].includes(item.status as QueueStatus)) {
@@ -120,10 +120,12 @@ export default function QueueTimers({ item }: QueueTimersProps) {
   const { text, Icon } = getStatusInfo();
 
   return (
-    <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-full border-2 shadow-sm ${colorClasses[color as keyof typeof colorClasses]} font-semibold text-sm`}>
-      <Icon className="w-4 h-4 flex-shrink-0" />
-      <span className="text-xs">{text}:</span>
-      <span className="font-bold">{formatTime(elapsed)}</span>
+    <div className={`flex items-center justify-between gap-3 px-4 py-3 rounded-lg border-2 shadow-md ${colorClasses[color as keyof typeof colorClasses]} font-semibold w-full`}>
+      <div className="flex items-center gap-2">
+        <Icon className="w-5 h-5 flex-shrink-0" />
+        <span className="text-sm">{text}</span>
+      </div>
+      <span className="text-lg font-bold font-mono">{formatTime(elapsed)}</span>
     </div>
   );
 }

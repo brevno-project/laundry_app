@@ -262,6 +262,15 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('laundryIsNewUser');
       } else {
         console.log('✅ Restored user validated successfully');
+        // ✅ Синхронизируем avatar_type из БД
+        if (userExists.avatar_type && userExists.avatar_type !== user.avatar_type) {
+          console.log('🔄 Syncing avatar_type from DB:', userExists.avatar_type, 'current:', user.avatar_type);
+          const updatedUser = { ...user, avatar_type: userExists.avatar_type };
+          setUser(updatedUser);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+          }
+        }
       }
     }
   }, [user, students]);
