@@ -147,8 +147,11 @@ export const MoneyIcon = ({ className = "w-5 h-5" }: IconProps) => (
 
 // Новая иконка стиральной машины для заголовка (отличается от WashingIcon)
 export const LaundryIcon = ({ className = "w-5 h-5" }: IconProps) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M9.17 16.83c1.56 1.56 4.1 1.56 5.66 0 1.56-1.56 1.56-4.1 0-5.66l-5.66 5.66zM20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h2v2H6V4zm0 4h2v2H6V8zm0 12c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm6 0c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm6-12h2v2h-2V8zm0-4h2v2h-2V4z"/>
+  <svg className={className} fill="currentColor" viewBox="0 0 48 48">
+    <g data-name="Laundry a shirt">
+      <path d="M5.55 4.17A1 1 0 1 0 5.19 6a1 1 0 0 0 .36-1.83zM8.29 4.29a1 1 0 0 0 1.42 1.42 1 1 0 0 0-1.42-1.42zM12.62 4.08a1 1 0 1 0 1.09.21 1 1 0 0 0-1.09-.21zM33 4H23a1 1 0 0 0 0 2h10a1 1 0 0 0 0-2z"/>
+      <path d="M47.22 35A3 3 0 0 0 45 30h-7V4a4 4 0 0 0-4-4H4a4 4 0 0 0-4 4v36a4 4 0 0 0 4 4h18.1a5 5 0 0 0 4.9 4h18a3 3 0 0 0 2.22-5 3 3 0 0 0 0-4 3 3 0 0 0 0-4zM45 34H27a1 1 0 0 0 0 2h18a1 1 0 0 1 0 2H27a3 3 0 0 1 0-6h18a1 1 0 0 1 0 2zm-15.77-4h-2.18a9 9 0 1 0-5 4.45 3.93 3.93 0 0 0 .2 2.06 11 11 0 1 1 7-6.51zM12 25.4c1.42-.27 1.59-.9 3-.9 1.59 0 1.82 1 4 1s2.39-1 4-1c1.36 0 1.55.63 3 .9a7 7 0 1 1-14 0zm.63-2.35a7 7 0 0 1 12.68 0 5.17 5.17 0 0 0-4.78.05 3.17 3.17 0 0 1-3.1 0 5.19 5.19 0 0 0-4.77-.05zM2 4a2 2 0 0 1 2-2h30a2 2 0 0 1 2 2v4H2zm0 36V10h34v20h-4.63a13 13 0 1 0-8.12 8.27A4.89 4.89 0 0 0 24 39a5 5 0 0 0-1.93 3H4a2 2 0 0 1-2-2zm43 6H27a3 3 0 0 1 0-6h18a1 1 0 0 1 0 2H27a1 1 0 0 0 0 2h18a1 1 0 0 1 0 2z"/>
+    </g>
   </svg>
 );
 
@@ -167,5 +170,11 @@ export const BanIcon = ({ className = "w-5 h-5" }: IconProps) => (
 export const WarningIcon = ({ className = "w-5 h-5" }: IconProps) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24">
     <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+  </svg>
+);
+
+export const EyeIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
   </svg>
 );
