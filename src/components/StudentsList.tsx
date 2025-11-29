@@ -179,8 +179,8 @@ export default function StudentsList() {
 
           <td className="p-3">
             <div className="flex gap-2">
-              {/* Админы могут редактировать всех кроме суперадминов */}
-              {isAdmin && !student.is_super_admin && (
+              {/* Суперадмин может редактировать себя, обычный админ не может редактировать суперадмина */}
+              {isAdmin && (!student.is_super_admin || (student.is_super_admin && user && student.id === user.student_id)) && (
                 <button
                   onClick={() => openEditModal(student)}
                   className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
@@ -188,6 +188,7 @@ export default function StudentsList() {
                   <EditIcon className="w-4 h-4 inline-block mr-1" />Редактировать
                 </button>
               )}
+              {/* Суперадмина нельзя удалить */}
               {isAdmin && !student.is_super_admin && (
                 <button
                   onClick={() => setDeletingStudent(student)}
@@ -290,8 +291,8 @@ export default function StudentsList() {
                         {isAdmin && (
                           <td className="p-1">
                             <div className="flex gap-1">
-                              {/* Админы могут редактировать всех кроме суперадминов */}
-                              {!student.is_super_admin && (
+                              {/* Суперадмин может редактировать себя */}
+                              {(!student.is_super_admin || (student.is_super_admin && user && student.id === user.student_id)) && (
                                 <button
                                   onClick={() => openEditModal(student)}
                                   className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
@@ -299,6 +300,7 @@ export default function StudentsList() {
                                   <EditIcon className="w-3 h-3" />
                                 </button>
                               )}
+                              {/* Суперадмина нельзя удалить */}
                               {!student.is_super_admin && (
                                 <button
                                   onClick={() => setDeletingStudent(student)}

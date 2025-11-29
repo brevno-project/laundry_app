@@ -10,13 +10,16 @@ export default function AvatarSelector() {
   const [selectedAvatar, setSelectedAvatar] = useState<AvatarType>('default');
   const [isSaving, setIsSaving] = useState(false);
 
-  // ✅ ВСЕГДА синхронизируем selectedAvatar с user.avatar_type
+  // ✅ Синхронизируем selectedAvatar с user.avatar_type ТОЛЬКО при изменении avatar_type
   useEffect(() => {
-    if (user) {
-      const avatarType = (user.avatar_type as AvatarType) || 'default';
-      setSelectedAvatar(avatarType);
+    if (user && user.avatar_type) {
+      const avatarType = user.avatar_type as AvatarType;
+      // Обновляем только если аватар реально изменился
+      if (avatarType !== selectedAvatar) {
+        setSelectedAvatar(avatarType);
+      }
     }
-  }, [user, user?.avatar_type]);
+  }, [user?.avatar_type]); // Следим только за avatar_type
 
   const handleSave = async () => {
     if (!user) return;

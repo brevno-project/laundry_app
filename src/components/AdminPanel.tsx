@@ -818,9 +818,9 @@ export default function AdminPanel() {
                   onChange={(e) => setQueuePaymentType(e.target.value)}
                   className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
                 >
-                  <option value="money"> Деньги</option>
-                  <option value="coupon"> Купон</option>
-                  <option value="both"> Деньги+Купон</option>
+                  <option value="money">💵 Деньги</option>
+                  <option value="coupon">🎫 Купон</option>
+                  <option value="both">🎫 + 💵 Деньги+Купон</option>
                 </select>
               </div>
               

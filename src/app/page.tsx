@@ -12,7 +12,7 @@ import TelegramSetup from '@/components/TelegramSetup';
 import HistoryList from '@/components/HistoryList';
 import StudentsList from '@/components/StudentsList';
 import GlobalAlert from '@/components/GlobalAlert';
-import { HomeIcon, HistoryIcon, PeopleIcon, SettingsIcon, WashingIcon, DoorIcon } from '@/components/Icons';
+import { ListIcon, HistoryIcon, PeopleIcon, SettingsIcon, WashingIcon, DoorIcon } from '@/components/Icons';
 import TelegramBanner from '@/components/TelegramBanner';
 import StudentActions from '@/components/StudentActions';
 import AvatarSelector from '@/components/AvatarSelector';
@@ -160,7 +160,7 @@ export default function Home() {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              <HomeIcon className="w-5 h-5 inline-block mr-2" />Главная
+              <ListIcon className="w-5 h-5 inline-block mr-2" />Главная
             </button>
               <button
                 onClick={() => handleTabChange('history')}
@@ -368,7 +368,7 @@ export default function Home() {
         {activeTab === 'settings' && user && (
           <div className="w-full space-y-4 px-3">
             <AvatarSelector />
-            {!isAdmin && <TelegramSetup />}
+            <TelegramSetup />
             
             <div className="bg-white p-4 rounded-lg shadow-sm">
               <h3 className="font-bold text-lg text-gray-800 mb-3">Аккаунт</h3>
