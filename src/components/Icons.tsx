@@ -185,6 +185,24 @@ export const HourglassIcon = ({ className = "w-5 h-5" }: IconProps) => (
   </svg>
 );
 
+export const InfoIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+  </svg>
+);
+
+export const BackIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+    <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+  </svg>
+);
+
+export const ForwardIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+    <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
+  </svg>
+);
+
 export const PauseIcon = ({ className = "w-5 h-5" }: IconProps) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24">
     <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>

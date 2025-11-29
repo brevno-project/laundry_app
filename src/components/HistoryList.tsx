@@ -9,12 +9,18 @@ export default function HistoryList() {
   const { history } = useLaundry();
 
   // Функция для определения цвета таймера в зависимости от времени
-  const getTimerColor = (startTime: string, endTime: string | null | undefined, redZoneMinutes: number): 'yellow' | 'blue' | 'green' | 'orange' => {
+  // Зеленая зона: 0 - yellowZone
+  // Желтая зона: yellowZone - redZone
+  // Красная зона: > redZone
+  const getTimerColor = (startTime: string, endTime: string | null | undefined, yellowZoneMinutes: number, redZoneMinutes: number): 'yellow' | 'blue' | 'green' | 'orange' => {
     if (!endTime) return 'green';
     const start = new Date(startTime).getTime();
     const end = new Date(endTime).getTime();
     const elapsedMinutes = (end - start) / 60000;
-    return elapsedMinutes > redZoneMinutes ? 'orange' : 'green';
+    
+    if (elapsedMinutes > redZoneMinutes) return 'orange'; // Красная зона
+    if (elapsedMinutes > yellowZoneMinutes) return 'yellow'; // Желтая зона
+    return 'green'; // Зеленая зона
   };
 
   if (history.length === 0) {
@@ -44,7 +50,7 @@ export default function HistoryList() {
                   startTime={item.ready_at} 
                   endTime={item.key_issued_at}
                   label="За ключом" 
-                  color={getTimerColor(item.ready_at, item.key_issued_at, 15)}
+                  color={getTimerColor(item.ready_at, item.key_issued_at, 5, 15)}
                 />
               )}
               {item.key_issued_at && (
@@ -52,7 +58,7 @@ export default function HistoryList() {
                   startTime={item.key_issued_at} 
                   endTime={item.washing_started_at}
                   label="С ключом" 
-                  color={getTimerColor(item.key_issued_at, item.washing_started_at, 5)}
+                  color={getTimerColor(item.key_issued_at, item.washing_started_at, 5, 15)}
                 />
               )}
               {item.washing_started_at && (
@@ -60,7 +66,7 @@ export default function HistoryList() {
                   startTime={item.washing_started_at} 
                   endTime={item.return_requested_at || item.finished_at}
                   label="Стирка" 
-                  color={getTimerColor(item.washing_started_at, item.return_requested_at || item.finished_at, 120)}
+                  color={getTimerColor(item.washing_started_at, item.return_requested_at || item.finished_at, 80, 120)}
                 />
               )}
               {item.return_requested_at && (
@@ -68,7 +74,7 @@ export default function HistoryList() {
                   startTime={item.return_requested_at} 
                   endTime={item.finished_at}
                   label="Возврат ключа" 
-                  color={getTimerColor(item.return_requested_at, item.finished_at, 5)}
+                  color={getTimerColor(item.return_requested_at, item.finished_at, 5, 15)}
                 />
               )}
             </div>

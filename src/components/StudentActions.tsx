@@ -3,7 +3,7 @@
 import { useLaundry } from '@/contexts/LaundryContext';
 import { QueueStatus } from '@/types';
 import { useEffect, useState } from 'react';
-import { KeyIcon, WashingIcon, CheckIcon } from '@/components/Icons';
+import { KeyIcon, WashingIcon, CheckIcon, InfoIcon } from '@/components/Icons';
 
 /**
  * Кнопки действий для студента
@@ -203,16 +203,16 @@ export default function StudentActions() {
                 <h3 className="text-2xl font-bold text-white">Ключ выдан!</h3>
               </div>
               <p className="text-blue-100">Идите к стиралке и нажмите кнопку когда начнете стирать</p>
-              <p className="text-blue-200 text-sm mt-2">ℹ️ Админ получит уведомление и запустит таймер</p>
+              <p className="text-blue-200 text-sm mt-2 flex items-center gap-1">
+                <InfoIcon className="w-4 h-4" />
+                Админ получит уведомление и запустит таймер
+              </p>
             </div>
             <button
               onClick={handleStartWashing}
               className="w-full bg-white text-blue-700 font-bold py-4 px-6 rounded-xl text-xl hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              <div className="flex items-center justify-center gap-2">
-                <WashingIcon className="w-5 h-5" />
-                Начал стирать
-              </div>
+              Начал стирать
             </button>
           </>
         )}
@@ -230,7 +230,10 @@ export default function StudentActions() {
                 <div className="text-4xl font-black text-white">{washingTime}</div>
               </div>
               <p className="text-blue-100 text-sm">Нажмите кнопку когда закончите стирать</p>
-              <p className="text-blue-200 text-sm mt-2">ℹ️ Админ получит уведомление</p>
+              <p className="text-blue-200 text-sm mt-2 flex items-center gap-1">
+                <InfoIcon className="w-4 h-4" />
+                Админ получит уведомление
+              </p>
             </div>
             <button
               onClick={handleFinishWashing}
