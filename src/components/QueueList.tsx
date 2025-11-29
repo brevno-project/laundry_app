@@ -774,9 +774,9 @@ const handleSaveEdit = async () => {
             onChange={(e) => setEditPaymentType(e.target.value)}
             className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
           >
-            <option value="money">💵 Деньги</option>
-            <option value="coupon">🎫 Купон</option>
-            <option value="both">💵+🎫 Оба</option>
+            <option value="money">Деньги</option>
+            <option value="coupon">Купон</option>
+            <option value="both">Купон+Деньги</option>
           </select>
         </div>
       </div>
