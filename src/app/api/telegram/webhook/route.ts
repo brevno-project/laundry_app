@@ -45,6 +45,24 @@ export async function POST(request: NextRequest) {
           body: JSON.stringify({ chat_id: chatId, text: helpMessage })
         });
       }
+
+      if (text === '/chatid') {
+        const chatIdMessage = 
+          `🆔 Ваш Chat ID: \`${chatId}\`\n\n` +
+          `📋 Скопируйте этот номер и вставьте в настройки приложения Laundry.\n\n` +
+          `⚠️ Не делитесь Chat ID с посторонними!\n\n` +
+          `💡 После вставки Chat ID включите уведомления от бота в Telegram.`;
+        
+        await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            chat_id: chatId, 
+            text: chatIdMessage,
+            parse_mode: 'Markdown'
+          })
+        });
+      }
     }
     
     return NextResponse.json({ ok: true });
