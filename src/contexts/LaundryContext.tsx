@@ -136,111 +136,101 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
   // Load data and setup subscriptions on mount
   useEffect(() => {
-    // Initial data fetch - only load from Supabase if configured, otherwise use localStorage fallback
-    if (isSupabaseConfigured) {
-      loadStudents(); // Load students list
-      fetchQueue();
-      fetchMachineState();
-      fetchHistory();
-    } else {
+    if (!isSupabaseConfigured) {
+      // Local fallback
       setQueue(get_local_queue());
       setMachineState(get_local_machine_state());
       setHistory(get_local_history());
-      loadStudents(); // This will handle local fallback
-    }
-       
-    setIsLoading(false);
-    
-    // Only set up Supabase subscriptions if properly configured
-    if (isSupabaseConfigured) {
-      try {
-        if (!supabase) {
-          return;
-        }
-        
-        // Subscribe to queue changes
-        const queueSubscription = supabase
-          .channel('queue-changes')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'queue' }, payload => {
-            
-            fetchQueue();
-          })
-          .subscribe((status) => {
-          });
-        
-        // Subscribe to machine state changes
-        const machineStateSubscription = supabase
-          .channel('public:machine_state')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'machine_state' }, payload => {
-            fetchMachineState();
-          })
-          .subscribe((status) => {            
-          });
-        
-        // Subscribe to history changes
-        const historySubscription = supabase
-          .channel('public:history')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'history' }, payload => {
-            fetchHistory();
-          })
-          .subscribe((status) => {
-          });
-        
-        // Subscribe to machine state updates
-        const machineStateChannel = supabase
-          .channel('machine_state_updates')
-          .on('postgres_changes', {
-            event: '*',
-            schema: 'public',
-            table: 'machine_state'
-          }, (payload) => {
-            setMachineState(payload.new as MachineState);
-          })
-          .subscribe();
-
-        return () => {
-          queueSubscription.unsubscribe();
-          machineStateSubscription.unsubscribe();
-          historySubscription.unsubscribe();
-          machineStateChannel.unsubscribe();
-        };
-      } catch (error) {
-        // Continue without real-time updates
-      }
-    }
-  }, [isSupabaseConfigured, supabase]);
-
-  // ✅ КРИТИЧНЫЙ FIX: Fallback таймаут для isLoading - предотвращает вечный loading screen
-  useEffect(() => {
-    const loadingTimeout = setTimeout(() => {
+      loadStudents();
       setIsLoading(false);
-    }, 3000); // Уменьшаем до 3 секунд для более быстрого показа UI
+      return;
+    }
 
-    return () => clearTimeout(loadingTimeout);
-  }, []);
+    if (!supabase) {
+      setIsLoading(false);
+      return;
+    }
 
-  // ✅ КРИТИЧНЫЙ FIX: Валидация восстановленного user - если user не найден в students, сбросить его
-  useEffect(() => {
-    if (user && students.length > 0) {
-      const userExists = students.find(s => s.id === user.student_id);
-      if (!userExists) {
-        setUser(null);
-        localStorage.removeItem('laundryUser');
-        localStorage.removeItem('laundryIsAdmin');
-        localStorage.removeItem('laundryIsSuperAdmin');
-        localStorage.removeItem('laundryIsNewUser');
-      } else {
-        // ✅ Синхронизируем avatar_type из БД
-        if (userExists.avatar_type && userExists.avatar_type !== user.avatar_type) {
-          const updatedUser = { ...user, avatar_type: userExists.avatar_type };
-          setUser(updatedUser);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('user', JSON.stringify(updatedUser));
+    // --- INITIAL FETCH ---
+    loadStudents();
+    fetchQueue();
+    fetchMachineState();
+    fetchHistory();
+    setIsLoading(false);
+
+    // --- SUBSCRIPTIONS ---
+    const subs: ReturnType<typeof supabase.channel>[] = [];
+
+    // Queue updates
+    const queueSub = supabase
+      .channel("queue-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "queue" }, fetchQueue)
+      .subscribe();
+    subs.push(queueSub);
+
+    // Machine state
+    const machineStateSub = supabase
+      .channel("machine-state-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "machine_state" }, fetchMachineState)
+      .subscribe();
+    subs.push(machineStateSub);
+
+    // History
+    const historySub = supabase
+      .channel("history-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "history" }, fetchHistory)
+      .subscribe();
+    subs.push(historySub);
+
+    // Machine live push updates
+    const machineStateLiveSub = supabase
+      .channel("machine_state_live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "machine_state" },
+        (payload) => {
+          setMachineState(payload.new as MachineState);
+        }
+      )
+      .subscribe();
+    subs.push(machineStateLiveSub);
+
+    // --- TELEGRAM REAL-TIME (NEW & CORRECT) ---
+    if (user?.student_id) {
+      const telegramSub = supabase
+        .channel("students-telegram-updates")
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "students",
+            filter: `id=eq.${user.student_id}`,
+          },
+          (payload) => {
+            const newChatId = payload.new.telegram_chat_id;
+
+          if (newChatId && !user.telegram_chat_id) {
+            const updatedUser = { ...user, telegram_chat_id: newChatId };
+            setUser(updatedUser);
+
+            if (typeof window !== "undefined") {
+              localStorage.setItem("laundryUser", JSON.stringify(updatedUser));
+            }
           }
         }
-      }
-    }
-  }, [user, students]);
+      )
+      .subscribe();
+
+    subs.push(telegramSub);
+  }
+
+  // --- CLEANUP ---
+  return () => {
+    subs.forEach((s) => s.unsubscribe());
+  };
+}, [isSupabaseConfigured, supabase, user?.student_id]);
+
 
   // ✅ ДОБАВЛЕНО: Финальное логирование о всех исправлениях
   useEffect(() => {
@@ -281,6 +271,9 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       setStudents([]);
     }
   };
+
+ 
+
 
     // ========================================
 // ИСПРАВЛЕННАЯ ФУНКЦИЯ РЕГИСТРАЦИИ
