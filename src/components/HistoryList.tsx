@@ -47,7 +47,7 @@ export default function HistoryList() {
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
               <h3 className="font-bold text-gray-900 text-lg">{item.full_name}</h3>
               {item.room && (
-                <span className="text-sm font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200">
+                <span className="text-sm font-bold text-gray-700 bg-gray-50 px-3 py-1.5 rounded-lg border-2 border-gray-300">
                   {item.room}
                 </span>
               )}
@@ -90,13 +90,13 @@ export default function HistoryList() {
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 text-sm">
-              <div className="flex flex-col bg-gradient-to-br from-indigo-50 to-indigo-100 p-3 rounded-lg border border-indigo-200">
-                <span className="font-semibold text-indigo-900 text-xs uppercase tracking-wide mb-1">Начало</span>
-                <span className="text-indigo-800 font-medium">{formatDate(item.started_at)}</span>
+              <div className="flex flex-col bg-white p-3 rounded-lg border-2 border-gray-300">
+                <span className="font-semibold text-gray-600 text-xs uppercase tracking-wide mb-1">Начало</span>
+                <span className="text-gray-900 font-medium">{formatDate(item.started_at)}</span>
               </div>
-              <div className="flex flex-col bg-gradient-to-br from-purple-50 to-purple-100 p-3 rounded-lg border border-purple-200">
-                <span className="font-semibold text-purple-900 text-xs uppercase tracking-wide mb-1">Завершение</span>
-                <span className="text-purple-800 font-medium">{formatDate(item.finished_at)}</span>
+              <div className="flex flex-col bg-white p-3 rounded-lg border-2 border-gray-400">
+                <span className="font-semibold text-gray-600 text-xs uppercase tracking-wide mb-1">Завершение</span>
+                <span className="text-gray-900 font-medium">{formatDate(item.finished_at)}</span>
               </div>
             </div>
           </div>
