@@ -5,10 +5,7 @@ const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
   {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
+    auth: { autoRefreshToken: false, persistSession: false },
   }
 );
 
@@ -26,26 +23,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Проверка прав админа
-    const { data: adminData } = await supabaseAdmin
+    // Проверка прав (students.id)
+    const { data: adminData, error: adminError } = await supabaseAdmin
       .from("students")
       .select("is_admin, is_super_admin")
       .eq("id", adminStudentId)
       .single();
 
+    if (adminError) {
+      console.log("❌ Admin lookup failed:", adminError);
+      return NextResponse.json(
+        { error: "Admin lookup failed" },
+        { status: 500 }
+      );
+    }
+
     if (!adminData || (!adminData.is_admin && !adminData.is_super_admin)) {
-      return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Insufficient permissions" },
+        { status: 403 }
+      );
     }
 
     console.log("🔍 Admin verified");
 
-    // --- CRITICAL FIX ---
-    // Проверяем, существует ли пользователь в auth
-    console.log("🔍 Checking if auth user exists...");
-
+    // Проверяем наличие user в auth
     const { data: usersList } = await supabaseAdmin.auth.admin.listUsers();
-
-    const exists = usersList?.users?.some(u => u.id === userId);
+    const exists = usersList?.users?.some((u) => u.id === userId);
 
     console.log("🔍 Exists:", exists);
 
@@ -54,7 +58,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, skipped: true });
     }
 
-    // Удаление auth user
+    // Удаляем
     console.log("🗑️ Deleting auth user…");
 
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
@@ -67,10 +71,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("✅ USER DELETED SUCCESSFULLY");
-
     return NextResponse.json({ success: true });
-
   } catch (err: any) {
     console.log("💥 FATAL ERROR:", err);
     return NextResponse.json(
