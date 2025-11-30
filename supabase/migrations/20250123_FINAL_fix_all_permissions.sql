@@ -271,6 +271,23 @@ CREATE POLICY queue_delete_admin ON queue
     )
   );
 
+-- UPDATE: студенты могут забирать незанятые записи (user_id IS NULL)
+CREATE POLICY queue_claim_unowned_by_student ON queue
+  FOR UPDATE
+  TO authenticated
+  USING (
+    user_id IS NULL
+    AND EXISTS (
+      SELECT 1
+      FROM public.students s
+      WHERE s.id = queue.student_id
+        AND s.user_id = auth.uid()
+    )
+  )
+  WITH CHECK (
+    user_id = auth.uid()
+  );
+
 -- ========================================
 -- ШАГ 5: ПОЛИТИКИ ДЛЯ MACHINE_STATE
 -- ========================================
