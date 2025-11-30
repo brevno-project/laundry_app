@@ -58,7 +58,17 @@ export async function POST(request: NextRequest) {
           body: JSON.stringify({ 
             chat_id: chatId, 
             text: chatIdMessage,
-            parse_mode: 'Markdown'
+            parse_mode: 'Markdown',
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: '📋 Скопировать Chat ID',
+                    callback_data: `copy_chatid_${chatId}`
+                  }
+                ]
+              ]
+            }
           })
         });
       }
