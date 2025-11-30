@@ -92,6 +92,7 @@ export enum MachineStatus {
 }
 
 export type MachineState = {
+  id?: number;
   status: MachineStatus;
   current_queue_item_id?: string;
   started_at?: string;
