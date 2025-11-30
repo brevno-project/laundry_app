@@ -42,12 +42,12 @@ export default function HistoryList() {
         {history.map((item) => (
           <div 
             key={item.id} 
-            className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-gray-300 transition-all duration-300"
+            className="bg-white border border-gray-200 rounded-lg p-5 hover:border-blue-400 hover:shadow-sm transition-all duration-200"
           >
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="font-bold text-gray-900 text-xl">{item.full_name}</h3>
+            <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
+              <h3 className="font-semibold text-gray-900 text-lg">{item.full_name}</h3>
               {item.room && (
-                <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-gray-900 text-white shadow-sm">
+                <span className="inline-flex items-center px-3 py-1 text-xs font-semibold tracking-wide uppercase bg-slate-100 text-slate-700 border border-slate-200">
                   {item.room}
                 </span>
               )}
@@ -89,14 +89,20 @@ export default function HistoryList() {
               )}
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
-                <div className="text-xs font-medium text-blue-600 uppercase tracking-wider mb-2">Начало</div>
-                <div className="text-base font-semibold text-gray-900">{formatDate(item.started_at)}</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+              <div className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 p-4 border border-blue-600 shadow-sm">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+                <div className="relative">
+                  <div className="text-xs font-medium text-blue-100 uppercase tracking-wider mb-1.5">Начало</div>
+                  <div className="text-sm font-semibold text-white">{formatDate(item.started_at)}</div>
+                </div>
               </div>
-              <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
-                <div className="text-xs font-medium text-green-600 uppercase tracking-wider mb-2">Завершение</div>
-                <div className="text-base font-semibold text-gray-900">{formatDate(item.finished_at)}</div>
+              <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-emerald-600 p-4 border border-emerald-600 shadow-sm">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+                <div className="relative">
+                  <div className="text-xs font-medium text-emerald-100 uppercase tracking-wider mb-1.5">Завершение</div>
+                  <div className="text-sm font-semibold text-white">{formatDate(item.finished_at)}</div>
+                </div>
               </div>
             </div>
           </div>
