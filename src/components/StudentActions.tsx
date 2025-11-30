@@ -212,7 +212,7 @@ export default function StudentActions() {
               onClick={handleStartWashing}
               className="w-full bg-white text-blue-700 font-bold py-4 px-6 rounded-xl text-xl hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              Начал стирать
+              Начать стирку
             </button>
           </>
         )}
@@ -238,7 +238,7 @@ export default function StudentActions() {
             >
               <div className="flex items-center justify-center gap-2">
                 <CheckIcon className="w-5 h-5" />
-                Закончил стирать
+                Закончить стирку
               </div>
             </button>
           </>

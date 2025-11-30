@@ -62,7 +62,10 @@ async function getAdminInfo(admin_student_id?: string): Promise<{ full_name: str
 
 // Получить telegram_chat_id студента
 async function getStudentTelegramChatId(student_id?: string): Promise<string | null> {
+  console.log('🔍 getStudentTelegramChatId called with student_id:', student_id);
+  
   if (!supabaseUrl || !supabaseKey || !student_id) {
+    console.error('❌ Missing required data for getStudentTelegramChatId:', { supabaseUrl: !!supabaseUrl, supabaseKey: !!supabaseKey, student_id });
     return null;
   }
   
@@ -70,14 +73,18 @@ async function getStudentTelegramChatId(student_id?: string): Promise<string | n
   
   const { data, error } = await supabase
     .from('students')
-    .select('telegram_chat_id')
+    .select('telegram_chat_id, full_name')
     .eq('id', student_id)
     .single();
   
+  console.log('📊 Student data retrieved:', { student_id, full_name: data?.full_name, telegram_chat_id: data?.telegram_chat_id, error });
+  
   if (error || !data?.telegram_chat_id) {
+    console.log('⚠️ Student has no telegram_chat_id or error occurred');
     return null;
   }
   
+  console.log('✅ Student telegram_chat_id found:', data.telegram_chat_id);
   return data.telegram_chat_id;
 }
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import { Student } from '@/types';
-import { DoorIcon, CheckIcon, CloseIcon } from '@/components/Icons';
+import { DoorIcon, CheckIcon, CloseIcon, BackIcon } from '@/components/Icons';
 import Avatar, { AvatarType } from '@/components/Avatar';
 
 export default function StudentAuth() {
@@ -128,7 +128,8 @@ export default function StudentAuth() {
         }}
         className="text-blue-600 hover:text-blue-800 font-bold mb-4 flex items-center gap-2"
       >
-        ← Назад
+        <BackIcon className="w-5 h-5" />
+        Назад
       </button>
 
       <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
