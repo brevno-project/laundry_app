@@ -369,7 +369,7 @@ export default function Home() {
         {activeTab === 'settings' && user && (
           <div className="w-full space-y-4 px-3">
             <AvatarSelector />
-            <TelegramSetup />
+            {!user.can_view_students && <TelegramSetup />}
             
             <div className="bg-white p-4 rounded-lg shadow-sm">
               <h3 className="font-bold text-lg text-gray-800 mb-3">Аккаунт</h3>

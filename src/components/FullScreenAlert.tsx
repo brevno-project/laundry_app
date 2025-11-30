@@ -15,16 +15,15 @@ export default function FullScreenAlert({ status, needsToReturnKey, adminRoom, o
   if (needsToReturnKey || status === QueueStatus.RETURNING_KEY) {
     return (
       <div className="fixed inset-0 bg-orange-500 z-50 flex items-center justify-center p-4 animate-pulse">
-        <div className="text-center">
-          <BellIcon className="w-40 h-40 mx-auto mb-8 text-orange-900" />
-          <h1 className="text-6xl font-black text-orange-900 mb-4">
-            ПРИНЕСИТЕ КЛЮЧ!
+        <div className="text-center max-w-md">
+          <BellIcon className="w-32 h-32 sm:w-40 sm:h-40 mx-auto mb-6 sm:mb-8 text-orange-900" />
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-orange-900 mb-3 sm:mb-4 leading-tight">
+            ПРИНЕСИТЕ<br className="sm:hidden" /> КЛЮЧ!
           </h1>
-          <p className="text-4xl font-bold text-orange-800 mb-8">
-            {/* ✅ ИСПРАВЛЕНО: Используем adminRoom */}
+          <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-orange-800 mb-6 sm:mb-8">
             Верните ключ в {adminRoom || 'A501'}
           </p>
-          <p className="text-2xl font-semibold text-orange-700">
+          <p className="text-xl sm:text-2xl font-semibold text-orange-700">
             ⚡ Как можно скорее!
           </p>
         </div>
@@ -36,17 +35,16 @@ export default function FullScreenAlert({ status, needsToReturnKey, adminRoom, o
   if (status === QueueStatus.READY) {
     return (
       <div className="fixed inset-0 bg-yellow-400 z-50 flex items-center justify-center p-4 animate-pulse">
-        <div className="text-center">
-          <BellIcon className="w-40 h-40 mx-auto mb-8 text-yellow-900" />
-          <h1 className="text-6xl font-black text-yellow-900 mb-4">
+        <div className="text-center max-w-md">
+          <BellIcon className="w-32 h-32 sm:w-40 sm:h-40 mx-auto mb-6 sm:mb-8 text-yellow-900" />
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-yellow-900 mb-3 sm:mb-4">
             ВАС ЗОВУТ!
           </h1>
-          <p className="text-4xl font-bold text-yellow-800 mb-8">
-            {/* ✅ ИСПРАВЛЕНО: Используем adminRoom */}
+          <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-yellow-800 mb-6 sm:mb-8">
             Подойдите в {adminRoom || 'A501'} за ключом
           </p>
-          <p className="text-2xl font-semibold text-yellow-700 flex items-center justify-center gap-2">
-            <MoneyIcon className="w-8 h-8" />Возьмите деньги/купон
+          <p className="text-lg sm:text-xl md:text-2xl font-semibold text-yellow-700 flex items-center justify-center gap-2">
+            <MoneyIcon className="w-6 h-6 sm:w-8 sm:h-8" />Возьмите деньги/купон
           </p>
         </div>
       </div>

@@ -257,6 +257,10 @@ export async function POST(request: NextRequest) {
         success = success || studentSuccess;
       } else {
         console.log('⚠️ Student has no telegram_chat_id');
+        // ✅ Для student-only уведомлений возвращаем false если у студента нет Telegram
+        if (isStudentOnly) {
+          return NextResponse.json({ success: false });
+        }
       }
     }
 

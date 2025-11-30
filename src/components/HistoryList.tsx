@@ -33,22 +33,22 @@ export default function HistoryList() {
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
-        <HistoryIcon className="w-7 h-7" />
+    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+      <h2 className="text-2xl font-bold mb-6 text-gray-900 flex items-center gap-3 pb-3 border-b-2 border-gray-200">
+        <HistoryIcon className="w-7 h-7 text-blue-600" />
         История
       </h2>
       <div className="space-y-4">
         {history.map((item) => (
           <div 
             key={item.id} 
-            className="p-5 bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl border-l-4 border-green-500 shadow-md hover:shadow-lg transition-shadow"
+            className="bg-white border-2 border-gray-200 rounded-xl p-5 hover:border-blue-300 hover:shadow-md transition-all duration-200"
           >
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
               <h3 className="font-bold text-gray-900 text-lg">{item.full_name}</h3>
               {item.room && (
-                <span className="text-sm font-medium text-gray-600">
-                  Комната {item.room}
+                <span className="text-sm font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-lg">
+                  {item.room}
                 </span>
               )}
             </div>
@@ -89,14 +89,14 @@ export default function HistoryList() {
               )}
             </div>
             
-            <div className="space-y-2 mt-3 text-sm">
-              <div className="flex items-center gap-2 bg-blue-50 p-2 rounded-lg border border-blue-200">
-                <span className="font-semibold text-blue-900 min-w-[90px]">Начато:</span>
-                <span className="text-gray-700">{formatDate(item.started_at)}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 text-sm">
+              <div className="flex flex-col bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-lg border border-blue-200">
+                <span className="font-semibold text-blue-900 text-xs uppercase tracking-wide mb-1">Начало</span>
+                <span className="text-gray-800 font-medium">{formatDate(item.started_at)}</span>
               </div>
-              <div className="flex items-center gap-2 bg-green-50 p-2 rounded-lg border border-green-200">
-                <span className="font-semibold text-green-900 min-w-[90px]">Завершено:</span>
-                <span className="text-gray-700">{formatDate(item.finished_at)}</span>
+              <div className="flex flex-col bg-gradient-to-br from-green-50 to-green-100 p-3 rounded-lg border border-green-200">
+                <span className="font-semibold text-green-900 text-xs uppercase tracking-wide mb-1">Завершение</span>
+                <span className="text-gray-800 font-medium">{formatDate(item.finished_at)}</span>
               </div>
             </div>
           </div>
