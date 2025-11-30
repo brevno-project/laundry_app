@@ -609,7 +609,7 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ 
                 userId: studentData.user_id,
-                adminUserId: user.id 
+                adminStudentId: user.student_id 
               })
             });
             
@@ -621,6 +621,7 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
             throw new Error('Ошибка удаления пользователя');
           }
         }
+        
     
         // Сбросить регистрацию в таблице students
         const { error: updateError } = await supabase
@@ -1776,7 +1777,7 @@ const deleteStudent = async (studentId: string) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             userId: targetStudent.user_id,
-            adminUserId: user.id 
+            adminStudentId: user.student_id 
           })
         });
         
