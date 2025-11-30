@@ -111,7 +111,6 @@ export default function StudentActions() {
       return;
     }
     
-    console.log('🟢 handleStartWashing: начало', { myQueueItem });
     try {
       // Отправляем Telegram уведомление админу
       const response = await fetch('/api/telegram/notify', {
@@ -139,7 +138,6 @@ export default function StudentActions() {
         alert('❌ Ошибка отправки уведомления');
       }
     } catch (error) {
-      console.error('❌ Error в handleStartWashing:', error);
       alert('❌ Ошибка: ' + (error as Error).message);
     }
   };
@@ -178,7 +176,6 @@ export default function StudentActions() {
         alert('❌ Ошибка отправки уведомления');
       }
     } catch (error) {
-      console.error('❌ Error:', error);
       alert('❌ Ошибка: ' + (error as Error).message);
     }
   };

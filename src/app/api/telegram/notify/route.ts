@@ -36,10 +36,7 @@ interface TelegramNotification {
 
 // Получить информацию об админе
 async function getAdminInfo(admin_student_id?: string): Promise<{ full_name: string; room: string; telegram_chat_id: string | null } | null> {
-  console.log('🔍 getAdminInfo called with admin_student_id:', admin_student_id);
-  
   if (!supabaseUrl || !supabaseKey || !admin_student_id) {
-    console.error('❌ Missing required data:', { supabaseUrl: !!supabaseUrl, supabaseKey: !!supabaseKey, admin_student_id });
     return null;
   }
   
@@ -52,20 +49,15 @@ async function getAdminInfo(admin_student_id?: string): Promise<{ full_name: str
     .single();
   
   if (error) {
-    console.error('❌ Error getting admin info:', error);
     return null;
   }
   
-  console.log('✅ Admin info retrieved:', data);
   return data;
 }
 
 // Получить telegram_chat_id студента
 async function getStudentTelegramChatId(student_id?: string): Promise<string | null> {
-  console.log('🔍 getStudentTelegramChatId called with student_id:', student_id);
-  
   if (!supabaseUrl || !supabaseKey || !student_id) {
-    console.error('❌ Missing required data for getStudentTelegramChatId:', { supabaseUrl: !!supabaseUrl, supabaseKey: !!supabaseKey, student_id });
     return null;
   }
   
@@ -77,21 +69,16 @@ async function getStudentTelegramChatId(student_id?: string): Promise<string | n
     .eq('id', student_id)
     .single();
   
-  console.log('📊 Student data retrieved:', { student_id, full_name: data?.full_name, telegram_chat_id: data?.telegram_chat_id, error });
-  
   if (error || !data?.telegram_chat_id) {
-    console.log('⚠️ Student has no telegram_chat_id or error occurred');
     return null;
   }
   
-  console.log('✅ Student telegram_chat_id found:', data.telegram_chat_id);
   return data.telegram_chat_id;
 }
 
 // ✅ Получить telegram_chat_id всех админов
 async function getAllAdminChatIds(): Promise<string[]> {
   if (!supabaseUrl || !supabaseKey) {
-    console.error('❌ Missing Supabase config');
     return [];
   }
   
@@ -104,7 +91,6 @@ async function getAllAdminChatIds(): Promise<string[]> {
     .not('telegram_chat_id', 'is', null);
   
   if (error) {
-    console.error('❌ Error getting admin chat IDs:', error);
     return [];
   }
   
@@ -112,7 +98,6 @@ async function getAllAdminChatIds(): Promise<string[]> {
     .map(student => student.telegram_chat_id)
     .filter((id): id is string => id !== null && id !== undefined);
   
-  console.log('✅ Found admin chat IDs:', chatIds.length);
   return chatIds;
 }
 
@@ -183,7 +168,6 @@ async function formatMessage(notification: TelegramNotification): Promise<string
 // Отправка сообщения в Telegram
 async function sendTelegramMessage(chatId: string, message: string): Promise<boolean> {
   if (!TELEGRAM_BOT_TOKEN) {
-    console.error('TELEGRAM_BOT_TOKEN not configured');
     return false;
   }
 
@@ -201,13 +185,11 @@ async function sendTelegramMessage(chatId: string, message: string): Promise<boo
     const data = await response.json();
     
     if (!data.ok) {
-      console.error('Telegram API error:', data);
       return false;
     }
 
     return true;
   } catch (error) {
-    console.error('Error sending Telegram message:', error);
     return false;
   }
 }
@@ -216,8 +198,6 @@ export async function POST(request: NextRequest) {
   try {
     const notification: TelegramNotification = await request.json();
     
-    console.log('📥 Received notification:', JSON.stringify(notification, null, 2));
-
     if (!notification || !notification.type) {
       return NextResponse.json(
         { error: 'Invalid notification data' },
@@ -226,7 +206,6 @@ export async function POST(request: NextRequest) {
     }
 
     const message = await formatMessage(notification);
-    console.log('📝 Formatted message:', message);
     let success = false;
 
     // ✅ Уведомления, которые идут ТОЛЬКО студенту
@@ -240,7 +219,6 @@ export async function POST(request: NextRequest) {
     // ✅ Отправить ВСЕМ админам (только если это НЕ student-only уведомление)
     if (!isStudentOnly) {
       const adminChatIds = await getAllAdminChatIds();
-      console.log(`📤 Sending to ${adminChatIds.length} admins`);
       
       for (const chatId of adminChatIds) {
         const adminSuccess = await sendTelegramMessage(chatId, message);
@@ -249,7 +227,6 @@ export async function POST(request: NextRequest) {
       
       // Также отправить главному админу (если указан в .env)
       if (TELEGRAM_ADMIN_CHAT_ID && !adminChatIds.includes(TELEGRAM_ADMIN_CHAT_ID)) {
-        console.log('📤 Sending to main admin:', TELEGRAM_ADMIN_CHAT_ID);
         const mainAdminSuccess = await sendTelegramMessage(TELEGRAM_ADMIN_CHAT_ID, message);
         success = success || mainAdminSuccess;
       }
@@ -259,11 +236,9 @@ export async function POST(request: NextRequest) {
     if (notification.student_id && !isAdminOnly) {
       const studentChatId = await getStudentTelegramChatId(notification.student_id);
       if (studentChatId) {
-        console.log('📤 Sending to student:', studentChatId);
         const studentSuccess = await sendTelegramMessage(studentChatId, message);
         success = success || studentSuccess;
       } else {
-        console.log('⚠️ Student has no telegram_chat_id');
         // ✅ Для student-only уведомлений возвращаем false если у студента нет Telegram
         if (isStudentOnly) {
           return NextResponse.json({ success: false });
@@ -273,7 +248,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success });
   } catch (error: any) {
-    console.error('Error in telegram notify API:', error);
     return NextResponse.json(
       { error: error.message || 'Internal server error' },
       { status: 500 }

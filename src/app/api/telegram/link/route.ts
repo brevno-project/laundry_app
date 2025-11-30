@@ -8,10 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     const { student_id, telegram_chat_id } = await request.json();
     
-    console.log('📥 /api/telegram/link request:', { student_id, telegram_chat_id });
-
     if (!student_id || !telegram_chat_id) {
-      console.error('❌ Missing data:', { student_id, telegram_chat_id });
       return NextResponse.json(
         { error: 'Не указаны все данные' },
         { status: 400 }
@@ -19,7 +16,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (!supabaseUrl || !supabaseKey) {
-      console.error('❌ Supabase not configured');
       return NextResponse.json(
         { error: 'База данных не настроена' },
         { status: 500 }
@@ -35,10 +31,7 @@ export async function POST(request: NextRequest) {
       .eq('id', student_id)
       .single();
     
-    console.log('📊 BEFORE UPDATE:', currentData);
-
     // Обновить telegram_chat_id в таблице students
-    console.log('🔄 Updating telegram_chat_id for student_id:', student_id, 'NEW VALUE:', telegram_chat_id);
     const { data, error } = await supabase
       .from('students')
       .update({ telegram_chat_id: telegram_chat_id })
@@ -46,9 +39,6 @@ export async function POST(request: NextRequest) {
       .select('id, full_name, telegram_chat_id');
 
     if (error) {
-      console.error('❌ Error updating telegram_chat_id:', error);
-      console.error('❌ Error details:', JSON.stringify(error, null, 2));
-      
       // Проверяем есть ли проблема с RLS
       if (error.message?.includes('policy') || error.code === '42501') {
         return NextResponse.json(
@@ -63,10 +53,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('✅ telegram_chat_id UPDATED:', data);
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
-    console.error('❌ Unexpected error in /api/telegram/link:', error);
     return NextResponse.json(
       { error: 'Внутренняя ошибка сервера' },
       { status: 500 }

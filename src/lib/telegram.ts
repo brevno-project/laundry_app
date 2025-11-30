@@ -9,8 +9,6 @@ import { TelegramNotification } from '../types/index';
  */
 export async function sendTelegramNotification(notification: TelegramNotification): Promise<boolean> {
   try {
-    console.log('📤 Sending Telegram notification:', notification.type);
-    
     const response = await fetch('/api/telegram/notify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -20,14 +18,11 @@ export async function sendTelegramNotification(notification: TelegramNotificatio
     const result = await response.json();
     
     if (!response.ok) {
-      console.error('❌ Telegram notification failed:', result.error);
       return false;
     }
 
-    console.log('✅ Telegram notification sent successfully');
     return result.success || false;
   } catch (error) {
-    console.error('❌ Error sending Telegram notification:', error);
     return false;
   }
 }

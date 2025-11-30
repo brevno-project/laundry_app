@@ -125,7 +125,6 @@ export default function AdminPanel() {
       setError('');
       setAdminKey('');
     } catch (err: any) {
-      console.error('❌ Admin login failed:', err);
       setError('Ошибка авторизации: ' + err.message);
     }
   };
@@ -159,7 +158,6 @@ export default function AdminPanel() {
       setSelectedStudent(null);
       alert('✅ Регистрация сброшена!');
     } catch (err: any) {
-      console.error('Error resetting student:', err);
       alert('❌ Ошибка сброса регистрации');
     }
   };
@@ -276,15 +274,10 @@ export default function AdminPanel() {
   };
 
   const handleToggleAdmin = async (studentId: string, makeAdmin: boolean) => {
-    console.log(' Toggle admin:', studentId, makeAdmin);
-    console.log(' Current user:', user);
-    console.log(' Is super admin:', isSuperAdmin);
-    
     try {
       await toggleAdminStatus(studentId, makeAdmin);
       alert(makeAdmin ? '✅ Студент стал админом!' : '✅ Админские права сняты!');
     } catch (error: any) {
-      console.error(' Error toggling admin:', error);
       alert('❌ Ошибка: ' + error.message);
     }
   };
@@ -395,7 +388,6 @@ export default function AdminPanel() {
                       : '❌ Ошибка отправки. Проверь консоль.'
                     );
                   } catch (err: any) {
-                    console.error('Test notification error:', err);
                     alert('❌ Ошибка: ' + err.message);
                   }
                 }}

@@ -16,7 +16,6 @@ export default function AvatarSelector() {
   // ✅ Синхронизируем selectedAvatar с user.avatar_type при каждом изменении
   useEffect(() => {
     const avatarType = (user?.avatar_type as AvatarType) || 'default';
-    console.log('👤 Syncing avatar from user:', avatarType, 'current selected:', selectedAvatar);
     if (avatarType !== selectedAvatar) {
       setSelectedAvatar(avatarType);
     }
@@ -44,7 +43,6 @@ export default function AvatarSelector() {
         .eq('student_id', user.student_id);
       
       if (queueError) {
-        console.warn('Warning updating queue avatars:', queueError);
         // Не прерываем процесс, так как основное обновление успешно
       }
       
@@ -58,7 +56,6 @@ export default function AvatarSelector() {
       await fetchQueue();
       alert('✅ Аватар обновлен везде!');
     } catch (error) {
-      console.error('Error updating avatar:', error);
       alert('❌ Ошибка обновления аватара');
     } finally {
       setIsSaving(false);

@@ -9,7 +9,7 @@ export default function UserForm() {
   const [washCount, setWashCount] = useState<number>(1);
   const [paymentType, setPaymentType] = useState<string>('money');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string>(''); // ✅ Новое поле для выбора даты
+  const [selectedDate, setSelectedDate] = useState<string>(''); // 
   
   const existingQueueItem = getUserQueueItem();
   const isInQueue = !!existingQueueItem;
@@ -53,14 +53,6 @@ export default function UserForm() {
     
     if (user?.full_name && !isInQueue && !isSubmitting) {
       setIsSubmitting(true);
-      
-      console.log('Joining queue with:', {
-        full_name: user.full_name,
-        room: user.room,
-        washCount,
-        paymentType,
-        chosenDate: selectedDate // ✅ Передаем выбранную дату
-      });
       
       // ✅ Передаем выбранную дату в joinQueue (без expectedFinishAt)
       await joinQueue(user.full_name, user.room, washCount, paymentType, undefined, selectedDate);

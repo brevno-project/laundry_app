@@ -1,0 +1,55 @@
+import { NextRequest, NextResponse } from 'next/server';
+export async function POST(request: NextRequest) {
+  try {
+    const update = await request.json();
+    
+    if (update.message && update.message.text) {
+      const chatId = update.message.chat.id;
+      const text = update.message.text;
+      
+      if (text === '/start') {
+        const message = 
+          `👋 Привет! Бот уведомлений прачечной Keiin Dorm.\n\n` +
+          `🔗 Подключение:\n` +
+          `1️⃣ @userinfobot → /start → скопируйте Chat ID\n` +
+          `2️⃣ Вставьте в настройки приложения\n` + 
+          `3️⃣ В Telegram: включите уведомления от бота\n\n` +
+          `📱 Уведомления о:\n` +
+          `• Очереди стирки\n` +
+          `• Возврате ключа\n` + 
+          `• Статусе стирки\n\n` +
+          `❓ Chat ID - уникальный номер чата\n\n` +
+          `⚠️ Включите уведомления в Telegram!\n\n` +
+          `💡 Наслаждайтесь автоматическими оповещениями!`;
+        
+        await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: message })
+        });
+      }
+      
+      if (text === '/help') {
+        const helpMessage = 
+          `❓ Помощь по подключению:\n\n` +
+          `1. Откройте @userinfobot\n` +
+          `2. Напишите /start\n` +
+          `3. Скопируйте Chat ID\n` +
+          `4. Вставьте в приложение\n` +
+          `5. Включите уведомления в Telegram\n\n` +
+          `Готово! Вы получите все уведомления о стирке.`;
+        
+        await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: helpMessage })
+        });
+      }
+    }
+    
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error('Webhook error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

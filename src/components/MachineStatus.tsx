@@ -40,11 +40,6 @@ export default function MachineStatus() {
   // ✅ КРИТИЧНО: Ищем того, кто стирает
   const currentWashingItem = queue.find((item) => item.status === QueueStatus.WASHING);
   
-  console.log('🔍 MachineStatus: Looking for washing item');
-  console.log('📊 Queue:', queue);
-  console.log('👤 Current washing item:', currentWashingItem);
-  console.log('🎰 Machine state:', machineState);
-
   const isWashing = !!currentWashingItem;
 
   // ✅ Если кто-то стирает - показываем красную карточку

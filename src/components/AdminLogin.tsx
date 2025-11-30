@@ -26,7 +26,6 @@ export default function AdminLogin() {
       setError('');
       setPassword('');
     } catch (err: any) {
-      console.error('❌ Admin login error:', err);
       setError(err.message || 'Ошибка входа');
     } finally {
       setLoading(false);

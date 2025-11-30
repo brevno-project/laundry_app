@@ -248,9 +248,6 @@ const handleSaveEdit = async () => {
     );
   }
 
-  console.log('🎰 Machine State:', machineState);
-  console.log('🔑 isAdmin:', isAdmin, 'selectedItems:', selectedItems.length);
-  
   return (
     <div className="bg-white rounded-lg shadow-lg border border-gray-200">
       {/* Header */}
@@ -332,7 +329,6 @@ const handleSaveEdit = async () => {
             <div className="space-y-3">
             {groupedQueue[dateKey].map((item: any, index: number) => {
                 const isCurrentUser = user && item.student_id === user.student_id;
-                console.log('QueueItem:', item.id, 'student_id:', item.student_id, 'user.student_id:', user?.student_id, 'isCurrentUser:', isCurrentUser, 'status:', item.status);
                 const statusDisplay = getStatusDisplay(item.status);
                 const globalIndex = queuedItems.findIndex((q: any) => q.id === item.id);
                 
@@ -539,7 +535,6 @@ const handleSaveEdit = async () => {
                                     : `⚠️ ${item.full_name} не подключил Telegram`
                                   );
                                 } catch (error) {
-                                  console.error('❌ Ошибка при вызове:', error);
                                   alert('❌ Ошибка при вызове студента');
                                 }
                               }}
@@ -580,12 +575,11 @@ const handleSaveEdit = async () => {
                                         })
                                       });
                                     } catch (err) {
-                                      console.error('❌ Error sending Telegram notification:', err);
+                                      alert('❌ Ошибка при отправке уведомления');
                                     }
                                     
                                     alert(`✅ ${item.full_name} получил ключ!`);
                                   } catch (error) {
-                                    console.error('❌ Ошибка:', error);
                                     alert('❌ Ошибка при выдаче ключа');
                                   }
                                 }}
@@ -612,7 +606,6 @@ const handleSaveEdit = async () => {
                                     await startWashing(item.id);
                                     alert(`✅ ${item.full_name} стирает!`);   
                                   } catch (error) {
-                                    console.error('❌ Ошибка:', error);
                                     alert('❌ Ошибка при запуске стирки');
                                   }
                                 }}
@@ -651,7 +644,6 @@ const handleSaveEdit = async () => {
                                       : `⚠️ ${item.full_name} не подключил Telegram`
                                     );
                                   } catch (error) {
-                                    console.error('❌ Ошибка:', error);
                                     alert('❌ Ошибка отправки уведомления');
                                   }
                                 }}
@@ -684,7 +676,6 @@ const handleSaveEdit = async () => {
                                     
                                     alert(`✅ Уведомления отменены для ${item.full_name}`);
                                   } catch (error) {
-                                    console.error('❌ Ошибка:', error);
                                     alert('❌ Ошибка отмены уведомлений');
                                   }
                                 }}
@@ -707,7 +698,6 @@ const handleSaveEdit = async () => {
                                     await markDone(item.id);
                                     alert(`✅ ${item.full_name} закончил!`);
                                   } catch (error) {
-                                    console.error('❌ Ошибка:', error);
                                     alert('❌ Ошибка при завершении');
                                   }
                                 }}
@@ -736,7 +726,6 @@ const handleSaveEdit = async () => {
                                     
                                     alert(`✅ ${item.full_name} в ожидании`);
                                   } catch (error) {
-                                    console.error('❌ Ошибка:', error);
                                     alert('❌ Ошибка при возврате в ожидание');
                                   }
                                 }}

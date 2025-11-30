@@ -37,7 +37,6 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      console.error('Auth error:', error);
       return NextResponse.json(
         { error: 'Ошибка аутентификации' },
         { status: 401 }
@@ -89,7 +88,6 @@ export async function POST(request: NextRequest) {
       session: data.session
     });
   } catch (error: any) {
-    console.error('Error in admin login API:', error);
     return NextResponse.json(
       { error: error.message || 'Internal server error' },
       { status: 500 }

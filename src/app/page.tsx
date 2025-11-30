@@ -20,15 +20,6 @@ import AvatarSelector from '@/components/AvatarSelector';
 export default function Home() {
   const { user, isLoading, logoutStudent, isAdmin, machineState, queue, isNewUser, setIsNewUser, students } = useLaundry();
   
-  console.log('🏠 Home component render:', {
-    isLoading,
-    user: !!user,
-    userName: user?.full_name,
-    isAdmin,
-    queueLength: queue?.length,
-    studentsCount: students?.length
-  });
-  
   // ✅ Восстанавливаем activeTab из localStorage
   const [activeTab, setActiveTab] = React.useState(() => {
     if (typeof window !== 'undefined') {
@@ -50,7 +41,6 @@ export default function Home() {
   // ✅ ТЫ FIX: Сбрасываем activeTab на 'main' когда нет пользователя
   React.useEffect(() => {
     if (!user && activeTab !== 'main') {
-      console.log('🔄 Resetting activeTab to main because user is not logged in');
       setActiveTab('main');
       if (typeof window !== 'undefined') {
         localStorage.setItem('activeTab', 'main');
@@ -89,8 +79,6 @@ export default function Home() {
     setShowScrollButton(false);
   };
 
-  console.log('🎰 Machine State:', machineState);
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -98,38 +86,6 @@ export default function Home() {
       </div>
     );
   }
-
-  console.log('🏠 Home component render:', {
-    isLoading,
-    user: !!user,
-    userName: user?.full_name,
-    isAdmin,
-    queueLength: queue?.length,
-    studentsCount: students?.length
-  });
-
-  // ✅ КРИТИЧНЫЙ FIX: Показывать UI даже без пользователя - пусть пользователь сам выберет себя из списка
-  // Раньше: if (!user) return <div>Выберите себя из списка</div>
-  // Теперь: показываем UI всегда, но контент зависит от user
-  // Дополнительная проверка - если user восстановлен, но не найден в students, он будет сброшен в LaundryContext
-  
-  // Дополнительное логирование для production debugging
-  console.log('🔍 Home render details:', {
-    hasUser: !!user,
-    userStudentId: user?.student_id,
-    studentsLoaded: students.length > 0,
-    firstStudentId: students[0]?.id,
-    userFoundInStudents: user ? students.some(s => s.id === user.student_id) : false
-  });
-  
-  // ✅ ДОБАВЛЕНО: Финальное логирование о статусе Home компонента
-  console.log('🏠 Home component status:', {
-    isLoading,
-    showStudentAuth: !user,
-    showMainUI: !!user,
-    studentsCount: students.length,
-    queueLength: queue.length
-  });
 
   return (
     <div className="min-h-screen w-full bg-gray-50">
@@ -369,7 +325,7 @@ export default function Home() {
         {activeTab === 'settings' && user && (
           <div className="w-full space-y-4 px-3">
             <AvatarSelector />
-            <TelegramSetup />
+            {!user.can_view_students && <TelegramSetup />}
             
             <div className="bg-white p-4 rounded-lg shadow-sm">
               <h3 className="font-bold text-lg text-gray-800 mb-3">Аккаунт</h3>

@@ -50,7 +50,6 @@ export async function POST(request: NextRequest) {
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
     if (deleteError) {
-      console.error('Error deleting user:', deleteError);
       return NextResponse.json(
         { error: deleteError.message },
         { status: 500 }
@@ -59,7 +58,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error('Error in delete-user API:', error);
     return NextResponse.json(
       { error: error.message || 'Internal server error' },
       { status: 500 }

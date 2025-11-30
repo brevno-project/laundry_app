@@ -87,7 +87,6 @@ export default function StudentsList() {
       setEditingStudent(null);
       alert('✅ Студент обновлен!');
     } catch (error) {
-      console.error('❌ Error updating student:', error);
       alert('❌ Ошибка обновления');
     }
   };
@@ -122,7 +121,6 @@ export default function StudentsList() {
       setNewRoom('');
       alert('✅ Студент добавлен!');
     } catch (error) {
-      console.error('❌ Error adding student:', error);
       alert('❌ Ошибка добавления');
     }
   };
@@ -135,7 +133,6 @@ export default function StudentsList() {
       setDeletingStudent(null);
       alert('✅ Студент удален!');
     } catch (error) {
-      console.error('❌ Error deleting student:', error);
       alert('❌ Ошибка удаления');
     }
   };

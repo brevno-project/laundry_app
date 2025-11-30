@@ -14,7 +14,6 @@ export const get_local_queue = (): QueueItem[] => {
     const storedQueue = localStorage.getItem(QUEUE_KEY);
     return storedQueue ? JSON.parse(storedQueue) : [];
   } catch (error) {
-    console.error('Error reading queue from localStorage:', error);
     return [];
   }
 };
@@ -26,7 +25,6 @@ export const get_local_machine_state = (): MachineState => {
       ? JSON.parse(storedState) 
       : { status: MachineStatus.IDLE };
   } catch (error) {
-    console.error('Error reading machine state from localStorage:', error);
     return { status: MachineStatus.IDLE };
   }
 };
@@ -36,7 +34,7 @@ export const get_local_history = (): HistoryItem[] => {
     const storedHistory = localStorage.getItem(HISTORY_KEY);
     return storedHistory ? JSON.parse(storedHistory) : [];
   } catch (error) {
-    console.error('Error reading history from localStorage:', error);
+    
     return [];
   }
 };
@@ -46,7 +44,7 @@ export const save_local_queue = (queue: QueueItem[]) => {
   try {
     localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
   } catch (error) {
-    console.error('Error saving queue to localStorage:', error);
+    
   }
 };
 
@@ -54,7 +52,7 @@ export const save_local_machine_state = (state: MachineState) => {
   try {
     localStorage.setItem(MACHINE_STATE_KEY, JSON.stringify(state));
   } catch (error) {
-    console.error('Error saving machine state to localStorage:', error);
+    
   }
 };
 
@@ -62,7 +60,7 @@ export const save_local_history = (history: HistoryItem[]) => {
   try {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
   } catch (error) {
-    console.error('Error saving history to localStorage:', error);
+    
   }
 };
 
