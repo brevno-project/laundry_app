@@ -1459,7 +1459,8 @@ const startWashing = async (queueItemId: string) => {
       };
       const { error: machineError } = await supabase
         .from('machine_state')
-        .upsert(idleMachineState);
+        .update(idleMachineState)
+        .eq('id', machineState.id || 1);
       
       if (machineError) throw machineError;
       
