@@ -47,7 +47,7 @@ export default function HistoryList() {
             <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-gray-200">
               <h3 className="font-bold text-gray-900 text-lg">{item.full_name}</h3>
               {item.room && (
-                <span className="text-sm font-bold text-blue-900 bg-gradient-to-r from-blue-100 to-blue-200 px-3 py-1.5 rounded-lg shadow-sm border border-blue-300">
+                <span className="text-sm font-bold text-white bg-gradient-to-r from-gray-700 via-gray-800 to-gray-900 px-3 py-1.5 rounded-lg shadow-md">
                   {item.room}
                 </span>
               )}
@@ -90,12 +90,12 @@ export default function HistoryList() {
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 text-sm">
-            <div className="flex flex-col bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-lg border border-blue-200 shadow-sm">
-                <span className="font-semibold text-blue-700 text-xs uppercase tracking-wide mb-1">Начало</span>
+            <div className="flex flex-col bg-gradient-to-br from-cyan-50 via-cyan-100 to-blue-100 p-3 rounded-lg border border-cyan-300 shadow-md">
+                <span className="font-semibold text-cyan-700 text-xs uppercase tracking-wide mb-1">Начало</span>
                 <span className="text-gray-900 font-semibold">{formatDate(item.started_at)}</span>
               </div>
-              <div className="flex flex-col bg-gradient-to-br from-green-50 to-green-100 p-3 rounded-lg border border-green-200 shadow-sm">
-                <span className="font-semibold text-green-700 text-xs uppercase tracking-wide mb-1">Завершение</span>
+              <div className="flex flex-col bg-gradient-to-br from-cyan-50 via-cyan-100 to-blue-100 p-3 rounded-lg border border-cyan-300 shadow-md">
+                <span className="font-semibold text-cyan-700 text-xs uppercase tracking-wide mb-1">Завершение</span>
                 <span className="text-gray-900 font-semibold">{formatDate(item.finished_at)}</span>
               </div>
             </div>
