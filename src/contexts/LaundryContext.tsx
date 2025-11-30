@@ -1451,6 +1451,7 @@ const startWashing = async (queueItemId: string) => {
       
       // Сбросить состояние машины
       const idleMachineState: MachineState = {
+        id: machineState.id || 1,
         status: MachineStatus.IDLE,
         current_queue_item_id: undefined,
         started_at: undefined,

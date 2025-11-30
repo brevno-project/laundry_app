@@ -47,7 +47,7 @@ export default function HistoryList() {
             <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-gray-200">
               <h3 className="font-bold text-gray-900 text-lg">{item.full_name}</h3>
               {item.room && (
-                <span className="text-sm font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200">
+                <span className="text-sm font-bold text-gray-900 bg-gradient-to-r from-gray-200 to-gray-300 px-3 py-1.5 rounded-lg shadow-sm">
                   {item.room}
                 </span>
               )}
@@ -90,11 +90,11 @@ export default function HistoryList() {
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 text-sm">
-              <div className="flex flex-col bg-gray-50 p-3 rounded-lg border border-gray-300">
+            <div className="flex flex-col bg-gradient-to-br from-gray-100 to-gray-200 p-3 rounded-lg border border-gray-300 shadow-sm">
                 <span className="font-semibold text-gray-600 text-xs uppercase tracking-wide mb-1">Начало</span>
                 <span className="text-gray-900 font-semibold">{formatDate(item.started_at)}</span>
               </div>
-              <div className="flex flex-col bg-gray-50 p-3 rounded-lg border border-gray-300">
+              <div className="flex flex-col bg-gradient-to-br from-gray-100 to-gray-200 p-3 rounded-lg border border-gray-300 shadow-sm">
                 <span className="font-semibold text-gray-600 text-xs uppercase tracking-wide mb-1">Завершение</span>
                 <span className="text-gray-900 font-semibold">{formatDate(item.finished_at)}</span>
               </div>
