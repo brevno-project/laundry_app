@@ -131,9 +131,9 @@ export default function StudentsList() {
     try {
       await deleteStudent(deletingStudent.id);
       setDeletingStudent(null);
-      alert('✅ Студент удален!');
+      
     } catch (error) {
-      alert('❌ Ошибка удаления');
+      
     }
   };
   

@@ -227,9 +227,7 @@ export default function AdminPanel() {
       await deleteStudent(selectedStudent.id);
       setShowDeleteConfirm(false);
       setSelectedStudent(null);
-      alert('✅ Студент удалён!');
     } catch (err: any) {
-      alert('❌ Ошибка: ' + err.message);
     }
   };
 
