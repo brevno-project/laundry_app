@@ -11,34 +11,25 @@ const supabaseAdmin = createClient(
 
 export async function POST(req: NextRequest) {
   try {
-    console.log("🔥 DELETE USER API HIT");
+    console.log("🔥 DELETE-STUDENT API HIT");
 
-    const { userId, adminStudentId } = await req.json();
-    console.log("📩 BODY:", { userId, adminStudentId });
+    const { studentId, adminStudentId } = await req.json();
 
-    if (!userId || !adminStudentId) {
+    if (!studentId || !adminStudentId) {
       return NextResponse.json(
-        { error: "Missing userId or adminStudentId" },
+        { error: "Missing studentId or adminStudentId" },
         { status: 400 }
       );
     }
 
-    // 1) Проверяем, что вызывающий – админ
-    const { data: adminInfo, error: adminErr } = await supabaseAdmin
+    // --- 1. Проверяем права ---
+    const { data: adminInfo } = await supabaseAdmin
       .from("students")
       .select("is_admin, is_super_admin")
       .eq("id", adminStudentId)
       .single();
 
-    if (adminErr || !adminInfo) {
-      console.log("❌ Admin lookup failed:", adminErr);
-      return NextResponse.json(
-        { error: "Admin lookup failed" },
-        { status: 500 }
-      );
-    }
-
-    if (!adminInfo.is_admin && !adminInfo.is_super_admin) {
+    if (!adminInfo || (!adminInfo.is_admin && !adminInfo.is_super_admin)) {
       return NextResponse.json(
         { error: "Insufficient permissions" },
         { status: 403 }
@@ -47,48 +38,63 @@ export async function POST(req: NextRequest) {
 
     console.log("🔐 Admin verified");
 
-    // 2) Проверяем, существует ли auth-пользователь
-    let authExists = false;
-    try {
-      const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
-      authExists = !!data;
-    } catch (e) {
-      authExists = false;
+    // --- 2. Берём студента ---
+    const { data: studentData, error: studentErr } = await supabaseAdmin
+      .from("students")
+      .select("*")
+      .eq("id", studentId)
+      .single();
+
+    if (studentErr || !studentData) {
+      return NextResponse.json({ error: "Student not found" }, { status: 404 });
     }
 
-    if (!authExists) {
-      console.log("ℹ️ No auth user, cleaning database only…");
-    } else {
-      // 3) Пытаемся удалить auth-пользователя
-      console.log("🗑️ Deleting auth user…");
-      const { error: deleteError } =
+    const userId = studentData.user_id;
+
+    // --- 3. Удаляем очередь студента ---
+    await supabaseAdmin
+      .from("queue")
+      .delete()
+      .eq("student_id", studentId);
+
+    // --- 4. Удаляем историю ---
+    if (userId) {
+      await supabaseAdmin
+        .from("history")
+        .delete()
+        .eq("user_id", userId);
+    }
+
+    // --- 5. Удаляем auth user ---
+    if (userId) {
+      const { error: authError } =
         await supabaseAdmin.auth.admin.deleteUser(userId);
 
-      if (deleteError) {
-        console.log("⚠️ Auth delete error (ignored for app):", deleteError);
-        // НЕ выходим — ниже всё равно чистим очередь/историю/students
+      if (authError) {
+        console.log("⚠ Auth delete error (ignored):", authError.message);
+        // продолжаем — не критично
       }
     }
 
-    // 4) Чистим очередь
-    await supabaseAdmin.from("queue").delete().eq("user_id", userId);
-
-    // 5) Чистим историю
-    await supabaseAdmin.from("history").delete().eq("user_id", userId);
-
-    // 6) Сбрасываем связь у студентов
-    await supabaseAdmin
+    // --- 6. Удаляем студента ---
+    const { error: deleteStudentErr } = await supabaseAdmin
       .from("students")
-      .update({ user_id: null, is_registered: false })
-      .eq("user_id", userId);
+      .delete()
+      .eq("id", studentId);
 
-    console.log("✅ CLEANED: queue + history + students.user_id cleared");
+    if (deleteStudentErr) {
+      return NextResponse.json(
+        { error: deleteStudentErr.message },
+        { status: 500 }
+      );
+    }
 
+    console.log("✅ Student FULLY deleted:", studentId);
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.log("💥 FATAL ERROR:", err);
     return NextResponse.json(
-      { error: err.message || "Internal server error" },
+      { error: err.message || "Internal error" },
       { status: 500 }
     );
   }

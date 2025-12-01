@@ -715,12 +715,12 @@ const joinQueue = async (
   }
   
   if (!supabase) {
-    alert('Ошибка инициализации');
+    
     return;
   }
 
   if (!user.id || typeof user.id !== 'string') {
-    alert('Ошибка авторизации');
+    
     return;
   }
 
@@ -752,19 +752,18 @@ const joinQueue = async (
       }
       
       if (!studentData || studentData.user_id !== user.id) {
-        alert('Ошибка синхронизации. Попробуйте снова.');
+        
         logoutStudent();
         return;
       }
 
       if (studentData.is_banned) {
         const banReason = studentData.ban_reason || 'Не указана';
-        alert(`Вы забанены. Причина: ${banReason}`);
+        throw new Error(`Вы забанены. Причина: ${banReason}`);
         logoutStudent();
         return;
       }
     } catch (err) {
-      alert('Ошибка проверки статуса');
       return;
     }
   } else {
@@ -806,11 +805,9 @@ const joinQueue = async (
       .in('status', ['waiting', 'ready', 'key_issued', 'washing', 'returning_key']);
 
     if (existingEntry && existingEntry.length > 0) {
-      alert('Вы уже в очереди на эту дату');
       return;
     }
   } catch (err) {
-    alert('Ошибка проверки очереди');
     return;
   }
 
@@ -824,7 +821,6 @@ const joinQueue = async (
       .eq('scheduled_for_date', targetDate);
 
     if (posErr) {
-      alert('Ошибка получения позиций');
       return;
     }
 
@@ -836,7 +832,6 @@ const joinQueue = async (
 
     // ✅ Проверяем user.id перед созданием записи
     if (!user.id || typeof user.id !== 'string' || user.id.trim() === '') {
-      alert('Ошибка обновления данных. Попробуйте войти снова.');
       logoutStudent();
       return;
     }
@@ -1645,105 +1640,36 @@ const startWashing = async (queueItemId: string) => {
   }
 };
 
-// Удалить студента
 const deleteStudent = async (studentId: string) => {
-  if (!isAdmin && !isSuperAdmin) throw new Error('Недостаточно прав');
-  if (!isSupabaseConfigured || !supabase) {
-    throw new Error('Supabase не настроен');
-  }
+  if (!isAdmin && !isSuperAdmin) throw new Error("Недостаточно прав");
 
   try {
-    // --- 0. Найти студента ---
-    const targetStudent = students.find(s => s.id === studentId);
-    if (!targetStudent) {
-      alert('Студент не найден');
+    const response = await fetch("/api/admin/delete-student", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        studentId,
+        adminStudentId: user?.student_id
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      alert(result.error || "Ошибка удаления студента");
       return;
     }
 
-    // --- 1. Защита: админ не может удалять админов ---
-    if (isAdmin && !isSuperAdmin && (targetStudent.is_admin || targetStudent.is_super_admin)) {
-      alert('Админ не может удалять других админов');
-      return;
-    }
-
-    // --- 2. Защита: нельзя удалить последнего супера ---
-    if (targetStudent.is_super_admin) {
-      const superAdminsCount = students.filter(s => s.is_super_admin).length;
-      if (superAdminsCount <= 1) {
-        alert('Нельзя удалить последнего супер-админа');
-        return;
-      }
-    }
-
-    // --- 3. Удаление очереди студента ---
-    const { error: queueError } = await supabase
-      .from('queue')
-      .delete()
-      .eq('student_id', studentId);
-
-    if (queueError) {
-      console.warn('Ошибка удаления очереди (игнорируется):', queueError);
-      // продолжаем
-    }
-
-    // --- 4. Удаление истории ---
-    if (targetStudent.user_id) {
-      const { error: historyError } = await supabase
-        .from('history')
-        .delete()
-        .eq('user_id', targetStudent.user_id);
-
-      if (historyError) {
-        console.warn('Ошибка удаления истории (игнорируется):', historyError);
-        // продолжаем
-      }
-    }
-
-    // --- 5. Мягкое удаление Supabase Auth пользователя ---
-    if (targetStudent.user_id && user?.student_id) {
-      try {
-        const response = await fetch('/api/admin/delete-user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: targetStudent.user_id,
-            adminStudentId: user.student_id
-          })
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          console.warn('Ошибка удаления auth пользователя (некритично):', result.error);
-        } else if (result.authDeleteError) {
-          console.warn('Auth delete non-fatal:', result.authDeleteError);
-        }
-      } catch (err) {
-        console.warn('Ошибка общения с /delete-user (некритично):', err);
-      }
-    }
-
-    // --- 6. Удалить запись студента ---
-    const { error: deleteError } = await supabase
-      .from('students')
-      .delete()
-      .eq('id', studentId);
-
-    if (deleteError) {
-      alert('Ошибка удаления студента');
-      console.error(deleteError);
-      return;
-    }
-
-    // --- 7. Обновление локальных данных ---
     await loadStudents();
     await fetchQueue();
 
-    alert('Студент успешно удалён!');
+    alert("Студент полностью удалён!");
   } catch (err) {
-    throw err;
+    console.error(err);
+    alert("Ошибка удаления студента");
   }
 };
+
 
 
 
