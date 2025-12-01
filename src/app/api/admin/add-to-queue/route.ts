@@ -26,40 +26,56 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Проверяем что admin_student_id — админ
-    const { data: adminInfo } = await admin
+    // Проверка прав админа
+    const { data: adminInfo, error: adminErr } = await admin
       .from("students")
       .select("is_admin, is_super_admin")
       .eq("id", admin_student_id)
       .single();
 
-    if (!adminInfo || (!adminInfo.is_admin && !adminInfo.is_super_admin)) {
+    if (adminErr || !adminInfo) {
+      return NextResponse.json({ error: "Admin not found" }, { status: 400 });
+    }
+
+    if (!adminInfo.is_admin && !adminInfo.is_super_admin) {
       return NextResponse.json({ error: "Not enough permissions" }, { status: 403 });
     }
 
-    // Генерируем позицию
-    const today = scheduled_for_date;
+    // Получаем auth.user_id студента
+    const { data: student, error: userErr } = await admin
+      .from("students")
+      .select("user_id")
+      .eq("id", student_id)
+      .single();
+
+    if (userErr || !student) {
+      return NextResponse.json({ error: "Student not found" }, { status: 400 });
+    }
+
+    // Генерация queue_position
     const { data: rows } = await admin
       .from("queue")
       .select("queue_position")
-      .eq("queue_date", today)
-      .eq("scheduled_for_date", today);
+      .eq("queue_date", scheduled_for_date)
+      .eq("scheduled_for_date", scheduled_for_date);
 
     const nextPos =
       rows && rows.length > 0
         ? Math.max(...rows.map((r) => r.queue_position || 0)) + 1
         : 1;
 
+    // Вставляем запись (с user_id)
     const { error } = await admin.from("queue").insert({
       id: crypto.randomUUID(),
       student_id,
+      user_id: student.user_id,       // 🔥 ОБЯЗАТЕЛЬНО
       full_name,
       room,
       wash_count,
       payment_type,
       expected_finish_at,
-      scheduled_for_date: today,
-      queue_date: today,
+      scheduled_for_date,
+      queue_date: scheduled_for_date,
       queue_position: nextPos,
       avatar_type,
       joined_at: new Date().toISOString(),
@@ -71,10 +87,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message || "Internal error" },
-      { status: 500 }
-    );
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
