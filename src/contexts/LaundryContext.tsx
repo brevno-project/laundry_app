@@ -916,116 +916,54 @@ const joinQueue = async (
   };
 
 
-  // Admin: Add student to queue (works for both registered and unregistered students)
-const adminAddToQueue = async (
-  studentRoom?: string,
-  washCount: number = 1,
-  paymentType: string = 'money',
-  expectedFinishAt?: string,
-  chosenDate?: string,
-  studentId?: string
-) => {
-  const student = students.find(s => s.id === studentId);
-  if (!student) {
-    alert('Студент не найден');
-    return;
-  }
+  const adminAddToQueue = async (
+    studentRoom?: string,
+    washCount: number = 1,
+    paymentType: string = 'money',
+    expectedFinishAt?: string,
+    chosenDate?: string,
+    studentId?: string
+  ) => {
+    const student = students.find(s => s.id === studentId);
+    if (!student) {
+      alert("Студент не найден");
+      return;
+    }
   
-  // ПРОВЕРКА: обычный админ не может ставить в очередь супер-админов
-  if (!isSuperAdmin && student.is_super_admin) {
-    alert('Только супер-админ может добавлять супер-админов в очередь');
-    return;
-  }
+    if (!isAdmin) {
+      alert("Недостаточно прав");
+      return;
+    }
   
-  if (!isAdmin) {
-    alert('Недостаточно прав');
-    return;
-  }
-
-  if (!supabase) {
-    alert('Ошибка инициализации');
-    return;
-  }
-
-  const todayISO = new Date().toISOString().slice(0, 10);
-  const targetDate = chosenDate || todayISO;
-
-  try {
-    // Получить позиции для правильной сортировки
-    const { data: sameDayRows, error: posErr } = await supabase
-      .from('queue')
-      .select('queue_position, scheduled_for_date, queue_date')
-      .eq('queue_date', targetDate)
-      .eq('scheduled_for_date', targetDate);
-
-    if (posErr) {
-      alert('Ошибка получения позиций');
+    const todayISO = new Date().toISOString().slice(0, 10);
+    const targetDate = chosenDate || todayISO;
+  
+    const response = await fetch("/api/admin/add-to-queue", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        student_id: student.id,
+        admin_student_id: user?.student_id,
+        full_name: student.full_name,
+        room: studentRoom || student.room,
+        wash_count: washCount,
+        payment_type: paymentType,
+        expected_finish_at: expectedFinishAt,
+        scheduled_for_date: targetDate,
+        avatar_type: student.avatar_type,
+      }),
+    });
+  
+    const res = await response.json();
+  
+    if (!response.ok) {
+      alert("Ошибка добавления в очередь: " + res.error);
       return;
     }
-
-    let nextPos = 1;
-    if (sameDayRows && sameDayRows.length > 0) {
-      const maxPos = Math.max(...sameDayRows.map(row => row.queue_position || 0));
-      nextPos = maxPos + 1;
-    }
-
-    // ✅ Проверяем дубликат по student_id
-    const { data: existingStudent } = await supabase
-      .from('queue')
-      .select('id')
-      .eq('student_id', student.id)
-      .eq('queue_date', targetDate)
-      .in('status', ['waiting', 'ready', 'key_issued', 'washing']);
-
-    if (existingStudent && existingStudent.length > 0) {
-      alert(`${student.full_name} уже в очереди на эту дату`);
-      return;
-    }
-
-    // ✅ КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: user_id может быть null для незарегистрированных
-    const userId = student.is_registered ? student.user_id : null;
-
-    const newItem = {
-      id: crypto.randomUUID(),
-      user_id: userId,  // ✅ null для незарегистрированных!
-      student_id: student.id,
-      full_name: student.full_name,
-      room: studentRoom || student.room || null,
-      wash_count: washCount,
-      payment_type: paymentType,
-      joined_at: new Date().toISOString(),
-      expected_finish_at: expectedFinishAt || null,
-      status: QueueStatus.WAITING,
-      scheduled_for_date: targetDate,
-      queue_date: targetDate,
-      queue_position: nextPos,
-      admin_message: null,
-      return_key_alert: false,
-      created_at: new Date().toISOString(),
-      avatar_type: student.avatar_type || 'default', // ✅ Копируем аватар студента
-    };
-
-    // Проверяем сессию Supabase
-    const { data: sessionData } = await supabase.auth.getSession();
-    
-    if (!sessionData?.session) {
-      alert('❌ Нет сессии Supabase. Перезайдите как админ.');
-      return;
-    }
-
-    const { error } = await supabase.from('queue').insert(newItem);
-
-    if (error) {
-      alert('Ошибка добавления в очередь: ' + error.message);
-      return;
-    }
-
+  
     await fetchQueue();
-
-  } catch (error: any) {
-    alert('Ошибка добавления');
-  }
-};
+  };
+  
 
   // Admin: Set return key alert
   const setReturnKeyAlert = async (queueItemId: string, alert: boolean) => {
