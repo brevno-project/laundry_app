@@ -83,7 +83,6 @@ type LaundryContextType = {
   addStudent: (firstName: string, lastName: string, room?: string) => Promise<void>;
   updateStudent: (studentId: string, updates: { first_name?: string; last_name?: string; middle_name?: string; room?: string; can_view_students?: boolean }) => Promise<void>;
   deleteStudent: (studentId: string) => Promise<void>;
-  updateAdminKey: (newKey: string) => Promise<void>;
   adminAddToQueue: (studentRoom?: string, washCount?: number, paymentType?: string, expectedFinishAt?: string, chosenDate?: string, studentId?: string) => Promise<void>;
   updateQueueItemDetails: (queueId: string, updates: { wash_count?: number; payment_type?: string; expected_finish_at?: string; chosen_date?: string }) => Promise<void>;
   updateQueueEndTime: (queueId: string, endTime: string) => Promise<void>;
@@ -585,64 +584,69 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
   };
 
     // Admin: Reset student registration
-    const resetStudentRegistration = async (studentId: string) => {
-      if (!isAdmin) throw new Error('Недостаточно прав');
-      if (!isSupabaseConfigured || !supabase) {
-        throw new Error('Supabase не настроен');
+const resetStudentRegistration = async (studentId: string) => {
+  if (!isAdmin) throw new Error('Недостаточно прав');
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase не настроен');
+  }
+
+  try {
+    // 1. Получаем студента
+    const { data: studentData, error: studentError } = await supabase
+      .from('students')
+      .select('id, user_id, is_registered, full_name')
+      .eq('id', studentId)
+      .single();
+
+    if (studentError) throw studentError;
+    if (!studentData) throw new Error('Студент не найден');
+
+    // 2. (Необязательно) Чистим user_id в queue для этого студента,
+    //    чтобы там не висел "старый" user_id — это безопасно.
+    try {
+      const { error: queueError } = await supabase
+        .from('queue')
+        .update({ user_id: null })
+        .eq('student_id', studentId);
+
+      if (queueError) {
+        console.warn('Не удалось обнулить user_id в очереди при сбросе регистрации:', queueError);
+        // не падаем — это не критично
       }
-    
-      try {
-        const { data: studentData, error: studentError } = await supabase
-          .from('students')
-          .select('user_id, is_registered, full_name')
-          .eq('id', studentId)
-          .single();
-    
-        if (studentError) throw studentError;
-        if (!studentData) throw new Error('Студент не найден');
-        
-        // Удалить из Supabase Auth если user_id существует
-        if (studentData.user_id && user?.id) {
-          try {
-            const response = await fetch('/api/admin/delete-user', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                userId: studentData.user_id,
-                adminStudentId: user.student_id 
-              })
-            });
-            
-            const result = await response.json();
-            if (!response.ok) {
-              throw new Error(result.error);
-            }
-          } catch (error) {
-            throw new Error('Ошибка удаления пользователя');
-          }
-        }
-        
-    
-        // Сбросить регистрацию в таблице students
-        const { error: updateError } = await supabase
-          .from('students')
-          .update({ 
-            is_registered: false,
-            registered_at: null,
-            user_id: null,
-            telegram_chat_id: null, // ✅ Сбрасываем Telegram
-            avatar_type: 'default', // ✅ Сбрасываем аватар
-            // НЕ СБРАСЫВАЕМ is_banned и ban_reason - они остаются!
-          })
-          .eq('id', studentId);
-    
-        if (updateError) throw updateError;
-    
-        await loadStudents();
-      } catch (error: any) {
-        throw error;
-      }
-    };
+    } catch (queueErr) {
+      console.warn('Ошибка при обновлении очереди во время сброса регистрации:', queueErr);
+      // тоже не роняем процесс
+    }
+
+    // 3. Сбрасываем регистрацию в таблице students
+    const { error: updateError } = await supabase
+      .from('students')
+      .update({
+        is_registered: false,
+        registered_at: null,
+        user_id: null,
+        telegram_chat_id: null,   // сбрасываем Telegram
+        avatar_type: 'default',   // сбрасываем аватар
+        // is_banned и ban_reason НЕ трогаем
+      })
+      .eq('id', studentId);
+
+    if (updateError) throw updateError;
+
+    // 4. Обновляем локальный список
+    await loadStudents();
+
+    // 5. Если админ сбросил САМ СЕБЕ регистрацию — разлогиниваем его
+    if (user && user.student_id === studentId) {
+      await logoutStudent();
+    }
+
+  } catch (error: any) {
+    // Пробрасываем наверх, чтобы UI показал нормальную ошибку
+    throw error;
+  }
+};
+
 
   // Telegram 
   const linkTelegram = async (telegramCode: string): Promise<{ success: boolean; error?: string }> => {
@@ -1726,19 +1730,20 @@ const deleteStudent = async (studentId: string) => {
   }
 
   try {
-    // ✅ ПРОВЕРКА: Существует ли студент
+    // --- 0. Найти студента ---
     const targetStudent = students.find(s => s.id === studentId);
     if (!targetStudent) {
       alert('Студент не найден');
       return;
     }
-    
-    // ✅ ПРОВЕРКА: Админ не может удалять других админов
+
+    // --- 1. Защита: админ не может удалять админов ---
     if (isAdmin && !isSuperAdmin && (targetStudent.is_admin || targetStudent.is_super_admin)) {
       alert('Админ не может удалять других админов');
+      return;
     }
-    
-    // ✅ ПРОВЕРКА: Нельзя удалить последнего супер-админа
+
+    // --- 2. Защита: нельзя удалить последнего супера ---
     if (targetStudent.is_super_admin) {
       const superAdminsCount = students.filter(s => s.is_super_admin).length;
       if (superAdminsCount <= 1) {
@@ -1746,53 +1751,56 @@ const deleteStudent = async (studentId: string) => {
         return;
       }
     }
-    
-    // 1. Удалить записи из очереди
+
+    // --- 3. Удаление очереди студента ---
     const { error: queueError } = await supabase
       .from('queue')
       .delete()
       .eq('student_id', studentId);
 
     if (queueError) {
-      alert('Ошибка удаления из очереди');
-      // Не бросаем ошибку - продолжаем удаление
+      console.warn('Ошибка удаления очереди (игнорируется):', queueError);
+      // продолжаем
     }
 
-    // 2. Удалить из истории (если есть)
-    const { error: historyError } = await supabase
-      .from('history')
-      .delete()
-      .eq('user_id', targetStudent.user_id);
+    // --- 4. Удаление истории ---
+    if (targetStudent.user_id) {
+      const { error: historyError } = await supabase
+        .from('history')
+        .delete()
+        .eq('user_id', targetStudent.user_id);
 
-    if (historyError) {
-      alert('Ошибка удаления из истории');
-      // Не бросаем ошибку, продолжаем удаление
+      if (historyError) {
+        console.warn('Ошибка удаления истории (игнорируется):', historyError);
+        // продолжаем
+      }
     }
 
-    // 3. Удалить auth пользователя (если есть user_id)
-    if (targetStudent.user_id && user?.id) {
+    // --- 5. Мягкое удаление Supabase Auth пользователя ---
+    if (targetStudent.user_id && user?.student_id) {
       try {
         const response = await fetch('/api/admin/delete-user', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             userId: targetStudent.user_id,
-            adminStudentId: user.student_id 
+            adminStudentId: user.student_id
           })
         });
-        
+
         const result = await response.json();
+
         if (!response.ok) {
-          alert('Ошибка удаления auth пользователя');
-          return;
+          console.warn('Ошибка удаления auth пользователя (некритично):', result.error);
+        } else if (result.authDeleteError) {
+          console.warn('Auth delete non-fatal:', result.authDeleteError);
         }
-      } catch (error) {
-        alert('Ошибка удаления auth пользователя');
-        return;
+      } catch (err) {
+        console.warn('Ошибка общения с /delete-user (некритично):', err);
       }
     }
 
-    // 4. Удалить студента из таблицы students
+    // --- 6. Удалить запись студента ---
     const { error: deleteError } = await supabase
       .from('students')
       .delete()
@@ -1800,34 +1808,18 @@ const deleteStudent = async (studentId: string) => {
 
     if (deleteError) {
       alert('Ошибка удаления студента');
-      throw deleteError;
+      console.error(deleteError);
+      return;
     }
 
+    // --- 7. Обновление локальных данных ---
     await loadStudents();
     await fetchQueue();
-  } catch (error: any) {
-    alert('Ошибка удаления студента');
-    throw error;
-  }
-};
 
-// Обновить админ-ключ
-const updateAdminKey = async (newKey: string) => {
-  if (!isAdmin) throw new Error('');
-  
-  try {
-    const response = await fetch('/api/admin/update-key', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ newKey }),
-    });
-
-    if (!response.ok) throw new Error('');
-
-    alert('Ключ администратора обновлен');
-  } catch (error: any) {
-    alert('Ошибка обновления ключа администратора');
-    throw error;
+    alert('Студент успешно удалён!');
+  } catch (err) {
+    console.error('Ошибка в deleteStudent:', err);
+    alert('Ошибка удаления студента (неизвестная)');
   }
 };
 
@@ -2427,7 +2419,6 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     addStudent,
    updateStudent,
    deleteStudent,
-   updateAdminKey,
    adminAddToQueue,
    updateQueueItemDetails,
    updateQueueEndTime,              
