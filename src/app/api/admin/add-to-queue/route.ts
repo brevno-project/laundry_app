@@ -26,49 +26,43 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Проверка прав админа
-    const { data: adminInfo, error: adminErr } = await admin
+    // Проверяем админа
+    const { data: adminInfo } = await admin
       .from("students")
       .select("is_admin, is_super_admin")
       .eq("id", admin_student_id)
       .single();
 
-    if (adminErr || !adminInfo) {
+    if (!adminInfo || (!adminInfo.is_admin && !adminInfo.is_super_admin)) {
       return NextResponse.json({ error: "Admin not found" }, { status: 400 });
     }
 
-    if (!adminInfo.is_admin && !adminInfo.is_super_admin) {
-      return NextResponse.json({ error: "Not enough permissions" }, { status: 403 });
-    }
-
-    // Получаем auth.user_id студента
-    const { data: student, error: userErr } = await admin
+    // Получаем user_id нужного студента (auth.uid)
+    const { data: student } = await admin
       .from("students")
       .select("user_id")
       .eq("id", student_id)
       .single();
 
-    if (userErr || !student) {
-      return NextResponse.json({ error: "Student not found" }, { status: 400 });
+    if (!student || !student.user_id) {
+      return NextResponse.json({ error: "Student has no user_id" }, { status: 400 });
     }
 
-    // Генерация queue_position
+    // Позиция в очереди
     const { data: rows } = await admin
       .from("queue")
       .select("queue_position")
-      .eq("queue_date", scheduled_for_date)
-      .eq("scheduled_for_date", scheduled_for_date);
+      .eq("queue_date", scheduled_for_date);
 
-    const nextPos =
-      rows && rows.length > 0
-        ? Math.max(...rows.map((r) => r.queue_position || 0)) + 1
-        : 1;
+    const nextPos = rows?.length
+      ? Math.max(...rows.map(r => r.queue_position || 0)) + 1
+      : 1;
 
-    // Вставляем запись (с user_id)
+    // Вставляем
     const { error } = await admin.from("queue").insert({
       id: crypto.randomUUID(),
       student_id,
-      user_id: student.user_id,       // 🔥 ОБЯЗАТЕЛЬНО
+      user_id: student.user_id,    // 🔥 КЛЮЧЕВОЕ! RLS работает!!!
       full_name,
       room,
       wash_count,
@@ -87,7 +81,8 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
