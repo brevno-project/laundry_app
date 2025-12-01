@@ -273,116 +273,8 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
  
 
-
-    // ========================================
-// ИСПРАВЛЕННАЯ ФУНКЦИЯ РЕГИСТРАЦИИ
-// ========================================
-
-const registerStudent = async (studentId: string, password: string): Promise<User | null> => {
-  if (!isSupabaseConfigured || !supabase) {
-    throw new Error("Supabase не настроен");
-  }
-
-  try {
-    const student = students.find(s => s.id === studentId);
-    if (!student) throw new Error("Студент не найден");
-
-    if (student.is_banned) {
-      throw new Error(`Вы забанены. Причина: ${student.ban_reason || "Не указана"}`);
-    }
-
-    if (student.is_registered && student.user_id) {
-      throw new Error("Студент уже зарегистрирован. Нажмите «Войти».");
-    }
-
-    // ---------- 🔥 1. УЛУЧШЕННАЯ ЗАЩИТА EMAIL ----------
-    const shortId = studentId.replace(/-/g, "").slice(0, 12); // безопасная длина  
-    const email = `student-${shortId}@example.com`;
-
-    // 1.1 Проверяем, есть ли auth-user с этим email (чтобы не создавать дубликат)
-    const { data: usersList } = await supabase.auth.admin.listUsers();
-    const existingUser = usersList?.users?.find(u => u.email === email);
-
-    // 1.2 Если auth-user уже существует → просто логинимся
-    if (existingUser) {
-      const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (loginError) {
-        throw new Error("Этот email уже существует. Используйте «Войти», а не «Регистрация».");
-      }
-
-      // 1.3 Чиним metadata, если он был битый
-      if (!existingUser.user_metadata?.student_id) {
-        await supabase.auth.admin.updateUserById(existingUser.id, {
-          user_metadata: {
-            student_id: studentId,
-            full_name: student.full_name,
-            room: student.room || null,
-          },
-        });
-      }
-
-      // 1.4 Привязываем студента
-      await supabase
-        .from("students")
-        .update({
-          user_id: existingUser.id,
-          is_registered: true,
-          registered_at: new Date().toISOString(),
-        })
-        .eq("id", studentId);
-
-      return finalizeLogin(existingUser.id, student);
-    }
-
-    // ---------- 🔥 2. РЕГИСТРАЦИЯ НОВОГО AUTH USER ----------
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          student_id: studentId,
-          full_name: student.full_name,
-          room: student.room || null,
-        },
-      },
-    });
-
-    if (authError) throw authError;
-    if (!authData.user) throw new Error("Не удалось создать пользователя");
-
-    const authUserId = authData.user.id;
-
-    // ---------- 🔥 3. ОБНОВЛЯЕМ СТУДЕНТА ----------
-    await supabase
-      .from("students")
-      .update({
-        user_id: authUserId,
-        is_registered: true,
-        registered_at: new Date().toISOString(),
-      })
-      .eq("id", studentId);
-
-    // ---------- 🔥 4. ОБНОВЛЯЕМ ВСЮ ОЧЕРЕДЬ ----------
-    await supabase
-      .from("queue")
-      .update({ user_id: authUserId })
-      .eq("student_id", studentId)
-      .is("user_id", null);
-
-    await fetchQueue();
-
-    // ---------- 🔥 5. ЧИСТЫЙ ФИНАЛ ----------
-    return finalizeLogin(authUserId, student);
-  } catch (error: any) {
-    throw error;
-  }
-};
-
-const finalizeLogin = (authUserId: string, student: any): User => {
+  // Универсальный хелпер: формирует локального пользователя и статусы
+const finalizeUserSession = (authUserId: string, student: Student, isNew: boolean): User => {
   const newUser: User = {
     id: authUserId,
     student_id: student.id,
@@ -391,10 +283,11 @@ const finalizeLogin = (authUserId: string, student: any): User => {
     full_name: student.full_name,
     room: student.room || undefined,
     telegram_chat_id: student.telegram_chat_id || undefined,
+    avatar_type: student.avatar_type || "default",
   };
 
   setUser(newUser);
-  setIsNewUser(true);
+  setIsNewUser(isNew);
 
   const isAdminUser = student.is_admin || false;
   const isSuperAdminUser = student.is_super_admin || false;
@@ -409,18 +302,126 @@ const finalizeLogin = (authUserId: string, student: any): User => {
   return newUser;
 };
 
-
+    // ========================================
+// ФУНКЦИЯ РЕГИСТРАЦИИ
 // ========================================
-// loginStudent — безопасная версия
-// ========================================
 
-const loginStudent = async (studentId: string, password: string): Promise<User | null> => {
+const registerStudent = async (
+  studentId: string,
+  password: string
+): Promise<User | null> => {
   if (!isSupabaseConfigured || !supabase) {
     throw new Error("Supabase не настроен");
   }
 
   try {
-    // 1) Проверяем студента
+    const student = students.find((s) => s.id === studentId);
+    if (!student) throw new Error("Студент не найден");
+
+    if (student.is_banned) {
+      throw new Error(
+        `Вы забанены. Причина: ${student.ban_reason || "Не указана"}`
+      );
+    }
+
+    if (student.is_registered && student.user_id) {
+      throw new Error("Студент уже зарегистрирован. Нажмите «Войти».");
+    }
+
+    // СТАБИЛЬНАЯ СХЕМА EMAIL (та же, что была раньше)
+    const email = `student-${studentId.slice(0, 8)}@example.com`;
+
+    // 1) Пытаемся создать пользователя
+    const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          student_id: studentId,
+          full_name: student.full_name,
+          room: student.room || null,
+        },
+      },
+    });
+
+    let authUser = signUpData?.user ?? null;
+
+    // Если уже существует — пробуем войти
+    if (signUpErr) {
+      const msg = signUpErr.message?.toLowerCase() || "";
+      if (msg.includes("already registered")) {
+        const { data: signInData, error: signInErr } =
+          await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+        if (signInErr || !signInData?.user) {
+          throw new Error(
+            "Этот email уже зарегистрирован. Используйте «Войти»."
+          );
+        }
+
+        authUser = signInData.user;
+      } else {
+        throw signUpErr;
+      }
+    }
+
+    if (!authUser) {
+      throw new Error("Не удалось создать/получить пользователя");
+    }
+
+    // 2) Привязываем студента к authUser
+    const { error: updateStudentErr } = await supabase
+      .from("students")
+      .update({
+        user_id: authUser.id,
+        is_registered: true,
+        registered_at: new Date().toISOString(),
+        is_banned: false,
+        ban_reason: null,
+        banned_at: null,
+      })
+      .eq("id", studentId);
+
+    if (updateStudentErr) throw updateStudentErr;
+
+    // 3) Обновляем очередь (старые записи, где user_id ещё null)
+    const { error: queueUpdateErr } = await supabase
+      .from("queue")
+      .update({ user_id: authUser.id })
+      .eq("student_id", studentId)
+      .is("user_id", null);
+
+    if (queueUpdateErr) throw queueUpdateErr;
+
+    await fetchQueue();
+    await loadStudents();
+
+    // 4) Создаём локальную сессию (новый пользователь → isNewUser = true)
+    return finalizeUserSession(authUser.id, student, true);
+  } catch (error: any) {
+    throw error;
+  }
+};
+
+
+
+// ========================================
+// loginStudent — безопасная версия
+// ========================================
+
+const loginStudent = async (
+  studentId: string,
+  password: string
+): Promise<User | null> => {
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error("Supabase не настроен");
+  }
+
+  try {
+    // 1) Берём студента
     const { data: student, error: studentErr } = await supabase
       .from("students")
       .select("*")
@@ -430,26 +431,25 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
     if (studentErr) throw studentErr;
     if (!student) throw new Error("Студент не найден");
 
-    // 2) Бан — до попытки входа
+    // 2) Бан до логина
     if (student.is_banned) {
       const banReason = student.ban_reason || "Не указана";
       throw new Error(`Вы забанены. Причина: ${banReason}`);
     }
 
-    // 3) Проверяем регистрацию
-    if (!student.is_registered || !student.user_id) {
+    if (!student.is_registered) {
       throw new Error("Студент не зарегистрирован");
     }
 
-    // 4) Генерируем корректный email (те же правила, что в registerStudent)
-    const shortId = studentId.replace(/-/g, "").slice(0, 12);
-    const email = `student-${shortId}@example.com`;
+    // 3) Генерируем тот же email, что и при регистрации
+    const email = `student-${studentId.slice(0, 8)}@example.com`;
 
-    // 5) Логинимся
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    // 4) Логин
+    const { data: authData, error: authError } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
     if (authError) {
       if (authError.message === "Invalid login credentials") {
@@ -458,70 +458,37 @@ const loginStudent = async (studentId: string, password: string): Promise<User |
       throw new Error(authError.message || "Ошибка входа");
     }
 
-    if (!authData.user) {
+    if (!authData?.user) {
       throw new Error("Не удалось войти");
     }
 
     const authUser = authData.user;
 
-    // 6) 🔥 Если metadata повреждён (нет student_id) → ЧИНИМ
-    if (!authUser.user_metadata?.student_id) {
-      await supabase.auth.admin.updateUserById(authUser.id, {
-        user_metadata: {
-          student_id: student.id,
-          full_name: student.full_name,
-          room: student.room || null,
-        },
-      });
-    }
-
-    // 7) 🔥 Если в students.user_id нет соответствия auth.id → ЧИНИМ
-    if (student.user_id !== authUser.id) {
+    // 5) Если student.user_id пустой или не совпадает — чиним
+    if (!student.user_id || student.user_id !== authUser.id) {
       await supabase
         .from("students")
         .update({ user_id: authUser.id })
         .eq("id", student.id);
     }
 
-    // 8) 🔥 Чиним очередь: user_id должен соответствовать authUser.id
+    // 6) Чиним очередь: все старые записи без user_id привязываем к актуальному
     await supabase
       .from("queue")
       .update({ user_id: authUser.id })
       .eq("student_id", student.id)
       .is("user_id", null);
 
-    // 9) Формирование локального пользователя
-    const newUser: User = {
-      id: authUser.id,
-      student_id: student.id,
-      first_name: student.first_name,
-      last_name: student.last_name,
-      full_name: student.full_name,
-      room: student.room || undefined,
-      telegram_chat_id: student.telegram_chat_id || undefined,
-      avatar_type: student.avatar_type || "default",
-    };
+    await fetchQueue();
+    await loadStudents();
 
-    const isAdminUser = student.is_admin || false;
-    const isSuperAdminUser = student.is_super_admin || false;
-
-    setIsAdmin(isAdminUser);
-    setIsSuperAdmin(isSuperAdminUser);
-
-    localStorage.setItem("laundryIsAdmin", isAdminUser.toString());
-    localStorage.setItem("laundryIsSuperAdmin", isSuperAdminUser.toString());
-
-    // 🔥 Вход → уже не новый пользователь
-    setIsNewUser(false);
-
-    setUser(newUser);
-    localStorage.setItem("laundryUser", JSON.stringify(newUser));
-
-    return newUser;
+    // 7) Создаём локальную сессию (НЕ новый пользователь)
+    return finalizeUserSession(authUser.id, student, false);
   } catch (error: any) {
     throw error;
   }
 };
+
 
 
   // Logout student
@@ -2339,6 +2306,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     transferSelectedToDate,
     changeQueuePosition,
     registerStudent,
+    finalizeUserSession,
     loginStudent,
     adminLogin,
     logoutStudent,
@@ -2380,6 +2348,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
    toggleAdminStatus,
    toggleSuperAdminStatus,
    loadStudents,
+
   };
 
   return <LaundryContext.Provider value={value}>{children}</LaundryContext.Provider>;
