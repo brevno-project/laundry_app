@@ -43,6 +43,7 @@ export type User = {
   can_view_students?: boolean; // Может ли студент видеть список студентов
   avatar?: string; // SVG аватар
   avatar_type?: string; // Тип аватара
+  
 };
 
 export enum QueueStatus {

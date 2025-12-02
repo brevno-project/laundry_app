@@ -274,7 +274,15 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
  
 
   // Универсальный хелпер: формирует локального пользователя и статусы
-const finalizeUserSession = (authUserId: string, student: Student, isNew: boolean): User => {
+const finalizeUserSession = (
+  authUserId: string,
+  student: Student,
+  isNew: boolean
+): User => {
+  const isAdminUser = student.is_admin || false;
+  const isSuperAdminUser = student.is_super_admin || false;
+  const canViewStudents = student.can_view_students || false;
+
   const newUser: User = {
     id: authUserId,
     student_id: student.id,
@@ -284,20 +292,24 @@ const finalizeUserSession = (authUserId: string, student: Student, isNew: boolea
     room: student.room || undefined,
     telegram_chat_id: student.telegram_chat_id || undefined,
     avatar_type: student.avatar_type || "default",
+
+    // 🔥 Добавляем эти поля в объект пользователя
+    is_admin: isAdminUser,
+    is_super_admin: isSuperAdminUser,
+    can_view_students: canViewStudents,
   };
 
   setUser(newUser);
   setIsNewUser(isNew);
 
-  const isAdminUser = student.is_admin || false;
-  const isSuperAdminUser = student.is_super_admin || false;
-
   setIsAdmin(isAdminUser);
   setIsSuperAdmin(isSuperAdminUser);
 
-  localStorage.setItem("laundryUser", JSON.stringify(newUser));
-  localStorage.setItem("laundryIsAdmin", isAdminUser.toString());
-  localStorage.setItem("laundryIsSuperAdmin", isSuperAdminUser.toString());
+  if (typeof window !== "undefined") {
+    localStorage.setItem("laundryUser", JSON.stringify(newUser));
+    localStorage.setItem("laundryIsAdmin", isAdminUser.toString());
+    localStorage.setItem("laundryIsSuperAdmin", isSuperAdminUser.toString());
+  }
 
   return newUser;
 };
@@ -1465,118 +1477,154 @@ const startWashing = async (queueItemId: string) => {
   };
 
   // Добавить нового студента
-  const addStudent = async (firstName: string, lastName: string, room?: string) => {
-    if (!isAdmin) throw new Error('Недостаточно прав');
+  const addStudent = async (
+    firstName: string,
+    lastName: string,
+    room?: string
+  ) => {
+    if (!isAdmin) throw new Error("Недостаточно прав");
     if (!isSupabaseConfigured || !supabase) {
-      throw new Error('Supabase не настроен');
+      throw new Error("Supabase не настроен");
     }
   
     try {
       const fullName = lastName ? `${firstName} ${lastName}` : firstName;
-      
-      const { error } = await supabase
-        .from('students')
-        .insert({
-          id: uuidv4(),
-          first_name: firstName,
-          last_name: lastName || '',
-          full_name: fullName,
-          room: room || null,
-          is_registered: false,
-          created_at: new Date().toISOString(),
-        });
+  
+      const { error } = await supabase.from("students").insert({
+        id: uuidv4(),
+        first_name: firstName,
+        last_name: lastName || "",
+        full_name: fullName,
+        room: room || null,
+        is_registered: false,
+        created_at: new Date().toISOString(),
+        is_banned: false,
+        can_view_students: false,
+        avatar_type: "default",
+      });
   
       if (error) throw error;
   
       await loadStudents();
     } catch (error: any) {
-      alert('Ошибка добавления студента');
+      alert("Ошибка добавления студента");
       throw error;
     }
   };
+  
 
   // Обновить данные студента
   const updateStudent = async (
     studentId: string,
-    updates: { first_name?: string; last_name?: string; middle_name?: string; room?: string; can_view_students?: boolean; avatar_type?: string }
-) => {
-  if (!isAdmin) {
-    alert('Вы не администратор');
-    return;
-  }
-  
-  if (!isSupabaseConfigured || !supabase) {
-    alert('Ошибка обновления студента');
-    return;
-  }
-
-  try {
-    const targetStudent = students.find(s => s.id === studentId);
-    if (!targetStudent) {
-      alert('Студент не найден');
+    updates: {
+      first_name?: string;
+      last_name?: string;
+      middle_name?: string;
+      room?: string;
+      can_view_students?: boolean;
+      avatar_type?: string;
+    }
+  ) => {
+    if (!isAdmin) {
+      alert("Вы не администратор");
       return;
     }
-    
-    // ПРОВЕРКА: обычный админ не может редактировать супер-админов
-    if (!isSuperAdmin && targetStudent.is_super_admin) {
-      alert('Только супер-админ может редактировать супер-админов');
+  
+    if (!isSupabaseConfigured || !supabase) {
+      alert("Ошибка обновления студента");
+      return;
     }
-
-    const updateData: any = {};
-    
-    if (updates.first_name !== undefined || updates.last_name !== undefined || updates.middle_name !== undefined) {
-      const newFirstName = updates.first_name !== undefined ? updates.first_name : targetStudent.first_name;
-      const newLastName = updates.last_name !== undefined ? updates.last_name : (targetStudent.last_name || '');
-      const newMiddleName = updates.middle_name !== undefined ? updates.middle_name : (targetStudent.middle_name || '');
-      
-      // Формируем full_name: Имя Фамилия Отчество
-      const nameParts = [newFirstName, newLastName, newMiddleName].filter(Boolean);
-      updateData.full_name = nameParts.join(' ');
-      
-      if (updates.first_name !== undefined) updateData.first_name = newFirstName;
-      if (updates.last_name !== undefined) updateData.last_name = newLastName || null;
-      if (updates.middle_name !== undefined) updateData.middle_name = newMiddleName || null;
-    }
-
-    if (updates.room !== undefined) updateData.room = updates.room;
-    if (updates.can_view_students !== undefined) updateData.can_view_students = updates.can_view_students;
-    if (updates.avatar_type !== undefined) updateData.avatar_type = updates.avatar_type;
-
-    // Проверить текущую сессию
-    const { data: sessionData } = await supabase.auth.getSession();
-
-    const { data, error } = await supabase
-      .from('students')
-      .update(updateData)
-      .eq('id', studentId)
-      .select();
-
-    if (error) {
-      alert('Ошибка обновления студента');
+  
+    try {
+      const targetStudent = students.find((s) => s.id === studentId);
+      if (!targetStudent) {
+        alert("Студент не найден");
+        return;
+      }
+  
+      // 🚫 Обычный админ не может редактировать супер-админа
+      if (!isSuperAdmin && targetStudent.is_super_admin) {
+        alert("Только супер-админ может редактировать супер-админов");
+        return;
+      }
+  
+      const updateData: any = {};
+  
+      // Имя / фамилия / отчество + пересборка full_name
+      if (
+        updates.first_name !== undefined ||
+        updates.last_name !== undefined ||
+        updates.middle_name !== undefined
+      ) {
+        const newFirstName =
+          updates.first_name !== undefined
+            ? updates.first_name
+            : targetStudent.first_name;
+        const newLastName =
+          updates.last_name !== undefined
+            ? updates.last_name
+            : targetStudent.last_name || "";
+        const newMiddleName =
+          updates.middle_name !== undefined
+            ? updates.middle_name
+            : targetStudent.middle_name || "";
+  
+        const nameParts = [newFirstName, newLastName, newMiddleName].filter(
+          Boolean
+        );
+        updateData.full_name = nameParts.join(" ");
+  
+        updateData.first_name = newFirstName;
+        updateData.last_name = newLastName || null;
+        updateData.middle_name = newMiddleName || null;
+      }
+  
+      if (updates.room !== undefined) {
+        updateData.room = updates.room;
+      }
+      if (updates.can_view_students !== undefined) {
+        updateData.can_view_students = updates.can_view_students;
+      }
+      if (updates.avatar_type !== undefined) {
+        updateData.avatar_type = updates.avatar_type;
+      }
+  
+      const { data, error } = await supabase
+        .from("students")
+        .update(updateData)
+        .eq("id", studentId)
+        .select();
+  
+      if (error) {
+        alert("Ошибка обновления студента");
+        throw error;
+      }
+  
+      await loadStudents();
+  
+      // 🔁 Если обновлённый студент — это текущий пользователь, обновляем его сессию
+      if (user && user.student_id === studentId && data && data[0]) {
+        const updatedStudent = data[0];
+        const updatedUser: User = {
+          ...user,
+          full_name: updatedStudent.full_name,
+          room: updatedStudent.room,
+          avatar_type: updatedStudent.avatar_type,
+          can_view_students: updatedStudent.can_view_students ?? false,
+        };
+  
+        setUser(updatedUser);
+        if (typeof window !== "undefined") {
+          // 🔥 тут был баг: раньше стоял ключ "user"
+          localStorage.setItem("laundryUser", JSON.stringify(updatedUser));
+        }
+      }
+    } catch (error: any) {
+      alert("Ошибка обновления студента");
       throw error;
     }
-
-    await loadStudents();
-    // ✅ Если обновленный студент - это текущий пользователь, обновляем его данные
-    if (user && user.student_id === studentId && data && data[0]) {
-      const updatedStudent = data[0];
-      const updatedUser = {
-        ...user,
-        full_name: updatedStudent.full_name,
-        room: updatedStudent.room,
-        avatar_type: updatedStudent.avatar_type,
-        can_view_students: updatedStudent.can_view_students
-      };
-      setUser(updatedUser);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-      }
-    }
-  } catch (error: any) {
-    alert('Ошибка обновления студента');
-    throw error;
-  }
-};
+  };
+  
 
 const deleteStudent = async (studentId: string) => {
   if (!isAdmin && !isSuperAdmin) throw new Error("Недостаточно прав");
@@ -2105,44 +2153,60 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
   }
 };
 
-  const adminLogin = async (password: string): Promise<User | null> => {
-    if (!isSupabaseConfigured || !supabase) {
-      throw new Error('Supabase not configured');
+const adminLogin = async (password: string): Promise<User | null> => {
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error("Supabase not configured");
+  }
+
+  try {
+    const response = await fetch("/api/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Ошибка входа");
     }
 
-    try {
-      // Вызываем безопасный API route, который хранит email админа на сервере
-      const response = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password })
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Ошибка входа');
-      }
-
-      // Устанавливаем сессию в Supabase клиенте
-      if (result.session) {
-        await supabase.auth.setSession(result.session);
-      }
-
-      const newUser: User = result.user;
-
-      setIsNewUser(false); // Админы - существующие пользователи
-      setUser(newUser);
-      setIsAdmin(newUser.is_admin || false);
-      setIsSuperAdmin(newUser.is_super_admin || false);
-      localStorage.setItem('laundryUser', JSON.stringify(newUser));
-      localStorage.setItem('laundryIsAdmin', (newUser.is_admin || false).toString());
-      localStorage.setItem('laundryIsSuperAdmin', (newUser.is_super_admin || false).toString());     
-      return newUser;
-    } catch (error: any) {
-      throw error;
+    // Устанавливаем сессию в Supabase клиенте
+    if (result.session) {
+      await supabase.auth.setSession(result.session);
     }
-  };
+
+    const newUser: User = {
+      ...result.user,
+      // на всякий случай, если API что-то не вернул
+      is_admin: result.user.is_admin ?? true,
+      is_super_admin: result.user.is_super_admin ?? false,
+    };
+
+    setIsNewUser(false); // Админы - существующие пользователи
+    setUser(newUser);
+    setIsAdmin(!!newUser.is_admin);
+    setIsSuperAdmin(!!newUser.is_super_admin);
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("laundryUser", JSON.stringify(newUser));
+      localStorage.setItem("laundryIsAdmin", (!!newUser.is_admin).toString());
+      localStorage.setItem(
+        "laundryIsSuperAdmin",
+        (!!newUser.is_super_admin).toString()
+      );
+    }
+
+    // 🔥 сразу подтягиваем студентов, чтобы весь админский UI ожил
+    await loadStudents();
+    await fetchQueue();
+
+    return newUser;
+  } catch (error: any) {
+    throw error;
+  }
+};
+
 
   const value = {
     user,

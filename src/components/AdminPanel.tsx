@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import { Student } from '@/types';
 import { CalendarIcon, DoorIcon, DeleteIcon, CheckIcon, CloseIcon, EditIcon, RefreshIcon, BanIcon, BellIcon } from '@/components/Icons';
+import ActionMenu from "@/components/ActionMenu";
 
 export default function AdminPanel() {
   const { 
@@ -479,89 +480,19 @@ export default function AdminPanel() {
                   </div>
                   
                   {/* ========== УПРАВЛЕНИЕ АДМИНАМИ ========== */}
-                  {/* Скрываем кнопку снять админа для суперадмина когда он смотрит на себя */}
-                  {isSuperAdmin && !(student.is_super_admin && user && student.id === user.student_id) && (
-                    <button onClick={() => handleToggleAdmin(student.id, !student.is_admin)}
-                    className={`w-full px-4 py-2 text-sm font-bold text-white mb-2 rounded-none ${
-                      student.is_admin 
-                        ? 'bg-red-500 hover:bg-red-600'  
-                        : 'bg-yellow-500 hover:bg-yellow-600'  
-                    }`}
-                  >
-                    {student.is_admin ? ' Снять админа' : ' Сделать админом'}
-                  </button>
-                  )}
-                  <div className="border-t border-gray-300 pt-2 mt-2">                   
-                  </div>
-
-                  {/* ========== БЕЗОПАСНЫЕ ДЕЙСТВИЯ ========== */}
-                  {/* Суперадмин может ставить себя в очередь */}
-                  {(isSuperAdmin || isAdmin) && (!student.is_super_admin || (student.is_super_admin && user && student.id === user.student_id)) && (
-                    <button onClick={() => openAddToQueueModal(student)}
-                      className="bg-purple-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-purple-600 flex items-center justify-center gap-2 w-full">
-                      <CalendarIcon className="w-4 h-4" />Поставить в очередь
-                    </button>
-                  )}
-
-                  {/* Суперадмин может редактировать себя */}
-                  {(
-                    (isSuperAdmin || isAdmin) 
-                      ? (!student.is_super_admin || (student.is_super_admin && user && student.id === user.student_id))
-                      : student.id === user?.student_id
-                  ) && (
-                    <button
-                      onClick={() => openEditModal(student)}
-                      className="bg-blue-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-blue-600 w-full flex items-center justify-center gap-1"
-                      title="Редактировать"
-                    >
-                      <EditIcon className="w-4 h-4" />Редактировать
-                    </button>
-                  )}
-
-                  {/* ========== ОПАСНЫЕ ДЕЙСТВИЯ ========== */}
-                  <div className="border-t border-red-300 pt-2 mt-2">
-                  {/* ✅ Сбросить регистрацию - Скрываем для суперадмина когда он смотрит на себя */}
-                  {isSuperAdmin && student.is_registered && !student.is_super_admin && (
-                      <button
-                        onClick={() => openResetConfirm(student)}
-                        className="bg-orange-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-orange-600 w-full mb-1"
-                        title="Сбросить регистрацию"
-                      >
-                        <RefreshIcon className="w-4 h-4 inline-block mr-1" />Сбросить регистрацию
-                      </button>
-                    )}
-
-                    {/* ✅ Разбанить - Скрываем для суперадмина когда он смотрит на себя */}
-                    {isSuperAdmin && !student.is_super_admin && student.is_banned && (
-                      <button
-                        onClick={() => handleUnbanStudent(student.id)}
-                        className="w-full px-4 py-2 rounded-lg text-sm font-bold bg-green-500 hover:bg-green-600 text-white mb-1"
-                      >
-                        <CheckIcon className="w-4 h-4 inline-block mr-1" />Разбанить студента
-                      </button>
-                    )}
-
-                    {/* ✅ Забанить - Скрываем для суперадмина когда он смотрит на себя */}
-                    {isSuperAdmin && !student.is_super_admin && !student.is_banned && (
-                      <button
-                        onClick={() => openBanModal(student)}
-                        className="bg-red-500 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-red-600 w-full mb-1"
-                        title="Забанить"
-                      >
-                        <BanIcon className="w-4 h-4 inline-block mr-1" />Забанить студента
-                      </button>
-                    )}
-
-                    {/* ✅ Удалить - ТОЛЬКО СУПЕРАДМИН */}
-                    {isSuperAdmin && !student.is_super_admin && (
-                      <button
-                        onClick={() => openDeleteModal(student)}
-                        className="bg-gray-700 text-white text-sm font-semibold py-2 px-3 rounded hover:bg-gray-800 w-full"
-                        title="Удалить студента"
-                      >
-                        🗑️ Удалить студента
-                      </button>
-                    )}
+                  <div className="flex justify-end">
+                    <ActionMenu
+                      student={student}
+                      isAdmin={isAdmin}
+                      isSuperAdmin={isSuperAdmin}
+                      onEdit={openEditModal}
+                      onBan={openBanModal}
+                      onUnban={handleUnbanStudent}
+                      onDelete={openDeleteModal}
+                      onReset={openResetConfirm}
+                      onAddToQueue={openAddToQueueModal}
+                      onToggleAdmin={handleToggleAdmin}
+                    />
                   </div>
                 </div>
               ))}
