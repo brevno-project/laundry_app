@@ -1757,45 +1757,39 @@ const toggleAdminStatus = async (studentId: string, makeAdmin: boolean) => {
 
 
 
-const toggleSuperAdminStatus = async (studentId: string, makeSuperAdmin: boolean) => {
-  if (!isAdmin) {
-    throw new Error('');
+const toggleSuperAdminStatus = async (
+  studentId: string,
+  makeSuperAdmin: boolean
+) => {
+  if (!isSuperAdmin) {
+    alert("Недостаточно прав");
+    return;
   }
-  if (!isSupabaseConfigured || !supabase) {
-    throw new Error('Supabase ');
-  }
+
   try {
-    const currentStudent = students.find(s => s.id === user?.student_id);
-    
-    // Only super admin can manage super admin status
-    if (!currentStudent?.is_super_admin) {
-      throw new Error('');
+    const response = await fetch("/api/admin/toggle-super-admin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        studentId,
+        makeSuperAdmin,
+        adminStudentId: user?.student_id,
+      }),
+    });
+
+    const res = await response.json();
+
+    if (!response.ok) {
+      alert(res.error || "Ошибка");
+      return;
     }
-    
-    // Cannot remove the last super admin
-    if (!makeSuperAdmin) {
-      const superAdminsCount = students.filter(s => s.is_super_admin).length;
-      if (superAdminsCount <= 1) {
-        throw new Error('');
-      }
-    }
-    
-    const { error } = await supabase
-      .from('students')
-      .update({ is_super_admin: makeSuperAdmin })
-      .eq('id', studentId);
-      
-    if (error) {
-      throw error;
-    }
-    
+
     await loadStudents();
-    
-  } catch (error: any) {
-    alert('Ошибка обновления статуса');
-    throw error;
+  } catch {
+    alert("Ошибка");
   }
 };
+
 
 // Admin: Send message to queue item
 const sendAdminMessage = async (queueItemId: string, message: string) => {
