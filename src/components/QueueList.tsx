@@ -596,6 +596,22 @@ const handleSaveEdit = async () => {
                             <CheckIcon className="w-4 h-4" /> Завершить
                           </button>
 
+                          {/* Отменить уведомления */}
+                          <button
+                            className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-gray-500 text-white font-semibold"
+                            onClick={async () => {
+                              await updateQueueItem(item.id, { 
+                                ready_at: undefined,
+                                return_requested_at: undefined,
+                                admin_room: undefined,
+                                return_key_alert: false
+                              });
+                            }}
+                          >
+                            <BellOffIcon className="w-4 h-4" /> Отменить уведомления
+                          </button>
+
+
                           {/* В ожидание */}
                           <button
                             className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-purple-500 text-white font-semibold"
