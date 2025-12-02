@@ -43,9 +43,7 @@ export default function QueueList() {
   const [editWashCount, setEditWashCount] = useState(1);
   const [editPaymentType, setEditPaymentType] = useState('money');
   const [editDate, setEditDate] = useState('');
-
-  // Global ActionSheet state
-  const [actionSheetItem, setActionSheetItem] = useState<any>(null);
+  const [openActionFor, setOpenActionFor] = useState<string | null>(null);
 
   const toggleSelect = (id: string) => {
     setSelectedItems(prev => 
@@ -334,7 +332,7 @@ const handleSaveEdit = async () => {
                 const isCurrentUser = user && item.student_id === user.student_id;
                 const statusDisplay = getStatusDisplay(item.status);
                 const globalIndex = queuedItems.findIndex((q: any) => q.id === item.id);
-                const [openActionFor, setOpenActionFor] = useState<string | null>(null);
+                
 
                 
                 return (
