@@ -1726,45 +1726,36 @@ const updateQueueEndTime = async (queueId: string, endTime: string) => {
 // ========================================
 
 const toggleAdminStatus = async (studentId: string, makeAdmin: boolean) => {
-  if (!isAdmin) {
-    throw new Error('Недостаточно прав');
+  if (!isSuperAdmin) {
+    alert("Недостаточно прав");
+    return;
   }
-  if (!isSupabaseConfigured || !supabase) {
-    throw new Error('Supabase не настроен');
-  }
-  
+
   try {
-    const currentStudent = students.find(s => s.id === user?.student_id);
-    const targetStudent = students.find(s => s.id === studentId);
-    
-    // Только супер админ может менять админ статусы
-    if (!currentStudent?.is_super_admin) {
-      throw new Error('Только супер-админ может управлять админами');
+    const response = await fetch("/api/admin/toggle-admin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        studentId,
+        makeAdmin,
+        adminStudentId: user?.student_id,
+      }),
+    });
+
+    const res = await response.json();
+
+    if (!response.ok) {
+      alert(res.error || "Ошибка");
+      return;
     }
-    
-    // Нельзя снять супер админа
-    if (!makeAdmin && targetStudent?.is_super_admin) {
-      throw new Error('Нельзя снять супер-админа');
-    }
-    
-    // ✅ ПРЯМОЙ UPDATE вместо RPC
-    const { error } = await supabase
-      .from('students')
-      .update({ is_admin: makeAdmin })
-      .eq('id', studentId);
-      
-    if (error) {
-      alert('Ошибка обновления статуса');
-      throw error;
-    }
-    
+
     await loadStudents();
-    
-  } catch (error: any) {
-    alert('Ошибка обновления статуса');
-    throw error;
+  } catch (err) {
+    alert("Ошибка");
   }
 };
+
+
 
 const toggleSuperAdminStatus = async (studentId: string, makeSuperAdmin: boolean) => {
   if (!isAdmin) {
