@@ -789,12 +789,11 @@ const joinQueue = async (
       
       if (studentData?.is_banned) {
         const banReason = studentData.ban_reason || 'Не указана';
-        alert(`Вы забанены. Причина: ${banReason}`);
+      
         logoutStudent();
         return;
       }
     } catch (err) {
-      alert('Ошибка проверки статуса');
       return;
     }
   }
@@ -869,10 +868,8 @@ const joinQueue = async (
 
     if (error) {
       if (error.code === '23505') {
-        alert('Вы уже в очереди на эту дату');
         return;
       }
-      alert('Ошибка добавления в очередь');
       return;
     }
 
@@ -896,7 +893,7 @@ const joinQueue = async (
     await fetchQueue();
 
   } catch (err: any) {
-    alert('Ошибка добавления в очередь');
+    return;
   } finally {
     setTimeout(() => setIsJoining(false), 1000);
   }
@@ -907,7 +904,6 @@ const joinQueue = async (
     if (!isAdmin) return;
     
     if (!isSupabaseConfigured || !supabase) {
-      alert('Ошибка инициализации');
       return;
     }
 
@@ -918,12 +914,11 @@ const joinQueue = async (
         .eq('id', queueItemId);
       
       if (error) {
-        alert('Ошибка обновления статуса');
         return;
       }
       await fetchQueue();
     } catch (error) {
-      alert('Ошибка обновления статуса');
+      return;
     }
   };
 
@@ -938,12 +933,10 @@ const joinQueue = async (
   ) => {
     const student = students.find(s => s.id === studentId);
     if (!student) {
-      alert("Студент не найден");
       return;
     }
   
     if (!isAdmin) {
-      alert("Недостаточно прав");
       return;
     }
   
@@ -969,7 +962,6 @@ const joinQueue = async (
     const res = await response.json();
   
     if (!response.ok) {
-      alert("Ошибка добавления в очередь: " + res.error);
       return;
     }
   
@@ -1028,8 +1020,7 @@ const startWashing = async (queueItemId: string) => {
       .eq('id', queueItemId);
     
     if (queueError) {
-      alert('Ошибка обновления статуса');
-      throw queueError;
+      return;
     }
     
     // Update machine state
@@ -1045,8 +1036,7 @@ const startWashing = async (queueItemId: string) => {
       .upsert(newMachineState, { onConflict: 'id' });
     
     if (machineError) {
-      alert('Ошибка обновления состояния машины');
-      throw machineError;
+      return;
     }
     
     // Обновить локальный state немедленно
@@ -1058,7 +1048,7 @@ const startWashing = async (queueItemId: string) => {
     await fetchMachineState();
     
   } catch (error) {
-    alert('Ошибка запуска стирки');
+    return;
     // Fallback to local storage on error
     start_local_washing(queueItemId);
     fetchQueue();
@@ -1128,11 +1118,7 @@ const startWashing = async (queueItemId: string) => {
       setMachineState(idleMachineState);
       save_local_machine_state(idleMachineState);
     } catch (error) {
-      alert('Ошибка завершения');
-      mark_local_done();
-      fetchQueue();
-      fetchMachineState();
-      fetchHistory();
+      return;
     }
   };
 
@@ -1176,9 +1162,9 @@ const startWashing = async (queueItemId: string) => {
           expected_finish_at: null,
         });
       
-      if (machineError) throw machineError;
+      if (machineError) return;
     } catch (error) {
-      alert('Ошибка отмены');
+      return;
     }
   };
 
@@ -1240,7 +1226,6 @@ const startWashing = async (queueItemId: string) => {
       await fetchQueue();
       await fetchMachineState();
     } catch (error) {
-      alert('Ошибка очистки очереди');
       clear_local_queue();
       fetchQueue();
       fetchMachineState();
@@ -1270,7 +1255,7 @@ const startWashing = async (queueItemId: string) => {
 
       await fetchQueue();
     } catch (error) {
-      alert('Ошибка удаления из очереди');
+      return;
     }
   };
 
@@ -1297,7 +1282,7 @@ const startWashing = async (queueItemId: string) => {
 
       await fetchQueue();
     } catch (error) {
-      alert('Ошибка очистки завершенных');
+      return;
     }
   };
 
@@ -1330,7 +1315,6 @@ const startWashing = async (queueItemId: string) => {
 
       await fetchQueue();
     } catch (error) {
-      alert('Ошибка очистки старых записей');
     }
   };
 
@@ -1368,7 +1352,7 @@ const startWashing = async (queueItemId: string) => {
 
       await fetchQueue();
     } catch (error) {
-      alert('Ошибка очистки зависших записей');
+      return;
     }
   };
 
@@ -1403,8 +1387,7 @@ const startWashing = async (queueItemId: string) => {
         .eq('student_id', studentId);
   
       if (queueError) {
-        alert('Ошибка удаления из очереди');
-        throw queueError;
+        return;
       }
   
       // Забанить
@@ -1418,35 +1401,28 @@ const startWashing = async (queueItemId: string) => {
         .eq('id', studentId);
   
       if (error) {
-        alert('Ошибка бана');
-        throw error;
+        return;
       }
   
       
       // Если забанили текущего пользователя - принудительно разлогинить
       if (user && user.student_id === studentId) {
         await logoutStudent();
-        alert('Вы были забанены администратором');
         return; // Не продолжать выполнение
       }
 
       await loadStudents();
       await fetchQueue();
     } catch (error) {
-      alert('Ошибка бана');
-      throw error;
+      return;
     }
   };
 
   // Разбанить студента
   const unbanStudent = async (studentId: string) => {
-    if (!isAdmin) {
-      alert('Вы не администратор');
-      return;
-    }
+    if (!isAdmin) return;
     
     if (!isSupabaseConfigured || !supabase) {
-      alert('Ошибка разбана');
       return;
     }
 
@@ -1465,14 +1441,12 @@ const startWashing = async (queueItemId: string) => {
         .select();
 
       if (error) {
-        alert('Ошибка разбана');
-        throw error;
+        return;
       }
 
       await loadStudents();
     } catch (error) {
-      alert('Ошибка разбана');
-      throw error;
+      return;
     }
   };
 
@@ -1507,8 +1481,7 @@ const startWashing = async (queueItemId: string) => {
   
       await loadStudents();
     } catch (error: any) {
-      alert("Ошибка добавления студента");
-      throw error;
+      return;
     }
   };
   
@@ -1525,26 +1498,20 @@ const startWashing = async (queueItemId: string) => {
       avatar_type?: string;
     }
   ) => {
-    if (!isAdmin) {
-      alert("Вы не администратор");
-      return;
-    }
+    if (!isAdmin) return;
   
     if (!isSupabaseConfigured || !supabase) {
-      alert("Ошибка обновления студента");
       return;
     }
   
     try {
       const targetStudent = students.find((s) => s.id === studentId);
       if (!targetStudent) {
-        alert("Студент не найден");
         return;
       }
   
       // 🚫 Обычный админ не может редактировать супер-админа
       if (!isSuperAdmin && targetStudent.is_super_admin) {
-        alert("Только супер-админ может редактировать супер-админов");
         return;
       }
   
@@ -1596,8 +1563,7 @@ const startWashing = async (queueItemId: string) => {
         .select();
   
       if (error) {
-        alert("Ошибка обновления студента");
-        throw error;
+        return;
       }
   
       await loadStudents();
@@ -1620,8 +1586,7 @@ const startWashing = async (queueItemId: string) => {
         }
       }
     } catch (error: any) {
-      alert("Ошибка обновления студента");
-      throw error;
+      return;
     }
   };
   
@@ -1642,17 +1607,14 @@ const deleteStudent = async (studentId: string) => {
     const result = await response.json();
 
     if (!response.ok) {
-      alert(result.error || "Ошибка удаления студента");
       return;
     }
 
     await loadStudents();
     await fetchQueue();
-
-    alert("Студент полностью удалён!");
   } catch (err) {
     console.error(err);
-    alert("Ошибка удаления студента");
+    return;
   }
 };
 
@@ -1684,15 +1646,12 @@ const deleteStudent = async (studentId: string) => {
         .eq('id', queueItemId);
 
       if (error) {
-        alert('Ошибка удаления из очереди');
-        throw error;
+        return;
       }
 
       await fetchQueue();
     } catch (error) {
-      alert('Ошибка удаления из очереди');
-      remove_from_local_queue(queueItemId, user.id);
-      await fetchQueue();
+      return;
     }
   };
 
@@ -1728,7 +1687,6 @@ const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>)
     // Только для НЕ-админа проверяем владельца
     if (!isAdmin) {
       if (!user) {
-        alert('Пользователь не найден');
         return;
       }
       query = query.eq('student_id', user.student_id);
@@ -1737,14 +1695,12 @@ const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>)
     const { error } = await query;
     
     if (error) {
-      alert('Ошибка обновления очереди');
-      throw error;
+      return;
     }
     
     await fetchQueue();
   } catch (error) {
-    alert('Ошибка обновления очереди');
-    await fetchQueue();
+    return;
   }
 };
 
@@ -1774,10 +1730,7 @@ const updateQueueEndTime = async (queueId: string, endTime: string) => {
 // ========================================
 
 const toggleAdminStatus = async (studentId: string, makeAdmin: boolean) => {
-  if (!isSuperAdmin) {
-    alert("Недостаточно прав");
-    return;
-  }
+  if (!isSuperAdmin) return;
 
   try {
     const response = await fetch("/api/admin/toggle-admin", {
@@ -1793,13 +1746,12 @@ const toggleAdminStatus = async (studentId: string, makeAdmin: boolean) => {
     const res = await response.json();
 
     if (!response.ok) {
-      alert(res.error || "Ошибка");
       return;
     }
 
     await loadStudents();
   } catch (err) {
-    alert("Ошибка");
+    return;
   }
 };
 
@@ -1809,10 +1761,7 @@ const toggleSuperAdminStatus = async (
   studentId: string,
   makeSuperAdmin: boolean
 ) => {
-  if (!isSuperAdmin) {
-    alert("Недостаточно прав");
-    return;
-  }
+  if (!isSuperAdmin) return;
 
   try {
     const response = await fetch("/api/admin/toggle-super-admin", {
@@ -1828,13 +1777,12 @@ const toggleSuperAdminStatus = async (
     const res = await response.json();
 
     if (!response.ok) {
-      alert(res.error || "Ошибка");
       return;
     }
 
     await loadStudents();
-  } catch {
-    alert("Ошибка");
+  } catch (err) {
+    return;
   }
 };
 
@@ -1861,11 +1809,9 @@ const sendAdminMessage = async (queueItemId: string, message: string) => {
       .update({ admin_message: message })
       .eq('id', queueItemId);
     
-    if (error) throw error;
-    alert('Сообщение отправлено');
-  } catch (error) {
-    alert('Ошибка отправки сообщения');
-    throw error;
+    if (error) return;
+  } catch (err) {
+    return;
   }
 };
  
@@ -1879,7 +1825,6 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
     );
     
     if (unfinishedItems.length === 0) {
-      alert('');
       return;
     }
     
@@ -1908,7 +1853,7 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
       });
       setQueue(updatedQueue);
       save_local_queue(updatedQueue);
-      alert('');
+      return;
     } else {
       if (supabase) {
         // 
@@ -1952,12 +1897,10 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
           }
         }
 
-        alert('');
         await fetchQueue();  
       }
     }
   } catch (err: any) {
-    alert('Ошибка переноса');
     return;
   }
 };
@@ -1972,12 +1915,10 @@ const transferSelectedToDate = async (selectedIds: string[], targetDateStr: stri
     );
     
     if (unfinishedItems.length === 0) {
-      alert('Нет незавершенных записей для переноса');
       return;
     }
     
     if (!isSupabaseConfigured || !supabase) {
-      alert('Ошибка: Supabase не настроен');
       return;
     }
     
@@ -2016,12 +1957,9 @@ const transferSelectedToDate = async (selectedIds: string[], targetDateStr: stri
       }
     }
 
-    const dateLabel = formatDateForAlert(targetDateStr);
-    alert(`✅ Перенесено ${unfinishedItems.length} записей на ${dateLabel}`);
     await fetchQueue();
   } catch (err: any) {
-    alert('Ошибка переноса');
-    throw err;
+    return;
   }
 };
 
@@ -2052,21 +1990,16 @@ const updateQueueItemDetails = async (
     chosen_date?: string;
   }
 ) => {
-  if (!supabase) {
-    alert('');
-    return;
-  }
+  if (!supabase) return;
 
   try {
     const item = queue.find(q => q.id === queueId);
     if (!item) {
-      alert('');
       return;
     }
 
     // 
     if (item.status !== QueueStatus.WAITING) {
-      alert('');
       return;
     }
 
@@ -2085,7 +2018,6 @@ const updateQueueItemDetails = async (
       .eq('id', queueId);
 
     if (error) {
-      alert('Ошибка обновления данных');
       return;
     }
     await fetchQueue();  
@@ -2104,22 +2036,18 @@ const updateQueueItemDetails = async (
     }
 
   } catch (error: any) {
-    alert('Ошибка обновления данных');
+    return;
   }
 };
 
 // 
 const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') => {
-  if (!supabase) {
-    alert('Ошибка обновления данных');
-    return;
-  }
+  if (!supabase) return;
   
   try {
     // 
     const itemToMove = queue.find(item => item.id === queueId);
     if (!itemToMove) {
-      alert('Ошибка обновления данных');
       return;
     }
     
@@ -2149,7 +2077,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     
     await fetchQueue();
   } catch (err: any) {
-    alert('Ошибка обновления данных');
+    return;
   }
 };
 
