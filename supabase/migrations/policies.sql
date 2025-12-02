@@ -273,4 +273,3 @@ CREATE POLICY history_delete_super_admin ON history
   FOR DELETE
   TO authenticated
   USING (public.is_super_admin());
-к
