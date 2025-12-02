@@ -329,12 +329,7 @@ export default function AdminPanel() {
             />
             {error && <p className="mt-2 text-red-600 text-sm font-semibold">{error}</p>}
           </div>
-          <button
-            onClick={handleAdminLogin}
-            className="w-full bg-purple-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-purple-700 transition-colors shadow-md"
-          >
-            Войти как админ
-          </button>
+          
         </div>
       </div>
     );
@@ -481,18 +476,19 @@ export default function AdminPanel() {
                   
                   {/* ========== УПРАВЛЕНИЕ АДМИНАМИ ========== */}
                   <div className="flex justify-end">
-                    <ActionMenu
-                      student={student}
-                      isAdmin={isAdmin}
-                      isSuperAdmin={isSuperAdmin}
-                      onEdit={openEditModal}
-                      onBan={openBanModal}
-                      onUnban={handleUnbanStudent}
-                      onDelete={openDeleteModal}
-                      onReset={openResetConfirm}
-                      onAddToQueue={openAddToQueueModal}
-                      onToggleAdmin={handleToggleAdmin}
-                    />
+                  <ActionMenu
+                    student={student}
+                    isAdmin={isAdmin}
+                    isSuperAdmin={isSuperAdmin}
+                    onEdit={(s) => openEditModal(s)}
+                    onBan={(s) => openBanModal(s)}
+                    onUnban={(id) => handleUnbanStudent(id)}
+                    onDelete={(s) => openDeleteModal(s)}
+                    onReset={(s) => openResetConfirm(s)}
+                    onAddToQueue={(s) => openAddToQueueModal(s)}
+                    onToggleAdmin={(id, makeAdmin) => handleToggleAdmin(id, makeAdmin)}
+                  />
+
                   </div>
                 </div>
               ))}

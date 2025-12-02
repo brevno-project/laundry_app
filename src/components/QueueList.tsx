@@ -39,10 +39,13 @@ export default function QueueList() {
     setTempTimes(prev => ({ ...prev, [id]: time }));
   };
   const [showEditModal, setShowEditModal] = useState(false);
-const [editingItem, setEditingItem] = useState<any>(null);
-const [editWashCount, setEditWashCount] = useState(1);
-const [editPaymentType, setEditPaymentType] = useState('money');
-const [editDate, setEditDate] = useState('');
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editWashCount, setEditWashCount] = useState(1);
+  const [editPaymentType, setEditPaymentType] = useState('money');
+  const [editDate, setEditDate] = useState('');
+
+  // Global ActionSheet state
+  const [actionSheetItem, setActionSheetItem] = useState<any>(null);
 
   const toggleSelect = (id: string) => {
     setSelectedItems(prev => 
@@ -504,270 +507,14 @@ const handleSaveEdit = async () => {
                         
                         {/* Кнопки админа */}
                         {isAdmin && (
-                          <div className="space-y-2">
-                            {/* БЛОК: Основные действия */}
-                            <div className="flex flex-col gap-2">
-                            {/* КНОПКА: Позвать */}
-                            <button
-                              className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm flex items-center justify-center gap-1"
-                              onClick={async () => {
-                                try {
-                                  // ✅ Сохраняем комнату админа и время вызова
-                                  await updateQueueItem(item.id, { 
-                                    return_key_alert: false,
-                                    admin_room: user?.room, // ✅ Комната админа
-                                    ready_at: new Date().toISOString() // ✅ Время когда позвали
-                                  });
-                                  await new Promise(resolve => setTimeout(resolve, 100));
-                                  await setQueueStatus(item.id, QueueStatus.READY);
-      
-                                  // ✅ КРИТИЧНО: Передаём admin_student_id, НЕ передаём room студента
-                                  const success = await sendTelegramNotification({
-                                    type: 'admin_call_for_key',
-                                    full_name: item.full_name,
-                                    student_id: item.student_id,
-                                    expected_finish_at: item.expected_finish_at,
-                                    admin_student_id: user?.student_id,  // ✅ ID админа
-                                  });
-      
-                                  alert(success 
-                                    ? `✅ ${item.full_name} позван!` 
-                                    : `⚠️ ${item.full_name} не подключил Telegram`
-                                  );
-                                } catch (error) {
-                                  alert('❌ Ошибка при вызове студента');
-                                }
-                              }}
-                            >
-                              <BellIcon className="w-4 h-4" />Позвать
-                            </button>
-
-                            </div>
-
-                            {/* БЛОК: Действия со статусом */}
-                            <div className="flex flex-col gap-2">
-                              <button
-                                className="bg-blue-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-blue-700 shadow-sm w-full flex items-center justify-center gap-1"
-                                onClick={async () => {
-                                  try {
-                                    if (!isAdmin) {
-                                      alert('❌ Только администратор может выполнять это действие');
-                                      return;
-                                    }
-                                    // ✅ Устанавливаем статус KEY_ISSUED и сохраняем время
-                                    await updateQueueItem(item.id, { 
-                                      return_key_alert: false,
-                                      key_issued_at: new Date().toISOString() // ✅ Время выдачи ключа
-                                    });
-                                    await new Promise(resolve => setTimeout(resolve, 100));
-                                    await setQueueStatus(item.id, QueueStatus.KEY_ISSUED);
-                                    
-                                    // ✅ Отправляем Telegram уведомление
-                                    try {
-                                      await fetch('/api/telegram/notify', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({
-                                          type: 'key_issued',
-                                          full_name: item.full_name,
-                                          room: item.room,
-                                          student_id: item.student_id
-                                        })
-                                      });
-                                    } catch (err) {
-                                      alert('❌ Ошибка при отправке уведомления');
-                                    }
-                                    
-                                    alert(`✅ ${item.full_name} получил ключ!`);
-                                  } catch (error) {
-                                    alert('❌ Ошибка при выдаче ключа');
-                                  }
-                                }}
-                              >
-                                <KeyIcon className="w-4 h-4" />Выдать ключ
-                              </button>
-                              
-                              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
-                              
-                              <button
-                                className="bg-green-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-green-700 shadow-sm w-full flex items-center justify-center gap-1"
-                                onClick={async () => {
-                                  try {
-                                    if (!isAdmin) {
-                                      alert('❌ Только администратор может выполнять это действие');
-                                      return;
-                                    }
-                                    // ✅ Сохраняем время начала стирки
-                                    await updateQueueItem(item.id, { 
-                                      return_key_alert: false,
-                                      washing_started_at: new Date().toISOString() // ✅ Время начала стирки
-                                    });
-                                    await new Promise(resolve => setTimeout(resolve, 100));
-                                    await startWashing(item.id);
-                                    alert(`✅ ${item.full_name} стирает!`);   
-                                  } catch (error) {
-                                    alert('❌ Ошибка при запуске стирки');
-                                  }
-                                }}
-                              >
-                                <WashingIcon className="w-4 h-4" />Стирать
-                              </button>
-                              
-                              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
-                              
-                              {/* КНОПКА: Вернуть ключ */}
-                              <button
-                                className="bg-orange-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-orange-600 shadow-sm w-full flex items-center justify-center gap-1"
-                                onClick={async () => {
-                                  try {
-                                    // ✅ Устанавливаем статус RETURNING_KEY
-                                    await setQueueStatus(item.id, QueueStatus.RETURNING_KEY);
-                                    await new Promise(resolve => setTimeout(resolve, 100));
-                                    
-                                    // ✅ Сохраняем комнату админа и время запроса
-                                    await updateQueueItem(item.id, { 
-                                      return_key_alert: true,
-                                      admin_room: user?.room,
-                                      return_requested_at: new Date().toISOString()
-                                    });
-                                    
-                                    const success = await sendTelegramNotification({
-                                      type: 'admin_return_key',
-                                      full_name: item.full_name,
-                                      student_id: item.student_id,
-                                      expected_finish_at: item.expected_finish_at,
-                                      admin_student_id: user?.student_id,
-                                    });
-                                    
-                                    alert(success 
-                                      ? `✅ ${item.full_name} попросили вернуть ключ!` 
-                                      : `⚠️ ${item.full_name} не подключил Telegram`
-                                    );
-                                  } catch (error) {
-                                    alert('❌ Ошибка отправки уведомления');
-                                  }
-                                }}
-                              >
-                                <BellIcon className="w-4 h-4" />Вернуть ключ
-                              </button>
-                              
-                              <button
-                                className="bg-gray-400 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-gray-500 shadow-sm w-full flex items-center justify-center gap-1"
-                                onClick={async () => {
-                                  try {
-                                    if (!isAdmin) {
-                                      alert('❌ Только администратор может отменить уведомления');
-                                      return;
-                                    }
-                                    
-                                    await updateQueueItem(item.id, { 
-                                      return_key_alert: false,
-                                      admin_room: undefined,
-                                      ready_at: undefined,
-                                      return_requested_at: undefined
-                                    });
-                                    await new Promise(resolve => setTimeout(resolve, 100));
-                                    
-                                    if (item.status === QueueStatus.READY || 
-                                        item.status === QueueStatus.KEY_ISSUED ||
-                                        item.status === QueueStatus.RETURNING_KEY) {
-                                      await setQueueStatus(item.id, QueueStatus.WAITING);
-                                    }
-                                    
-                                    alert(`✅ Уведомления отменены для ${item.full_name}`);
-                                  } catch (error) {
-                                    alert('❌ Ошибка отмены уведомлений');
-                                  }
-                                }}
-                              >
-                                <BellOffIcon className="w-4 h-4" />Отменить уведомления
-                              </button>
-                              
-                              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
-                              
-                              <button
-                                className="bg-emerald-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-emerald-700 shadow-sm w-full flex items-center justify-center gap-1"
-                                onClick={async () => {
-                                  try {
-                                    if (!isAdmin) {
-                                      alert('❌ Только администратор может выполнять это действие');
-                                      return;
-                                    }
-                                    await updateQueueItem(item.id, { return_key_alert: false });
-                                    await new Promise(resolve => setTimeout(resolve, 100));
-                                    await markDone(item.id);
-                                    alert(`✅ ${item.full_name} закончил!`);
-                                  } catch (error) {
-                                    alert('❌ Ошибка при завершении');
-                                  }
-                                }}
-                              >
-                                <CheckIcon className="w-4 h-4" />Завершить
-                              </button>
-                              
-                              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
-                              
-                              <button
-                                className="bg-purple-500 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-purple-600 shadow-sm w-full flex items-center justify-center gap-1"
-                                onClick={async () => {
-                                  try {
-                                    if (!isAdmin) {
-                                      alert('❌ Только администратор может выполнять это действие');
-                                      return;
-                                    }
-                                    await updateQueueItem(item.id, { return_key_alert: false });
-                                    await new Promise(resolve => setTimeout(resolve, 100));
-                                    
-                                    if (item.status === QueueStatus.WASHING) {
-                                      await cancelWashing(item.id);
-                                    } else {
-                                      await setQueueStatus(item.id, QueueStatus.WAITING);
-                                    }
-                                    
-                                    alert(`✅ ${item.full_name} в ожидании`);
-                                  } catch (error) {
-                                    alert('❌ Ошибка при возврате в ожидание');
-                                  }
-                                }}
-                              >
-                                <WaitIcon className="w-4 h-4" />В ожидание
-                              </button>
-                            </div>
-                            
-                            <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent my-2"></div>
-                            
-                            {/* БЛОК: Удалить */}
-                            <button
-                              className="bg-red-600 text-white font-semibold py-2 px-2 rounded-lg text-xs hover:bg-red-700 shadow-sm w-full flex items-center justify-center gap-1"
-                              onClick={async () => {
-                                if (!isAdmin) {
-                                  alert('❌ Только администратор может выполнять это действие');
-                                  return;
-                                }
-                                if (confirm(`Удалить ${item.full_name} из очереди?`)) {
-                                  await removeFromQueue(item.id);
-                                  alert(`✅ ${item.full_name} удален!`);
-                                }
-                              }}
-                            >
-                              <DeleteIcon className="w-4 h-4" />Удалить из очереди
-                            </button>
-                          </div>
-                        )}
-
-                        {/* БЛОК: Редактировать */}
-                        
-                        {(isAdmin) && item.status === QueueStatus.WAITING && (
                           <button
-                            onClick={() => openEditModal(item)}
-                            className="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 w-full flex items-center justify-center gap-2 font-semibold shadow-sm"
-                            title="Редактировать параметры"
+                            onClick={() => setActionSheetItem(item)}
+                            className="w-full bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold py-2 px-3 rounded-lg shadow-sm flex items-center justify-center gap-2 mt-2"
                           >
-                            <EditIcon className="w-4 h-4" />Редактировать
+                            <EditIcon className="w-4 h-4" />
+                            Действия
                           </button>
                         )}
-                            
-                        {/* Статус для не-админа - убран, так как уже отображается выше */}
                       </div>
                     </div>
                   </div>
@@ -852,6 +599,128 @@ const handleSaveEdit = async () => {
     </div>
   </div>
 )}
+
+      {/* ACTION SHEET — глобальное модальное окно */}
+      {actionSheetItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-end justify-center z-50">
+
+          {/* Закрытие по клику на фон */}
+          <div
+            className="absolute inset-0"
+            onClick={() => setActionSheetItem(null)}
+          />
+
+          {/* Сам ActionSheet */}
+          <div className="relative w-full bg-white rounded-t-2xl p-4 shadow-xl">
+
+            {/* Верхняя ручка */}
+            <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-4"></div>
+
+            <h3 className="font-bold text-lg text-center mb-3">
+              {actionSheetItem.full_name}
+            </h3>
+
+            <div className="space-y-2">
+
+              {/* --- Кнопки действий --- */}
+              <button
+                className="sheet-btn bg-orange-500 hover:bg-orange-600"
+                onClick={async () => {
+                  // ВСТАВЬ СЮДА КОД "Позвать"
+                  setActionSheetItem(null);
+                }}
+              >
+                <BellIcon className="w-5 h-5" /> Позвать
+              </button>
+
+              <button
+                className="sheet-btn bg-blue-600 hover:bg-blue-700"
+                onClick={async () => {
+                  // КОД "Выдать ключ"
+                  setActionSheetItem(null);
+                }}
+              >
+                <KeyIcon className="w-5 h-5" /> Выдать ключ
+              </button>
+
+              <button
+                className="sheet-btn bg-green-600 hover:bg-green-700"
+                onClick={async () => {
+                  // КОД "Стирать"
+                  setActionSheetItem(null);
+                }}
+              >
+                <WashingIcon className="w-5 h-5" /> Стирать
+              </button>
+
+              <button
+                className="sheet-btn bg-orange-500 hover:bg-orange-600"
+                onClick={async () => {
+                  // КОД "Вернуть ключ"
+                  setActionSheetItem(null);
+                }}
+              >
+                <BellIcon className="w-5 h-5" /> Вернуть ключ
+              </button>
+
+              <button
+                className="sheet-btn bg-emerald-600 hover:bg-emerald-700"
+                onClick={async () => {
+                  // КОД "Завершить"
+                  setActionSheetItem(null);
+                }}
+              >
+                <CheckIcon className="w-5 h-5" /> Завершить
+              </button>
+
+              <button
+                className="sheet-btn bg-purple-500 hover:bg-purple-600"
+                onClick={async () => {
+                  // КОД "В ожидание"
+                  setActionSheetItem(null);
+                }}
+              >
+                <WaitIcon className="w-5 h-5" /> В ожидание
+              </button>
+
+              <button
+                className="sheet-btn bg-red-600 hover:bg-red-700"
+                onClick={async () => {
+                  // КОД "Удалить"
+                  setActionSheetItem(null);
+                }}
+              >
+                <DeleteIcon className="w-5 h-5" /> Удалить
+              </button>
+            </div>
+
+            {/* Кнопка отмены */}
+            <button
+              onClick={() => setActionSheetItem(null)}
+              className="w-full py-3 mt-3 bg-gray-200 rounded-xl font-semibold"
+            >
+              Отмена
+            </button>
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        .sheet-btn {
+          width: 100%;
+          color: white;
+          font-weight: 600;
+          padding: 12px;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          font-size: 16px;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
+      `}</style>
+
     </div>
   );
 }
