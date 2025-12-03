@@ -399,7 +399,7 @@ const registerStudent = async (
 
     if (updateStudentErr) throw updateStudentErr;
 
-    // 3) Обновляем очередь (старые записи, где user_id ещё null)
+    // 3) Обновляем очередь
     const { error: queueUpdateErr } = await supabase
       .from("queue")
       .update({ user_id: authUser.id })
@@ -408,11 +408,19 @@ const registerStudent = async (
 
     if (queueUpdateErr) throw queueUpdateErr;
 
-    await fetchQueue();
-    await loadStudents();
+    // 🎯 СРАЗУ загружаем обновленного студента
+    const { data: updatedStudent, error: loadErr } = await supabase
+      .from("students")
+      .select("*")
+      .eq("id", studentId)
+      .single();
 
-    // 4) Создаём локальную сессию (новый пользователь → isNewUser = true)
-    return finalizeUserSession(authUser.id, student, true);
+    if (loadErr || !updatedStudent) {
+      throw new Error("Не удалось загрузить обновлённые данные студента");
+    }
+
+    // 🎯 Теперь localStorage получает правильные данные
+    return finalizeUserSession(authUser.id, updatedStudent, true);
   } catch (error: any) {
     throw error;
   }
@@ -495,7 +503,13 @@ const loginStudent = async (
     await loadStudents();
 
     // 7) Создаём локальную сессию (НЕ новый пользователь)
-    return finalizeUserSession(authUser.id, student, false);
+    const { data: updatedStudent } = await supabase
+      .from("students")
+      .select("*")
+      .eq("id", student.id)
+      .single();
+
+    return finalizeUserSession(authUser.id, updatedStudent, false);
   } catch (error: any) {
     throw error;
   }
