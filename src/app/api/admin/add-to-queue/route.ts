@@ -34,28 +34,21 @@ export async function POST(req: NextRequest) {
       .from("students")
       .select("is_admin, is_super_admin")
       .eq("id", admin_student_id)
-      .single();
+      .maybeSingle();
 
     if (!adminInfo || (!adminInfo.is_admin && !adminInfo.is_super_admin)) {
       return NextResponse.json({ error: "Admin not found" }, { status: 400 });
     }
 
-    // 2) Получаем user_id студента
     const { data: student } = await admin
       .from("students")
-      .select("user_id")
+      .select("id, user_id, full_name, room, avatar_type")
       .eq("id", student_id)
-      .single();
+      .maybeSingle();
 
     if (!student) {
-      return NextResponse.json(
-        { error: "Student not found" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Student not found" }, { status: 400 });
     }
-
-    // Незарегистрирован → user_id null
-    const queueUserId = student.user_id ?? null;
 
     // 3) Определяем позицию
     const { data: rows } = await admin
@@ -71,29 +64,33 @@ export async function POST(req: NextRequest) {
     // 4) Вставка ПОЛНОЙ записи
     const row = {
       id: crypto.randomUUID(),
-      student_id,
-      user_id: queueUserId,
-      full_name,
-      room,
+    
+      student_id: student.id,
+      user_id: student.user_id ?? null,
+    
+      full_name: student.full_name,
+      room: student.room,
+    
       wash_count,
       payment_type,
       expected_finish_at,
+    
       scheduled_for_date,
       queue_date: scheduled_for_date,
       queue_position: nextPos,
-      avatar_type,
-      joined_at: new Date().toISOString(),
+    
+      avatar_type: student.avatar_type,
+    
       status: "waiting",
-
-      // ВСЕ недостающие поля:
-      ready_at: null,
-      washing_started_at: null,
-      key_issued_at: null,
-      return_requested_at: null,
-      return_key_alert: false,
+      joined_at: new Date().toISOString(),
+    
       admin_message: null,
-      washEndTime: null,
-      paymentEndTime: null,
+      return_key_alert: false,
+      ready_at: null,
+      key_issued_at: null,
+      washing_started_at: null,
+      return_requested_at: null,
+      washing_finished_at: null,
     };
 
     const { error } = await admin.from("queue").insert(row);
