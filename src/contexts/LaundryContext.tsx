@@ -257,19 +257,24 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured || !supabase) {
       return;
     }
-
+  
+    const client = supabase; // 👈 для TS, чтобы точно не null
+  
     try {
-      const { data, error } = await supabase
-        .from('students')
-        .select('*')
-        .order('full_name', { ascending: true });
-
+      const { data, error } = await client
+        .from("students")
+        .select("*")
+        .order("full_name", { ascending: true });
+  
       if (error) throw error;
+  
       setStudents(data || []);
-    } catch (error: any) {
+    } catch (error) {
+      console.error("Error loading students", error);
       setStudents([]);
     }
   };
+  
 
  
 
@@ -385,41 +390,26 @@ const registerStudent = async (
     }
 
     // 2) Привязываем студента к authUser
-    const { error: updateStudentErr } = await supabase
-      .from("students")
-      .update({
-        user_id: authUser.id,
-        is_registered: true,
-        registered_at: new Date().toISOString(),
-        is_banned: false,
-        ban_reason: null,
-        banned_at: null,
-      })
-      .eq("id", studentId);
-
-    if (updateStudentErr) throw updateStudentErr;
+    await supabase.from("students").update({
+      user_id: authUser.id,
+      is_registered: true,
+      registered_at: new Date().toISOString(),
+    }).eq("id", studentId);
 
     // 3) Обновляем очередь
-    const { error: queueUpdateErr } = await supabase
-      .from("queue")
+    await supabase.from("queue")
       .update({ user_id: authUser.id })
       .eq("student_id", studentId)
       .is("user_id", null);
 
-    if (queueUpdateErr) throw queueUpdateErr;
-
-    // 🎯 СРАЗУ загружаем обновленного студента
-    const { data: updatedStudent, error: loadErr } = await supabase
+    // 4) НЕ вызываем loadStudents() !!!
+    // ❗ Вместо этого — берём студента из UPDATE:
+    const { data: updatedStudent } = await supabase
       .from("students")
       .select("*")
       .eq("id", studentId)
       .single();
 
-    if (loadErr || !updatedStudent) {
-      throw new Error("Не удалось загрузить обновлённые данные студента");
-    }
-
-    // 🎯 Теперь localStorage получает правильные данные
     return finalizeUserSession(authUser.id, updatedStudent, true);
   } catch (error: any) {
     throw error;
