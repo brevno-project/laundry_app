@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, type ReactNode } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Student } from "@/types";
 import {
   CalendarIcon,
@@ -12,11 +12,10 @@ import {
   PeopleIcon,
 } from "@/components/Icons";
 
-interface ActionMenuProps {
+interface Props {
   student: Student;
   isAdmin: boolean;
   isSuperAdmin: boolean;
-  currentStudentId: string | null;
   onEdit: (s: Student) => void;
   onBan: (s: Student) => void;
   onUnban: (id: string) => void;
@@ -26,12 +25,11 @@ interface ActionMenuProps {
   onToggleAdmin: (id: string, makeAdmin: boolean) => void;
 }
 
-export default function ActionMenu(props: ActionMenuProps) {
+export default function ActionMenu(props: Props) {
   const {
     student,
     isAdmin,
     isSuperAdmin,
-    currentStudentId,
     onEdit,
     onBan,
     onUnban,
@@ -42,179 +40,201 @@ export default function ActionMenu(props: ActionMenuProps) {
   } = props;
 
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement | null>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const startY = useRef(0);
+  const currentY = useRef(0);
 
-  // расчёты ролей идут до JSX, это норм
-  const isSelf = currentStudentId === student.id;
-  const isTargetSuper = student.is_super_admin;
-  const isRegular = !student.is_admin && !student.is_super_admin;
-
-  // Хуки должны быть всегда — нельзя return null выше!!
+  // Закрытие по ESC
   useEffect(() => {
-    if (open && rootRef.current) {
-      rootRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, []);
+
+  // Swipe down to close bottom-sheet
+  const handleTouchStart = (e: React.TouchEvent) => {
+    startY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    currentY.current = e.touches[0].clientY;
+    const diff = currentY.current - startY.current;
+
+    if (diff > 0 && sheetRef.current) {
+      sheetRef.current.style.transform = `translateY(${diff}px)`;
     }
-  }, [open]);
+  };
 
-  // Вариант: если обычный юзер — просто пустой div (хуки уже выполнены безопасно)
-  const hiddenForUser = !isAdmin && !isSuperAdmin;
+  const handleTouchEnd = () => {
+    const diff = currentY.current - startY.current;
 
-  // Правила доступа:
-  const canResetRegistration = isSuperAdmin && !isTargetSuper && !isSelf;
-
-  const canBan =
-    (isSuperAdmin && !isSelf && !isTargetSuper) ||
-    (!isSuperAdmin && isAdmin && isRegular && !student.is_banned);
-
-  const canUnban =
-    (isSuperAdmin && !isSelf && !isTargetSuper) ||
-    (!isSuperAdmin && isAdmin && isRegular && student.is_banned);
-
-  const canToggleAdmin = isSuperAdmin && !isSelf && !isTargetSuper;
-
-  const canDelete =
-    (isSuperAdmin && !isSelf && !isTargetSuper) ||
-    (!isSuperAdmin && isAdmin && isRegular && !isSelf);
+    if (diff > 70) {
+      setOpen(false);
+    } else {
+      if (sheetRef.current) sheetRef.current.style.transform = "translateY(0)";
+    }
+  };
 
   return (
-    <div ref={rootRef} className="relative">
-      {/* Если скрыто — просто не рендерим кнопку */}
-      {!hiddenForUser && (
-        <button
-          onClick={() => setOpen(true)}
-          className="rounded-full p-2 text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition"
+    <>
+      {/* КНОПКА ОТКРЫТИЯ */}
+      <button
+        onClick={() => setOpen(true)}
+        className="
+          bg-purple-600 hover:bg-purple-700
+          text-white px-3 py-1.5
+          text-sm rounded-lg shadow 
+          font-semibold flex items-center gap-2
+        "
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-4 h-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
         >
-          ⋮
-        </button>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M12 6v.01M12 12v.01M12 18v.01"
+          />
+        </svg>
+        Управление
+      </button>
+
+      {/* ФОН */}
+      {open && (
+        <div
+          className="fixed inset-0 bg-black/50 z-[90]"
+          onClick={() => setOpen(false)}
+        ></div>
       )}
 
-      {open && !hiddenForUser && (
+      {/* BOTTOM SHEET */}
+      {open && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40"
-          onClick={() => setOpen(false)}
+          ref={sheetRef}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          className="
+            fixed bottom-0 left-0 right-0 z-[100]
+            bg-white rounded-t-2xl shadow-xl
+            p-4 pb-6
+            animate-slideUp
+          "
         >
-          <div
-            className="w-full max-w-md rounded-t-2xl bg-white shadow-2xl border-t border-gray-200 p-4 space-y-3"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Заголовок */}
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-xs text-gray-500">
-                Действия со студентом
-                <div className="text-sm font-semibold text-gray-900">
-                  {student.full_name}
-                </div>
-              </div>
+          {/* Хвостик для свайпа */}
+          <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-4"></div>
 
-              <button
-                onClick={() => setOpen(false)}
-                className="rounded-full p-2 text-gray-400 hover:bg-gray-200 hover:text-gray-700 transition"
-              >
-                ✕
-              </button>
-            </div>
+          {/* Список действий */}
 
-            {/* Очередь / Профиль */}
-            <MenuButton
-              icon={<CalendarIcon className="w-4 h-4" />}
-              label="Поставить в очередь"
+          <SheetButton
+            icon={<CalendarIcon className="w-5 h-5" />}
+            label="Поставить в очередь"
+            onClick={() => {
+              onAddToQueue(student);
+              setOpen(false);
+            }}
+          />
+
+          <SheetButton
+            icon={<EditIcon className="w-5 h-5" />}
+            label="Редактировать"
+            onClick={() => {
+              onEdit(student);
+              setOpen(false);
+            }}
+          />
+
+          {isSuperAdmin && student.is_registered && !student.is_super_admin && (
+            <SheetButton
+              icon={<RefreshIcon className="w-5 h-5" />}
+              label="Сбросить регистрацию"
               onClick={() => {
-                onAddToQueue(student);
+                onReset(student);
                 setOpen(false);
               }}
             />
+          )}
 
-            <MenuButton
-              icon={<EditIcon className="w-4 h-4" />}
-              label="Редактировать данные"
+          {isSuperAdmin && !student.is_super_admin && !student.is_banned && (
+            <SheetButton
+              icon={<BanIcon className="w-5 h-5" />}
+              label="Забанить"
               onClick={() => {
-                onEdit(student);
+                onBan(student);
                 setOpen(false);
               }}
             />
+          )}
 
-            {(canResetRegistration ||
-              canBan ||
-              canUnban ||
-              canToggleAdmin) && (
-              <div className="pt-2 border-t border-gray-100 space-y-1">
-                {canResetRegistration && (
-                  <MenuButton
-                    icon={<RefreshIcon className="w-4 h-4" />}
-                    label="Сбросить регистрацию"
-                    onClick={() => {
-                      onReset(student);
-                      setOpen(false);
-                    }}
-                  />
-                )}
+          {isSuperAdmin && student.is_banned && (
+            <SheetButton
+              icon={<CheckIcon className="w-5 h-5" />}
+              label="Разбанить"
+              onClick={() => {
+                onUnban(student.id);
+                setOpen(false);
+              }}
+            />
+          )}
 
-                {canBan && !student.is_banned && (
-                  <MenuButton
-                    icon={<BanIcon className="w-4 h-4" />}
-                    label="Забанить"
-                    onClick={() => {
-                      onBan(student);
-                      setOpen(false);
-                    }}
-                  />
-                )}
+          {isSuperAdmin && !student.is_super_admin && (
+            <SheetButton
+              icon={<PeopleIcon className="w-5 h-5" />}
+              label={student.is_admin ? "Снять админа" : "Сделать админом"}
+              onClick={() => {
+                onToggleAdmin(student.id, !student.is_admin);
+                setOpen(false);
+              }}
+            />
+          )}
 
-                {canUnban && student.is_banned && (
-                  <MenuButton
-                    icon={<CheckIcon className="w-4 h-4" />}
-                    label="Разбанить"
-                    onClick={() => {
-                      onUnban(student.id);
-                      setOpen(false);
-                    }}
-                  />
-                )}
-
-                {canToggleAdmin && (
-                  <MenuButton
-                    icon={<PeopleIcon className="w-4 h-4" />}
-                    label={
-                      student.is_admin
-                        ? "Снять админа"
-                        : "Сделать админом"
-                    }
-                    onClick={() => {
-                      onToggleAdmin(student.id, !student.is_admin);
-                      setOpen(false);
-                    }}
-                  />
-                )}
-              </div>
-            )}
-
-            {canDelete && (
-              <div className="pt-2 border-t border-gray-100 space-y-1">
-                <MenuButton
-                  icon={<DeleteIcon className="w-4 h-4" />}
-                  label="Удалить студента"
-                  danger
-                  onClick={() => {
-                    onDelete(student);
-                    setOpen(false);
-                  }}
-                />
-              </div>
-            )}
-          </div>
+          {isSuperAdmin && !student.is_super_admin && (
+            <SheetButton
+              icon={<DeleteIcon className="w-5 h-5 text-red-600" />}
+              label="Удалить"
+              onClick={() => {
+                onDelete(student);
+                setOpen(false);
+              }}
+              danger
+            />
+          )}
         </div>
       )}
-    </div>
+
+      {/* Анимации */}
+      <style jsx>{`
+        @keyframes slideUp {
+          from {
+            transform: translateY(100%);
+          }
+          to {
+            transform: translateY(0);
+          }
+        }
+        .animate-slideUp {
+          animation: slideUp 0.25s ease-out;
+        }
+      `}</style>
+    </>
   );
 }
 
-function MenuButton({
+/* ОДНА КНОПКА ВНИЗУ */
+function SheetButton({
   icon,
   label,
   onClick,
   danger = false,
 }: {
-  icon: ReactNode;
+  icon: React.ReactNode;
   label: string;
   onClick: () => void;
   danger?: boolean;
@@ -222,17 +242,15 @@ function MenuButton({
   return (
     <button
       onClick={onClick}
-      className={[
-        "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-left transition",
-        danger
-          ? "text-red-600 hover:bg-red-50 font-semibold"
-          : "text-gray-800 hover:bg-gray-100",
-      ].join(" ")}
+      className={`
+        w-full flex items-center gap-3
+        px-4 py-3 mb-1 rounded-lg
+        text-left text-gray-800
+        ${danger ? "text-red-600 hover:bg-red-50" : "hover:bg-gray-100"}
+      `}
     >
-      <span className={danger ? "text-red-500" : "text-gray-500"}>
-        {icon}
-      </span>
-      <span>{label}</span>
+      {icon}
+      <span className="font-medium">{label}</span>
     </button>
   );
 }
