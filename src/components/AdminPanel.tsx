@@ -480,6 +480,7 @@ export default function AdminPanel() {
                     student={student}
                     isAdmin={isAdmin}
                     isSuperAdmin={isSuperAdmin}
+                    currentUserId={user?.id}
                     onEdit={(s) => openEditModal(s)}
                     onBan={(s) => openBanModal(s)}
                     onUnban={(id) => handleUnbanStudent(id)}

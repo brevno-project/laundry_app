@@ -42,40 +42,33 @@ export default function ActionMenu(props: Props) {
   } = props;
 
   const [open, setOpen] = useState(false);
-  const sheetRef = useRef<HTMLDivElement>(null);
-
-  // SWIPE DOWN TO CLOSE
   const touchStart = useRef(0);
   const touchEnd = useRef(0);
 
+  // → Touch events
   const onStart = (e: React.TouchEvent) => {
     touchStart.current = e.touches[0].clientY;
   };
-
   const onMove = (e: React.TouchEvent) => {
     touchEnd.current = e.touches[0].clientY;
   };
-
   const onEnd = () => {
-    if (touchEnd.current - touchStart.current > 60) {
-      setOpen(false);
-    }
+    if (touchEnd.current - touchStart.current > 70) setOpen(false);
   };
 
-  // ESC to close
+  // → ESC closes
   useEffect(() => {
-    const key = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    window.addEventListener("keydown", key);
-    return () => window.removeEventListener("keydown", key);
+    const f = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", f);
+    return () => window.removeEventListener("keydown", f);
   }, []);
 
-  // Проверка прав
+  // → Rights logic
   const isSelf = student.id === currentUserId;
   const isTargetAdmin = student.is_admin;
   const isTargetSuperAdmin = student.is_super_admin;
 
   function can(action: string) {
-    // SUPER ADMIN LOGIC
     if (isSuperAdmin) {
       if (isSelf) {
         return {
@@ -88,6 +81,7 @@ export default function ActionMenu(props: Props) {
           delete: false,
         }[action];
       }
+
       return {
         edit: true,
         addQueue: true,
@@ -99,7 +93,6 @@ export default function ActionMenu(props: Props) {
       }[action];
     }
 
-    // ADMIN LOGIC
     if (isAdmin) {
       if (isTargetSuperAdmin) return false;
 
@@ -131,7 +124,7 @@ export default function ActionMenu(props: Props) {
 
   return (
     <>
-      {/* КНОПКА ПО ЦЕНТРУ */}
+      {/* Центральная кнопка */}
       <button
         onClick={() => setOpen(true)}
         className="mx-auto block bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow font-semibold text-sm"
@@ -139,7 +132,7 @@ export default function ActionMenu(props: Props) {
         Управление
       </button>
 
-      {/* ФОН */}
+      {/* затемнение */}
       {open && (
         <div
           className="fixed inset-0 bg-black/50 z-[90]"
@@ -147,18 +140,13 @@ export default function ActionMenu(props: Props) {
         ></div>
       )}
 
-      {/* BOTTOM SHEET */}
+      {/* нижний блок */}
       {open && (
         <div
-          ref={sheetRef}
           onTouchStart={onStart}
           onTouchMove={onMove}
           onTouchEnd={onEnd}
-          className="
-            fixed bottom-0 left-0 right-0 z-[100]
-            bg-white rounded-t-2xl shadow-xl
-            p-4 pb-6 animate-slideUp
-          "
+          className="fixed bottom-0 left-0 right-0 z-[100] bg-white rounded-t-2xl shadow-xl p-4 pb-6 animate-slideUp"
         >
           <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-4"></div>
 
