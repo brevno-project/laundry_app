@@ -8,6 +8,7 @@ import {
   CheckIcon,
   CloseIcon,
   EditIcon,
+  PeopleIcon,
 } from "@/components/Icons";
 import ActionMenu from "@/components/ActionMenu";
 import Avatar, { AvatarType } from "@/components/Avatar";
@@ -360,6 +361,7 @@ export default function AdminPanel() {
             {isSuperAdmin ? "Режим суперадмина" : "Режим администратора"}
           </p>
         </div>
+        
       </div>
 
       <div className="space-y-4">
