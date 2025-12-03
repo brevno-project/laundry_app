@@ -29,9 +29,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ---------------------------
-    // 1. Проверяем админа
-    // ---------------------------
+    // 1) Проверяем админа
     const { data: adminInfo } = await admin
       .from("students")
       .select("is_admin, is_super_admin")
@@ -42,9 +40,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Admin not found" }, { status: 400 });
     }
 
-    // ---------------------------
-    // 2. Получаем информацию о студенте
-    // ---------------------------
+    // 2) Получаем user_id студента
     const { data: student } = await admin
       .from("students")
       .select("user_id")
@@ -58,12 +54,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Незарегистрированный студент = user_id нет → ставим null
+    // Незарегистрирован → user_id null
     const queueUserId = student.user_id ?? null;
 
-    // ---------------------------
-    // 3. Ищем позицию в очереди
-    // ---------------------------
+    // 3) Определяем позицию
     const { data: rows } = await admin
       .from("queue")
       .select("queue_position")
@@ -74,13 +68,11 @@ export async function POST(req: NextRequest) {
         ? Math.max(...rows.map((r) => r.queue_position || 0)) + 1
         : 1;
 
-    // ---------------------------
-    // 4. Вставляем запись очереди
-    // ---------------------------
-    const { error } = await admin.from("queue").insert({
+    // 4) Вставка ПОЛНОЙ записи
+    const row = {
       id: crypto.randomUUID(),
       student_id,
-      user_id: queueUserId, // 🔥 Работает ВСЕГДА
+      user_id: queueUserId,
       full_name,
       room,
       wash_count,
@@ -92,7 +84,19 @@ export async function POST(req: NextRequest) {
       avatar_type,
       joined_at: new Date().toISOString(),
       status: "waiting",
-    });
+
+      // ВСЕ недостающие поля:
+      ready_at: null,
+      washing_started_at: null,
+      key_issued_at: null,
+      return_requested_at: null,
+      return_key_alert: false,
+      admin_message: null,
+      washEndTime: null,
+      paymentEndTime: null,
+    };
+
+    const { error } = await admin.from("queue").insert(row);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
