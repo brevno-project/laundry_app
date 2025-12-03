@@ -22,12 +22,16 @@ export async function POST(req: NextRequest) {
       admin_student_id,
     } = body;
 
-    if (!student_id) {
-      return NextResponse.json({ error: "Missing student_id" }, { status: 400 });
+    if (!student_id || !admin_student_id) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
     }
-    
 
-    // Проверяем админа
+    // ---------------------------
+    // 1. Проверяем админа
+    // ---------------------------
     const { data: adminInfo } = await admin
       .from("students")
       .select("is_admin, is_super_admin")
@@ -38,32 +42,45 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Admin not found" }, { status: 400 });
     }
 
-    // Получаем user_id нужного студента (auth.uid)
+    // ---------------------------
+    // 2. Получаем информацию о студенте
+    // ---------------------------
     const { data: student } = await admin
       .from("students")
       .select("user_id")
       .eq("id", student_id)
       .single();
 
-    if (!student || !student.user_id) {
-      return NextResponse.json({ error: "Student has no user_id" }, { status: 400 });
+    if (!student) {
+      return NextResponse.json(
+        { error: "Student not found" },
+        { status: 400 }
+      );
     }
 
-    // Позиция в очереди
+    // Незарегистрированный студент = user_id нет → ставим null
+    const queueUserId = student.user_id ?? null;
+
+    // ---------------------------
+    // 3. Ищем позицию в очереди
+    // ---------------------------
     const { data: rows } = await admin
       .from("queue")
       .select("queue_position")
       .eq("queue_date", scheduled_for_date);
 
-    const nextPos = rows?.length
-      ? Math.max(...rows.map(r => r.queue_position || 0)) + 1
-      : 1;
+    const nextPos =
+      rows?.length && rows.length > 0
+        ? Math.max(...rows.map((r) => r.queue_position || 0)) + 1
+        : 1;
 
-    // Вставляем
+    // ---------------------------
+    // 4. Вставляем запись очереди
+    // ---------------------------
     const { error } = await admin.from("queue").insert({
       id: crypto.randomUUID(),
       student_id,
-      user_id: student.user_id,    // 🔥 КЛЮЧЕВОЕ! RLS работает!!!
+      user_id: queueUserId, // 🔥 Работает ВСЕГДА
       full_name,
       room,
       wash_count,
@@ -82,7 +99,6 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
