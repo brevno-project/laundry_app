@@ -28,6 +28,21 @@ export async function POST(req: NextRequest) {
       .select("is_admin, is_super_admin")
       .eq("id", adminStudentId)
       .single();
+      
+      // 1.5) Получить данные удаляемого студента
+      const { data: studentToDelete } = await supabaseAdmin
+      .from("students")
+      .select("is_super_admin")
+      .eq("id", studentId)
+      .single();
+
+    // 1.6) ЗАЩИТА: блокируем удаление суперадмина
+    if (studentToDelete?.is_super_admin && !adminInfo?.is_super_admin) {
+      return NextResponse.json(
+        { error: "You cannot delete super admin" },
+        { status: 403 }
+      );
+    }
 
     if (!adminInfo || (!adminInfo.is_admin && !adminInfo.is_super_admin)) {
       return NextResponse.json(

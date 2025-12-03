@@ -40,14 +40,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Admin not found" }, { status: 400 });
     }
 
+    // 2) Получаем студента
     const { data: student } = await admin
       .from("students")
-      .select("id, user_id, full_name, room, avatar_type")
+      .select("id, user_id, full_name, room, avatar_type, is_super_admin")  // ← ДОБАВИЛИ is_super_admin
       .eq("id", student_id)
       .maybeSingle();
 
     if (!student) {
       return NextResponse.json({ error: "Student not found" }, { status: 400 });
+    }
+
+    // 2.5) НОВАЯ ЗАЩИТА: блокируем действия над суперадмином
+    if (student.is_super_admin && !adminInfo.is_super_admin) {
+      return NextResponse.json(
+        { error: "You cannot modify super admin" },
+        { status: 403 }
+      );
     }
 
     // 3) Определяем позицию

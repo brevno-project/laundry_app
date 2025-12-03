@@ -22,6 +22,7 @@ export default function QueueList() {
     cancelWashing,
     markDone,
     isAdmin,
+    students,
     machineState,
     transferSelectedToDate,
     transferSelectedToToday,  
@@ -332,7 +333,9 @@ const handleSaveEdit = async () => {
                 const isCurrentUser = user && item.student_id === user.student_id;
                 const statusDisplay = getStatusDisplay(item.status);
                 const globalIndex = queuedItems.findIndex((q: any) => q.id === item.id);
-                
+                // Найти студента по item.student_id и проверить is_super_admin
+                const targetStudent = students.find(s => s.id === item.student_id);
+                const targetIsSuperAdmin = targetStudent?.is_super_admin === true;
 
                 
                 return (
@@ -516,7 +519,7 @@ const handleSaveEdit = async () => {
                             <EditIcon className="w-4 h-4" /> Действия
                           </button>
                         )}
-                        {isAdmin && !item.is_super_admin && openActionFor === item.id && (
+                        {isAdmin && !targetIsSuperAdmin && openActionFor === item.id && (
                           <div className="mt-3 bg-gray-50 border rounded-lg shadow-inner p-3 space-y-2">
 
                           {/* Позвать */}

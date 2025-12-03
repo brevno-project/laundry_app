@@ -25,7 +25,15 @@ export async function POST(req: NextRequest) {
       .eq("id", adminStudentId)
       .single();
 
-    if (!caller?.is_super_admin) {
+    // 1.5) Получить данные изменяемого студента
+    const { data: studentToModify } = await supabaseAdmin
+      .from("students")
+      .select("is_super_admin")
+      .eq("id", studentId)
+      .single();
+
+    // 1.6) ЗАЩИТА: суперадмина может менять только другой суперадмин
+    if (studentToModify?.is_super_admin && !caller?.is_super_admin) {
       return NextResponse.json(
         { error: "Only super admin can manage super admins" },
         { status: 403 }
