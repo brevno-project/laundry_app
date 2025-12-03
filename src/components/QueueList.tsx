@@ -506,15 +506,17 @@ const handleSaveEdit = async () => {
                         )}
                         
                         {/* Кнопки админа */}
-                        <button
-                          onClick={() =>
-                            setOpenActionFor(openActionFor === item.id ? null : item.id)
-                          }
-                          className="w-full bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold py-2 px-3 rounded-lg shadow-sm flex items-center justify-center gap-2 mt-2"
-                        >
-                          <EditIcon className="w-4 h-4" /> Действия
-                        </button>
-                        {isAdmin && openActionFor === item.id && (
+                        {isAdmin && (
+                          <button
+                            onClick={() =>
+                              setOpenActionFor(openActionFor === item.id ? null : item.id)
+                            }
+                            className="w-full bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold py-2 px-3 rounded-lg shadow-sm flex items-center justify-center gap-2 mt-2"
+                          >
+                            <EditIcon className="w-4 h-4" /> Действия
+                          </button>
+                        )}
+                        {isAdmin && !item.is_super_admin && openActionFor === item.id && (
                           <div className="mt-3 bg-gray-50 border rounded-lg shadow-inner p-3 space-y-2">
 
                           {/* Позвать */}

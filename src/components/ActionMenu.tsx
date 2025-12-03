@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { Student } from "@/types";
 import {
   CalendarIcon,
   EditIcon,
@@ -10,9 +11,8 @@ import {
   DeleteIcon,
   PeopleIcon,
 } from "@/components/Icons";
-import { Student } from "@/types";
 
-interface ActionMenuProps {
+interface Props {
   student: Student;
   isAdmin: boolean;
   isSuperAdmin: boolean;
@@ -26,111 +26,164 @@ interface ActionMenuProps {
 }
 
 export default function ActionMenu({
-    student,
-    isSuperAdmin,
-    isAdmin,
-    onEdit,
-    onBan,
-    onUnban,
-    onDelete,
-    onReset,
-    onAddToQueue,
-    onToggleAdmin,
-  }: ActionMenuProps) {
-  
+  student,
+  isSuperAdmin,
+  isAdmin,
+  onEdit,
+  onBan,
+  onUnban,
+  onDelete,
+  onReset,
+  onAddToQueue,
+  onToggleAdmin,
+}: Props) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
 
-  // Закрытие при клике вне меню
+  // Закрытие по ESC
   useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
     };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
   }, []);
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative">
       {/* Три точки */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="p-2 rounded hover:bg-gray-200 text-gray-700"
+        className="p-2 rounded-lg hover:bg-gray-200 text-gray-700 transition"
       >
         ⋮
       </button>
 
+      {/* ВЫПАДАЮЩЕЕ МЕНЮ */}
       {open && (
-        <div className="absolute right-0 mt-2 bg-white shadow-lg rounded-lg border p-2 w-56 z-50 space-y-1">
-          
-          {/* Поставить в очередь */}
-          <button className="menu-btn" onClick={() => { onAddToQueue(student); setOpen(false); }}>
-            <CalendarIcon className="w-4 h-4 mr-2" />
-            Поставить в очередь
-          </button>
+        <div
+          className="
+            absolute right-0 mt-2 w-56 rounded-xl bg-white shadow-xl border
+            animate-fadeIn z-50 overflow-hidden
+          "
+        >
+          <MenuButton
+            icon={<CalendarIcon className="w-4 h-4" />}
+            label="Поставить в очередь"
+            onClick={() => {
+              onAddToQueue(student);
+              setOpen(false);
+            }}
+          />
 
-          {/* Редактировать */}
-          <button className="menu-btn" onClick={() => { onEdit(student); setOpen(false); }}>
-            <EditIcon className="w-4 h-4 mr-2" />
-            Редактировать
-          </button>
+          <MenuButton
+            icon={<EditIcon className="w-4 h-4" />}
+            label="Редактировать"
+            onClick={() => {
+              onEdit(student);
+              setOpen(false);
+            }}
+          />
 
-          {/* Сброс регистрации */}
           {isSuperAdmin && student.is_registered && !student.is_super_admin && (
-            <button className="menu-btn" onClick={() => { onReset(student); setOpen(false); }}>
-              <RefreshIcon className="w-4 h-4 mr-2" />
-              Сбросить регистрацию
-            </button>
+            <MenuButton
+              icon={<RefreshIcon className="w-4 h-4" />}
+              label="Сбросить регистрацию"
+              onClick={() => {
+                onReset(student);
+                setOpen(false);
+              }}
+            />
           )}
 
-          {/* Забанить */}
           {isSuperAdmin && !student.is_super_admin && !student.is_banned && (
-            <button className="menu-btn" onClick={() => { onBan(student); setOpen(false); }}>
-              <BanIcon className="w-4 h-4 mr-2" />
-              Забанить
-            </button>
+            <MenuButton
+              icon={<BanIcon className="w-4 h-4" />}
+              label="Забанить"
+              onClick={() => {
+                onBan(student);
+                setOpen(false);
+              }}
+            />
           )}
 
-          {/* Разбанить */}
           {isSuperAdmin && student.is_banned && (
-            <button className="menu-btn" onClick={() => { onUnban(student.id); setOpen(false); }}>
-              <CheckIcon className="w-4 h-4 mr-2" />
-              Разбанить
-            </button>
+            <MenuButton
+              icon={<CheckIcon className="w-4 h-4" />}
+              label="Разбанить"
+              onClick={() => {
+                onUnban(student.id);
+                setOpen(false);
+              }}
+            />
           )}
 
-          {/* Сделать / снять админа */}
           {isSuperAdmin && !student.is_super_admin && (
-            <button className="menu-btn" onClick={() => { onToggleAdmin(student.id, !student.is_admin); setOpen(false); }}>
-              <PeopleIcon className="w-4 h-4 mr-2" />
-              {student.is_admin ? "Снять админа" : "Сделать админом"}
-            </button>
+            <MenuButton
+              icon={<PeopleIcon className="w-4 h-4" />}
+              label={student.is_admin ? "Снять админа" : "Сделать админом"}
+              onClick={() => {
+                onToggleAdmin(student.id, !student.is_admin);
+                setOpen(false);
+              }}
+            />
           )}
 
-          {/* Удалить */}
           {isSuperAdmin && !student.is_super_admin && (
-            <button className="menu-btn text-red-600" onClick={() => { onDelete(student); setOpen(false); }}>
-              <DeleteIcon className="w-4 h-4 mr-2" />
-              Удалить
-            </button>
+            <MenuButton
+              icon={<DeleteIcon className="w-4 h-4" />}
+              label="Удалить"
+              className="text-red-600 hover:bg-red-50"
+              onClick={() => {
+                onDelete(student);
+                setOpen(false);
+              }}
+            />
           )}
         </div>
       )}
 
-      <style jsx>{`
-        .menu-btn {
-          display: flex;
-          align-items: center;
-          width: 100%;
-          padding: 6px 10px;
-          border-radius: 6px;
-          font-size: 14px;
-          color: #333;
+      <style jsx global>{`
+        .animate-fadeIn {
+          animation: fadeIn 0.12s ease-out;
         }
-        .menu-btn:hover {
-          background: #f0f0f0;
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(-5px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
       `}</style>
     </div>
+  );
+}
+
+/* Кнопка меню */
+function MenuButton({
+  icon,
+  label,
+  onClick,
+  className = "",
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        flex items-center gap-3 px-4 py-2 w-full text-left
+        text-gray-800 hover:bg-gray-100 transition
+        ${className}
+      `}
+    >
+      {icon}
+      <span className="font-medium">{label}</span>
+    </button>
   );
 }
