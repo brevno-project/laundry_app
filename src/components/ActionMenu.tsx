@@ -16,6 +16,7 @@ interface Props {
   student: Student;
   isAdmin: boolean;
   isSuperAdmin: boolean;
+  currentUserId: string;
   onEdit: (s: Student) => void;
   onBan: (s: Student) => void;
   onUnban: (id: string) => void;
@@ -30,6 +31,7 @@ export default function ActionMenu(props: Props) {
     student,
     isAdmin,
     isSuperAdmin,
+    currentUserId,
     onEdit,
     onBan,
     onUnban,
@@ -41,63 +43,99 @@ export default function ActionMenu(props: Props) {
 
   const [open, setOpen] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
-  const startY = useRef(0);
-  const currentY = useRef(0);
 
-  // Закрытие по ESC
+  // SWIPE DOWN TO CLOSE
+  const touchStart = useRef(0);
+  const touchEnd = useRef(0);
+
+  const onStart = (e: React.TouchEvent) => {
+    touchStart.current = e.touches[0].clientY;
+  };
+
+  const onMove = (e: React.TouchEvent) => {
+    touchEnd.current = e.touches[0].clientY;
+  };
+
+  const onEnd = () => {
+    if (touchEnd.current - touchStart.current > 60) {
+      setOpen(false);
+    }
+  };
+
+  // ESC to close
   useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
+    const key = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
   }, []);
 
-  // Touch events
-  const handleTouchStart = (e: React.TouchEvent) => {
-    startY.current = e.touches[0].clientY;
-  };
+  // Проверка прав
+  const isSelf = student.id === currentUserId;
+  const isTargetAdmin = student.is_admin;
+  const isTargetSuperAdmin = student.is_super_admin;
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    currentY.current = e.touches[0].clientY;
-    const diff = currentY.current - startY.current;
-
-    if (diff > 0 && sheetRef.current) {
-      sheetRef.current.style.transform = `translateY(${diff}px)`;
+  function can(action: string) {
+    // SUPER ADMIN LOGIC
+    if (isSuperAdmin) {
+      if (isSelf) {
+        return {
+          edit: true,
+          addQueue: false,
+          reset: false,
+          ban: false,
+          unban: false,
+          adminToggle: false,
+          delete: false,
+        }[action];
+      }
+      return {
+        edit: true,
+        addQueue: true,
+        reset: !isTargetSuperAdmin,
+        ban: !isTargetSuperAdmin,
+        unban: !isTargetSuperAdmin,
+        adminToggle: !isTargetSuperAdmin,
+        delete: !isTargetSuperAdmin,
+      }[action];
     }
-  };
 
-  const handleTouchEnd = () => {
-    const diff = currentY.current - startY.current;
+    // ADMIN LOGIC
+    if (isAdmin) {
+      if (isTargetSuperAdmin) return false;
 
-    if (diff > 70) {
-      setOpen(false);
-    } else if (sheetRef.current) {
-      sheetRef.current.style.transform = "translateY(0)";
+      if (isSelf) {
+        return {
+          edit: true,
+          addQueue: true,
+          reset: false,
+          ban: false,
+          unban: false,
+          adminToggle: false,
+          delete: false,
+        }[action];
+      }
+
+      return {
+        edit: true,
+        addQueue: true,
+        reset: true,
+        ban: true,
+        unban: true,
+        adminToggle: false,
+        delete: true,
+      }[action];
     }
-  };
+
+    return false;
+  }
 
   return (
     <>
-      {/* ОТКРЫВАЮЩАЯ КНОПКА */}
+      {/* КНОПКА ПО ЦЕНТРУ */}
       <button
         onClick={() => setOpen(true)}
-        className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 text-sm rounded-lg shadow font-semibold flex items-center gap-2"
+        className="mx-auto block bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow font-semibold text-sm"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-4 h-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M12 6v.01M12 12v.01M12 18v.01"
-          />
-        </svg>
         Управление
       </button>
 
@@ -113,32 +151,40 @@ export default function ActionMenu(props: Props) {
       {open && (
         <div
           ref={sheetRef}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          className="fixed bottom-0 left-0 right-0 z-[100] bg-white rounded-t-2xl shadow-xl p-4 pb-6 animate-slideUp"
+          onTouchStart={onStart}
+          onTouchMove={onMove}
+          onTouchEnd={onEnd}
+          className="
+            fixed bottom-0 left-0 right-0 z-[100]
+            bg-white rounded-t-2xl shadow-xl
+            p-4 pb-6 animate-slideUp
+          "
         >
           <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-4"></div>
 
-          <SheetButton
-            icon={<CalendarIcon className="w-5 h-5" />}
-            label="Поставить в очередь"
-            onClick={() => {
-              onAddToQueue(student);
-              setOpen(false);
-            }}
-          />
+          {can("addQueue") && (
+            <SheetButton
+              icon={<CalendarIcon className="w-5 h-5" />}
+              label="Поставить в очередь"
+              onClick={() => {
+                onAddToQueue(student);
+                setOpen(false);
+              }}
+            />
+          )}
 
-          <SheetButton
-            icon={<EditIcon className="w-5 h-5" />}
-            label="Редактировать"
-            onClick={() => {
-              onEdit(student);
-              setOpen(false);
-            }}
-          />
+          {can("edit") && (
+            <SheetButton
+              icon={<EditIcon className="w-5 h-5" />}
+              label="Редактировать"
+              onClick={() => {
+                onEdit(student);
+                setOpen(false);
+              }}
+            />
+          )}
 
-          {isSuperAdmin && student.is_registered && !student.is_super_admin && (
+          {can("reset") && (
             <SheetButton
               icon={<RefreshIcon className="w-5 h-5" />}
               label="Сбросить регистрацию"
@@ -149,7 +195,7 @@ export default function ActionMenu(props: Props) {
             />
           )}
 
-          {isSuperAdmin && !student.is_super_admin && !student.is_banned && (
+          {can("ban") && !student.is_banned && (
             <SheetButton
               icon={<BanIcon className="w-5 h-5" />}
               label="Забанить"
@@ -160,7 +206,7 @@ export default function ActionMenu(props: Props) {
             />
           )}
 
-          {isSuperAdmin && student.is_banned && (
+          {can("unban") && student.is_banned && (
             <SheetButton
               icon={<CheckIcon className="w-5 h-5" />}
               label="Разбанить"
@@ -171,7 +217,7 @@ export default function ActionMenu(props: Props) {
             />
           )}
 
-          {isSuperAdmin && !student.is_super_admin && (
+          {can("adminToggle") && (
             <SheetButton
               icon={<PeopleIcon className="w-5 h-5" />}
               label={student.is_admin ? "Снять админа" : "Сделать админом"}
@@ -182,7 +228,7 @@ export default function ActionMenu(props: Props) {
             />
           )}
 
-          {isSuperAdmin && !student.is_super_admin && (
+          {can("delete") && (
             <SheetButton
               icon={<DeleteIcon className="w-5 h-5 text-red-600" />}
               label="Удалить"
