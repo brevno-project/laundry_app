@@ -944,7 +944,7 @@ const joinQueue = async (
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         student_id: student.id,
-        admin_student_id: user?.id,
+        admin_student_id: user?.student_id,
         full_name: student.full_name,
         room: studentRoom || student.room,
         wash_count: washCount,
