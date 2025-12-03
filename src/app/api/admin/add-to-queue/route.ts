@@ -22,9 +22,10 @@ export async function POST(req: NextRequest) {
       admin_student_id,
     } = body;
 
-    if (!student_id || !admin_student_id) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!student_id) {
+      return NextResponse.json({ error: "Missing student_id" }, { status: 400 });
     }
+    
 
     // Проверяем админа
     const { data: adminInfo } = await admin
