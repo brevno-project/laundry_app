@@ -14,9 +14,9 @@ import {
 
 interface ActionMenuProps {
   student: Student;
-  isAdmin: boolean;          // текущий пользователь — админ (включая супер)
-  isSuperAdmin: boolean;     // текущий пользователь — суперАдмин
-  currentStudentId: string | null; // id студента текущего пользователя (user.student_id)
+  isAdmin: boolean;
+  isSuperAdmin: boolean;
+  currentStudentId: string | null;
   onEdit: (s: Student) => void;
   onBan: (s: Student) => void;
   onUnban: (id: string) => void;
@@ -26,43 +26,41 @@ interface ActionMenuProps {
   onToggleAdmin: (id: string, makeAdmin: boolean) => void;
 }
 
-export default function ActionMenu({
-  student,
-  isAdmin,
-  isSuperAdmin,
-  currentStudentId,
-  onEdit,
-  onBan,
-  onUnban,
-  onDelete,
-  onReset,
-  onAddToQueue,
-  onToggleAdmin,
-}: ActionMenuProps) {
+export default function ActionMenu(props: ActionMenuProps) {
+  const {
+    student,
+    isAdmin,
+    isSuperAdmin,
+    currentStudentId,
+    onEdit,
+    onBan,
+    onUnban,
+    onDelete,
+    onReset,
+    onAddToQueue,
+    onToggleAdmin,
+  } = props;
+
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
 
-  // если не админ вообще — ничего не показываем (но по идее сюда обычный юзер не попадёт)
-  if (!isAdmin && !isSuperAdmin) return null;
-
+  // расчёты ролей идут до JSX, это норм
   const isSelf = currentStudentId === student.id;
   const isTargetSuper = student.is_super_admin;
-  const isTargetAdmin = student.is_admin && !student.is_super_admin;
   const isRegular = !student.is_admin && !student.is_super_admin;
 
-  // когда открываем sheet — скроллим карточку студента в центр
+  // Хуки должны быть всегда — нельзя return null выше!!
   useEffect(() => {
     if (open && rootRef.current) {
-      rootRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
+      rootRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [open]);
 
-  // Правила доступа
-  const canResetRegistration =
-    isSuperAdmin && !isTargetSuper && !isSelf;
+  // Вариант: если обычный юзер — просто пустой div (хуки уже выполнены безопасно)
+  const hiddenForUser = !isAdmin && !isSuperAdmin;
+
+  // Правила доступа:
+  const canResetRegistration = isSuperAdmin && !isTargetSuper && !isSelf;
 
   const canBan =
     (isSuperAdmin && !isSelf && !isTargetSuper) ||
@@ -72,26 +70,25 @@ export default function ActionMenu({
     (isSuperAdmin && !isSelf && !isTargetSuper) ||
     (!isSuperAdmin && isAdmin && isRegular && student.is_banned);
 
-  const canToggleAdmin =
-    isSuperAdmin && !isSelf && !isTargetSuper; // только супер над обычными
+  const canToggleAdmin = isSuperAdmin && !isSelf && !isTargetSuper;
 
   const canDelete =
     (isSuperAdmin && !isSelf && !isTargetSuper) ||
-    (!isSuperAdmin && isAdmin && isRegular && !isSelf); // админ удаляет только обычных
+    (!isSuperAdmin && isAdmin && isRegular && !isSelf);
 
   return (
     <div ref={rootRef} className="relative">
-      {/* Три точки-триггер */}
-      <button
-        onClick={() => setOpen(true)}
-        className="rounded-full p-2 text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition"
-        title="Действия"
-      >
-        ⋮
-      </button>
+      {/* Если скрыто — просто не рендерим кнопку */}
+      {!hiddenForUser && (
+        <button
+          onClick={() => setOpen(true)}
+          className="rounded-full p-2 text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition"
+        >
+          ⋮
+        </button>
+      )}
 
-      {/* Bottom sheet */}
-      {open && (
+      {open && !hiddenForUser && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/40"
           onClick={() => setOpen(false)}
@@ -106,43 +103,6 @@ export default function ActionMenu({
                 Действия со студентом
                 <div className="text-sm font-semibold text-gray-900">
                   {student.full_name}
-                  {student.room && (
-                    <span className="ml-1 text-gray-500 text-xs">
-                      ({student.room})
-                    </span>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {student.is_super_admin && (
-                    <span className="px-2 py-0.5 text-[10px] rounded-full bg-purple-100 text-purple-700 font-semibold">
-                      SUPERADMIN
-                    </span>
-                  )}
-                  {student.is_admin && !student.is_super_admin && (
-                    <span className="px-2 py-0.5 text-[10px] rounded-full bg-indigo-100 text-indigo-700 font-semibold">
-                      ADMIN
-                    </span>
-                  )}
-                  {student.is_registered && (
-                    <span className="px-2 py-0.5 text-[10px] rounded-full bg-green-100 text-green-700 font-semibold">
-                      Зарег.
-                    </span>
-                  )}
-                  {student.is_banned && (
-                    <span className="px-2 py-0.5 text-[10px] rounded-full bg-red-100 text-red-700 font-semibold">
-                      Бан
-                    </span>
-                  )}
-                  {student.telegram_chat_id && (
-                    <span className="px-2 py-0.5 text-[10px] rounded-full bg-blue-100 text-blue-700 font-semibold">
-                      TG
-                    </span>
-                  )}
-                  {isSelf && (
-                    <span className="px-2 py-0.5 text-[10px] rounded-full bg-gray-100 text-gray-600 font-semibold">
-                      Это вы
-                    </span>
-                  )}
                 </div>
               </div>
 
@@ -154,29 +114,30 @@ export default function ActionMenu({
               </button>
             </div>
 
-            {/* Блок: Очередь / профиль */}
-            <div className="space-y-1 border-t border-gray-100 pt-2">
-              <MenuButton
-                icon={<CalendarIcon className="w-4 h-4" />}
-                label="Поставить в очередь"
-                onClick={() => {
-                  onAddToQueue(student);
-                  setOpen(false);
-                }}
-              />
-              <MenuButton
-                icon={<EditIcon className="w-4 h-4" />}
-                label="Редактировать данные"
-                onClick={() => {
-                  onEdit(student);
-                  setOpen(false);
-                }}
-              />
-            </div>
+            {/* Очередь / Профиль */}
+            <MenuButton
+              icon={<CalendarIcon className="w-4 h-4" />}
+              label="Поставить в очередь"
+              onClick={() => {
+                onAddToQueue(student);
+                setOpen(false);
+              }}
+            />
 
-            {/* Блок: Управление доступом */}
-            {(canResetRegistration || canBan || canUnban || canToggleAdmin) && (
-              <div className="space-y-1 border-t border-gray-100 pt-2">
+            <MenuButton
+              icon={<EditIcon className="w-4 h-4" />}
+              label="Редактировать данные"
+              onClick={() => {
+                onEdit(student);
+                setOpen(false);
+              }}
+            />
+
+            {(canResetRegistration ||
+              canBan ||
+              canUnban ||
+              canToggleAdmin) && (
+              <div className="pt-2 border-t border-gray-100 space-y-1">
                 {canResetRegistration && (
                   <MenuButton
                     icon={<RefreshIcon className="w-4 h-4" />}
@@ -213,7 +174,11 @@ export default function ActionMenu({
                 {canToggleAdmin && (
                   <MenuButton
                     icon={<PeopleIcon className="w-4 h-4" />}
-                    label={student.is_admin ? "Снять админа" : "Сделать админом"}
+                    label={
+                      student.is_admin
+                        ? "Снять админа"
+                        : "Сделать админом"
+                    }
                     onClick={() => {
                       onToggleAdmin(student.id, !student.is_admin);
                       setOpen(false);
@@ -223,9 +188,8 @@ export default function ActionMenu({
               </div>
             )}
 
-            {/* Блок: Опасная зона */}
             {canDelete && (
-              <div className="space-y-1 border-t border-gray-100 pt-2">
+              <div className="pt-2 border-t border-gray-100 space-y-1">
                 <MenuButton
                   icon={<DeleteIcon className="w-4 h-4" />}
                   label="Удалить студента"
@@ -265,7 +229,9 @@ function MenuButton({
           : "text-gray-800 hover:bg-gray-100",
       ].join(" ")}
     >
-      <span className={danger ? "text-red-500" : "text-gray-500"}>{icon}</span>
+      <span className={danger ? "text-red-500" : "text-gray-500"}>
+        {icon}
+      </span>
       <span>{label}</span>
     </button>
   );
