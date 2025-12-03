@@ -1,21 +1,26 @@
 "use client";
 
-import { useState } from 'react';
-import { useLaundry } from '@/contexts/LaundryContext';
-import { Student } from '@/types';
-import { CalendarIcon, DoorIcon, DeleteIcon, CheckIcon, CloseIcon, EditIcon, RefreshIcon, BanIcon, BellIcon } from '@/components/Icons';
+import { useState } from "react";
+import { useLaundry } from "@/contexts/LaundryContext";
+import { Student } from "@/types";
+import {
+  DeleteIcon,
+  CheckIcon,
+  CloseIcon,
+  EditIcon,
+} from "@/components/Icons";
 import ActionMenu from "@/components/ActionMenu";
 
 export default function AdminPanel() {
-  const { 
+  const {
     user,
-    isAdmin, 
-    setIsAdmin, 
+    isAdmin,
+    setIsAdmin,
     adminLogin,
     queue,
     students,
-    markDone, 
-    startNext, 
+    markDone,
+    startNext,
     clearQueue,
     clearOldQueues,
     clearStuckQueues,
@@ -28,14 +33,13 @@ export default function AdminPanel() {
     adminAddToQueue,
     toggleAdminStatus,
     isSuperAdmin,
-    setIsSuperAdmin
   } = useLaundry();
-  
-  const [adminKey, setAdminKey] = useState('');
+
+  const [adminKey, setAdminKey] = useState("");
   const [showConfirmClear, setShowConfirmClear] = useState(false);
   const [showStudents, setShowStudents] = useState(false);
-  const [error, setError] = useState('');
-  
+  const [error, setError] = useState("");
+
   // Модальные окна
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [showEditStudent, setShowEditStudent] = useState(false);
@@ -44,104 +48,107 @@ export default function AdminPanel() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showAddToQueue, setShowAddToQueue] = useState(false);
-  
+
   // Параметры записи в очередь (включая дату)
   const [queueWashCount, setQueueWashCount] = useState(1);
-  const [queuePaymentType, setQueuePaymentType] = useState('money');
+  const [queuePaymentType, setQueuePaymentType] = useState("money");
+  const [queueDate, setQueueDate] = useState("");
 
-  const [queueDate, setQueueDate] = useState(''); // НОВОЕ ПОЛЕ
-  
   // Форма добавления студента
-  const [newFirstName, setNewFirstName] = useState('');
-  const [newLastName, setNewLastName] = useState('');
-  const [newRoom, setNewRoom] = useState('');
-  
+  const [newFirstName, setNewFirstName] = useState("");
+  const [newLastName, setNewLastName] = useState("");
+  const [newRoom, setNewRoom] = useState("");
+
   // Форма редактирования студента
-  const [editFirstname, setEditFirstname] = useState('');
-  const [editLastname, setEditLastname] = useState('');
-  const [editRoom, setEditRoom] = useState('');
-  
+  const [editFirstname, setEditFirstname] = useState("");
+  const [editLastname, setEditLastname] = useState("");
+  const [editRoom, setEditRoom] = useState("");
+
   // Форма бана
-  const [banReason, setBanReason] = useState('');
-  
-  // Форма смены ключа
-  const [newAdminKey, setNewAdminKey] = useState('');
-  const [confirmAdminKey, setConfirmAdminKey] = useState('');
-  
+  const [banReason, setBanReason] = useState("");
+
   // Поиск студентов
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'registered' | 'unregistered' | 'banned'>('all');
-  
-  const washingItem = queue.find(item => item.status === 'washing');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState<
+    "all" | "registered" | "unregistered" | "banned"
+  >("all");
+
+  const washingItem = queue.find((item) => item.status === "washing");
 
   // Генерация доступных дат (сегодня + 7 дней)
   const getAvailableDates = () => {
-    const dates = [];
+    const dates: { value: string; label: string }[] = [];
     const today = new Date();
-    
+
     for (let i = 0; i < 8; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
-      const dateStr = date.toISOString().slice(0, 10);
-      
-      const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+      const value = date.toISOString().slice(0, 10);
+
+      const dayNames = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
       const dayName = dayNames[date.getDay()];
       const day = date.getDate();
       const month = date.getMonth() + 1;
-      
-      let label = `${dayName}, ${day}.${month.toString().padStart(2, '0')}`;
-      if (i === 0) label += ' (Сегодня)';
-      if (i === 1) label += ' (Завтра)';
-      
-      dates.push({ value: dateStr, label });
+
+      let label = `${dayName}, ${day}.${month.toString().padStart(2, "0")}`;
+      if (i === 0) label += " (сегодня)";
+      if (i === 1) label += " (завтра)";
+
+      dates.push({ value, label });
     }
-    
+
     return dates;
   };
 
   // Фильтрация студентов
-  const filteredStudents = students.filter(student => {
-    const matchesSearch = student.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (student.room && student.room.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const matchesFilter = 
-      filterStatus === 'all' ? true :
-      filterStatus === 'registered' ? student.is_registered :
-      filterStatus === 'unregistered' ? !student.is_registered :
-      filterStatus === 'banned' ? student.is_banned : true;
-    
+  const filteredStudents = students.filter((student) => {
+    const q = searchQuery.toLowerCase();
+
+    const matchesSearch =
+      student.full_name.toLowerCase().includes(q) ||
+      (student.room && student.room.toLowerCase().includes(q));
+
+    const matchesFilter =
+      filterStatus === "all"
+        ? true
+        : filterStatus === "registered"
+        ? student.is_registered
+        : filterStatus === "unregistered"
+        ? !student.is_registered
+        : filterStatus === "banned"
+        ? student.is_banned
+        : true;
+
     return matchesSearch && matchesFilter;
   });
 
-  // Обработчики
   const handleAdminLogin = async () => {
-    if (adminKey.trim() === '') {
-      setError('Введите ключ администратора');
+    if (!adminKey.trim()) {
+      setError("Введите ключ администратора");
       return;
     }
 
     try {
-      // Залогинить админа в Supabase Auth для работы RLS политик
       await adminLogin(adminKey.trim());
-      setError('');
-      setAdminKey('');
+      setError("");
+      setAdminKey("");
     } catch (err: any) {
-      setError('Ошибка авторизации: ' + err.message);
+      setError("Ошибка авторизации: " + err.message);
     }
   };
 
   const handleAdminLogout = () => {
     setIsAdmin(false);
-    setAdminKey('');
+    setAdminKey("");
   };
 
   const handleClearQueueConfirm = async () => {
     try {
       await clearQueue();
       setShowConfirmClear(false);
-      alert('✅ Очередь очищена!');
+      alert("Очередь очищена");
     } catch (err: any) {
-      alert('❌ Ошибка: ' + err.message);
+      alert("Ошибка: " + err.message);
     }
   };
 
@@ -152,38 +159,39 @@ export default function AdminPanel() {
 
   const handleResetStudent = async () => {
     if (!selectedStudent) return;
-    
+
     try {
       await resetStudentRegistration(selectedStudent.id);
       setShowResetConfirm(false);
       setSelectedStudent(null);
-      alert('✅ Регистрация сброшена!');
+      alert("Регистрация сброшена");
     } catch (err: any) {
-      alert('❌ Ошибка сброса регистрации');
+      alert("Ошибка сброса регистрации");
     }
   };
 
   const handleAddStudent = async () => {
-    if (!newFirstName) {  // ✅ ТОЛЬКО имя обязательно
-      alert('Введите имя');
+    if (!newFirstName.trim()) {
+      alert("Введите имя");
       return;
     }
-    
+
     try {
-      await addStudent(newFirstName, newLastName, newRoom || undefined);
-      setShowAddStudent(false);
-      setNewFirstName('');
-      setNewLastName('');
-      setNewRoom('');
-      alert('✅ Студент добавлен!');
+      await addStudent(
+        newFirstName.trim(),
+        newLastName.trim() ?? "",
+        newRoom.trim() ?? ""
+      );
+      
+      alert("Студент добавлен");
     } catch (err: any) {
-      alert('❌ Ошибка: ' + err.message);
+      alert("Ошибка: " + err.message);
     }
   };
 
   const handleEditStudent = async () => {
     if (!selectedStudent) return;
-    
+
     try {
       await updateStudent(selectedStudent.id, {
         first_name: editFirstname || undefined,
@@ -192,57 +200,97 @@ export default function AdminPanel() {
       });
       setShowEditStudent(false);
       setSelectedStudent(null);
-      alert('✅ Данные обновлены!');
+      alert("Данные обновлены");
     } catch (err: any) {
-      alert('❌ Ошибка: ' + err.message);
+      alert("Ошибка: " + err.message);
     }
   };
 
   const handleBanStudent = async () => {
     if (!selectedStudent) return;
-    
+
     try {
-      await banStudent(selectedStudent.id, banReason || 'Не указано');
+      await banStudent(selectedStudent.id, banReason || "Не указано");
       setShowBanStudent(false);
       setSelectedStudent(null);
-      setBanReason('');
-      alert('✅ Студент забанен!');
+      setBanReason("");
+      alert("Студент забанен");
     } catch (err: any) {
-      alert('❌ Ошибка: ' + err.message);
+      alert("Ошибка: " + err.message);
     }
   };
 
   const handleUnbanStudent = async (studentId: string) => {
     try {
       await unbanStudent(studentId);
-      alert('✅ Студент разбанен!');
+      alert("Студент разбанен");
     } catch (err: any) {
-      alert('❌ Ошибка: ' + err.message);
+      alert("Ошибка: " + err.message);
     }
   };
 
   const handleDeleteStudent = async () => {
     if (!selectedStudent) return;
-    
+
     try {
       await deleteStudent(selectedStudent.id);
       setShowDeleteConfirm(false);
       setSelectedStudent(null);
+      alert("Студент удалён");
     } catch (err: any) {
+      alert("Ошибка: " + err.message);
     }
+  };
+
+  const handleAddToQueue = async () => {
+    if (!selectedStudent) return;
+
+    try {
+      await adminAddToQueue(
+        selectedStudent.room || undefined,
+        queueWashCount,
+        queuePaymentType,
+        undefined,
+        queueDate,
+        selectedStudent.id
+      );
+
+      setShowAddToQueue(false);
+      alert("Студент добавлен в очередь");
+    } catch (err: any) {
+      alert("Ошибка: " + err.message);
+    }
+  };
+
+  const handleToggleAdmin = async (studentId: string, makeAdmin: boolean) => {
+    try {
+      await toggleAdminStatus(studentId, makeAdmin);
+      alert(makeAdmin ? "Студент стал админом" : "Админские права сняты");
+    } catch (error: any) {
+      alert("Ошибка: " + error.message);
+    }
+  };
+
+  const openAddToQueueModal = (student: Student) => {
+    setSelectedStudent(student);
+    setQueueWashCount(1);
+    setQueuePaymentType("money");
+    const today = new Date().toISOString().slice(0, 10);
+    setQueueDate(today);
+    setShowAddToQueue(true);
   };
 
   const openEditModal = (student: Student) => {
     setSelectedStudent(student);
-    setEditFirstname(student.first_name);
-    setEditLastname(student.last_name || '');
-    setEditRoom(student.room || '');
+    setEditFirstname(student.first_name || "");
+    setEditLastname(student.last_name || "");
+    setEditRoom(student.room || "");
     setShowEditStudent(true);
   };
 
   const openBanModal = (student: Student) => {
     setSelectedStudent(student);
-    setBanReason('');
+    setBanReason("");
     setShowBanStudent(true);
   };
 
@@ -251,59 +299,15 @@ export default function AdminPanel() {
     setShowDeleteConfirm(true);
   };
 
-  // ОБНОВЛЕННАЯ функция добавления в очередь С ВЫБОРОМ ДАТЫ
-  const handleAddToQueue = async () => {
-    if (!selectedStudent) return;
-    
-    try {
-      await adminAddToQueue(
-        selectedStudent.room || undefined,
-        queueWashCount,
-        queuePaymentType,
-        undefined, // expectedFinishAt больше не используется
-        queueDate,
-        selectedStudent.id,
-      );
-      
-      setShowAddToQueue(false);
-      alert('✅ Студент добавлен в очередь!');
-    } catch (err: any) {
-      alert('❌ Ошибка: ' + err.message);
-    }
-  };
-
-  const handleToggleAdmin = async (studentId: string, makeAdmin: boolean) => {
-    try {
-      await toggleAdminStatus(studentId, makeAdmin);
-      alert(makeAdmin ? '✅ Студент стал админом!' : '✅ Админские права сняты!');
-    } catch (error: any) {
-      alert('❌ Ошибка: ' + error.message);
-    }
-  };
-
-
-
-  const openAddToQueueModal = (student: Student) => {
-    setSelectedStudent(student);
-    setQueueWashCount(1);
-    setQueuePaymentType('money');
-    const today = new Date().toISOString().slice(0, 10);
-    setQueueDate(today); // Устанавливаем сегодняшнюю дату по умолчанию
-    setShowAddToQueue(true);
-  };
-
   if (!user) {
     return (
-      <div className="bg-yellow-50 p-6 rounded-lg shadow-lg border border-yellow-200">
-        <h2 className="text-2xl font-bold mb-4 text-yellow-800">⚠️ Требуется вход</h2>
-        <p className="text-yellow-700 mb-4">
-          Для использования админ функций <strong>сначала войдите как студент</strong> с правами администратора, затем введите админ ключ.
+      <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-6 shadow-sm">
+        <h2 className="mb-3 text-2xl font-bold text-yellow-800">Требуется вход</h2>
+        <p className="mb-2 text-sm text-yellow-800">
+          Сначала войдите как студент с правами администратора, затем введите админ-ключ.
         </p>
-        <p className="text-sm text-yellow-600 mb-4">
-          Это необходимо для корректной работы с базой данных.
-        </p>
-        <p className="text-sm text-yellow-600">
-          После входа как студент вернитесь сюда и введите админ ключ.
+        <p className="text-xs text-yellow-700">
+          Это нужно для корректной работы с базой и политиками безопасности.
         </p>
       </div>
     );
@@ -311,11 +315,14 @@ export default function AdminPanel() {
 
   if (!isAdmin) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800"> Администратор</h2>
+      <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-2xl font-bold text-gray-900">Администратор</h2>
         <div className="space-y-4">
           <div>
-            <label htmlFor="adminKey" className="block text-sm font-bold mb-2 text-gray-700">
+            <label
+              htmlFor="adminKey"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
               Ключ администратора
             </label>
             <input
@@ -323,174 +330,213 @@ export default function AdminPanel() {
               type="password"
               value={adminKey}
               onChange={(e) => setAdminKey(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAdminLogin()}
-              className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+              onKeyDown={(e) => e.key === "Enter" && handleAdminLogin()}
+              className="block w-full rounded-md border-2 border-gray-300 p-3 text-gray-900 shadow-sm placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200"
               placeholder="Введите ключ"
             />
-            {error && <p className="mt-2 text-red-600 text-sm font-semibold">{error}</p>}
+            {error && (
+              <p className="mt-2 text-sm font-semibold text-red-600">{error}</p>
+            )}
           </div>
-          
+          <button
+            type="button"
+            onClick={handleAdminLogin}
+            className="w-full rounded-md bg-purple-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-purple-700"
+          >
+            Войти как админ
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-purple-700 p-6 rounded-lg shadow-lg border-2 border-purple-800">
-      <div className="mb-4">
-        <h2 className="text-2xl font-bold text-white"> Панель админа</h2>
+    <div className="rounded-lg border-2 border-purple-800 bg-purple-700 p-6 shadow-lg">
+      {/* ШАПКА ПАНЕЛИ */}
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-white">Панель администратора</h2>
+          <p className="text-xs text-purple-200">
+            {isSuperAdmin ? "Режим суперадмина" : "Режим администратора"}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleAdminLogout}
+          className="rounded-md border border-purple-300 bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-800"
+        >
+          Выйти из режима админа
+        </button>
       </div>
-      
+
       <div className="space-y-4">
-        
-        {/* Управление очередью */}
-        {!showConfirmClear ? (
-          <button
-            onClick={() => setShowConfirmClear(true)}
-            className="w-full bg-red-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-red-700 transition-colors shadow-md flex items-center justify-center gap-2"
-          >
-            <DeleteIcon className="w-5 h-5" />Очистить очередь
-          </button>
-        ) : (
-          <div className="bg-white p-4 rounded-md border-2 border-red-400">
-            <p className="text-red-700 font-bold text-base mb-3"> Вы уверены, что хотите очистить всю очередь?</p>
-            <div className="flex gap-2">
+        {/* БЛОК УПРАВЛЕНИЯ ОЧЕРЕДЬЮ */}
+        <div className="rounded-lg bg-white p-4 shadow-sm">
+          <h3 className="mb-2 text-sm font-semibold text-gray-800">
+            Управление очередью
+          </h3>
+
+          {washingItem && (
+            <p className="mb-2 text-xs text-gray-600">
+              Сейчас машина в режиме стирки. Подробности видно в общем статусе.
+            </p>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            {washingItem && (
               <button
-                onClick={() => setShowConfirmClear(false)}
-                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700 flex items-center justify-center gap-2"
+                type="button"
+                onClick={() => markDone(washingItem.id)}
+                className="inline-flex items-center gap-1 rounded-md bg-green-600 px-3 py-2 text-xs font-semibold text-white hover:bg-green-700"
               >
-                <CloseIcon className="w-4 h-4" />Отмена
-              </button>
-              
-              <button
-                onClick={handleClearQueueConfirm}
-                className="flex-1 bg-red-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-700 flex items-center justify-center gap-2"
-              >
-                <CheckIcon className="w-4 h-4" />Да, очистить
-              </button>
-              
-            </div>
-            {/* ✅ ТЕСТОВОЕ УВЕДОМЛЕНИЕ - ВСЕГДА ВИДНО */}
-            {isAdmin && (
-              <button
-                onClick={async () => {
-                  try {
-                    const { sendTestNotification } = await import('@/lib/telegram');
-                    const success = await sendTestNotification(user?.student_id);
-                    alert(success 
-                      ? '✅ Тестовое уведомление отправлено!' 
-                      : '❌ Ошибка отправки. Проверь консоль.'
-                    );
-                  } catch (err: any) {
-                    alert('❌ Ошибка: ' + err.message);
-                  }
-                }}
-                className="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-blue-700 transition-colors shadow-md"
-              >
-                <BellIcon className="w-5 h-5 inline-block mr-2" />Отправить тестовое уведомление
+                <CheckIcon className="h-4 w-4" />
+                Отметить стирку завершённой
               </button>
             )}
+
+            {!showConfirmClear ? (
+              <button
+                type="button"
+                onClick={() => setShowConfirmClear(true)}
+                className="inline-flex items-center gap-1 rounded-md bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700"
+              >
+                <DeleteIcon className="h-4 w-4" />
+                Очистить очередь
+              </button>
+            ) : (
+              <div className="mt-2 w-full rounded-md border border-red-300 bg-red-50 p-3 text-xs">
+                <p className="mb-2 font-semibold text-red-700">
+                  Очистить всю очередь?
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmClear(false)}
+                    className="flex-1 inline-flex items-center justify-center gap-1 rounded-md bg-gray-600 px-3 py-2 text-xs font-semibold text-white hover:bg-gray-700"
+                  >
+                    <CloseIcon className="h-4 w-4" />
+                    Отмена
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClearQueueConfirm}
+                    className="flex-1 inline-flex items-center justify-center gap-1 rounded-md bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700"
+                  >
+                    <CheckIcon className="h-4 w-4" />
+                    Да, очистить
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-        
-        {/* Управление студентами */}
+        </div>
+
+        {/* КНОПКА УПРАВЛЕНИЯ СТУДЕНТАМИ */}
         <button
-          onClick={() => setShowStudents(!showStudents)}
-          className="w-full bg-purple-800 text-white font-semibold py-3 px-4 rounded-md hover:bg-purple-900 transition-colors shadow-md"
+          type="button"
+          onClick={() => setShowStudents((v) => !v)}
+          className="w-full rounded-md bg-purple-800 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-purple-900"
         >
-          {showStudents ? 'Скрыть студентов' : 'Управление студентами'}
+          {showStudents ? "Скрыть студентов" : "Управление студентами"}
         </button>
 
+        {/* СПИСОК СТУДЕНТОВ */}
         {showStudents && (
-          <div className="bg-white p-4 rounded-md space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold text-gray-800">Список студентов ({filteredStudents.length})</h3>
+          <div className="space-y-4 rounded-lg bg-white p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Студенты ({filteredStudents.length})
+              </h3>
               <button
+                type="button"
                 onClick={() => setShowAddStudent(true)}
-                className="bg-green-600 text-white text-sm font-semibold px-3 py-2 rounded hover:bg-green-700"
+                className="rounded-md bg-green-600 px-3 py-2 text-xs font-semibold text-white hover:bg-green-700"
               >
-                Добавить
+                Добавить студента
               </button>
             </div>
 
-            {/* Поиск и фильтры */}
+            {/* Поиск + фильтры */}
             <div className="space-y-2">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder=" Поиск..."
-                className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+                placeholder="Поиск по имени или комнате"
+                className="w-full rounded-md border-2 border-gray-300 p-2 text-sm text-gray-900"
               />
-              
-              <div className="grid grid-cols-4 gap-2">
-                <button
-                  onClick={() => setFilterStatus('all')}
-                  className={`py-2 px-2 rounded text-xs font-semibold ${filterStatus === 'all' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-                >
-                  Все
-                </button>
-                <button
-                  onClick={() => setFilterStatus('registered')}
-                  className={`py-2 px-2 rounded text-xs font-semibold ${filterStatus === 'registered' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-                >
-                  Зарег.
-                </button>
-                <button
-                  onClick={() => setFilterStatus('unregistered')}
-                  className={`py-2 px-2 rounded text-xs font-semibold ${filterStatus === 'unregistered' ? 'bg-yellow-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-                >
-                  Не зар.
-                </button>
-                <button
-                  onClick={() => setFilterStatus('banned')}
-                  className={`py-2 px-2 rounded text-xs font-semibold ${filterStatus === 'banned' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-                >
-                  Баны
-                </button>
+
+              <div className="grid grid-cols-4 gap-2 text-xs font-semibold">
+                <FilterButton
+                  active={filterStatus === "all"}
+                  onClick={() => setFilterStatus("all")}
+                  label="Все"
+                />
+                <FilterButton
+                  active={filterStatus === "registered"}
+                  onClick={() => setFilterStatus("registered")}
+                  label="Зарег."
+                />
+                <FilterButton
+                  active={filterStatus === "unregistered"}
+                  onClick={() => setFilterStatus("unregistered")}
+                  label="Не зар."
+                />
+                <FilterButton
+                  active={filterStatus === "banned"}
+                  onClick={() => setFilterStatus("banned")}
+                  label="Баны"
+                />
               </div>
             </div>
 
-            {/* Список студентов */}
-            <div className="max-h-96 overflow-y-auto space-y-3">
+            {/* Карточки студентов */}
+            <div className="max-h-96 space-y-3 overflow-y-auto">
               {filteredStudents.map((student) => (
-                <div key={student.id} className="border-2 border-gray-200 rounded-lg bg-gray-50 p-3 space-y-2">
-                  {/* Имя и значки */}
-                  <div>
-                    <p className="font-bold text-gray-900 text-base">
-                      {student.full_name}
-                      {student.room && <span className="text-gray-600 text-sm ml-2">({student.room})</span>}
-                    </p>
-                    <div className="flex gap-1 mt-1 flex-wrap">
-                      {student.is_registered && (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded font-semibold"> Зарег.</span>
-                      )}
-                      {student.is_banned && (
-                        <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded font-semibold"> Бан</span>
-                      )}
-                      {student.telegram_chat_id && (
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-semibold"> TG</span>
-                      )}
+                <div
+                  key={student.id}
+                  className="space-y-2 rounded-lg border border-gray-200 bg-gray-50 p-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {student.full_name}
+                        {student.room && (
+                          <span className="ml-2 text-xs text-gray-600">
+                            ({student.room})
+                          </span>
+                        )}
+                      </p>
+                      <div className="mt-1 flex flex-wrap gap-1 text-[10px] font-semibold">
+                        {student.is_registered && (
+                          <Tag color="green">Зарегистрирован</Tag>
+                        )}
+                        {student.is_banned && <Tag color="red">Бан</Tag>}
+                        {student.telegram_chat_id && (
+                          <Tag color="blue">Telegram</Tag>
+                        )}
+                        {student.is_super_admin && (
+                          <Tag color="purple">Суперадмин</Tag>
+                        )}
+                        {!student.is_super_admin && student.is_admin && (
+                          <Tag color="indigo">Админ</Tag>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  
-                  {/* ========== УПРАВЛЕНИЕ АДМИНАМИ ========== */}
-                  <div className="flex justify-end">
-                  <ActionMenu
-                    student={student}
-                    isAdmin={isAdmin}
-                    isSuperAdmin={isSuperAdmin}
-                    currentUserId={user?.id}
-                    onEdit={(s) => openEditModal(s)}
-                    onBan={(s) => openBanModal(s)}
-                    onUnban={(id) => handleUnbanStudent(id)}
-                    onDelete={(s) => openDeleteModal(s)}
-                    onReset={(s) => openResetConfirm(s)}
-                    onAddToQueue={(s) => openAddToQueueModal(s)}
-                    onToggleAdmin={(id, makeAdmin) => handleToggleAdmin(id, makeAdmin)}
-                  />
 
-
+                    <ActionMenu
+                      student={student}
+                      isAdmin={isAdmin}
+                      isSuperAdmin={isSuperAdmin}
+                      currentUserId={user?.id}
+                      onEdit={openEditModal}
+                      onBan={openBanModal}
+                      onUnban={handleUnbanStudent}
+                      onDelete={openDeleteModal}
+                      onReset={openResetConfirm}
+                      onAddToQueue={openAddToQueueModal}
+                      onToggleAdmin={handleToggleAdmin}
+                    />
                   </div>
                 </div>
               ))}
@@ -499,265 +545,358 @@ export default function AdminPanel() {
         )}
       </div>
 
+      {/* МОДАЛКИ */}
 
-
-      {/* ========== ВСЕ МОДАЛЬНЫЕ ОКНА ========== */}
-
-      {/* Модальное окно: Добавить студента */}
+      {/* Добавить студента */}
       {showAddStudent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-900 mb-4"> Добавить студента</h3>
-            <div className="space-y-3">
-              <input
-                type="text"
-                value={newFirstName}
-                onChange={(e) => setNewFirstName(e.target.value)}
-                placeholder="Имя"
-                className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900"
-              />
-              <input
-                type="text"
-                value={newLastName}
-                onChange={(e) => setNewLastName(e.target.value)}
-                placeholder="Фамилия"
-                className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900"
-              />
-              <input
-                type="text"
-                value={newRoom}
-                onChange={(e) => setNewRoom(e.target.value)}
-                placeholder="Комната (необязательно)"
-                className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900"
-              />
-            </div>
-            <div className="flex gap-2 mt-4">
-              <button
-                onClick={() => setShowAddStudent(false)}
-                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
-              >
-                Отмена
-              </button>
-              <button
-                onClick={handleAddStudent}
-                className="flex-1 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700"
-              >
-                Добавить
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Модальное окно: Редактировать студента */}
-      {showEditStudent && selectedStudent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><EditIcon className="w-5 h-5" />Редактировать студента</h3>
-            <div className="space-y-3">
-              <input
-                type="text"
-                value={editFirstname}
-                onChange={(e) => setEditFirstname(e.target.value)}
-                placeholder="Имя"
-                className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900"
-              />
-              <input
-                type="text"
-                value={editLastname}
-                onChange={(e) => setEditLastname(e.target.value)}
-                placeholder="Фамилия"
-                className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900"
-              />
-              <input
-                type="text"
-                value={editRoom}
-                onChange={(e) => setEditRoom(e.target.value)}
-                placeholder="Комната"
-                className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900"
-              />
-            </div>
-            <div className="flex gap-2 mt-4">
-              <button
-                onClick={() => setShowEditStudent(false)}
-                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
-              >
-                Отмена
-              </button>
-              <button
-                onClick={handleEditStudent}
-                className="flex-1 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700"
-              >
-                Сохранить
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Модальное окно: Подтверждение сброса */}
-      {showResetConfirm && selectedStudent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-orange-700 mb-4"> Сбросить регистрацию?</h3>
-            <p className="text-gray-700 mb-4">
-              Сбросить регистрацию для <span className="font-bold">{selectedStudent.full_name}</span>?
-            </p>
-            <p className="text-orange-600 text-sm font-semibold mb-4">
-              Студент сможет заново зарегистрироваться.
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowResetConfirm(false)}
-                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
-              >
-                Отмена
-              </button>
-              <button
-                onClick={handleResetStudent}
-                className="flex-1 bg-orange-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-orange-700"
-              >
-                Сбросить
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Модальное окно: Забанить студента */}
-      {showBanStudent && selectedStudent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-900 mb-4"> Забанить студента</h3>
-            <p className="text-gray-700 mb-3">
-              Забанить <span className="font-bold">{selectedStudent.full_name}</span>?
-            </p>
-            <textarea
-              value={banReason}
-              onChange={(e) => setBanReason(e.target.value)}
-              placeholder="Причина бана (необязательно)"
-              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900 h-24"
+        <Modal onClose={() => setShowAddStudent(false)}>
+          <h3 className="mb-4 text-xl font-bold text-gray-900">
+            Добавить студента
+          </h3>
+          <div className="space-y-3">
+            <input
+              type="text"
+              value={newFirstName}
+              onChange={(e) => setNewFirstName(e.target.value)}
+              placeholder="Имя"
+              className="w-full rounded-lg border-2 border-gray-300 p-3 text-gray-900"
             />
-            <div className="flex gap-2 mt-4">
-              <button
-                onClick={() => setShowBanStudent(false)}
-                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
-              >
-                Отмена
-              </button>
-              <button
-                onClick={handleBanStudent}
-                className="flex-1 bg-red-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-700"
-              >
-                Забанить
-              </button>
-            </div>
+            <input
+              type="text"
+              value={newLastName}
+              onChange={(e) => setNewLastName(e.target.value)}
+              placeholder="Фамилия (опционально)"
+              className="w-full rounded-lg border-2 border-gray-300 p-3 text-gray-900"
+            />
+            <input
+              type="text"
+              value={newRoom}
+              onChange={(e) => setNewRoom(e.target.value)}
+              placeholder="Комната (опционально)"
+              className="w-full rounded-lg border-2 border-gray-300 p-3 text-gray-900"
+            />
           </div>
-        </div>
+          <div className="mt-4 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setShowAddStudent(false)}
+              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
+            >
+              Отмена
+            </button>
+            <button
+              type="button"
+              onClick={handleAddStudent}
+              className="flex-1 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+            >
+              Добавить
+            </button>
+          </div>
+        </Modal>
       )}
 
-      {/* Модальное окно: Удалить студента */}
+      {/* Редактировать студента */}
+      {showEditStudent && selectedStudent && (
+        <Modal onClose={() => setShowEditStudent(false)}>
+          <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
+            <EditIcon className="h-5 w-5" />
+            Редактировать студента
+          </h3>
+          <div className="space-y-3">
+            <input
+              type="text"
+              value={editFirstname}
+              onChange={(e) => setEditFirstname(e.target.value)}
+              placeholder="Имя"
+              className="w-full rounded-lg border-2 border-gray-300 p-3 text-gray-900"
+            />
+            <input
+              type="text"
+              value={editLastname}
+              onChange={(e) => setEditLastname(e.target.value)}
+              placeholder="Фамилия"
+              className="w-full rounded-lg border-2 border-gray-300 p-3 text-gray-900"
+            />
+            <input
+              type="text"
+              value={editRoom}
+              onChange={(e) => setEditRoom(e.target.value)}
+              placeholder="Комната"
+              className="w-full rounded-lg border-2 border-gray-300 p-3 text-gray-900"
+            />
+          </div>
+          <div className="mt-4 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setShowEditStudent(false)}
+              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
+            >
+              Отмена
+            </button>
+            <button
+              type="button"
+              onClick={handleEditStudent}
+              className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+            >
+              Сохранить
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Сброс регистрации */}
+      {showResetConfirm && selectedStudent && (
+        <Modal onClose={() => setShowResetConfirm(false)}>
+          <h3 className="mb-3 text-xl font-bold text-orange-700">
+            Сбросить регистрацию?
+          </h3>
+          <p className="mb-3 text-sm text-gray-800">
+            Сбросить регистрацию для{" "}
+            <span className="font-semibold">{selectedStudent.full_name}</span>?
+          </p>
+          <p className="mb-4 text-xs font-semibold text-orange-600">
+            Студент сможет зарегистрироваться заново.
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setShowResetConfirm(false)}
+              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
+            >
+              Отмена
+            </button>
+            <button
+              type="button"
+              onClick={handleResetStudent}
+              className="flex-1 rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700"
+            >
+              Сбросить
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Бан */}
+      {showBanStudent && selectedStudent && (
+        <Modal onClose={() => setShowBanStudent(false)}>
+          <h3 className="mb-4 text-xl font-bold text-gray-900">
+            Забанить студента
+          </h3>
+          <p className="mb-3 text-sm text-gray-800">
+            Забанить{" "}
+            <span className="font-semibold">{selectedStudent.full_name}</span>?
+          </p>
+          <textarea
+            value={banReason}
+            onChange={(e) => setBanReason(e.target.value)}
+            placeholder="Причина бана (опционально)"
+            className="h-24 w-full rounded-lg border-2 border-gray-300 p-3 text-sm text-gray-900"
+          />
+          <div className="mt-4 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setShowBanStudent(false)}
+              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
+            >
+              Отмена
+            </button>
+            <button
+              type="button"
+              onClick={handleBanStudent}
+              className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+            >
+              Забанить
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Удаление */}
       {showDeleteConfirm && selectedStudent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-red-700 mb-4"> Удалить студента?</h3>
-            <p className="text-gray-700 mb-4">
-              Вы уверены, что хотите удалить <span className="font-bold">{selectedStudent.full_name}</span>?
-            </p>
-            <p className="text-red-600 text-sm font-semibold mb-4">
-              Это действие нельзя отменить! Будут удалены все данные студента.
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
-              >
-                Отмена
-              </button>
-              <button
-                onClick={handleDeleteStudent}
-                className="flex-1 bg-red-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-700"
-              >
-                Удалить
-              </button>
-            </div>
+        <Modal onClose={() => setShowDeleteConfirm(false)}>
+          <h3 className="mb-3 text-xl font-bold text-red-700">
+            Удалить студента?
+          </h3>
+          <p className="mb-3 text-sm text-gray-800">
+            Вы уверены, что хотите удалить{" "}
+            <span className="font-semibold">{selectedStudent.full_name}</span>?
+          </p>
+          <p className="mb-4 text-xs font-semibold text-red-600">
+            Это действие нельзя отменить. Будут удалены все данные студента.
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(false)}
+              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
+            >
+              Отмена
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteStudent}
+              className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+            >
+              Удалить
+            </button>
           </div>
-        </div>
+        </Modal>
       )}
 
-      
-      {/* ГЛАВНОЕ МОДАЛЬНОЕ ОКНО: Поставить в очередь С ВЫБОРОМ ДАТЫ */}
+      {/* Поставить в очередь (с датой) */}
       {showAddToQueue && selectedStudent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-900 mb-4"> Поставить в очередь</h3>
-            <p className="text-gray-700 mb-3">
-              Студент: <span className="font-bold">{selectedStudent.full_name}</span>
-            </p>
-            
-            <div className="space-y-3">
-              {/* НОВОЕ ПОЛЕ: Выбор даты стирки */}
-              <div>
-                <label className="block text-sm font-bold mb-2 text-gray-900"> Дата стирки</label>
-                <select
-                  value={queueDate}
-                  onChange={(e) => setQueueDate(e.target.value)}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
-                >
-                  {getAvailableDates().map(date => (
-                    <option key={date.value} value={date.value}>
-                      {date.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+        <Modal onClose={() => setShowAddToQueue(false)}>
+          <h3 className="mb-3 text-xl font-bold text-gray-900">
+            Поставить в очередь
+          </h3>
+          <p className="mb-3 text-sm text-gray-800">
+            Студент:{" "}
+            <span className="font-semibold">{selectedStudent.full_name}</span>
+          </p>
 
-              <div>
-                <label className="block text-sm font-bold mb-2 text-gray-900">Количество стирок</label>
-                <select
-                  value={queueWashCount}
-                  onChange={(e) => setQueueWashCount(Number(e.target.value))}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 font-semibold"
-                >
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-                    <option key={num} value={num}>{num}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-bold mb-2 text-gray-900">Способ оплаты</label>
-                <select
-                  value={queuePaymentType}
-                  onChange={(e) => setQueuePaymentType(e.target.value)}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
-                >
-                  <option value="money">💵 Деньги</option>
-                  <option value="coupon">🎫 Купон</option>
-                  <option value="both">🎫 + 💵 Деньги+Купон</option>
-                </select>
-              </div>
-              
-
+          <div className="space-y-3 text-sm">
+            <div>
+              <label className="mb-1 block font-semibold text-gray-900">
+                Дата стирки
+              </label>
+              <select
+                value={queueDate}
+                onChange={(e) => setQueueDate(e.target.value)}
+                className="w-full rounded-lg border-2 border-gray-300 p-2 text-gray-900"
+              >
+                {getAvailableDates().map((d) => (
+                  <option key={d.value} value={d.value}>
+                    {d.label}
+                  </option>
+                ))}
+              </select>
             </div>
-            
-            <div className="flex gap-2 mt-4">
-              <button
-                onClick={() => setShowAddToQueue(false)}
-                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
+
+            <div>
+              <label className="mb-1 block font-semibold text-gray-900">
+                Количество стирок
+              </label>
+              <select
+                value={queueWashCount}
+                onChange={(e) => setQueueWashCount(Number(e.target.value))}
+                className="w-full rounded-lg border-2 border-gray-300 p-2 text-gray-900"
               >
-                Отмена
-              </button>
-              <button
-                onClick={handleAddToQueue}
-                className="flex-1 bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-purple-700"
+                {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1 block font-semibold text-gray-900">
+                Способ оплаты
+              </label>
+              <select
+                value={queuePaymentType}
+                onChange={(e) => setQueuePaymentType(e.target.value)}
+                className="w-full rounded-lg border-2 border-gray-300 p-2 text-gray-900"
               >
-                Добавить
-              </button>
+                <option value="money">Деньги</option>
+                <option value="coupon">Купон</option>
+                <option value="both">Деньги + купон</option>
+              </select>
             </div>
           </div>
-        </div>
+
+          <div className="mt-4 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setShowAddToQueue(false)}
+              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
+            >
+              Отмена
+            </button>
+            <button
+              type="button"
+              onClick={handleAddToQueue}
+              className="flex-1 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700"
+            >
+              Добавить
+            </button>
+          </div>
+        </Modal>
       )}
+    </div>
+  );
+}
+
+/* ВСПОМОГАТЕЛЬНЫЕ КОМПОНЕНТЫ */
+
+function FilterButton({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-md px-2 py-2 text-center ${
+        active
+          ? "bg-purple-600 text-white"
+          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function Tag({
+  children,
+  color,
+}: {
+  children: React.ReactNode;
+  color: "green" | "red" | "blue" | "purple" | "indigo";
+}) {
+  const map: Record<typeof color, string> = {
+    green: "bg-green-100 text-green-800",
+    red: "bg-red-100 text-red-800",
+    blue: "bg-blue-100 text-blue-800",
+    purple: "bg-purple-100 text-purple-800",
+    indigo: "bg-indigo-100 text-indigo-800",
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2 py-0.5 ${map[color]}`}
+    >
+      {children}
+    </span>
+  );
+}
+
+function Modal({
+  children,
+  onClose,
+}: {
+  children: React.ReactNode;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+        {children}
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-gray-800"
+        >
+          <CloseIcon className="h-4 w-4" />
+          Закрыть
+        </button>
+      </div>
     </div>
   );
 }
