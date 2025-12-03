@@ -323,6 +323,10 @@ const finalizeUserSession = (
 // ФУНКЦИЯ РЕГИСТРАЦИИ
 // ========================================
 
+// ========================================
+// ФУНКЦИЯ РЕГИСТРАЦИИ (НОВАЯ, ФИКС)
+// ========================================
+
 const registerStudent = async (
   studentId: string,
   password: string
@@ -336,19 +340,16 @@ const registerStudent = async (
     if (!student) throw new Error("Студент не найден");
 
     if (student.is_banned) {
-      throw new Error(
-        `Вы забанены. Причина: ${student.ban_reason || "Не указана"}`
-      );
+      throw new Error(`Вы забанены. Причина: ${student.ban_reason || "Не указана"}`);
     }
 
     if (student.is_registered && student.user_id) {
       throw new Error("Студент уже зарегистрирован. Нажмите «Войти».");
     }
 
-    // СТАБИЛЬНАЯ СХЕМА EMAIL (та же, что была раньше)
     const email = `student-${studentId.slice(0, 8)}@example.com`;
 
-    // 1) Пытаемся создать пользователя
+    // 1) Создаём auth user
     const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
       email,
       password,
@@ -356,65 +357,56 @@ const registerStudent = async (
         data: {
           student_id: studentId,
           full_name: student.full_name,
-          room: student.room || null,
         },
       },
     });
 
-    let authUser = signUpData?.user ?? null;
+    let authUser = signUpData?.user;
 
-    // Если уже существует — пробуем войти
     if (signUpErr) {
       const msg = signUpErr.message?.toLowerCase() || "";
       if (msg.includes("already registered")) {
-        const { data: signInData, error: signInErr } =
-          await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-
-        if (signInErr || !signInData?.user) {
-          throw new Error(
-            "Этот email уже зарегистрирован. Используйте «Войти»."
-          );
-        }
-
-        authUser = signInData.user;
+        const { data: signInData } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        authUser = signInData?.user;
       } else {
         throw signUpErr;
       }
     }
 
-    if (!authUser) {
-      throw new Error("Не удалось создать/получить пользователя");
-    }
+    if (!authUser) throw new Error("Не удалось создать/получить пользователя");
 
-    // 2) Привязываем студента к authUser
-    await supabase.from("students").update({
-      user_id: authUser.id,
-      is_registered: true,
-      registered_at: new Date().toISOString(),
-    }).eq("id", studentId);
+    // 2) ВЫЗЫВАЕМ backend API через service-role
+    const response = await fetch("/api/student/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        student_id: studentId,
+        auth_user_id: authUser.id,
+      }),
+    });
 
-    // 3) Обновляем очередь
-    await supabase.from("queue")
-      .update({ user_id: authUser.id })
-      .eq("student_id", studentId)
-      .is("user_id", null);
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error);
 
-    // 4) НЕ вызываем loadStudents() !!!
-    // ❗ Вместо этого — берём студента из UPDATE:
+    // 3) Загрузка обновлённого студента
     const { data: updatedStudent } = await supabase
       .from("students")
       .select("*")
       .eq("id", studentId)
       .single();
 
+    if (!updatedStudent) throw new Error("Ошибка загрузки данных студента");
+
+    // 4) Финализируем
     return finalizeUserSession(authUser.id, updatedStudent, true);
-  } catch (error: any) {
+  } catch (error) {
     throw error;
   }
 };
+
 
 
 
