@@ -53,7 +53,7 @@ export default function ActionMenu(props: Props) {
     return () => window.removeEventListener("keydown", handleEsc);
   }, []);
 
-  // Swipe down to close bottom-sheet
+  // Touch events
   const handleTouchStart = (e: React.TouchEvent) => {
     startY.current = e.touches[0].clientY;
   };
@@ -72,22 +72,17 @@ export default function ActionMenu(props: Props) {
 
     if (diff > 70) {
       setOpen(false);
-    } else {
-      if (sheetRef.current) sheetRef.current.style.transform = "translateY(0)";
+    } else if (sheetRef.current) {
+      sheetRef.current.style.transform = "translateY(0)";
     }
   };
 
   return (
     <>
-      {/* КНОПКА ОТКРЫТИЯ */}
+      {/* ОТКРЫВАЮЩАЯ КНОПКА */}
       <button
         onClick={() => setOpen(true)}
-        className="
-          bg-purple-600 hover:bg-purple-700
-          text-white px-3 py-1.5
-          text-sm rounded-lg shadow 
-          font-semibold flex items-center gap-2
-        "
+        className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 text-sm rounded-lg shadow font-semibold flex items-center gap-2"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -121,17 +116,9 @@ export default function ActionMenu(props: Props) {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className="
-            fixed bottom-0 left-0 right-0 z-[100]
-            bg-white rounded-t-2xl shadow-xl
-            p-4 pb-6
-            animate-slideUp
-          "
+          className="fixed bottom-0 left-0 right-0 z-[100] bg-white rounded-t-2xl shadow-xl p-4 pb-6 animate-slideUp"
         >
-          {/* Хвостик для свайпа */}
           <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-4"></div>
-
-          {/* Список действий */}
 
           <SheetButton
             icon={<CalendarIcon className="w-5 h-5" />}
@@ -199,17 +186,16 @@ export default function ActionMenu(props: Props) {
             <SheetButton
               icon={<DeleteIcon className="w-5 h-5 text-red-600" />}
               label="Удалить"
+              danger
               onClick={() => {
                 onDelete(student);
                 setOpen(false);
               }}
-              danger
             />
           )}
         </div>
       )}
 
-      {/* Анимации */}
       <style jsx>{`
         @keyframes slideUp {
           from {
@@ -227,7 +213,6 @@ export default function ActionMenu(props: Props) {
   );
 }
 
-/* ОДНА КНОПКА ВНИЗУ */
 function SheetButton({
   icon,
   label,
@@ -242,12 +227,11 @@ function SheetButton({
   return (
     <button
       onClick={onClick}
-      className={`
-        w-full flex items-center gap-3
-        px-4 py-3 mb-1 rounded-lg
-        text-left text-gray-800
-        ${danger ? "text-red-600 hover:bg-red-50" : "hover:bg-gray-100"}
-      `}
+      className={`w-full flex items-center gap-3 px-4 py-3 mb-1 rounded-lg text-left ${
+        danger
+          ? "text-red-600 hover:bg-red-50"
+          : "text-gray-800 hover:bg-gray-100"
+      }`}
     >
       {icon}
       <span className="font-medium">{label}</span>
