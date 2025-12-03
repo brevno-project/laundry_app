@@ -480,6 +480,7 @@ export default function AdminPanel() {
                     student={student}
                     isAdmin={isAdmin}
                     isSuperAdmin={isSuperAdmin}
+                    currentStudentId={user.student_id ?? null}
                     onEdit={(s) => openEditModal(s)}
                     onBan={(s) => openBanModal(s)}
                     onUnban={(id) => handleUnbanStudent(id)}
@@ -488,6 +489,7 @@ export default function AdminPanel() {
                     onAddToQueue={(s) => openAddToQueueModal(s)}
                     onToggleAdmin={(id, makeAdmin) => handleToggleAdmin(id, makeAdmin)}
                   />
+
 
                   </div>
                 </div>
