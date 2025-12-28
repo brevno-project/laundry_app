@@ -366,6 +366,16 @@ export default function AdminPanel() {
 
       <div className="space-y-4">
 
+        {/* КНОПКА УПРАВЛЕНИЯ СТУДЕНТАМИ */}
+        <button
+          type="button"
+          onClick={() => setShowStudents((v) => !v)}
+          className="w-full flex items-center justify-center gap-2 rounded-md bg-purple-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-purple-700"
+        >
+          <PeopleIcon className="h-5 w-5" />
+          {showStudents ? "Скрыть студентов" : "Управление студентами"}
+        </button>
+
         {/* СПИСОК СТУДЕНТОВ */}
         {showStudents && (
           <div className="space-y-4 rounded-lg bg-white p-5 shadow-sm">
@@ -395,14 +405,6 @@ export default function AdminPanel() {
                 </button>
               </div>
             </div>
-
-            <button
-              type="button"
-              onClick={() => setShowStudents((v) => !v)}
-              className="flex flex-1 items-center justify-center rounded-md bg-purple-800 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-purple-900"
-            >
-              {showStudents ? "Скрыть студентов" : "Управление студентами"}
-            </button>
 
             {/* Поиск + фильтры */}
             <div className="space-y-2">
