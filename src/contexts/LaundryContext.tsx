@@ -2094,6 +2094,7 @@ const adminLogin = async (password: string): Promise<User | null> => {
     });
 
     const result = await response.json();
+    console.log("🔍 adminLogin result:", result);
 
     if (!response.ok) {
       throw new Error(result.error || "Ошибка входа");
@@ -2101,8 +2102,19 @@ const adminLogin = async (password: string): Promise<User | null> => {
 
     // Устанавливаем сессию в Supabase клиенте
     if (result.session) {
+      console.log("🔐 Setting Supabase session...");
       await supabase.auth.setSession(result.session);
+      console.log("✅ Session set successfully");
+    } else {
+      console.warn("⚠️ No session in result from API");
     }
+
+    // 🔍 ПРОВЕРКА: Получаем текущую сессию после установки
+    const sessionCheck = await supabase.auth.getSession();
+    console.log("📊 session AFTER adminLogin:", sessionCheck.data.session);
+
+    const userCheck = await supabase.auth.getUser();
+    console.log("👤 auth user AFTER adminLogin:", userCheck.data.user);
 
     const newUser: User = {
       ...result.user,
