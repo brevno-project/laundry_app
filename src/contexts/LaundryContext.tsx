@@ -208,18 +208,22 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
           },
           (payload) => {
             const newChatId = payload.new.telegram_chat_id;
+            console.log('🔔 Telegram realtime update received:', { newChatId, currentChatId: user.telegram_chat_id });
 
-          if (newChatId && !user.telegram_chat_id) {
-            const updatedUser = { ...user, telegram_chat_id: newChatId };
-            setUser(updatedUser);
+            // Обновляем если новый chat_id отличается от текущего
+            if (newChatId !== undefined && newChatId !== user.telegram_chat_id) {
+              const updatedUser = { ...user, telegram_chat_id: newChatId };
+              setUser(updatedUser);
 
-            if (typeof window !== "undefined") {
-              localStorage.setItem("laundryUser", JSON.stringify(updatedUser));
+              if (typeof window !== "undefined") {
+                localStorage.setItem("laundryUser", JSON.stringify(updatedUser));
+              }
+              
+              console.log('✅ User telegram_chat_id updated in state and localStorage');
             }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
 
     subs.push(telegramSub);
   }
