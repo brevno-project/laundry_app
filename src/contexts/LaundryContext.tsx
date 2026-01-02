@@ -51,7 +51,7 @@ type LaundryContextType = {
   changeQueuePosition: (queueId: string, direction: 'up' | 'down') => Promise<void>;
   registerStudent: (studentId: string, password: string) => Promise<User | null>;
   loginStudent: (studentId: string, password: string) => Promise<User | null>;
-  adminLogin: (adminKey: string) => Promise<User | null>;
+  // ❌ УДАЛЕНО: adminLogin - админы входят через loginStudent
   logoutStudent: () => void;
   resetStudentRegistration: (studentId: string) => Promise<void>;
   linkTelegram: (telegramCode: string) => Promise<{ success: boolean; error?: string }>;
@@ -96,28 +96,13 @@ type LaundryContextType = {
 const LaundryContext = createContext<LaundryContextType | undefined>(undefined);
 
 export function LaundryProvider({ children }: { children: ReactNode }) {
-  // Initialize states with localStorage fallback (fixes SSR hydration issues)
-  const [user, setUser] = useState<User | null>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('laundryUser');
-      return stored ? JSON.parse(stored) : null;
-    }
-    return null;
-  });
+  // ✅ User стартует null, НЕ из localStorage!
+  // refreshMyRole() установит правильное значение из Supabase Auth session
+  const [user, setUser] = useState<User | null>(null);
   
-  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('laundryIsAdmin') === 'true';
-    }
-    return false;
-  });
-  
-  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('laundryIsSuperAdmin') === 'true';
-    }
-    return false;
-  });
+  // ✅ Права определяются ТОЛЬКО из Supabase Auth session + БД
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(false);
   const [students, setStudents] = useState<Student[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [machineState, setMachineState] = useState<MachineState>({
@@ -132,6 +117,25 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     return false;
   });
   const [isJoining, setIsJoining] = useState(false);
+
+  // ✅ ПРИ СТАРТЕ: Синхронизация прав с Supabase Auth
+  useEffect(() => {
+    refreshMyRole();
+  }, []);
+
+  // ✅ ПРИ ИЗМЕНЕНИИ AUTH: Обновляем права
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) return;
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔄 Auth state changed:', event);
+      refreshMyRole();
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [isSupabaseConfigured, supabase]);
 
   // Load data and setup subscriptions on mount
   useEffect(() => {
@@ -235,11 +239,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 }, [isSupabaseConfigured, supabase, user?.student_id]);
 
 
-  // ✅ ДОБАВЛЕНО: Финальное логирование о всех исправлениях
-  useEffect(() => {
-  }, []);
-
-  // Save user to localStorage when changed
+  // Save user to localStorage when changed (только для UI, не права)
   useEffect(() => {
     if (user) {
       localStorage.setItem('laundryUser', JSON.stringify(user));
@@ -250,11 +250,82 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     localStorage.setItem('laundryIsNewUser', isNewUser.toString());
   }, [isNewUser]);
-  
-  // Save admin status to localStorage
-  useEffect(() => {
-    localStorage.setItem('laundryIsAdmin', isAdmin.toString());
-  }, [isAdmin]);
+
+  // ✅ ЕДИНАЯ ФУНКЦИЯ: Синхронизация прав с Supabase Auth session
+  const refreshMyRole = async () => {
+    if (!isSupabaseConfigured || !supabase) {
+      setUser(null);
+      setIsAdmin(false);
+      setIsSuperAdmin(false);
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const uid = session?.user?.id;
+
+      if (!uid) {
+        console.log('🔓 No active session');
+        setUser(null);
+        setIsAdmin(false);
+        setIsSuperAdmin(false);
+        return;
+      }
+
+      console.log('🔐 Active session found, fetching user data...');
+      const { data: me, error } = await supabase
+        .from("students")
+        .select("id, first_name, last_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students")
+        .eq("user_id", uid)
+        .maybeSingle();
+
+      if (error) {
+        console.error('❌ Error fetching user data:', error);
+        setUser(null);
+        setIsAdmin(false);
+        setIsSuperAdmin(false);
+        return;
+      }
+
+      if (!me) {
+        console.log('⚠️ User authenticated but not in students table');
+        setUser({ id: uid } as any);
+        setIsAdmin(false);
+        setIsSuperAdmin(false);
+        return;
+      }
+
+      console.log('✅ User data loaded:', { full_name: me.full_name, is_admin: me.is_admin, is_super_admin: me.is_super_admin });
+
+      const newUser: User = {
+        id: uid,
+        student_id: me.id,
+        first_name: me.first_name,
+        last_name: me.last_name,
+        full_name: me.full_name,
+        room: me.room,
+        avatar_type: me.avatar_type || 'default',
+        telegram_chat_id: me.telegram_chat_id,
+        is_admin: me.is_admin || false,
+        is_super_admin: me.is_super_admin || false,
+        can_view_students: me.can_view_students || false,
+      };
+
+      setUser(newUser);
+      setIsAdmin(!!me.is_admin);
+      setIsSuperAdmin(!!me.is_super_admin);
+
+      // Сохраняем только user в localStorage (для UI), НЕ права
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('laundryUser', JSON.stringify(newUser));
+      }
+    } catch (error) {
+      console.error('❌ Error in refreshMyRole:', error);
+      setUser(null);
+      setIsAdmin(false);
+      setIsSuperAdmin(false);
+    }
+  };
 
   // Load students from Supabase
   const loadStudents = async () => {
@@ -314,10 +385,9 @@ const finalizeUserSession = (
   setIsAdmin(isAdminUser);
   setIsSuperAdmin(isSuperAdminUser);
 
+  // ✅ Сохраняем только user, НЕ права (права из refreshMyRole)
   if (typeof window !== "undefined") {
     localStorage.setItem("laundryUser", JSON.stringify(newUser));
-    localStorage.setItem("laundryIsAdmin", isAdminUser.toString());
-    localStorage.setItem("laundryIsSuperAdmin", isSuperAdminUser.toString());
   }
 
   return newUser;
@@ -506,78 +576,54 @@ const loginStudent = async (
   // Logout student
   const logoutStudent = async () => {
     if (supabase) {
-      await supabase.auth.signOut();
+      await supabase.auth.signOut(); // ✅ Это вызовет onAuthStateChange → refreshMyRole
     }
     setUser(null);
     setIsAdmin(false);
     setIsSuperAdmin(false);
     setIsNewUser(false);
     localStorage.removeItem('laundryUser');
-    localStorage.removeItem('laundryIsAdmin');
-    localStorage.removeItem('laundryIsSuperAdmin');
     localStorage.removeItem('laundryIsNewUser');
+    // ✅ Права больше не хранятся в localStorage
   };
 
-    // Admin: Reset student registration
+// Admin: Reset student registration
 const resetStudentRegistration = async (studentId: string) => {
-  if (!isAdmin) throw new Error('Недостаточно прав');
   if (!isSupabaseConfigured || !supabase) {
     throw new Error('Supabase не настроен');
   }
 
   try {
-    // 1. Получаем студента
-    const { data: studentData, error: studentError } = await supabase
-      .from('students')
-      .select('id, user_id, is_registered, full_name')
-      .eq('id', studentId)
-      .single();
-
-    if (studentError) throw studentError;
-    if (!studentData) throw new Error('Студент не найден');
-
-    // 2. (Необязательно) Чистим user_id в queue для этого студента,
-    //    чтобы там не висел "старый" user_id — это безопасно.
-    try {
-      const { error: queueError } = await supabase
-        .from('queue')
-        .update({ user_id: null })
-        .eq('student_id', studentId);
-
-      if (queueError) {
-        console.warn('Не удалось обнулить user_id в очереди при сбросе регистрации:', queueError);
-        // не падаем — это не критично
-      }
-    } catch (queueErr) {
-      console.warn('Ошибка при обновлении очереди во время сброса регистрации:', queueErr);
-      // тоже не роняем процесс
+    // ✅ Получаем JWT (безопасность на сервере)
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('Нет активной сессии');
     }
 
-    // 3. Сбрасываем регистрацию в таблице students
-    const { error: updateError } = await supabase
-      .from('students')
-      .update({
-        is_registered: false,
-        registered_at: null,
-        user_id: null,
-        telegram_chat_id: null,   // сбрасываем Telegram
-        avatar_type: 'default',   // сбрасываем аватар
-        // is_banned и ban_reason НЕ трогаем
-      })
-      .eq('id', studentId);
+    // ✅ Вызываем API route с JWT
+    const response = await fetch('/api/admin/reset-registration', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ student_id: studentId }),
+    });
 
-    if (updateError) throw updateError;
+    const result = await response.json();
 
-    // 4. Обновляем локальный список
+    if (!response.ok) {
+      throw new Error(result.error || 'Ошибка сброса регистрации');
+    }
+
+    // Обновляем локальный список
     await loadStudents();
 
-    // 5. Если админ сбросил САМ СЕБЕ регистрацию — разлогиниваем его
+    // Если админ сбросил САМ СЕБЕ регистрацию — разлогиниваем его
     if (user && user.student_id === studentId) {
       await logoutStudent();
     }
-
   } catch (error: any) {
-    // Пробрасываем наверх, чтобы UI показал нормальную ошибку
     throw error;
   }
 };
@@ -908,17 +954,31 @@ const joinQueue = async (
     }
 
     try {
-      const { error } = await supabase
-        .from('queue')
-        .update({ status })
-        .eq('id', queueItemId);
-      
-      if (error) {
-        return;
+      // ✅ Получаем JWT
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Нет активной сессии');
       }
+
+      // ✅ Вызываем API route с JWT
+      const response = await fetch('/api/admin/queue/set-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ queue_item_id: queueItemId, status }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка изменения статуса');
+      }
+
       await fetchQueue();
     } catch (error) {
-      return;
+      throw error;
     }
   };
 
@@ -978,18 +1038,34 @@ const joinQueue = async (
     }
 
     try {
-      const { error } = await supabase
-        .from('queue')
-        .update({ return_key_alert: alert })
-        .eq('id', queueItemId);
-      
-      if (error) throw error;
-      
+      // ✅ Получаем JWT
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Нет активной сессии');
+      }
+
+      // ✅ Вызываем API route с JWT
+      const response = await fetch('/api/admin/queue/set-return-key-alert', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ queue_item_id: queueItemId, alert }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка установки алерта');
+      }
+
       if (alert) {
         // Trigger alert and Telegram notification
         sendTelegramNotification({ type: 'admin_return_key' });
       }
     } catch (error) {
+      throw error;
     }
   };
 
@@ -1008,47 +1084,31 @@ const startWashing = async (queueItemId: string) => {
   }
   
   try {
-    const queueItem = queue.find(item => item.id === queueItemId);
-    if (!queueItem) {
-      return;
+    // ✅ Получаем JWT
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('Нет активной сессии');
     }
-    
-    // Update queue item status
-    const { error: queueError } = await supabase
-      .from('queue')
-      .update({ status: QueueStatus.WASHING })
-      .eq('id', queueItemId);
-    
-    if (queueError) {
-      return;
+
+    // ✅ Вызываем API route с JWT
+    const response = await fetch('/api/admin/queue/start-washing', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ queue_item_id: queueItemId }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Ошибка запуска стирки');
     }
-    
-    // Update machine state
-    const newMachineState: MachineState = {
-      status: MachineStatus.WASHING,
-      current_queue_item_id: queueItemId,
-      started_at: new Date().toISOString(),
-      expected_finish_at: queueItem.expected_finish_at,
-    };
-    
-    const { error: machineError } = await supabase
-      .from('machine_state')
-      .upsert(newMachineState, { onConflict: 'id' });
-    
-    if (machineError) {
-      return;
-    }
-    
-    // Обновить локальный state немедленно
-    setMachineState(newMachineState);
-    save_local_machine_state(newMachineState);
-    
-    // Обновить состояние для всех клиентов
+
     await fetchQueue();
     await fetchMachineState();
-    
   } catch (error) {
-    return;
     // Fallback to local storage on error
     start_local_washing(queueItemId);
     fetchQueue();
@@ -1073,52 +1133,33 @@ const startWashing = async (queueItemId: string) => {
     }
     
     try {
-      // Добавить в историю
-      const historyItem: HistoryItem = {
-        id: uuidv4(),
-        user_id: queueItem.user_id,
-        full_name: queueItem.full_name,
-        room: queueItem.room || undefined,
-        started_at: machineState.started_at || new Date().toISOString(),
-        finished_at: new Date().toISOString(),
-        // ✅ Таймеры
-        ready_at: queueItem.ready_at,
-        key_issued_at: queueItem.key_issued_at,
-        washing_started_at: queueItem.washing_started_at,
-        return_requested_at: queueItem.return_requested_at,
-      };
-      
-      const { error: historyError } = await supabase
-        .from('history')
-        .insert(historyItem);
-      
-      if (historyError) throw historyError;
-      
-      // Удалить из очереди
-      const { error: deleteError } = await supabase
-        .from('queue')
-        .delete()
-        .eq('id', queueItemId);
-      
-      if (deleteError) throw deleteError;
-      
-      // Сбросить состояние машины
-      const idleMachineState: MachineState = {
-        status: MachineStatus.IDLE,
-        current_queue_item_id: undefined,
-        started_at: undefined,
-        expected_finish_at: undefined,
-      };
-      const { error: machineError } = await supabase
-        .from('machine_state')
-        .upsert(idleMachineState);
-      
-      if (machineError) throw machineError;
-      
-      setMachineState(idleMachineState);
-      save_local_machine_state(idleMachineState);
+      // ✅ Получаем JWT
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Нет активной сессии');
+      }
+
+      // ✅ Вызываем API route с JWT
+      const response = await fetch('/api/admin/queue/mark-done', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ queue_item_id: queueItemId }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка завершения стирки');
+      }
+
+      await fetchQueue();
+      await fetchMachineState();
+      await fetchHistory();
     } catch (error) {
-      return;
+      throw error;
     }
   };
 
@@ -1144,27 +1185,32 @@ const startWashing = async (queueItemId: string) => {
     }
     
     try {
-      // Update queue item status back to 'queued'
-      const { error: updateError } = await supabase
-        .from('queue')
-        .update({ status: QueueStatus.WAITING })
-        .eq('id', queueItemId);
+      // ✅ Получаем JWT
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Нет активной сессии');
+      }
 
-      if (updateError) throw updateError;
-      
-      // Reset machine state
-      const { error: machineError } = await supabase
-        .from('machine_state')
-        .upsert({
-          status: MachineStatus.IDLE,
-          current_queue_item_id: null,
-          started_at: null,
-          expected_finish_at: null,
-        });
-      
-      if (machineError) return;
+      // ✅ Вызываем API route с JWT
+      const response = await fetch('/api/admin/queue/cancel-washing', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ queue_item_id: queueItemId }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка отмены стирки');
+      }
+
+      await fetchQueue();
+      await fetchMachineState();
     } catch (error) {
-      return;
+      throw error;
     }
   };
 
@@ -1203,26 +1249,28 @@ const startWashing = async (queueItemId: string) => {
     }
     
     try {
-      // ✅ СБРОС машины
-      const { error: machineError } = await supabase
-        .from('machine_state')
-        .upsert({
-          status: MachineStatus.IDLE,
-          current_queue_item_id: null,
-          started_at: null,
-          expected_finish_at: null,
-        });
-      
-      if (machineError) throw machineError;
-      
-      // ✅ УДАЛИТЬ ВСЕ записи из очереди (включая те, что добавлены админом)
-      const { error: queueError } = await supabase
-        .from('queue')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000');  // ✅ Удаляем ВСЕ
-      
-      if (queueError) throw queueError;
-      
+      // ✅ Получаем JWT
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Нет активной сессии');
+      }
+
+      // ✅ Вызываем API route с JWT
+      const response = await fetch('/api/admin/queue/clear', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ mode: 'all' }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка очистки очереди');
+      }
+
       await fetchQueue();
       await fetchMachineState();
     } catch (error) {
@@ -1246,16 +1294,31 @@ const startWashing = async (queueItemId: string) => {
     }
 
     try {
-      const { error } = await supabase
-        .from('queue')
-        .delete()
-        .eq('id', queueItemId);
+      // ✅ Получаем JWT
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Нет активной сессии');
+      }
 
-      if (error) throw error;
+      // ✅ Вызываем API route с JWT
+      const response = await fetch('/api/admin/queue/remove', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ queue_item_id: queueItemId }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка удаления из очереди');
+      }
 
       await fetchQueue();
     } catch (error) {
-      return;
+      throw error;
     }
   };
 
@@ -1273,16 +1336,31 @@ const startWashing = async (queueItemId: string) => {
     }
 
     try {
-      const { error } = await supabase
-        .from('queue')
-        .delete()
-        .eq('status', QueueStatus.DONE);
+      // ✅ Получаем JWT
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Нет активной сессии');
+      }
 
-      if (error) throw error;
+      // ✅ Вызываем API route с JWT
+      const response = await fetch('/api/admin/queue/clear', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ mode: 'completed' }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка очистки завершенных');
+      }
 
       await fetchQueue();
     } catch (error) {
-      return;
+      throw error;
     }
   };
 
@@ -1305,16 +1383,31 @@ const startWashing = async (queueItemId: string) => {
     }
 
     try {
-      const today = new Date().toISOString().split('T')[0];
-      const { error } = await supabase
-        .from('queue')
-        .delete()
-        .lt('scheduled_for_date', today);
+      // ✅ Получаем JWT
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Нет активной сессии');
+      }
 
-      if (error) throw error;
+      // ✅ Вызываем API route с JWT
+      const response = await fetch('/api/admin/queue/clear', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ mode: 'old' }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка очистки старой очереди');
+      }
 
       await fetchQueue();
     } catch (error) {
+      throw error;
     }
   };
 
@@ -1338,21 +1431,31 @@ const startWashing = async (queueItemId: string) => {
     }
 
     try {
-      const twoDaysAgo = new Date();
-      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-      const cutoffDate = twoDaysAgo.toISOString().split('T')[0];
-      
-      const { error } = await supabase
-        .from('queue')
-        .delete()
-        .lt('scheduled_for_date', cutoffDate)
-        .neq('status', QueueStatus.DONE);
+      // ✅ Получаем JWT
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Нет активной сессии');
+      }
 
-      if (error) throw error;
+      // ✅ Вызываем API route с JWT
+      const response = await fetch('/api/admin/queue/clear', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ mode: 'stuck' }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка очистки зависших');
+      }
 
       await fetchQueue();
     } catch (error) {
-      return;
+      throw error;
     }
   };
 
@@ -1360,61 +1463,42 @@ const startWashing = async (queueItemId: string) => {
   const banStudent = async (studentId: string, reason?: string) => {
     if (!isAdmin) return;
     if (!isSupabaseConfigured || !supabase) {
-      throw new Error('Supabase ');
+      throw new Error('Supabase не настроен');
     }
   
     try {
-      // Найти целевого студента
-      const targetStudent = students.find(s => s.id === studentId);
-      if (!targetStudent) {
-        throw new Error('Студент не найден');
+      // ✅ Получаем JWT
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Нет активной сессии');
       }
 
-      // ПРОВЕРКА: обычный админ не может банить супер-админов
-      if (!isSuperAdmin && targetStudent.is_super_admin) {
-        throw new Error('Только супер-админ может банить супер-админов');
+      // ✅ Вызываем API route с JWT
+      const response = await fetch('/api/admin/ban-student', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ student_id: studentId, reason, ban: true }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка бана');
       }
-      
-      // ПРОВЕРКА: нельзя банить супер-админов (даже супер-админу)
-      if (targetStudent.is_super_admin) {
-        throw new Error('Нельзя банить супер-админов');
-      }
-  
-      // Удалить из очереди
-      const { error: queueError } = await supabase
-        .from('queue')
-        .delete()
-        .eq('student_id', studentId);
-  
-      if (queueError) {
-        return;
-      }
-  
-      // Забанить
-      const { error } = await supabase
-        .from('students')
-        .update({
-          is_banned: true,  
-          banned_at: new Date().toISOString(),  
-          ban_reason: reason || '',  
-        })
-        .eq('id', studentId);
-  
-      if (error) {
-        return;
-      }
-  
-      
+
       // Если забанили текущего пользователя - принудительно разлогинить
       if (user && user.student_id === studentId) {
         await logoutStudent();
-        return; // Не продолжать выполнение
+        return;
       }
 
       await loadStudents();
       await fetchQueue();
     } catch (error) {
-      return;
+      throw error;
     }
   };
 
@@ -1427,26 +1511,31 @@ const startWashing = async (queueItemId: string) => {
     }
 
     try {
-      // Проверить текущую сессию
-      const { data: sessionData } = await supabase.auth.getSession();
-      
-      const { data, error } = await supabase
-        .from('students')
-        .update({
-          is_banned: false,
-          banned_at: null,
-          ban_reason: null,
-        })
-        .eq('id', studentId)
-        .select();
+      // ✅ Получаем JWT
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Нет активной сессии');
+      }
 
-      if (error) {
-        return;
+      // ✅ Вызываем API route с JWT
+      const response = await fetch('/api/admin/ban-student', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ student_id: studentId, ban: false }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка разбана');
       }
 
       await loadStudents();
     } catch (error) {
-      return;
+      throw error;
     }
   };
 
@@ -1505,72 +1594,33 @@ const startWashing = async (queueItemId: string) => {
     }
   
     try {
-      const targetStudent = students.find((s) => s.id === studentId);
-      if (!targetStudent) {
-        return;
+      // ✅ Получаем JWT
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Нет активной сессии');
       }
-  
-      // 🚫 Обычный админ не может редактировать супер-админа
-      if (!isSuperAdmin && targetStudent.is_super_admin) {
-        return;
+
+      // ✅ Вызываем API route с JWT
+      const response = await fetch('/api/admin/update-student', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ student_id: studentId, updates }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка обновления');
       }
-  
-      const updateData: any = {};
-  
-      // Имя / фамилия / отчество + пересборка full_name
-      if (
-        updates.first_name !== undefined ||
-        updates.last_name !== undefined ||
-        updates.middle_name !== undefined
-      ) {
-        const newFirstName =
-          updates.first_name !== undefined
-            ? updates.first_name
-            : targetStudent.first_name;
-        const newLastName =
-          updates.last_name !== undefined
-            ? updates.last_name
-            : targetStudent.last_name || "";
-        const newMiddleName =
-          updates.middle_name !== undefined
-            ? updates.middle_name
-            : targetStudent.middle_name || "";
-  
-        const nameParts = [newFirstName, newLastName, newMiddleName].filter(
-          Boolean
-        );
-        updateData.full_name = nameParts.join(" ");
-  
-        updateData.first_name = newFirstName;
-        updateData.last_name = newLastName || null;
-        updateData.middle_name = newMiddleName || null;
-      }
-  
-      if (updates.room !== undefined) {
-        updateData.room = updates.room;
-      }
-      if (updates.can_view_students !== undefined) {
-        updateData.can_view_students = updates.can_view_students;
-      }
-      if (updates.avatar_type !== undefined) {
-        updateData.avatar_type = updates.avatar_type;
-      }
-  
-      const { data, error } = await supabase
-        .from("students")
-        .update(updateData)
-        .eq("id", studentId)
-        .select();
-  
-      if (error) {
-        return;
-      }
-  
+
       await loadStudents();
-  
+
       // 🔁 Если обновлённый студент — это текущий пользователь, обновляем его сессию
-      if (user && user.student_id === studentId && data && data[0]) {
-        const updatedStudent = data[0];
+      if (user && user.student_id === studentId && result.student) {
+        const updatedStudent = result.student;
         const updatedUser: User = {
           ...user,
           full_name: updatedStudent.full_name,
@@ -1578,15 +1628,14 @@ const startWashing = async (queueItemId: string) => {
           avatar_type: updatedStudent.avatar_type,
           can_view_students: updatedStudent.can_view_students ?? false,
         };
-  
+
         setUser(updatedUser);
         if (typeof window !== "undefined") {
-          // 🔥 тут был баг: раньше стоял ключ "user"
           localStorage.setItem("laundryUser", JSON.stringify(updatedUser));
         }
       }
     } catch (error: any) {
-      return;
+      throw error;
     }
   };
   
@@ -1639,7 +1688,7 @@ const deleteStudent = async (studentId: string) => {
     }
     
     try {
-      // ✅ RLS политика сама проверит права через is_queue_owner() OR is_admin()
+      // ✅ RLS: удалить может только владелец записи (user_id = auth.uid())
       const { error } = await supabase
         .from('queue')
         .delete()
@@ -1677,30 +1726,38 @@ const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>)
   }
   
   try {
-    // Для админа - обновляем без проверки владельца
-    // Для обычного пользователя - проверяем studentId
-    let query = supabase
-      .from('queue')
-      .update(updates)
-      .eq('id', queueItemId);
-    
-    // Только для НЕ-админа проверяем владельца
-    if (!isAdmin) {
-      if (!user) {
-        return;
-      }
-      query = query.eq('student_id', user.student_id);
+    // ✅ Получаем JWT
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('Нет активной сессии');
     }
-    
-    const { error } = await query;
-    
-    if (error) {
-      return;
+
+    // ✅ Вызываем API route с JWT
+    const response = await fetch('/api/admin/queue/update-details', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ 
+        queue_item_id: queueItemId, 
+        updates 
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Ошибка обновления');
     }
-    
+
     await fetchQueue();
   } catch (error) {
-    return;
+    // Fallback to local storage on error
+    if (user) {
+      update_local_queue_item(queueItemId, user.id, updates);
+    }
+    fetchQueue();
   }
 };
 
@@ -2040,39 +2097,72 @@ const updateQueueItemDetails = async (
   }
 };
 
-// 
 const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') => {
   if (!supabase) return;
   
   try {
-    // 
+    if (!isAdmin) {
+      return;
+    }
+
     const itemToMove = queue.find(item => item.id === queueId);
     if (!itemToMove) {
       return;
     }
     
-    // 
     const sameDayItems = queue
       .filter(item => item.queue_date === itemToMove.queue_date && item.scheduled_for_date === itemToMove.scheduled_for_date)
       .sort((a, b) => a.queue_position - b.queue_position);
     
     const currentIndex = sameDayItems.findIndex(item => item.id === queueId);
     
+    // ✅ Получаем JWT
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('Нет активной сессии');
+    }
+    
     if (direction === 'up' && currentIndex > 0) {
-      // 
       const prevItem = sameDayItems[currentIndex - 1];
       
-      // 
-      await supabase.from('queue').update({ queue_position: prevItem.queue_position }).eq('id', queueId);
-      await supabase.from('queue').update({ queue_position: itemToMove.queue_position }).eq('id', prevItem.id);
+      // ✅ Вызываем API swap-position
+      const response = await fetch('/api/admin/queue/swap-position', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ 
+          a_id: itemToMove.id, 
+          b_id: prevItem.id 
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка смены позиции');
+      }
       
     } else if (direction === 'down' && currentIndex < sameDayItems.length - 1) {
-      // 
       const nextItem = sameDayItems[currentIndex + 1];
       
-      // 
-      await supabase.from('queue').update({ queue_position: nextItem.queue_position }).eq('id', queueId);
-      await supabase.from('queue').update({ queue_position: itemToMove.queue_position }).eq('id', nextItem.id);
+      // ✅ Вызываем API swap-position
+      const response = await fetch('/api/admin/queue/swap-position', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ 
+          a_id: itemToMove.id, 
+          b_id: nextItem.id 
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка смены позиции');
+      }
     }
     
     await fetchQueue();
@@ -2081,71 +2171,8 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
   }
 };
 
-const adminLogin = async (password: string): Promise<User | null> => {
-  if (!isSupabaseConfigured || !supabase) {
-    throw new Error("Supabase not configured");
-  }
-
-  try {
-    const response = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
-    });
-
-    const result = await response.json();
-    console.log("🔍 adminLogin result:", result);
-
-    if (!response.ok) {
-      throw new Error(result.error || "Ошибка входа");
-    }
-
-    // Устанавливаем сессию в Supabase клиенте
-    if (result.session) {
-      console.log("🔐 Setting Supabase session...");
-      await supabase.auth.setSession(result.session);
-      console.log("✅ Session set successfully");
-    } else {
-      console.warn("⚠️ No session in result from API");
-    }
-
-    // 🔍 ПРОВЕРКА: Получаем текущую сессию после установки
-    const sessionCheck = await supabase.auth.getSession();
-    console.log("📊 session AFTER adminLogin:", sessionCheck.data.session);
-
-    const userCheck = await supabase.auth.getUser();
-    console.log("👤 auth user AFTER adminLogin:", userCheck.data.user);
-
-    const newUser: User = {
-      ...result.user,
-      // на всякий случай, если API что-то не вернул
-      is_admin: result.user.is_admin ?? true,
-      is_super_admin: result.user.is_super_admin ?? false,
-    };
-
-    setIsNewUser(false); // Админы - существующие пользователи
-    setUser(newUser);
-    setIsAdmin(!!newUser.is_admin);
-    setIsSuperAdmin(!!newUser.is_super_admin);
-
-    if (typeof window !== "undefined") {
-      localStorage.setItem("laundryUser", JSON.stringify(newUser));
-      localStorage.setItem("laundryIsAdmin", (!!newUser.is_admin).toString());
-      localStorage.setItem(
-        "laundryIsSuperAdmin",
-        (!!newUser.is_super_admin).toString()
-      );
-    }
-
-    // 🔥 сразу подтягиваем студентов, чтобы весь админский UI ожил
-    await loadStudents();
-    await fetchQueue();
-
-    return newUser;
-  } catch (error: any) {
-    throw error;
-  }
-};
+// ❌ УДАЛЕНО: adminLogin больше не нужен
+// Админы входят через обычный loginStudent, права определяются из БД
 
 
   const value = {
@@ -2159,9 +2186,8 @@ const adminLogin = async (password: string): Promise<User | null> => {
     transferSelectedToDate,
     changeQueuePosition,
     registerStudent,
-    finalizeUserSession,
     loginStudent,
-    adminLogin,
+    // ❌ УДАЛЕНО: adminLogin, finalizeUserSession (внутренний хелпер)
     logoutStudent,
     resetStudentRegistration,
     linkTelegram,
