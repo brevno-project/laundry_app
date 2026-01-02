@@ -887,15 +887,16 @@ const joinQueue = async (
       nextPos = maxPos + 1;
     }
 
-    // ✅ Проверяем user.id перед созданием записи
-    if (!user.id || typeof user.id !== 'string' || user.id.trim() === '') {
+    // ✅ Проверяем сессию Supabase Auth
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) {
       logoutStudent();
       return;
     }
 
     const newItem = {
       id: crypto.randomUUID(),
-      user_id: user.id,  // Теперь гарантированно валиден
+      user_id: authUser.id,       // ✅ ТОЛЬКО auth.uid() для RLS
       student_id: user.student_id,
       full_name: name,
       room: room || null,
@@ -907,7 +908,7 @@ const joinQueue = async (
       scheduled_for_date: targetDate,
       queue_date: targetDate,
       queue_position: nextPos,
-      avatar_type: user.avatar_type || 'default', // ✅ Копируем аватар из профиля
+      avatar_type: user.avatar_type || 'default',
     };
 
     const { error } = await supabase.from('queue').insert(newItem);
@@ -1688,6 +1689,13 @@ const deleteStudent = async (studentId: string) => {
     }
     
     try {
+      // ✅ Проверяем сессию Supabase Auth
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) {
+        logoutStudent();
+        return;
+      }
+
       // ✅ RLS: удалить может только владелец записи (user_id = auth.uid())
       const { error } = await supabase
         .from('queue')
