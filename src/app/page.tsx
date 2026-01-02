@@ -7,7 +7,6 @@ import StudentAuth from '@/components/StudentAuth';
 import UserForm from '@/components/UserForm';
 import QueueList from '@/components/QueueList';
 import AdminPanel from '@/components/AdminPanel';
-import AdminLogin from '@/components/AdminLogin';
 import TelegramSetup from '@/components/TelegramSetup';
 import HistoryList from '@/components/HistoryList';
 import StudentsList from '@/components/StudentsList';
@@ -289,9 +288,6 @@ export default function Home() {
               </>
             ) : (
               <>
-                {/* AdminLogin показывается только если пользователь супер-админ и уже вошел */}
-                {students.find(s => s.id === user.student_id)?.is_super_admin && !isAdmin && <AdminLogin />}
-                
                 {/* Всегда показываем основные компоненты */}
                 {isAdmin && <AdminPanel />}
                 

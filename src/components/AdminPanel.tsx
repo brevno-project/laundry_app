@@ -17,7 +17,6 @@ export default function AdminPanel() {
     user,
     isAdmin,
     setIsAdmin,
-    adminLogin,
     queue,
     students,
     markDone,
@@ -122,21 +121,6 @@ export default function AdminPanel() {
 
     return matchesSearch && matchesFilter;
   });
-
-  const handleAdminLogin = async () => {
-    if (!adminKey.trim()) {
-      setError("Введите ключ администратора");
-      return;
-    }
-
-    try {
-      await adminLogin(adminKey.trim());
-      setError("");
-      setAdminKey("");
-    } catch (err: any) {
-      setError("Ошибка авторизации: " + err.message);
-    }
-  };
 
   const handleAdminLogout = () => {
     setIsAdmin(false);
@@ -318,35 +302,9 @@ export default function AdminPanel() {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-2xl font-bold text-gray-900">Администратор</h2>
-        <div className="space-y-4">
-          <div>
-            <label
-              htmlFor="adminKey"
-              className="mb-2 block text-sm font-semibold text-gray-700"
-            >
-              Ключ администратора
-            </label>
-            <input
-              id="adminKey"
-              type="password"
-              value={adminKey}
-              onChange={(e) => setAdminKey(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAdminLogin()}
-              className="block w-full rounded-md border-2 border-gray-300 p-3 text-gray-900 shadow-sm placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200"
-              placeholder="Введите ключ"
-            />
-            {error && (
-              <p className="mt-2 text-sm font-semibold text-red-600">{error}</p>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={handleAdminLogin}
-            className="w-full rounded-md bg-purple-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-purple-700"
-          >
-            Войти как админ
-          </button>
-        </div>
+        <p className="text-sm text-gray-600">
+          Войдите как студент с правами администратора для доступа к панели.
+        </p>
       </div>
     );
   }
