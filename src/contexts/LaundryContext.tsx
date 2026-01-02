@@ -74,8 +74,11 @@ type LaundryContextType = {
   unbanStudent: (studentId: string) => Promise<void>;
   isAdmin: boolean;
   isSuperAdmin: boolean;
+  needsClaim: boolean;
   setIsAdmin: (isAdmin: boolean) => void;
   setIsSuperAdmin: (isSuperAdmin: boolean) => void;
+  setIsJoining: (value: boolean) => void;
+  setNeedsClaim: (value: boolean) => void;
   getUserQueueItem: () => QueueItem | undefined;
   isLoading: boolean;
   isNewUser: boolean; // 
@@ -117,6 +120,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     return false;
   });
   const [isJoining, setIsJoining] = useState(false);
+  const [needsClaim, setNeedsClaim] = useState<boolean>(false);
 
   // ✅ ПРИ СТАРТЕ: Синхронизация прав с Supabase Auth
   useEffect(() => {
@@ -540,25 +544,29 @@ const loginStudent = async (
 
     const authUser = authData.user;
 
-    // 5) Если student.user_id пустой или не совпадает — чиним
-    if (!student.user_id || student.user_id !== authUser.id) {
-      await supabase
-        .from("students")
-        .update({ user_id: authUser.id })
-        .eq("id", student.id);
-    }
+    // 5) НЕ делаем автоматическую привязку - студент должен сделать claim
+    // if (!student.user_id || student.user_id !== authUser.id) {
+    //   await supabase
+    //     .from("students")
+    //     .update({ user_id: authUser.id })
+    //     .eq("id", student.id);
+    // }
 
-    // 6) Чиним очередь: все старые записи без user_id привязываем к актуальному
-    await supabase
-      .from("queue")
-      .update({ user_id: authUser.id })
-      .eq("student_id", student.id)
-      .is("user_id", null);
+    // 6) НЕ чиним очередь - пусть студент сделает claim
+    // await supabase
+    //   .from("queue")
+    //   .update({ user_id: authUser.id })
+    //   .eq("student_id", student.id)
+    //   .is("user_id", null);
 
     await fetchQueue();
     await loadStudents();
 
-    // 7) Создаём локальную сессию (НЕ новый пользователь)
+    // 7) Проверяем, нужно ли делать claim
+    const needsClaimAccount = !student.user_id || student.user_id !== authUser.id;
+    setNeedsClaim(needsClaimAccount);
+
+    // 8) Создаём локальную сессию (НЕ новый пользователь)
     const { data: updatedStudent } = await supabase
       .from("students")
       .select("*")
@@ -692,11 +700,10 @@ const resetStudentRegistration = async (studentId: string) => {
       }
       
       try {
-        const { data, error } = await supabase
-          .from('queue')
-          .select('*')
-          .order('scheduled_for_date', { ascending: true })
-          .order('queue_position', { ascending: true });
+        // ✅ Используем RPC для публичного доступа к очереди
+        const { data, error } = await supabase.rpc('get_queue_public', {
+          p_date: new Date().toISOString().split('T')[0] // Сегодняшняя дата
+        });
         
         if (error) throw error;
         setQueue(data || []);
@@ -887,16 +894,9 @@ const joinQueue = async (
       nextPos = maxPos + 1;
     }
 
-    // ✅ Проверяем сессию Supabase Auth
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (!authUser) {
-      logoutStudent();
-      return;
-    }
-
     const newItem = {
       id: crypto.randomUUID(),
-      user_id: authUser.id,       // ✅ ТОЛЬКО auth.uid() для RLS
+      // ✅ НЕ user_id! Только student_id (RLS проверит через is_student_owner)
       student_id: user.student_id,
       full_name: name,
       room: room || null,
@@ -1689,14 +1689,7 @@ const deleteStudent = async (studentId: string) => {
     }
     
     try {
-      // ✅ Проверяем сессию Supabase Auth
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) {
-        logoutStudent();
-        return;
-      }
-
-      // ✅ RLS: удалить может только владелец записи (user_id = auth.uid())
+      // ✅ RLS сам проверит через is_student_owner()
       const { error } = await supabase
         .from('queue')
         .delete()
@@ -2220,11 +2213,15 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     unbanStudent,
     isAdmin,
     isSuperAdmin,
+    needsClaim,
     setIsAdmin,
     setIsSuperAdmin,
+    setIsJoining,
+    setNeedsClaim,
     getUserQueueItem,
     isLoading,
     isNewUser,
+    isJoining,
     setIsNewUser,
     addStudent,
    updateStudent,

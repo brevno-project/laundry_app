@@ -10,6 +10,7 @@ import AdminPanel from '@/components/AdminPanel';
 import TelegramSetup from '@/components/TelegramSetup';
 import HistoryList from '@/components/HistoryList';
 import StudentsList from '@/components/StudentsList';
+import ClaimAccount from '@/components/ClaimAccount';
 import GlobalAlert from '@/components/GlobalAlert';
 import { HomeIcon, HistoryIcon, PeopleIcon, SettingsIcon, WashingIcon, DoorIcon, ListIcon, LaundryIcon } from '@/components/Icons';
 import TelegramBanner from '@/components/TelegramBanner';
@@ -17,7 +18,7 @@ import StudentActions from '@/components/StudentActions';
 import AvatarSelector from '@/components/AvatarSelector';
 
 export default function Home() {
-  const { user, isLoading, logoutStudent, isAdmin, machineState, queue, isNewUser, setIsNewUser, students } = useLaundry();
+  const { user, isLoading, logoutStudent, isAdmin, machineState, queue, isNewUser, setIsNewUser, students, needsClaim } = useLaundry();
   
   // ✅ Восстанавливаем activeTab из localStorage
   const [activeTab, setActiveTab] = React.useState(() => {
@@ -288,6 +289,9 @@ export default function Home() {
               </>
             ) : (
               <>
+                {/* Показываем ClaimAccount если нужно привязать аккаунт */}
+                {needsClaim && <ClaimAccount />}
+                
                 {/* Всегда показываем основные компоненты */}
                 {isAdmin && <AdminPanel />}
                 
