@@ -341,8 +341,8 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   
     try {
       const { data, error } = await client
-        .from("students")
-        .select("*")
+        .from("students_login_list")
+        .select("id, full_name, room, avatar_type")
         .order("full_name", { ascending: true });
   
       if (error) throw error;

@@ -46,3 +46,10 @@ next-env.d.ts
 
 # Telegram secrets
 token_bot_telegram.txt
+
+# GPT context temp files
+/tmp/
+*.tmp
+
+# Supabase CLI config
+.supabase/
