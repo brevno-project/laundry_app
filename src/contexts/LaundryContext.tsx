@@ -489,7 +489,7 @@ const registerStudent = async (
     // 3) Загрузка обновлённого студента
     const { data: updatedStudent } = await supabase
       .from("students")
-      .select("*")
+      .select("id, first_name, last_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, user_id, is_registered, created_at")
       .eq("id", studentId)
       .single();
 
@@ -541,16 +541,20 @@ const loginStudent = async (
 
     const authUser = authData.user;
 
-    // 3) Только ПОСЛЕ логина читаем students (теперь есть auth)
+    // 3) Только ПОСЛЕ логина читаем students по user_id (RLS безопасно)
     const { data: updatedStudent, error: studentError } = await supabase
       .from("students")
-      .select("*")
-      .eq("id", studentId)
-      .single();
+      .select("id, first_name, last_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, user_id, is_registered, created_at")
+      .eq("user_id", authUser.id)
+      .maybeSingle();
 
     if (studentError) throw studentError;
+    
+    // Если студент не найден по user_id - значит нужно сделать claim
     if (!updatedStudent) {
-      throw new Error("Студент не найден");
+      // Выходим и показываем экран claim
+      setNeedsClaim(true);
+      return null;
     }
 
     // 4) Проверяем бан (только после логина)
