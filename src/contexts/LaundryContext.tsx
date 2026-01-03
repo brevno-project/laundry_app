@@ -518,30 +518,27 @@ const loginStudent = async (
   }
 
   try {
-    // 1) Берём студента
-    const { data: student, error: studentErr } = await supabase
-      .from("students")
-      .select("*")
-      .eq("id", studentId)
-      .single();
+    // 1) Проверяем студента через RPC (безопасно, работает до логина)
+    const { data: loginData, error: loginError } = await supabase
+      .rpc("login_student", {
+        student_id: studentId,
+        password: password
+      });
 
-    if (studentErr) throw studentErr;
-    if (!student) throw new Error("Студент не найден");
-
-    // 2) Бан до логина
-    if (student.is_banned) {
-      const banReason = student.ban_reason || "Не указана";
-      throw new Error(`Вы забанены. Причина: ${banReason}`);
+    if (loginError) throw loginError;
+    if (!loginData || loginData.length === 0) {
+      throw new Error("Ошибка проверки данных");
     }
 
-    if (!student.is_registered) {
-      throw new Error("Студент не зарегистрирован");
+    const result = loginData[0];
+    if (!result.success) {
+      throw new Error(result.error_message || "Ошибка входа");
     }
 
-    // 3) Генерируем тот же email, что и при регистрации
+    // 2) Генерируем email для Supabase Auth
     const email = `student-${studentId.slice(0, 8)}@example.com`;
 
-    // 4) Логин
+    // 3) Логин через Supabase Auth
     const { data: authData, error: authError } =
       await supabase.auth.signInWithPassword({
         email,
@@ -561,34 +558,22 @@ const loginStudent = async (
 
     const authUser = authData.user;
 
-    // 5) НЕ делаем автоматическую привязку - студент должен сделать claim
-    // if (!student.user_id || student.user_id !== authUser.id) {
-    //   await supabase
-    //     .from("students")
-    //     .update({ user_id: authUser.id })
-    //     .eq("id", student.id);
-    // }
-
-    // 6) НЕ чиним очередь - пусть студент сделает claim
-    // await supabase
-    //   .from("queue")
-    //   .update({ user_id: authUser.id })
-    //   .eq("student_id", student.id)
-    //   .is("user_id", null);
-
     await fetchQueue();
     await loadStudents();
 
-    // 7) Проверяем, нужно ли делать claim
-    const needsClaimAccount = !student.user_id || student.user_id !== authUser.id;
-    setNeedsClaim(needsClaimAccount);
-
-    // 8) Создаём локальную сессию (НЕ новый пользователь)
+    // 4) Проверяем, нужно ли делать claim (теперь после логина можно читать students)
     const { data: updatedStudent } = await supabase
       .from("students")
       .select("*")
-      .eq("id", student.id)
+      .eq("id", studentId)
       .single();
+
+    if (!updatedStudent) {
+      throw new Error("Не удалось загрузить данные студента");
+    }
+
+    const needsClaimAccount = !updatedStudent.user_id || updatedStudent.user_id !== authUser.id;
+    setNeedsClaim(needsClaimAccount);
 
     return finalizeUserSession(authUser.id, updatedStudent, false);
   } catch (error: any) {
