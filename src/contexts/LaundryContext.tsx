@@ -518,27 +518,10 @@ const loginStudent = async (
   }
 
   try {
-    // 1) Проверяем студента через RPC (безопасно, работает до логина)
-    const { data: loginData, error: loginError } = await supabase
-      .rpc("login_student", {
-        student_id: studentId,
-        password: password
-      });
-
-    if (loginError) throw loginError;
-    if (!loginData || loginData.length === 0) {
-      throw new Error("Ошибка проверки данных");
-    }
-
-    const result = loginData[0];
-    if (!result.success) {
-      throw new Error(result.error_message || "Ошибка входа");
-    }
-
-    // 2) Генерируем email для Supabase Auth
+    // 1) Генерируем email для Supabase Auth
     const email = `student-${studentId.slice(0, 8)}@example.com`;
 
-    // 3) Логин через Supabase Auth
+    // 2) Логин через Supabase Auth (без предварительной проверки students)
     const { data: authData, error: authError } =
       await supabase.auth.signInWithPassword({
         email,
@@ -558,19 +541,26 @@ const loginStudent = async (
 
     const authUser = authData.user;
 
-    await fetchQueue();
-    await loadStudents();
-
-    // 4) Проверяем, нужно ли делать claim (теперь после логина можно читать students)
-    const { data: updatedStudent } = await supabase
+    // 3) Только ПОСЛЕ логина читаем students (теперь есть auth)
+    const { data: updatedStudent, error: studentError } = await supabase
       .from("students")
       .select("*")
       .eq("id", studentId)
       .single();
 
+    if (studentError) throw studentError;
     if (!updatedStudent) {
-      throw new Error("Не удалось загрузить данные студента");
+      throw new Error("Студент не найден");
     }
+
+    // 4) Проверяем бан (только после логина)
+    if (updatedStudent.is_banned) {
+      await supabase.auth.signOut(); // Выходим, если забанен
+      throw new Error("Доступ запрещен");
+    }
+
+    await fetchQueue();
+    await loadStudents();
 
     const needsClaimAccount = !updatedStudent.user_id || updatedStudent.user_id !== authUser.id;
     setNeedsClaim(needsClaimAccount);
