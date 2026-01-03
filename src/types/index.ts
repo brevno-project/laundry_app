@@ -28,6 +28,7 @@ export type StudentLoginList = {
   full_name: string;
   room: string | null;
   avatar_type?: string;
+  is_registered: boolean;
 };
 
 export type StudentAuth = {

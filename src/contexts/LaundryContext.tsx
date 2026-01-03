@@ -342,18 +342,18 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     try {
       const { data, error } = await client
         .from("students_login_list")
-        .select("id, full_name, room, avatar_type")
+        .select("id, full_name, room, avatar_type, is_registered")
         .order("full_name", { ascending: true });
   
       if (error) throw error;
   
       // Маппим StudentLoginList в Student (добавляем недостающие поля)
-      const students: Student[] = (data || []).map((item: StudentLoginList): Student => ({
+      const students: Student[] = (data || []).map((item: any): Student => ({
         ...item,
         first_name: item.full_name.split(' ')[0] || '',
         last_name: item.full_name.split(' ').slice(1).join(' ') || '',
         middle_name: '',
-        is_registered: true,
+        is_registered: item.is_registered || false, // Используем реальное значение
         created_at: new Date().toISOString(),
         is_banned: false,
         user_id: undefined,
