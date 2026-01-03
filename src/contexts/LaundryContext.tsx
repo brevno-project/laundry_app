@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/lib/supabase';
-import { User, Student, QueueItem, MachineStatus, QueueStatus, MachineState, HistoryItem } from '@/types';
+import { User, Student, StudentLoginList, QueueItem, MachineStatus, QueueStatus, MachineState, HistoryItem } from '@/types';
 import { sendTelegramNotification } from '@/lib/telegram';
 import { parseISO, format } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -347,7 +347,24 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   
       if (error) throw error;
   
-      setStudents(data || []);
+      // Маппим StudentLoginList в Student (добавляем недостающие поля)
+      const students: Student[] = (data || []).map((item: StudentLoginList): Student => ({
+        ...item,
+        first_name: item.full_name.split(' ')[0] || '',
+        last_name: item.full_name.split(' ').slice(1).join(' ') || '',
+        middle_name: '',
+        is_registered: true,
+        created_at: new Date().toISOString(),
+        is_banned: false,
+        user_id: undefined,
+        is_admin: false,
+        is_super_admin: false,
+        can_view_students: false,
+        telegram_chat_id: undefined,
+        avatar: item.avatar_type || 'default',
+      }));
+      
+      setStudents(students);
     } catch (error) {
       console.error("Error loading students", error);
       setStudents([]);

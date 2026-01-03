@@ -22,6 +22,14 @@ export type Student = {
   avatar_type?: string; // Тип аватара
 };
 
+// Тип для списка студентов на экране логина (только базовые поля)
+export type StudentLoginList = {
+  id: string;
+  full_name: string;
+  room: string | null;
+  avatar_type?: string;
+};
+
 export type StudentAuth = {
   id: string;
   student_id: string;
