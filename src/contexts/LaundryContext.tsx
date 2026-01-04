@@ -255,6 +255,29 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('laundryIsNewUser', isNewUser.toString());
   }, [isNewUser]);
 
+  // ✅ Автопривязка записей очереди при логине студента
+  const claimMyQueueItems = async (studentId: string, userId: string) => {
+    if (!supabase || !studentId || !userId) return;
+
+    try {
+      const { error } = await supabase
+        .from('queue')
+        .update({ user_id: userId })
+        .is('user_id', null)
+        .eq('student_id', studentId);
+
+      if (error) {
+        console.error('Error claiming queue items:', error);
+      } else {
+        console.log('✅ Claimed queue items for student:', studentId);
+        // Обновляем очередь чтобы увидеть изменения
+        await fetchQueue();
+      }
+    } catch (error) {
+      console.error('Error in claimMyQueueItems:', error);
+    }
+  };
+
   // ✅ ЕДИНАЯ ФУНКЦИЯ: Синхронизация прав с Supabase Auth session
   const refreshMyRole = async () => {
     if (!isSupabaseConfigured || !supabase) {
@@ -318,6 +341,11 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       setUser(newUser);
       setIsAdmin(!!me.is_admin);
       setIsSuperAdmin(!!me.is_super_admin);
+
+      // 🔄 Автопривязка записей очереди для залогиненного студента
+      if (uid && me.id) {
+        claimMyQueueItems(me.id, uid);
+      }
 
       // Сохраняем только user в localStorage (для UI), НЕ права
       if (typeof window !== 'undefined') {
@@ -892,10 +920,16 @@ const joinQueue = async (
 
     const nextPos = nextPosData || 1;
 
+    // 🔑 Получаем сессию для определения user_id
+    const { data: authData } = await supabase.auth.getSession();
+    const currentUserId = authData.session?.user?.id || null;
+
     const newItem = {
       id: crypto.randomUUID(),
-      // ✅ НЕ user_id! Только student_id (RLS проверит через is_student_owner)
+      // ✅ Всегда пишем student_id
       student_id: user.student_id,
+      // 🔑 ВАЖНО: если студент залогинен — сразу привязываем, иначе null (для админа)
+      user_id: currentUserId,
       full_name: name,
       room: room || null,
       wash_count: washCount,
@@ -1687,19 +1721,23 @@ const deleteStudent = async (studentId: string) => {
     }
     
     try {
-      // ✅ RLS сам проверит через is_student_owner()
+      // ✅ RLS сам проверит через is_queue_owner()
       const { error } = await supabase
         .from('queue')
         .delete()
         .eq('id', queueItemId);
 
       if (error) {
-        return;
+        console.error('leaveQueue error:', error);
+        // Показываем ошибку пользователю
+        throw new Error(error.message || 'Не удалось выйти из очереди');
       }
 
       await fetchQueue();
-    } catch (error) {
-      return;
+    } catch (error: any) {
+      console.error('leaveQueue error:', error);
+      // Можно выбросить ошибку наверх для UI или показать alert
+      throw error;
     }
   };
 
