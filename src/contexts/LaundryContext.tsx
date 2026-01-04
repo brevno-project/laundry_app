@@ -720,10 +720,8 @@ const resetStudentRegistration = async (studentId: string) => {
       }
       
       try {
-        // ✅ Используем RPC для публичного доступа к очереди
-        const { data, error } = await supabase.rpc('get_queue_public', {
-          p_date: new Date().toISOString().split('T')[0] // Сегодняшняя дата
-        });
+        // ✅ Используем RPC для получения активной очереди на все даты
+        const { data, error } = await supabase.rpc('get_queue_active');
         
         if (error) throw error;
         setQueue(data || []);
