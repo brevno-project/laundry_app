@@ -855,40 +855,42 @@ const joinQueue = async (
   const todayISO = new Date().toISOString().slice(0, 10);
   const targetDate = chosenDate || todayISO;
 
-  // Проверяем по student_id на эту дату
+  // Проверяем по student_id на эту дату через RPC
   try {
-    const { data: existingEntry } = await supabase
-      .from('queue')
-      .select('id')
-      .eq('student_id', user.student_id)
-      .eq('queue_date', targetDate)
-      .in('status', ['waiting', 'ready', 'key_issued', 'washing', 'returning_key']);
+    const { data: hasActive, error: checkError } = await supabase
+      .rpc('has_active_queue_item', {
+        p_student_id: user.student_id,
+        p_date: targetDate
+      });
 
-    if (existingEntry && existingEntry.length > 0) {
+    if (checkError) {
+      console.error('Error checking active queue:', checkError);
+      return;
+    }
+
+    if (hasActive) {
       return;
     }
   } catch (err) {
+    console.error('Error checking active queue:', err);
     return;
   }
 
   setIsJoining(true);
 
   try {
-    const { data: sameDayRows, error: posErr } = await supabase
-      .from('queue')
-      .select('queue_position, scheduled_for_date, queue_date')
-      .eq('queue_date', targetDate)
-      .eq('scheduled_for_date', targetDate);
+    // Получаем следующую позицию через RPC
+    const { data: nextPosData, error: posErr } = await supabase
+      .rpc('get_next_queue_position', {
+        p_date: targetDate
+      });
 
     if (posErr) {
+      console.error('Error getting next position:', posErr);
       return;
     }
 
-    let nextPos = 1;
-    if (sameDayRows && sameDayRows.length > 0) {
-      const maxPos = Math.max(...sameDayRows.map((r: any) => r.queue_position ?? 0));
-      nextPos = maxPos + 1;
-    }
+    const nextPos = nextPosData || 1;
 
     const newItem = {
       id: crypto.randomUUID(),
@@ -1924,20 +1926,25 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
         }
         
         // 
-        const { data: allOnDate } = await supabase
-          .from('queue')
-          .select('*')
-          .eq('queue_date', todayStr);
+        const { data: allOnDate, error: fetchError } = await supabase
+          .rpc('get_queue_public', {
+            p_date: todayStr
+          });
+
+        if (fetchError) {
+          console.error('Error fetching queue for date:', fetchError);
+          return;
+        }
 
         if (allOnDate) {
-          const transferred = allOnDate.filter(item => unfinishedItems.some(u => u.id === item.id));
-          const existing = allOnDate.filter(item => !unfinishedItems.some(u => u.id === item.id));
+          const transferred = allOnDate.filter((item: QueueItem) => unfinishedItems.some(u => u.id === item.id));
+          const existing = allOnDate.filter((item: QueueItem) => !unfinishedItems.some(u => u.id === item.id));
           
           // 
-          transferred.sort((a, b) => unfinishedItems.findIndex(u => u.id === a.id) - unfinishedItems.findIndex(u => u.id === b.id));
+          transferred.sort((a: QueueItem, b: QueueItem) => unfinishedItems.findIndex(u => u.id === a.id) - unfinishedItems.findIndex(u => u.id === b.id));
           
           // 
-          existing.sort((a, b) => a.queue_position - b.queue_position);
+          existing.sort((a: QueueItem, b: QueueItem) => a.queue_position - b.queue_position);
           
           // 
           const newOrder = [...existing, ...transferred];
@@ -1989,17 +1996,22 @@ const transferSelectedToDate = async (selectedIds: string[], targetDateStr: stri
     }
     
     // Пересчитать позиции
-    const { data: allOnDate } = await supabase
-      .from('queue')
-      .select('*')
-      .eq('queue_date', targetDateStr);
+    const { data: allOnDate, error: fetchError } = await supabase
+      .rpc('get_queue_public', {
+        p_date: targetDateStr
+      });
+
+    if (fetchError) {
+      console.error('Error fetching queue for date:', fetchError);
+      return;
+    }
 
     if (allOnDate) {
-      const transferred = allOnDate.filter(item => unfinishedItems.some(u => u.id === item.id));
-      const existing = allOnDate.filter(item => !unfinishedItems.some(u => u.id === item.id));
+      const transferred = allOnDate.filter((item: QueueItem) => unfinishedItems.some(u => u.id === item.id));
+      const existing = allOnDate.filter((item: QueueItem) => !unfinishedItems.some(u => u.id === item.id));
       
-      transferred.sort((a, b) => unfinishedItems.findIndex(u => u.id === a.id) - unfinishedItems.findIndex(u => u.id === b.id));
-      existing.sort((a, b) => a.queue_position - b.queue_position);
+      transferred.sort((a: QueueItem, b: QueueItem) => unfinishedItems.findIndex(u => u.id === a.id) - unfinishedItems.findIndex(u => u.id === b.id));
+      existing.sort((a: QueueItem, b: QueueItem) => a.queue_position - b.queue_position);
       
       const newOrder = [...existing, ...transferred];
       
