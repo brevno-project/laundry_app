@@ -70,15 +70,34 @@ if (error) {
 }
 ```
 
-#### `claimMyQueueItems` - автопривязка при логине
+#### `claimMyQueueItems` - автопривязка через RPC (SECURITY DEFINER)
 ```ts
-const claimMyQueueItems = async (studentId: string, userId: string) => {
-  await supabase
-    .from('queue')
-    .update({ user_id: userId })
-    .is('user_id', null)
-    .eq('student_id', studentId);
+const claimMyQueueItems = async () => {
+  // ✅ Безопасный RPC вызов, обходит RLS
+  const { error } = await supabase.rpc('claim_my_queue_items');
 };
+```
+
+**SQL функция:**
+```sql
+create or replace function public.claim_my_queue_items()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update queue q
+  set user_id = auth.uid()
+  where q.user_id is null
+    and exists (
+      select 1
+      from students s
+      where s.id = q.student_id
+        and s.user_id = auth.uid()
+    );
+end;
+$$;
 ```
 
 ---
@@ -94,14 +113,19 @@ INSERT INTO queue (
 );
 ```
 
-### Фаза 2: Студент логинится
+### Фаза 2: Студент логинится (RPC SECURITY DEFINER)
 ```sql
--- Автоматически выполняется в claimMyQueueItems
-UPDATE queue 
-SET user_id = 'auth-uid'
-WHERE user_id IS NULL 
-  AND student_id = 'student-uuid';
+-- Автоматически выполняется через RPC функцию
+-- SECURITY DEFINER обходит RLS, но auth.uid() всё ещё работает!
+CALL public.claim_my_queue_items();
 ```
+
+**Почему это безопасно:**
+- ✅ Функция работает от имени владельца (SECURITY DEFINER)
+- ✅ `auth.uid()` всё ещё используется для идентификации
+- ✅ Студент может забрать только СВОИ записи
+- ✅ RLS не нужен внутри функции
+- ✅ Никаких 403 ошибок
 
 ### Фаза 3: Проверка владения (RLS)
 ```sql

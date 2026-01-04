@@ -81,3 +81,26 @@ with check (
 
 -- 5. Удаляем старую политику SELECT если она есть
 drop policy if exists queue_select_policy on public.queue;
+
+-- 6. RPC функция для автопривязки записей (SECURITY DEFINER)
+create or replace function public.claim_my_queue_items()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update queue q
+  set user_id = auth.uid()
+  where q.user_id is null
+    and exists (
+      select 1
+      from students s
+      where s.id = q.student_id
+        and s.user_id = auth.uid()
+    );
+end;
+$$;
+
+-- 7. Политика на EXECUTE для RPC функции
+grant execute on function public.claim_my_queue_items() to authenticated;

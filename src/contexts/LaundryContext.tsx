@@ -255,21 +255,17 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('laundryIsNewUser', isNewUser.toString());
   }, [isNewUser]);
 
-  // ✅ Автопривязка записей очереди при логине студента
-  const claimMyQueueItems = async (studentId: string, userId: string) => {
-    if (!supabase || !studentId || !userId) return;
+  // ✅ Автопривязка записей очереди при логине студента (через RPC)
+  const claimMyQueueItems = async () => {
+    if (!supabase) return;
 
     try {
-      const { error } = await supabase
-        .from('queue')
-        .update({ user_id: userId })
-        .is('user_id', null)
-        .eq('student_id', studentId);
+      const { error } = await supabase.rpc('claim_my_queue_items');
 
       if (error) {
         console.error('Error claiming queue items:', error);
       } else {
-        console.log('✅ Claimed queue items for student:', studentId);
+        console.log('✅ Claimed queue items successfully');
         // Обновляем очередь чтобы увидеть изменения
         await fetchQueue();
       }
@@ -344,7 +340,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
       // 🔄 Автопривязка записей очереди для залогиненного студента
       if (uid && me.id) {
-        claimMyQueueItems(me.id, uid);
+        claimMyQueueItems();
       }
 
       // Сохраняем только user в localStorage (для UI), НЕ права
