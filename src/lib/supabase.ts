@@ -19,3 +19,8 @@ const isValidUrl = (url?: string) => {
 export const supabase = isValidUrl(supabaseUrl) && supabaseAnonKey
   ? createClient(supabaseUrl as string, supabaseAnonKey as string)
   : null;
+
+// Make supabase available in console for debugging
+if (process.env.NODE_ENV === 'development') {
+  (window as any).supabase = supabase;
+}
