@@ -204,6 +204,44 @@ async function sendTelegramMessage(chatId: string, message: string): Promise<boo
 
 export async function POST(request: NextRequest) {
   try {
+    // 🔐 ПРОВЕРКА АВТОРИЗАЦИИ: только админы могут отправлять уведомления
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.log('❌ No authorization header');
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.substring(7);
+    const { data: { user }, error: authError } = await admin.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.log('❌ Invalid token:', authError?.message);
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Проверить что пользователь - админ
+    const { data: caller, error: callerError } = await admin
+      .from('students')
+      .select('is_admin, is_super_admin, is_banned, full_name')
+      .eq('user_id', user.id)
+      .single();
+    
+    if (callerError || !caller || !caller.is_admin || caller.is_banned) {
+      console.log('❌ User is not admin or is banned:', { caller, error: callerError?.message });
+      return NextResponse.json(
+        { error: 'Forbidden: Admin access required' },
+        { status: 403 }
+      );
+    }
+
+    console.log('✅ Authorized admin:', caller.full_name);
+
     const notification: TelegramNotification = await request.json();
     
     console.log('📨 Telegram notification request:', {
@@ -228,7 +266,7 @@ export async function POST(request: NextRequest) {
     const isStudentOnly = studentOnlyNotifications.includes(notification.type);
     
     // ✅ Уведомления, которые идут ТОЛЬКО админу
-    const adminOnlyNotifications = ['washing_started_by_student', 'washing_finished'];
+    const adminOnlyNotifications = ['washing_started_by_student', 'washing_finished', 'joined'];
     const isAdminOnly = adminOnlyNotifications.includes(notification.type);
     
     console.log('🎯 Notification routing:', { isStudentOnly, isAdminOnly });

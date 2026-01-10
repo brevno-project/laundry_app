@@ -16,9 +16,25 @@ export async function sendTelegramNotification(notification: TelegramNotificatio
       admin_student_id: notification.admin_student_id
     });
     
+    // Получить JWT токен из Supabase
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      console.error('❌ [CLIENT] No session token available');
+      return false;
+    }
+    
     const response = await fetch('/api/telegram/notify', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`
+      },
       body: JSON.stringify(notification)
     });
 
