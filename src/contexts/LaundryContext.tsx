@@ -83,7 +83,7 @@ type LaundryContextType = {
   isLoading: boolean;
   isNewUser: boolean; // 
   setIsNewUser: (isNewUser: boolean) => void; // 
-  addStudent: (firstName: string, lastName: string, room?: string) => Promise<void>;
+  addStudent: (firstName: string, lastName: string, room?: string, middleName?: string) => Promise<void>;
   updateStudent: (studentId: string, updates: { first_name?: string; last_name?: string; middle_name?: string; room?: string; can_view_students?: boolean }) => Promise<void>;
   deleteStudent: (studentId: string) => Promise<void>;
   adminAddToQueue: (studentRoom?: string, washCount?: number, paymentType?: string, expectedFinishAt?: string, chosenDate?: string, studentId?: string) => Promise<void>;
