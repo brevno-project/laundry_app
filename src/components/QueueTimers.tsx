@@ -22,7 +22,7 @@ export default function QueueTimers({ item }: QueueTimersProps) {
   const [color, setColor] = useState('green');
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const calculateElapsed = () => {
       let startTime: Date | null = null;
       let redZoneMinutes = 15;
       let yellowZoneMinutes = 0; // Желтая зона (только для стирки)
@@ -74,10 +74,16 @@ export default function QueueTimers({ item }: QueueTimersProps) {
       } else {
         setColor('green');
       }
-    }, 1000);
+    };
+
+    // Обновляем сразу
+    calculateElapsed();
+
+    // Обновляем каждую секунду
+    const interval = setInterval(calculateElapsed, 1000);
 
     return () => clearInterval(interval);
-  }, [item]);
+  }, [item.status, item.ready_at, item.key_issued_at, item.washing_started_at, item.washing_finished_at, item.return_requested_at, item.wash_count]);
 
   // Форматирование времени
   const formatTime = (minutes: number): string => {

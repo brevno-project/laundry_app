@@ -1745,7 +1745,7 @@ const deleteStudent = async (studentId: string) => {
     });
   };
 
-// Update queue item details
+// Update queue item details (для timestamps и других полей без проверки статуса)
 const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>) => {
   if (!isSupabaseConfigured || !supabase) {
     // Use local storage fallback
@@ -1757,29 +1757,14 @@ const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>)
   }
   
   try {
-    // ✅ Получаем JWT
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      throw new Error('Нет активной сессии');
-    }
+    // ✅ Напрямую обновляем БД (для timestamps и других полей)
+    const { error } = await supabase
+      .from('queue')
+      .update(updates)
+      .eq('id', queueItemId);
 
-    // ✅ Вызываем API route с JWT
-    const response = await fetch('/api/admin/queue/update-details', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({ 
-        queue_item_id: queueItemId, 
-        updates 
-      }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || 'Ошибка обновления');
+    if (error) {
+      throw error;
     }
 
     await fetchQueue();
