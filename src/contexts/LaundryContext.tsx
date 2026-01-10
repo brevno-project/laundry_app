@@ -764,16 +764,36 @@ const resetStudentRegistration = async (studentId: string) => {
       }
       
       try {
+        // Получаем историю с аватарами из связанной таблицы students
         const { data, error } = await supabase
           .from('history')
-          .select('id, user_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, return_requested_at, avatar_type')
+          .select(`
+            id, 
+            user_id, 
+            full_name, 
+            room, 
+            started_at, 
+            finished_at, 
+            ready_at, 
+            key_issued_at, 
+            washing_started_at, 
+            return_requested_at,
+            students!inner(avatar_type)
+          `)
           .order('finished_at', { ascending: false })
-          .limit(100); // Загружаем больше записей
+          .limit(100);
         
         if (error) throw error;
-        setHistory(data || []);
-        // Also update local storage as backup
-        save_local_history(data || []);
+        
+        // Преобразуем данные, добавляя avatar_type из связанной таблицы
+        const historyWithAvatars = (data || []).map((item: any) => ({
+          ...item,
+          avatar_type: item.students?.avatar_type || 'default',
+          students: undefined // Убираем вложенный объект
+        }));
+        
+        setHistory(historyWithAvatars);
+        save_local_history(historyWithAvatars);
       } catch (error: any) {
         // Fall back to local storage
         setHistory(get_local_history());

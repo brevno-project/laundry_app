@@ -2,15 +2,44 @@
 
 import { useLaundry } from '@/contexts/LaundryContext';
 import { formatDate } from '@/contexts/LaundryContext';
-import { HistoryIcon, ClockIcon, CheckIcon } from './Icons';
+import { HistoryIcon, ClockIcon, CheckIcon, WashingIcon, KeyIcon } from './Icons';
 import Avatar, { AvatarType } from '@/components/Avatar';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 export default function HistoryList() {
   const { history } = useLaundry();
   const [showAll, setShowAll] = useState(false);
   
   const displayedHistory = showAll ? history : history.slice(0, 5);
+  
+  // Статистика
+  const stats = useMemo(() => {
+    if (history.length === 0) return null;
+    
+    const totalWashes = history.length;
+    const avgWashTime = history
+      .filter(h => h.washing_started_at)
+      .reduce((sum, h) => {
+        const mins = getDurationMinutes(h.washing_started_at!, h.return_requested_at || h.finished_at);
+        return sum + mins;
+      }, 0) / history.filter(h => h.washing_started_at).length;
+    
+    const fastestWash = history
+      .filter(h => h.washing_started_at)
+      .reduce((min, h) => {
+        const mins = getDurationMinutes(h.washing_started_at!, h.return_requested_at || h.finished_at);
+        return mins < min ? mins : min;
+      }, Infinity);
+    
+    const slowestWash = history
+      .filter(h => h.washing_started_at)
+      .reduce((max, h) => {
+        const mins = getDurationMinutes(h.washing_started_at!, h.return_requested_at || h.finished_at);
+        return mins > max ? mins : max;
+      }, 0);
+    
+    return { totalWashes, avgWashTime, fastestWash, slowestWash };
+  }, [history]);
 
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -40,33 +69,80 @@ export default function HistoryList() {
 
   if (history.length === 0) {
     return (
-      <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl shadow-sm border border-gray-200/50 p-8">
-        <div className="flex flex-col items-center justify-center text-center space-y-3">
-          <div className="w-16 h-16 rounded-full bg-gray-200/50 flex items-center justify-center">
-            <HistoryIcon className="w-8 h-8 text-gray-400" />
+      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-3xl shadow-lg border border-indigo-100 p-12">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-200/20 to-purple-200/20 rounded-full blur-3xl"></div>
+        <div className="relative flex flex-col items-center justify-center text-center space-y-4">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl">
+            <HistoryIcon className="w-10 h-10 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-700">История пуста</h3>
-          <p className="text-sm text-gray-500">Завершенные стирки появятся здесь</p>
+          <div>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">История пуста</h3>
+            <p className="text-gray-600">Завершенные стирки появятся здесь</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-1">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-          <HistoryIcon className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">История</h2>
-          <p className="text-sm text-gray-500">{history.length} {history.length === 1 ? 'запись' : 'записей'}</p>
+    <div className="space-y-6">
+      {/* Header with Stats */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-600 rounded-3xl shadow-2xl p-6">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+        
+        <div className="relative">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+              <HistoryIcon className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-3xl font-bold text-white">История</h2>
+              <p className="text-white/80">{history.length} {history.length === 1 ? 'запись' : 'записей'}</p>
+            </div>
+          </div>
+          
+          {/* Stats Cards */}
+          {stats && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <WashingIcon className="w-4 h-4 text-white/80" />
+                  <span className="text-xs text-white/80 font-medium">Всего</span>
+                </div>
+                <div className="text-2xl font-bold text-white">{stats.totalWashes}</div>
+              </div>
+              
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <ClockIcon className="w-4 h-4 text-white/80" />
+                  <span className="text-xs text-white/80 font-medium">Среднее</span>
+                </div>
+                <div className="text-2xl font-bold text-white">{Math.round(stats.avgWashTime)}м</div>
+              </div>
+              
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckIcon className="w-4 h-4 text-emerald-300" />
+                  <span className="text-xs text-white/80 font-medium">Быстрее</span>
+                </div>
+                <div className="text-2xl font-bold text-emerald-300">{Math.round(stats.fastestWash)}м</div>
+              </div>
+              
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <ClockIcon className="w-4 h-4 text-red-300" />
+                  <span className="text-xs text-white/80 font-medium">Дольше</span>
+                </div>
+                <div className="text-2xl font-bold text-red-300">{Math.round(stats.slowestWash)}м</div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* History Items */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {displayedHistory.map((item, index) => {
           const totalDuration = formatDuration(
             item.started_at,
@@ -76,29 +152,39 @@ export default function HistoryList() {
           return (
             <div
               key={item.id}
-              className="group relative bg-white rounded-2xl shadow-sm hover:shadow-md border border-gray-200/50 hover:border-gray-300 transition-all duration-300 overflow-hidden"
+              className="group relative bg-white rounded-2xl shadow-lg hover:shadow-xl border border-gray-200/50 hover:border-indigo-200 transition-all duration-300 overflow-hidden"
             >
-              {/* Gradient accent */}
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+              {/* Animated gradient accent */}
+              <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 group-hover:h-2 transition-all duration-300"></div>
               
-              <div className="p-5">
+              {/* Background decoration */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              <div className="relative p-6">
                 {/* Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <Avatar 
-                      type={(item.avatar_type as AvatarType) || 'default'} 
-                      className="w-12 h-12 ring-2 ring-gray-100" 
-                    />
-                    <div>
-                      <h3 className="font-bold text-gray-900 text-lg">{item.full_name}</h3>
-                      {item.room && (
-                        <span className="text-xs font-medium text-gray-500">Комната {item.room}</span>
-                      )}
+                <div className="flex items-start justify-between mb-5">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <Avatar 
+                        type={(item.avatar_type as AvatarType) || 'default'} 
+                        className="w-14 h-14 ring-4 ring-indigo-100 group-hover:ring-indigo-200 transition-all" 
+                      />
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center shadow-lg">
+                        <CheckIcon className="w-3 h-3 text-white" />
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="text-xs text-gray-500">
-                    {new Date(item.finished_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                    <div>
+                      <h3 className="font-bold text-gray-900 text-xl mb-1">{item.full_name}</h3>
+                      <div className="flex items-center gap-2">
+                        {item.room && (
+                          <span className="text-sm font-medium text-gray-600">Комната {item.room}</span>
+                        )}
+                        <span className="text-sm text-gray-400">•</span>
+                        <span className="text-sm text-gray-500">
+                          {new Date(item.finished_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
