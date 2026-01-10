@@ -116,6 +116,7 @@ export type HistoryItem = {
   room?: string;
   started_at: string;
   finished_at: string;
+  avatar_type?: string;
   // ✅ Таймеры
   ready_at?: string;
   key_issued_at?: string;
