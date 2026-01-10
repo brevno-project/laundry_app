@@ -17,7 +17,13 @@ const isValidUrl = (url?: string) => {
 };
 
 export const supabase = isValidUrl(supabaseUrl) && supabaseAnonKey
-  ? createClient(supabaseUrl as string, supabaseAnonKey as string)
+  ? createClient(supabaseUrl as string, supabaseAnonKey as string, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true, // важно для redirect/callback
+      },
+    })
   : null;
 
 // Make supabase available in console for debugging (only on client side)

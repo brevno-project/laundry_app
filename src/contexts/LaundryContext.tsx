@@ -33,6 +33,26 @@ const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 // Check if Supabase is configured
 const isSupabaseConfigured = !!SUPABASE_URL && !!SUPABASE_KEY && !!supabase;
 
+// ========================================
+// Ожидание стабильной сессии после auth
+// ========================================
+async function waitForSession(): Promise<boolean> {
+  if (!supabase) return false;
+  
+  // Ждём пока session стабильно доступна (до 5 попыток)
+  for (let i = 0; i < 5; i++) {
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.access_token) {
+      console.log('✅ Session established after', i + 1, 'attempts');
+      return true;
+    }
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  
+  console.error('❌ Session not established after 5 attempts');
+  return false;
+}
+
 
 // Format date to local timezone
 export const formatDate = (dateString: string) => {
@@ -328,8 +348,10 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         last_name: me.last_name,
         full_name: me.full_name,
         room: me.room,
-        avatar_type: me.avatar_type || 'default',
         telegram_chat_id: me.telegram_chat_id,
+        avatar_type: me.avatar_type || 'default',
+
+        // 🔥 Добавляем эти поля в объект пользователя
         is_admin: me.is_admin || false,
         is_super_admin: me.is_super_admin || false,
         can_view_students: me.can_view_students || false,
@@ -338,6 +360,11 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       setUser(newUser);
       setIsAdmin(!!me.is_admin);
       setIsSuperAdmin(!!me.is_super_admin);
+
+      // ✅ Сохраняем только user, НЕ права (права из refreshMyRole)
+      if (typeof window !== "undefined") {
+        localStorage.setItem("laundryUser", JSON.stringify(newUser));
+      }
 
       // 🔄 Автопривязка записей очереди для залогиненного студента
       if (uid && me.id) {
@@ -483,7 +510,7 @@ const registerStudent = async (
           student_id: studentId,
           full_name: student.full_name,
         },
-        emailRedirectTo: undefined, // Отключаем email redirect
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
 
@@ -539,7 +566,13 @@ const registerStudent = async (
 
     console.log("Auth user created/retrieved:", authUser.id);
 
-    // 2) ВСЕГДА вызываем backend API для установки user_id
+    // 2) Ждём стабильную сессию
+    const sessionReady = await waitForSession();
+    if (!sessionReady) {
+      throw new Error('Сессия не установлена. Попробуйте войти снова.');
+    }
+
+    // 3) ВСЕГДА вызываем backend API для установки user_id
     // Это важно даже если пользователь уже существовал в Auth, но не был связан с students
     console.log("Linking auth user to student record...");
     const response = await fetch("/api/student/register", {
@@ -554,7 +587,7 @@ const registerStudent = async (
     const result = await response.json();
     if (!response.ok) throw new Error(result.error);
 
-    // 3) Загрузка обновлённого студента
+    // 4) Загрузка обновлённого студента (теперь безопасно - сессия есть)
     const { data: updatedStudent } = await supabase
       .from("students")
       .select("id, first_name, last_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, user_id, is_registered, created_at")
@@ -563,14 +596,12 @@ const registerStudent = async (
 
     if (!updatedStudent) throw new Error("Ошибка загрузки данных студента");
 
-    // 4) Финализируем
+    // 5) Финализируем
     return finalizeUserSession(authUser.id, updatedStudent, true);
   } catch (error) {
     throw error;
   }
 };
-
-
 
 
 // ========================================
@@ -609,13 +640,19 @@ const loginStudent = async (
 
     const authUser = authData.user;
 
-    // 3) Только ПОСЛЕ логина читаем students по user_id (RLS безопасно)
+    // 3) Ждём стабильную сессию
+    const sessionReady = await waitForSession();
+    if (!sessionReady) {
+      throw new Error('Сессия не установлена. Попробуйте войти снова.');
+    }
+
+    // 4) Только ПОСЛЕ логина и установки сессии читаем students по user_id (RLS безопасно)
     const { data: updatedStudent, error: studentError } = await supabase
       .from("students")
       .select("id, first_name, last_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, user_id, is_registered, created_at")
       .eq("user_id", authUser.id)
       .maybeSingle();
-
+    
     if (studentError) throw studentError;
     
     // Если студент не найден по user_id - значит нужно сделать claim
