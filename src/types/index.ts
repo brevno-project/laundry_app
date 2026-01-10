@@ -130,6 +130,7 @@ export type TelegramNotification = {
     | 'left'
     | 'washing_started'
     | 'washing_done'
+    | 'done'
     | 'admin_call_for_key'
     | 'admin_key_issued'
     | 'admin_return_key'

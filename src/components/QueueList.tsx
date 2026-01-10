@@ -546,19 +546,23 @@ export default function QueueList() {
                           <button
                             className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-orange-500 text-white font-semibold"
                             onClick={async () => {
-                              await updateQueueItem(item.id, { 
-                                admin_room: user?.room,
-                                ready_at: new Date().toISOString()
-                              });
-                              await setQueueStatus(item.id, QueueStatus.READY);
+                              try {
+                                await updateQueueItem(item.id, { 
+                                  admin_room: user?.room,
+                                  ready_at: new Date().toISOString()
+                                });
+                                await setQueueStatus(item.id, QueueStatus.READY);
 
-                              await sendTelegramNotification({
-                                type: 'admin_call_for_key',
-                                full_name: item.full_name,
-                                student_id: item.student_id,
-                                expected_finish_at: item.expected_finish_at,
-                                admin_student_id: user?.student_id,
-                              });
+                                await sendTelegramNotification({
+                                  type: 'admin_call_for_key',
+                                  full_name: item.full_name,
+                                  student_id: item.student_id,
+                                  expected_finish_at: item.expected_finish_at,
+                                  admin_student_id: user?.student_id,
+                                });
+                              } catch (error) {
+                                console.error('❌ Error in Позвать:', error);
+                              }
                             }}
                           >
                             <BellIcon className="w-4 h-4" /> Позвать
@@ -568,21 +572,25 @@ export default function QueueList() {
                           <button
                             className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-blue-600 text-white font-semibold"
                             onClick={async () => {
-                              const now = new Date().toISOString();
-                              // Сначала устанавливаем timestamp
-                              await updateQueueItem(item.id, { 
-                                key_issued_at: now
-                              });
-                              // Потом меняем статус
-                              await setQueueStatus(item.id, QueueStatus.KEY_ISSUED);
-                              
-                              // Отправляем уведомление студенту
-                              await sendTelegramNotification({
-                                type: 'key_issued',
-                                full_name: item.full_name,
-                                room: item.room,
-                                student_id: item.student_id,
-                              });
+                              try {
+                                const now = new Date().toISOString();
+                                // Сначала устанавливаем timestamp
+                                await updateQueueItem(item.id, { 
+                                  key_issued_at: now
+                                });
+                                // Потом меняем статус
+                                await setQueueStatus(item.id, QueueStatus.KEY_ISSUED);
+                                
+                                // Отправляем уведомление студенту
+                                await sendTelegramNotification({
+                                  type: 'key_issued',
+                                  full_name: item.full_name,
+                                  room: item.room,
+                                  student_id: item.student_id,
+                                });
+                              } catch (error) {
+                                console.error('❌ Error in Выдать ключ:', error);
+                              }
                             }}
                           >
                             <KeyIcon className="w-4 h-4" /> Выдать ключ
@@ -592,13 +600,23 @@ export default function QueueList() {
                           <button
                             className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-green-600 text-white font-semibold"
                             onClick={async () => {
-                              const now = new Date().toISOString();
-                              // Сначала устанавливаем timestamp
-                              await updateQueueItem(item.id, { 
-                                washing_started_at: now
-                              });
-                              // Потом запускаем стирку (меняет статус)
-                              await startWashing(item.id);
+                              try {
+                                const now = new Date().toISOString();
+                                // Сначала устанавливаем timestamp
+                                await updateQueueItem(item.id, { 
+                                  washing_started_at: now
+                                });
+                                // Потом запускаем стирку (меняет статус)
+                                await startWashing(item.id);
+
+                                await sendTelegramNotification({
+                                  type: 'washing_started',
+                                  full_name: item.full_name,
+                                  student_id: item.student_id,
+                                });
+                              } catch (error) {
+                                console.error('❌ Error in Стирать:', error);
+                              }
                             }}
                           >
                             <WashingIcon className="w-4 h-4" /> Стирать
@@ -608,18 +626,22 @@ export default function QueueList() {
                           <button
                             className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-orange-600 text-white font-semibold"
                             onClick={async () => {
-                              await setQueueStatus(item.id, QueueStatus.RETURNING_KEY);
-                              await updateQueueItem(item.id, { 
-                                return_key_alert: true,
-                                admin_room: user?.room,
-                                return_requested_at: new Date().toISOString()
-                              });
-                              await sendTelegramNotification({
-                                type: "admin_return_key",
-                                full_name: item.full_name,
-                                student_id: item.student_id,
-                                admin_student_id: user?.student_id
-                              });
+                              try {
+                                await setQueueStatus(item.id, QueueStatus.RETURNING_KEY);
+                                await updateQueueItem(item.id, { 
+                                  return_key_alert: true,
+                                  admin_room: user?.room,
+                                  return_requested_at: new Date().toISOString()
+                                });
+                                await sendTelegramNotification({
+                                  type: "admin_return_key",
+                                  full_name: item.full_name,
+                                  student_id: item.student_id,
+                                  admin_student_id: user?.student_id
+                                });
+                              } catch (error) {
+                                console.error('❌ Error in Вернуть ключ:', error);
+                              }
                             }}
                           >
                             <BellIcon className="w-4 h-4" /> Вернуть ключ
@@ -629,7 +651,17 @@ export default function QueueList() {
                           <button
                             className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-emerald-600 text-white font-semibold"
                             onClick={async () => {
-                              await markDone(item.id);
+                              try {
+                                await markDone(item.id);
+
+                                await sendTelegramNotification({
+                                  type: 'washing_done',
+                                  full_name: item.full_name,
+                                  student_id: item.student_id,
+                                });
+                              } catch (error) {
+                                console.error('❌ Error in Завершить:', error);
+                              }
                             }}
                           >
                             <CheckIcon className="w-4 h-4" /> Завершить
