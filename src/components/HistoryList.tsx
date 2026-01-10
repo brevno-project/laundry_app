@@ -131,6 +131,27 @@ export default function HistoryList() {
                   </div>
                 </div>
 
+                {/* Key Pickup Timer (before washing) */}
+                {item.started_at && item.washing_started_at && (() => {
+                  const keyPickupMinutes = getDurationMinutes(item.started_at, item.washing_started_at);
+                  const keyPickupColor = getTimerColor(keyPickupMinutes, 3, 10);
+                  return (
+                    <div className={`${keyPickupColor.bg} rounded-xl p-3 border-2 ${keyPickupColor.border}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-8 h-8 ${keyPickupColor.icon} rounded-lg flex items-center justify-center`}>
+                            <CheckIcon className="w-4 h-4 text-white" />
+                          </div>
+                          <span className={`text-sm font-medium ${keyPickupColor.text}`}>Идет за ключом</span>
+                        </div>
+                        <span className={`text-lg font-bold ${keyPickupColor.text}`}>
+                          {formatDuration(item.started_at, item.washing_started_at)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Washing Timer */}
                 {item.washing_started_at && (() => {
                   const washMinutes = getDurationMinutes(item.washing_started_at, item.return_requested_at || item.finished_at);
@@ -152,20 +173,20 @@ export default function HistoryList() {
                   );
                 })()}
 
-                {/* Key Pickup Timer */}
+                {/* Key Return Timer */}
                 {item.ready_at && item.key_issued_at && (() => {
-                  const keyMinutes = getDurationMinutes(item.ready_at, item.key_issued_at);
-                  const keyColor = getTimerColor(keyMinutes, 5, 15);
+                  const keyReturnMinutes = getDurationMinutes(item.ready_at, item.key_issued_at);
+                  const keyReturnColor = getTimerColor(keyReturnMinutes, 5, 15);
                   return (
-                    <div className={`${keyColor.bg} rounded-xl p-3 border-2 ${keyColor.border}`}>
+                    <div className={`${keyReturnColor.bg} rounded-xl p-3 border-2 ${keyReturnColor.border}`}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className={`w-8 h-8 ${keyColor.icon} rounded-lg flex items-center justify-center`}>
+                          <div className={`w-8 h-8 ${keyReturnColor.icon} rounded-lg flex items-center justify-center`}>
                             <CheckIcon className="w-4 h-4 text-white" />
                           </div>
-                          <span className={`text-sm font-medium ${keyColor.text}`}>За ключом</span>
+                          <span className={`text-sm font-medium ${keyReturnColor.text}`}>Ключ выдан</span>
                         </div>
-                        <span className={`text-lg font-bold ${keyColor.text}`}>
+                        <span className={`text-lg font-bold ${keyReturnColor.text}`}>
                           {formatDuration(item.ready_at, item.key_issued_at)}
                         </span>
                       </div>

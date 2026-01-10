@@ -764,23 +764,37 @@ const resetStudentRegistration = async (studentId: string) => {
       }
       
       try {
-        // Получаем историю без аватаров (они не критичны для отображения)
-        const { data, error } = await supabase
+        // Получаем историю
+        const { data: historyData, error: historyError } = await supabase
           .from('history')
           .select('id, user_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, return_requested_at')
           .order('finished_at', { ascending: false })
           .limit(100);
         
-        if (error) throw error;
+        if (historyError) throw historyError;
         
-        // Добавляем default avatar_type для всех записей
-        const historyWithDefaults = (data || []).map((item: any) => ({
+        // Получаем уникальные user_id
+        const userIds = [...new Set((historyData || []).map((item: any) => item.user_id))];
+        
+        // Получаем аватары для всех пользователей
+        const { data: studentsData, error: studentsError } = await supabase
+          .from('students')
+          .select('id, avatar_type')
+          .in('id', userIds);
+        
+        // Создаем мапу user_id -> avatar_type
+        const avatarMap = new Map(
+          (studentsData || []).map((student: any) => [student.id, student.avatar_type])
+        );
+        
+        // Добавляем avatar_type к каждой записи истории
+        const historyWithAvatars = (historyData || []).map((item: any) => ({
           ...item,
-          avatar_type: 'default'
+          avatar_type: avatarMap.get(item.user_id) || 'default'
         }));
         
-        setHistory(historyWithDefaults);
-        save_local_history(historyWithDefaults);
+        setHistory(historyWithAvatars);
+        save_local_history(historyWithAvatars);
       } catch (error: any) {
         // Fall back to local storage
         setHistory(get_local_history());
