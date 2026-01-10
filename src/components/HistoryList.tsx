@@ -28,7 +28,7 @@ export default function HistoryList() {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
   const getDurationMinutes = (start: string, end: string | null | undefined) => {
@@ -142,7 +142,7 @@ export default function HistoryList() {
                           <div className={`w-8 h-8 ${keyPickupColor.icon} rounded-lg flex items-center justify-center`}>
                             <CheckIcon className="w-4 h-4 text-white" />
                           </div>
-                          <span className={`text-sm font-medium ${keyPickupColor.text}`}>Идет за ключом</span>
+                          <span className={`text-sm font-medium ${keyPickupColor.text}`}>Ключ выдан</span>
                         </div>
                         <span className={`text-lg font-bold ${keyPickupColor.text}`}>
                           {formatDuration(item.started_at, item.washing_started_at)}
@@ -184,7 +184,7 @@ export default function HistoryList() {
                           <div className={`w-8 h-8 ${keyReturnColor.icon} rounded-lg flex items-center justify-center`}>
                             <CheckIcon className="w-4 h-4 text-white" />
                           </div>
-                          <span className={`text-sm font-medium ${keyReturnColor.text}`}>Ключ выдан</span>
+                          <span className={`text-sm font-medium ${keyReturnColor.text}`}>Стирает</span>
                         </div>
                         <span className={`text-lg font-bold ${keyReturnColor.text}`}>
                           {formatDuration(item.ready_at, item.key_issued_at)}
