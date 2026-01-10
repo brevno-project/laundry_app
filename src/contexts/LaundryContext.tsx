@@ -94,6 +94,7 @@ type LaundryContextType = {
   loadStudents: () => void;
   optimisticUpdateQueueItem: (queueItemId: string, updates: Partial<QueueItem>) => void;
   fetchQueue: () => Promise<void>;
+  fetchHistory: () => Promise<void>;
 };
 
 const LaundryContext = createContext<LaundryContextType | undefined>(undefined);
@@ -2308,6 +2309,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
    toggleAdminStatus,
    toggleSuperAdminStatus,
    loadStudents,
+   fetchHistory,
 
   };
 

@@ -6,7 +6,7 @@ import Avatar, { AVATAR_OPTIONS, AvatarType } from './Avatar';
 import { supabase as supabaseClient } from '@/lib/supabase';
 
 export default function AvatarSelector() {
-  const { user, loadStudents, setUser, fetchQueue } = useLaundry();
+  const { user, loadStudents, setUser, fetchQueue, fetchHistory } = useLaundry();
   const [isSaving, setIsSaving] = useState(false);
   
   // ✅ Всегда используем аватар напрямую из user, без локального состояния
@@ -49,10 +49,11 @@ export default function AvatarSelector() {
       setUser(updatedUser);
       localStorage.setItem('user', JSON.stringify(updatedUser));
       
-      // Обновляем список студентов и очередь
+      // Обновляем список студентов, очередь и историю
       await loadStudents();
       await fetchQueue();
-      alert('✅ Аватар обновлен везде!');
+      await fetchHistory();
+      alert('✅ Аватар обновлен');
     } catch (error) {
       alert('❌ Ошибка обновления аватара');
     } finally {
