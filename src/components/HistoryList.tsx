@@ -31,6 +31,25 @@ export default function HistoryList() {
     return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
   };
 
+  const getDurationMinutes = (start: string, end: string | null | undefined) => {
+    if (!end) return 0;
+    const ms = new Date(end).getTime() - new Date(start).getTime();
+    const minutes = Math.floor(ms / 60000);
+    return minutes < 0 ? 0 : minutes;
+  };
+
+  const getTimerColor = (minutes: number, normalLimit: number, warningLimit: number) => {
+    if (minutes > warningLimit) return { bg: 'bg-red-100', border: 'border-red-300', text: 'text-red-700', icon: 'bg-red-500' };
+    if (minutes > normalLimit) return { bg: 'bg-yellow-100', border: 'border-yellow-300', text: 'text-yellow-700', icon: 'bg-yellow-500' };
+    return { bg: 'bg-green-100', border: 'border-green-300', text: 'text-green-700', icon: 'bg-green-500' };
+  };
+
+  const getCardBorderColor = (totalMinutes: number) => {
+    if (totalMinutes > 120) return 'border-red-400';
+    if (totalMinutes > 90) return 'border-yellow-400';
+    return 'border-green-400';
+  };
+
   if (history.length === 0) {
     return (
       <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-md border-2 border-green-200 p-12">
@@ -62,22 +81,16 @@ export default function HistoryList() {
         </div>
       </div>
 
-      {/* Colorful History Cards */}
+      {/* History Cards with Smart Color Coding */}
       <div className="space-y-3">
-        {displayedHistory.map((item, index) => {
-          const colors = [
-            'from-blue-50 to-blue-100 border-blue-200',
-            'from-purple-50 to-purple-100 border-purple-200',
-            'from-pink-50 to-pink-100 border-pink-200',
-            'from-orange-50 to-orange-100 border-orange-200',
-            'from-teal-50 to-teal-100 border-teal-200',
-          ];
-          const colorClass = colors[index % colors.length];
+        {displayedHistory.map((item) => {
+          const totalMinutes = getDurationMinutes(item.started_at, item.finished_at);
+          const borderColor = getCardBorderColor(totalMinutes);
           
           return (
             <div
               key={item.id}
-              className={`bg-gradient-to-br ${colorClass} rounded-2xl shadow-md border-2 hover:shadow-lg transition-all p-5`}
+              className={`bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-md border-2 ${borderColor} hover:shadow-lg transition-all p-5`}
             >
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
@@ -101,43 +114,80 @@ export default function HistoryList() {
                 </div>
               </div>
 
-              {/* Time Info with Icons */}
-              <div className="bg-white/60 rounded-xl p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                      <ClockIcon className="w-4 h-4 text-white" />
+              {/* Time Info with Color-Coded Timers */}
+              <div className="space-y-2">
+                {/* Total Duration */}
+                <div className="bg-white rounded-xl p-3 border-2 border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                        <ClockIcon className="w-4 h-4 text-white" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-700">Общее время</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-700">Время</span>
+                    <span className="text-lg font-bold text-gray-900">
+                      {formatDuration(item.started_at, item.finished_at)}
+                    </span>
                   </div>
-                  <span className="text-sm font-semibold text-gray-900">
-                    {formatTime(item.started_at)} - {formatTime(item.finished_at)}
-                  </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                      <CheckIcon className="w-4 h-4 text-white" />
+
+                {/* Washing Timer */}
+                {item.washing_started_at && (() => {
+                  const washMinutes = getDurationMinutes(item.washing_started_at, item.return_requested_at || item.finished_at);
+                  const washColor = getTimerColor(washMinutes, 60, 90);
+                  return (
+                    <div className={`${washColor.bg} rounded-xl p-3 border-2 ${washColor.border}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-8 h-8 ${washColor.icon} rounded-lg flex items-center justify-center`}>
+                            <ClockIcon className="w-4 h-4 text-white" />
+                          </div>
+                          <span className={`text-sm font-medium ${washColor.text}`}>Стирка</span>
+                        </div>
+                        <span className={`text-lg font-bold ${washColor.text}`}>
+                          {formatDuration(item.washing_started_at, item.return_requested_at || item.finished_at)}
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-sm font-medium text-gray-700">Длительность</span>
-                  </div>
-                  <span className="text-lg font-bold text-green-600">
-                    {formatDuration(item.started_at, item.finished_at)}
-                  </span>
-                </div>
+                  );
+                })()}
+
+                {/* Key Pickup Timer */}
+                {item.ready_at && item.key_issued_at && (() => {
+                  const keyMinutes = getDurationMinutes(item.ready_at, item.key_issued_at);
+                  const keyColor = getTimerColor(keyMinutes, 5, 15);
+                  return (
+                    <div className={`${keyColor.bg} rounded-xl p-3 border-2 ${keyColor.border}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-8 h-8 ${keyColor.icon} rounded-lg flex items-center justify-center`}>
+                            <CheckIcon className="w-4 h-4 text-white" />
+                          </div>
+                          <span className={`text-sm font-medium ${keyColor.text}`}>За ключом</span>
+                        </div>
+                        <span className={`text-lg font-bold ${keyColor.text}`}>
+                          {formatDuration(item.ready_at, item.key_issued_at)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Colorful Load More Button */}
+      {/* Colorful Load More Button with Bigger Arrow */}
       {history.length > 10 && (
         <button
           onClick={() => setShowAll(!showAll)}
-          className="w-full py-4 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg hover:shadow-xl transition-all text-lg"
+          className="w-full py-4 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3"
         >
-          {showAll ? '↑ Скрыть' : `↓ Показать еще ${history.length - 10}`}
+          <span className="text-lg">{showAll ? 'Скрыть' : `Показать еще ${history.length - 10}`}</span>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d={showAll ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"} />
+          </svg>
         </button>
       )}
     </div>
