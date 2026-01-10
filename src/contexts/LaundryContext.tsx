@@ -1747,7 +1747,10 @@ const deleteStudent = async (studentId: string) => {
 
 // Update queue item details (для timestamps и других полей без проверки статуса)
 const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>) => {
+  console.log('updateQueueItem called:', { queueItemId, updates });
+  
   if (!isSupabaseConfigured || !supabase) {
+    console.log('updateQueueItem: No Supabase, using local storage');
     // Use local storage fallback
     if (user) {
       update_local_queue_item(queueItemId, user.id, updates);
@@ -1757,18 +1760,25 @@ const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>)
   }
   
   try {
+    console.log('updateQueueItem: Updating database...');
     // ✅ Напрямую обновляем БД (для timestamps и других полей)
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('queue')
       .update(updates)
-      .eq('id', queueItemId);
+      .eq('id', queueItemId)
+      .select();
+
+    console.log('updateQueueItem result:', { data, error });
 
     if (error) {
+      console.error('updateQueueItem error:', error);
       throw error;
     }
 
+    console.log('updateQueueItem: Success, fetching queue...');
     await fetchQueue();
   } catch (error) {
+    console.error('updateQueueItem catch:', error);
     // Fallback to local storage on error
     if (user) {
       update_local_queue_item(queueItemId, user.id, updates);
