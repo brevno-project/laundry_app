@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { admin } from '@/lib/supabase-admin';
 
 // ✅ Секретные переменные (только на сервере!)
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID;
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // Типы уведомлений
 type NotificationType = 
@@ -36,13 +33,11 @@ interface TelegramNotification {
 
 // Получить информацию об админе
 async function getAdminInfo(admin_student_id?: string): Promise<{ full_name: string; room: string; telegram_chat_id: string | null } | null> {
-  if (!supabaseUrl || !supabaseKey || !admin_student_id) {
+  if (!admin_student_id) {
     return null;
   }
   
-  const supabase = createClient(supabaseUrl, supabaseKey);
-  
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from('students')
     .select('full_name, room, telegram_chat_id')
     .eq('id', admin_student_id)
@@ -59,14 +54,12 @@ async function getAdminInfo(admin_student_id?: string): Promise<{ full_name: str
 async function getStudentTelegramChatId(student_id?: string): Promise<string | null> {
   console.log('🔍 getStudentTelegramChatId called with student_id:', student_id);
   
-  if (!supabaseUrl || !supabaseKey || !student_id) {
-    console.log('❌ Missing config or student_id:', { supabaseUrl: !!supabaseUrl, supabaseKey: !!supabaseKey, student_id });
+  if (!student_id) {
+    console.log('❌ Missing student_id');
     return null;
   }
   
-  const supabase = createClient(supabaseUrl, supabaseKey);
-  
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from('students')
     .select('telegram_chat_id, full_name')
     .eq('id', student_id)
@@ -85,13 +78,7 @@ async function getStudentTelegramChatId(student_id?: string): Promise<string | n
 
 // ✅ Получить telegram_chat_id всех админов
 async function getAllAdminChatIds(): Promise<string[]> {
-  if (!supabaseUrl || !supabaseKey) {
-    return [];
-  }
-  
-  const supabase = createClient(supabaseUrl, supabaseKey);
-  
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from('students')
     .select('telegram_chat_id')
     .eq('is_admin', true)
@@ -106,6 +93,20 @@ async function getAllAdminChatIds(): Promise<string[]> {
     .filter((id): id is string => id !== null && id !== undefined);
   
   return chatIds;
+}
+
+// ✅ Получить всех студентов с telegram_chat_id для массовой рассылки
+async function getAllStudentChatIds(): Promise<string[]> {
+  const { data, error } = await admin
+    .from('students')
+    .select('telegram_chat_id')
+    .not('telegram_chat_id', 'is', null);
+  
+  if (error || !data) {
+    return [];
+  }
+  
+  return data.map((student: { telegram_chat_id: string }) => student.telegram_chat_id).filter((id: string) => id);
 }
 
 // Форматирование сообщения
