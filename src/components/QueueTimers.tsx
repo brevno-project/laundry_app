@@ -41,7 +41,18 @@ export default function QueueTimers({ item }: QueueTimersProps) {
       return;
     }
 
-    if (!startTime) return;
+    if (!startTime) {
+      console.log('QueueTimers: No startTime for status', item.status);
+      return;
+    }
+
+    console.log('QueueTimers: Setting up timer', {
+      status: item.status,
+      startTime,
+      ready_at: item.ready_at,
+      key_issued_at: item.key_issued_at,
+      washing_started_at: item.washing_started_at
+    });
 
     const update = () => {
       const ms = Date.now() - new Date(startTime!).getTime();
@@ -51,7 +62,10 @@ export default function QueueTimers({ item }: QueueTimersProps) {
       const m = Math.floor((ms % 3600000) / 60000);
       const s = Math.floor((ms % 60000) / 1000);
       
-      setTime(h > 0 ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`);
+      const timeStr = h > 0 ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`;
+      console.log('QueueTimers update:', { ms, min, h, m, s, timeStr });
+      
+      setTime(timeStr);
       setColor(min >= redMin ? 'red' : min >= yellowMin && yellowMin > 0 ? 'yellow' : 'green');
     };
 
