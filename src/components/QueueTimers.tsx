@@ -13,7 +13,7 @@ export default function QueueTimers({ item }: QueueTimersProps) {
   const [color, setColor] = useState('green');
 
   useEffect(() => {
-    let startTime: string | null = null;
+    let startTime: string | null | undefined = null;
     let yellowMin = 0;
     let redMin = 15;
 
