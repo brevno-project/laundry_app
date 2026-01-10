@@ -3,7 +3,7 @@
 import { useLaundry } from '@/contexts/LaundryContext';
 import { QueueStatus } from '@/types';
 import { sendTelegramNotification } from '@/lib/telegram';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Timer from './Timer';
 import QueueTimers from './QueueTimers';
 import { CalendarIcon, BellIcon, KeyIcon, WashingIcon, BellOffIcon, WaitIcon, CheckIcon, DeleteIcon, EditIcon, TicketIcon, MoneyIcon, HourglassIcon, CloseIcon, BackIcon, ForwardIcon } from '@/components/Icons';
@@ -48,6 +48,7 @@ export default function QueueList() {
   const [editDate, setEditDate] = useState('');
   const [openActionFor, setOpenActionFor] = useState<string | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const actionMenuRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const toggleSelect = (id: string) => {
     setSelectedItems(prev => 
@@ -516,16 +517,30 @@ export default function QueueList() {
                         {/* Кнопки админа */}
                         {isAdmin && (
                           <button
-                            onClick={() =>
-                              setOpenActionFor(openActionFor === item.id ? null : item.id)
-                            }
+                            onClick={() => {
+                              const newOpenId = openActionFor === item.id ? null : item.id;
+                              setOpenActionFor(newOpenId);
+                              
+                              // Скроллим к меню действий после небольшой задержки
+                              if (newOpenId) {
+                                setTimeout(() => {
+                                  actionMenuRefs.current[item.id]?.scrollIntoView({ 
+                                    behavior: 'smooth', 
+                                    block: 'nearest' 
+                                  });
+                                }, 100);
+                              }
+                            }}
                             className="w-full bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold py-2 px-3 rounded-lg shadow-sm flex items-center justify-center gap-2 mt-2"
                           >
                             <EditIcon className="w-4 h-4" /> Действия
                           </button>
                         )}
                         {isAdmin && !targetIsSuperAdmin && openActionFor === item.id && (
-                          <div className="mt-3 bg-gray-50 border rounded-lg shadow-inner p-3 space-y-2">
+                          <div 
+                            ref={(el) => { actionMenuRefs.current[item.id] = el; }}
+                            className="mt-3 bg-gray-50 border rounded-lg shadow-inner p-3 space-y-2"
+                          >
 
                           {/* Позвать */}
                           <button
