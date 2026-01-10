@@ -4,66 +4,50 @@ import { useState, useEffect } from 'react';
 import { PauseIcon, TimerIcon } from '@/components/Icons';
 
 interface TimerProps {
-  startTime: string; // ISO timestamp
-  endTime?: string; // ISO timestamp - если указан, таймер остановлен
+  startTime: string;
+  endTime?: string;
   label: string;
   color?: 'yellow' | 'blue' | 'green' | 'orange';
 }
 
 export default function Timer({ startTime, endTime, label, color = 'blue' }: TimerProps) {
-  const [elapsed, setElapsed] = useState<string>('00:00:00');
-  const [isStopped, setIsStopped] = useState<boolean>(!!endTime);
+  const [time, setTime] = useState('00:00:00');
 
   useEffect(() => {
-    const calculateElapsed = () => {
+    const update = () => {
       const start = new Date(startTime).getTime();
       const end = endTime ? new Date(endTime).getTime() : Date.now();
-      const diff = end - start;
-
-      if (diff < 0) {
-        setElapsed('00:00:00');
-        return;
-      }
-
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-      const formatted = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-      setElapsed(formatted);
+      const ms = Math.max(0, end - start);
+      
+      const h = Math.floor(ms / 3600000);
+      const m = Math.floor((ms % 3600000) / 60000);
+      const s = Math.floor((ms % 60000) / 1000);
+      
+      setTime(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
     };
 
-    // Обновляем сразу
-    calculateElapsed();
-
-    // Если таймер остановлен, не обновляем
-    if (endTime) {
-      setIsStopped(true);
-      return;
-    }
-
-    // Обновляем каждую секунду
-    const interval = setInterval(calculateElapsed, 1000);
-
-    return () => clearInterval(interval);
+    update();
+    
+    if (endTime) return;
+    
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
   }, [startTime, endTime]);
 
-  const colorClasses = {
+  const colors = {
     yellow: 'bg-yellow-50 text-yellow-900 border-yellow-400 shadow-yellow-200',
     blue: 'bg-blue-50 text-blue-900 border-blue-400 shadow-blue-200',
     green: 'bg-green-50 text-green-900 border-green-400 shadow-green-200',
     orange: 'bg-orange-50 text-orange-900 border-orange-400 shadow-orange-200',
   };
 
-  const Icon = isStopped ? PauseIcon : TimerIcon;
-
   return (
-    <div className={`flex items-center justify-between gap-3 px-4 py-2 rounded-lg border-2 shadow-md ${colorClasses[color]} ${isStopped ? 'opacity-80' : ''} w-full`}>
+    <div className={`flex items-center justify-between gap-3 px-4 py-2 rounded-lg border-2 shadow-md ${colors[color]} ${endTime ? 'opacity-80' : ''} w-full`}>
       <div className="flex items-center gap-2">
-        <Icon className="w-4 h-4 flex-shrink-0" />
+        {endTime ? <PauseIcon className="w-4 h-4" /> : <TimerIcon className="w-4 h-4" />}
         <span className="text-xs font-semibold">{label}</span>
       </div>
-      <span className="text-sm font-mono font-bold">{elapsed}</span>
+      <span className="text-sm font-mono font-bold">{time}</span>
     </div>
   );
 }

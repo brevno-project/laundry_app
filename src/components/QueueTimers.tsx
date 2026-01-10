@@ -8,134 +8,84 @@ interface QueueTimersProps {
   item: QueueItem;
 }
 
-/**
- * Компонент таймера с цветовой индикацией для каждого этапа очереди
- * 
- * Зоны:
- * - READY (позвать за ключом): 15 мин красная
- * - KEY_ISSUED (выдан ключ до стирки): 5 мин красная
- * - WASHING (стирка): 80 мин желтая, 120 мин красная
- * - RETURNING_KEY (принести ключ): 5 мин красная
- */
 export default function QueueTimers({ item }: QueueTimersProps) {
-  const [elapsed, setElapsed] = useState(0);
+  const [time, setTime] = useState('0:00');
   const [color, setColor] = useState('green');
 
   useEffect(() => {
-    const calculateElapsed = () => {
-      let startTime: Date | null = null;
-      let redZoneMinutes = 15;
-      let yellowZoneMinutes = 0; // Желтая зона (только для стирки)
+    let startTime: string | null = null;
+    let yellowMin = 0;
+    let redMin = 15;
 
-      // Определяем время начала и зоны в зависимости от статуса
-      switch (item.status) {
-        case QueueStatus.READY:
-          startTime = item.ready_at ? new Date(item.ready_at) : null;
-          yellowZoneMinutes = 5; // 5 минут желтая зона
-          redZoneMinutes = 15; // 15 минут красная зона
-          break;
-        case QueueStatus.KEY_ISSUED:
-          startTime = item.key_issued_at ? new Date(item.key_issued_at) : null;
-          yellowZoneMinutes = 5; // 5 минут желтая зона
-          redZoneMinutes = 15; // 15 минут красная зона
-          break;
-        case QueueStatus.WASHING:
-          startTime = item.washing_started_at ? new Date(item.washing_started_at) : null;
-          yellowZoneMinutes = (item.wash_count || 1) * 80; // 80 минут на стирку - желтая
-          redZoneMinutes = (item.wash_count || 1) * 120; // 120 минут - красная
-          break;
-        case QueueStatus.WASHING_FINISHED:
-          startTime = item.washing_finished_at ? new Date(item.washing_finished_at) : null;
-          yellowZoneMinutes = 5; // 5 минут желтая зона
-          redZoneMinutes = 15; // 15 минут красная зона
-          break;
-        case QueueStatus.RETURNING_KEY:
-          startTime = item.return_requested_at ? new Date(item.return_requested_at) : null;
-          yellowZoneMinutes = 5; // 5 минут желтая зона
-          redZoneMinutes = 15; // 15 минут красная зона
-          break;
-        default:
-          return;
-      }
+    if (item.status === QueueStatus.READY) {
+      startTime = item.ready_at;
+      yellowMin = 5;
+      redMin = 15;
+    } else if (item.status === QueueStatus.KEY_ISSUED) {
+      startTime = item.key_issued_at;
+      yellowMin = 5;
+      redMin = 15;
+    } else if (item.status === QueueStatus.WASHING) {
+      startTime = item.washing_started_at;
+      yellowMin = (item.wash_count || 1) * 80;
+      redMin = (item.wash_count || 1) * 120;
+    } else if (item.status === QueueStatus.WASHING_FINISHED) {
+      startTime = item.washing_finished_at;
+      yellowMin = 5;
+      redMin = 15;
+    } else if (item.status === QueueStatus.RETURNING_KEY) {
+      startTime = item.return_requested_at;
+      yellowMin = 5;
+      redMin = 15;
+    } else {
+      return;
+    }
 
-      if (!startTime) return;
+    if (!startTime) return;
 
-      const now = new Date();
-      const elapsedMs = now.getTime() - startTime.getTime();
-      const elapsedMinutes = elapsedMs / 60000;
-
-      setElapsed(elapsedMinutes);
-
-      // Цветовая индикация
-      if (elapsedMinutes >= redZoneMinutes) {
-        setColor('red');
-      } else if (yellowZoneMinutes > 0 && elapsedMinutes >= yellowZoneMinutes) {
-        setColor('yellow'); // Желтая зона (только для стирки)
-      } else {
-        setColor('green');
-      }
+    const update = () => {
+      const ms = Date.now() - new Date(startTime!).getTime();
+      const min = ms / 60000;
+      
+      const h = Math.floor(ms / 3600000);
+      const m = Math.floor((ms % 3600000) / 60000);
+      const s = Math.floor((ms % 60000) / 1000);
+      
+      setTime(h > 0 ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`);
+      setColor(min >= redMin ? 'red' : min >= yellowMin && yellowMin > 0 ? 'yellow' : 'green');
     };
 
-    // Обновляем сразу
-    calculateElapsed();
-
-    // Обновляем каждую секунду
-    const interval = setInterval(calculateElapsed, 1000);
-
-    return () => clearInterval(interval);
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
   }, [item.status, item.ready_at, item.key_issued_at, item.washing_started_at, item.washing_finished_at, item.return_requested_at, item.wash_count]);
 
-  // Форматирование времени
-  const formatTime = (minutes: number): string => {
-    const totalSeconds = Math.floor(minutes * 60);
-    const hours = Math.floor(totalSeconds / 3600);
-    const mins = Math.floor((totalSeconds % 3600) / 60);
-    const secs = totalSeconds % 60;
-    
-    if (hours > 0) {
-      return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const icons = {
+    [QueueStatus.READY]: { text: 'Ожидание ключа', Icon: HourglassIcon },
+    [QueueStatus.KEY_ISSUED]: { text: 'Ключ выдан', Icon: KeyIcon },
+    [QueueStatus.WASHING]: { text: 'Стирка', Icon: WashingIcon },
+    [QueueStatus.WASHING_FINISHED]: { text: 'Стирка завершена', Icon: WashingIcon },
+    [QueueStatus.RETURNING_KEY]: { text: 'Возврат ключа', Icon: KeyIcon },
   };
 
-  // Определяем текст статуса и иконку
-  const getStatusInfo = (): { text: string; Icon: React.ComponentType<{ className?: string }> } => {
-    switch (item.status) {
-      case QueueStatus.READY:
-        return { text: 'Ожидание ключа', Icon: HourglassIcon };
-      case QueueStatus.KEY_ISSUED:
-        return { text: 'Ключ выдан', Icon: KeyIcon };
-      case QueueStatus.WASHING:
-        return { text: 'Стирка', Icon: WashingIcon };
-      case QueueStatus.WASHING_FINISHED:
-        return { text: 'Стирка завершена', Icon: WashingIcon };
-      case QueueStatus.RETURNING_KEY:
-        return { text: 'Возврат ключа', Icon: KeyIcon };
-      default:
-        return { text: '', Icon: HourglassIcon };
-    }
-  };
-
-  // Цвета для индикации
-  const colorClasses = {
+  const colors = {
     green: 'bg-green-50 text-green-900 border-green-400 shadow-green-200',
     yellow: 'bg-yellow-50 text-yellow-900 border-yellow-400 shadow-yellow-200',
     red: 'bg-red-50 text-red-900 border-red-400 shadow-red-200 animate-pulse'
   };
 
-  if (![QueueStatus.READY, QueueStatus.KEY_ISSUED, QueueStatus.WASHING, QueueStatus.WASHING_FINISHED, QueueStatus.RETURNING_KEY].includes(item.status as QueueStatus)) {
-    return null;
-  }
+  const info = icons[item.status as keyof typeof icons];
+  if (!info) return null;
 
-  const { text, Icon } = getStatusInfo();
+  const { text, Icon } = info;
 
   return (
-    <div className={`flex items-center justify-between gap-3 px-4 py-3 rounded-lg border-2 shadow-md ${colorClasses[color as keyof typeof colorClasses]} font-semibold w-full`}>
+    <div className={`flex items-center justify-between gap-3 px-4 py-3 rounded-lg border-2 shadow-md ${colors[color as keyof typeof colors]} font-semibold w-full`}>
       <div className="flex items-center gap-2">
         <Icon className="w-5 h-5 flex-shrink-0" />
         <span className="text-sm">{text}</span>
       </div>
-      <span className="text-lg font-bold font-mono">{formatTime(elapsed)}</span>
+      <span className="text-lg font-bold font-mono">{time}</span>
     </div>
   );
 }
