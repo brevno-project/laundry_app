@@ -553,9 +553,12 @@ export default function QueueList() {
                           <button
                             className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-blue-600 text-white font-semibold"
                             onClick={async () => {
+                              const now = new Date().toISOString();
+                              // Сначала устанавливаем timestamp
                               await updateQueueItem(item.id, { 
-                                key_issued_at: new Date().toISOString()
+                                key_issued_at: now
                               });
+                              // Потом меняем статус
                               await setQueueStatus(item.id, QueueStatus.KEY_ISSUED);
                             }}
                           >
@@ -566,9 +569,12 @@ export default function QueueList() {
                           <button
                             className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-green-600 text-white font-semibold"
                             onClick={async () => {
+                              const now = new Date().toISOString();
+                              // Сначала устанавливаем timestamp
                               await updateQueueItem(item.id, { 
-                                washing_started_at: new Date().toISOString()
+                                washing_started_at: now
                               });
+                              // Потом запускаем стирку (меняет статус)
                               await startWashing(item.id);
                             }}
                           >
@@ -606,26 +612,20 @@ export default function QueueList() {
                             <CheckIcon className="w-4 h-4" /> Завершить
                           </button>
 
-                          {/* Отменить уведомления */}
+                          {/* В ожидание - сбрасывает все timestamps */}
                           <button
-                            className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-gray-500 text-white font-semibold"
+                            className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-purple-500 text-white font-semibold"
                             onClick={async () => {
+                              // Сначала сбрасываем все timestamps
                               await updateQueueItem(item.id, { 
                                 ready_at: null,
+                                key_issued_at: null,
+                                washing_started_at: null,
                                 return_requested_at: null,
                                 admin_room: null,
                                 return_key_alert: false
                               });
-                            }}
-                          >
-                            <BellOffIcon className="w-4 h-4" /> Отменить уведомления
-                          </button>
-
-
-                          {/* В ожидание */}
-                          <button
-                            className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-purple-500 text-white font-semibold"
-                            onClick={async () => {
+                              // Потом меняем статус
                               await setQueueStatus(item.id, QueueStatus.WAITING);
                             }}
                           >
