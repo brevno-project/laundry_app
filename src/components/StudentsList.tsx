@@ -20,6 +20,7 @@ export default function StudentsList() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newFirstName, setNewFirstName] = useState('');
   const [newLastName, setNewLastName] = useState('');
+  const [newMiddleName, setNewMiddleName] = useState('');
   const [newRoom, setNewRoom] = useState('');
   
   // Состояние для удаления
@@ -116,13 +117,14 @@ export default function StudentsList() {
       await addStudent(
         newFirstName.trim(),
         newLastName.trim() || "",
-        room
+        room,
+        newMiddleName.trim() || ""
       );
       
-  
       setShowAddModal(false);
       setNewFirstName('');
       setNewLastName('');
+      setNewMiddleName('');
       setNewRoom('');
       alert('✅ Студент добавлен!');
     } catch (error) {
@@ -552,6 +554,17 @@ export default function StudentsList() {
                   placeholder="Иван"
                 />
               </div>
+              
+              <div>
+                <label className="block text-sm font-bold mb-2 text-gray-900">Отчество</label>
+                <input
+                  type="text"
+                  value={newMiddleName}
+                  onChange={(e) => setNewMiddleName(e.target.value)}
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+                  placeholder="Иванович"
+                />
+              </div>
             </div>
             
             <div className="flex gap-2 mt-6">
@@ -560,6 +573,7 @@ export default function StudentsList() {
                   setShowAddModal(false);
                   setNewFirstName('');
                   setNewLastName('');
+                  setNewMiddleName('');
                   setNewRoom('');
                 }}
                 className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"

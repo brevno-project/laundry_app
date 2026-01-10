@@ -1612,7 +1612,8 @@ const startWashing = async (queueItemId: string) => {
   const addStudent = async (
     firstName: string,
     lastName: string,
-    room?: string
+    room?: string,
+    middleName?: string
   ) => {
     if (!isAdmin) throw new Error("Недостаточно прав");
     if (!isSupabaseConfigured || !supabase) {
@@ -1620,26 +1621,37 @@ const startWashing = async (queueItemId: string) => {
     }
   
     try {
-      const fullName = lastName ? `${firstName} ${lastName}` : firstName;
-  
-      const { error } = await supabase.from("students").insert({
-        id: uuidv4(),
-        first_name: firstName,
-        last_name: lastName || "",
-        full_name: fullName,
-        room: room || null,
-        is_registered: false,
-        created_at: new Date().toISOString(),
-        is_banned: false,
-        can_view_students: false,
-        avatar_type: "default",
+      // ✅ Получаем JWT
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Нет активной сессии');
+      }
+
+      // ✅ Вызываем API route с JWT
+      const response = await fetch('/api/admin/add-student', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ 
+          first_name: firstName,
+          last_name: lastName || "",
+          middle_name: middleName || null,
+          room: room || null
+        }),
       });
-  
-      if (error) throw error;
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка добавления студента');
+      }
   
       await loadStudents();
     } catch (error: any) {
-      return;
+      console.error("Error adding student:", error);
+      throw error;
     }
   };
   

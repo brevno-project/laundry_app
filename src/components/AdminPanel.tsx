@@ -55,6 +55,7 @@ export default function AdminPanel() {
   // Форма добавления студента
   const [newFirstName, setNewFirstName] = useState("");
   const [newLastName, setNewLastName] = useState("");
+  const [newMiddleName, setNewMiddleName] = useState("");
   const [newRoom, setNewRoom] = useState("");
 
   // Форма редактирования студента
@@ -153,13 +154,19 @@ export default function AdminPanel() {
     try {
       await addStudent(
         newFirstName.trim(),
-        newLastName.trim() ?? "",
-        newRoom.trim() ?? ""
+        newLastName.trim() || "",
+        newRoom.trim() || "",
+        newMiddleName.trim() || ""
       );
       
-      alert("Студент добавлен");
+      setNewFirstName("");
+      setNewLastName("");
+      setNewMiddleName("");
+      setNewRoom("");
+      setShowAddStudent(false);
+      alert("✅ Студент добавлен");
     } catch (err: any) {
-      alert("Ошибка: " + err.message);
+      alert("❌ Ошибка: " + err.message);
     }
   };
 
@@ -472,21 +479,28 @@ export default function AdminPanel() {
               type="text"
               value={newFirstName}
               onChange={(e) => setNewFirstName(e.target.value)}
-              placeholder="Имя"
+              placeholder="Имя *"
               className="w-full rounded-lg border-2 border-gray-300 p-3 text-gray-900"
             />
             <input
               type="text"
               value={newLastName}
               onChange={(e) => setNewLastName(e.target.value)}
-              placeholder="Фамилия (опционально)"
+              placeholder="Фамилия"
+              className="w-full rounded-lg border-2 border-gray-300 p-3 text-gray-900"
+            />
+            <input
+              type="text"
+              value={newMiddleName}
+              onChange={(e) => setNewMiddleName(e.target.value)}
+              placeholder="Отчество"
               className="w-full rounded-lg border-2 border-gray-300 p-3 text-gray-900"
             />
             <input
               type="text"
               value={newRoom}
               onChange={(e) => setNewRoom(e.target.value)}
-              placeholder="Комната (опционально)"
+              placeholder="Комната"
               className="w-full rounded-lg border-2 border-gray-300 p-3 text-gray-900"
             />
           </div>
