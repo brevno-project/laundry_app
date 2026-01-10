@@ -22,6 +22,8 @@ export default function HistoryList() {
     if (!end) return '—';
     const ms = new Date(end).getTime() - new Date(start).getTime();
     const minutes = Math.floor(ms / 60000);
+    // Защита от отрицательных значений (некорректные данные)
+    if (minutes < 0) return '0м';
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return hours > 0 ? `${hours}ч ${mins}м` : `${mins}м`;
@@ -30,7 +32,9 @@ export default function HistoryList() {
   const getDurationMinutes = (start: string, end: string | null | undefined) => {
     if (!end) return 0;
     const ms = new Date(end).getTime() - new Date(start).getTime();
-    return Math.floor(ms / 60000);
+    const minutes = Math.floor(ms / 60000);
+    // Защита от отрицательных значений (некорректные данные)
+    return minutes < 0 ? 0 : minutes;
   };
 
   const getTimeColor = (minutes: number, yellowZone: number, redZone: number) => {
