@@ -488,6 +488,7 @@ const registerStudent = async (
     });
 
     let authUser = signUpData?.user;
+    let userAlreadyExisted = false;
 
     if (signUpErr) {
       console.error("SignUp error:", signUpErr);
@@ -496,6 +497,7 @@ const registerStudent = async (
       // Если пользователь уже существует, пробуем войти
       if (msg.includes("already registered") || msg.includes("user already registered")) {
         console.log("User already exists, trying to sign in...");
+        userAlreadyExisted = true;
         const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -537,7 +539,9 @@ const registerStudent = async (
 
     console.log("Auth user created/retrieved:", authUser.id);
 
-    // 2) ВЫЗЫВАЕМ backend API через service-role
+    // 2) ВСЕГДА вызываем backend API для установки user_id
+    // Это важно даже если пользователь уже существовал в Auth, но не был связан с students
+    console.log("Linking auth user to student record...");
     const response = await fetch("/api/student/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
