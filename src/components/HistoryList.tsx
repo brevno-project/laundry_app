@@ -2,111 +2,148 @@
 
 import { useLaundry } from '@/contexts/LaundryContext';
 import { formatDate } from '@/contexts/LaundryContext';
-import Timer from './Timer';
-import { HistoryIcon } from './Icons';
+import { HistoryIcon, ClockIcon, CheckIcon } from './Icons';
+import Avatar, { AvatarType } from '@/components/Avatar';
 
 export default function HistoryList() {
   const { history } = useLaundry();
 
-  // Функция для определения цвета таймера в зависимости от времени
-  // Зеленая зона: 0 - yellowZone
-  // Желтая зона: yellowZone - redZone
-  // Красная зона: > redZone
-  const getTimerColor = (startTime: string, endTime: string | null | undefined, yellowZoneMinutes: number, redZoneMinutes: number): 'yellow' | 'blue' | 'green' | 'orange' => {
-    if (!endTime) return 'green';
-    const start = new Date(startTime).getTime();
-    const end = new Date(endTime).getTime();
-    const elapsedMinutes = (end - start) / 60000;
-    
-    if (elapsedMinutes > redZoneMinutes) return 'orange'; // Красная зона
-    if (elapsedMinutes > yellowZoneMinutes) return 'yellow'; // Желтая зона
-    return 'green'; // Зеленая зона
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatDuration = (start: string, end: string | null | undefined) => {
+    if (!end) return '—';
+    const ms = new Date(end).getTime() - new Date(start).getTime();
+    const minutes = Math.floor(ms / 60000);
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return hours > 0 ? `${hours}ч ${mins}м` : `${mins}м`;
   };
 
   if (history.length === 0) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2"><HistoryIcon className="w-6 h-6" />История</h2>
-        <p className="text-gray-700 text-lg">История пуста.</p>
+      <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl shadow-sm border border-gray-200/50 p-8">
+        <div className="flex flex-col items-center justify-center text-center space-y-3">
+          <div className="w-16 h-16 rounded-full bg-gray-200/50 flex items-center justify-center">
+            <HistoryIcon className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-700">История пуста</h3>
+          <p className="text-sm text-gray-500">Завершенные стирки появятся здесь</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-      <h2 className="text-2xl font-bold mb-6 text-gray-900 flex items-center gap-3 pb-3 border-b-2 border-gray-200">
-        <HistoryIcon className="w-7 h-7 text-gray-700" />
-        История
-      </h2>
-      <div className="space-y-4">
-        {history.map((item) => (
-          <div 
-            key={item.id} 
-            className="bg-white border border-gray-200 rounded-lg p-5 hover:border-blue-400 hover:shadow-sm transition-all duration-200"
-          >
-            <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
-              <h3 className="font-semibold text-gray-900 text-lg">{item.full_name}</h3>
-              {item.room && (
-                <span className="inline-flex items-center px-3 py-1 text-xs font-semibold tracking-wide uppercase bg-slate-100 text-slate-700 border border-slate-200">
-                  {item.room}
-                </span>
-              )}
-            </div>
-            
-            {/* ✅ Таймеры истории */}
-            <div className="flex flex-wrap gap-2 mt-3 mb-2">
-              {item.ready_at && (
-                <Timer 
-                  startTime={item.ready_at} 
-                  endTime={item.key_issued_at}
-                  label="За ключом" 
-                  color={getTimerColor(item.ready_at, item.key_issued_at, 5, 15)}
-                />
-              )}
-              {item.key_issued_at && (
-                <Timer 
-                  startTime={item.key_issued_at} 
-                  endTime={item.washing_started_at}
-                  label="С ключом" 
-                  color={getTimerColor(item.key_issued_at, item.washing_started_at, 5, 15)}
-                />
-              )}
-              {item.washing_started_at && (
-                <Timer 
-                  startTime={item.washing_started_at} 
-                  endTime={item.return_requested_at || item.finished_at}
-                  label="Стирка" 
-                  color={getTimerColor(item.washing_started_at, item.return_requested_at || item.finished_at, 80, 120)}
-                />
-              )}
-              {item.return_requested_at && (
-                <Timer 
-                  startTime={item.return_requested_at} 
-                  endTime={item.finished_at}
-                  label="Возврат ключа" 
-                  color={getTimerColor(item.return_requested_at, item.finished_at, 5, 15)}
-                />
-              )}
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-              <div className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 p-4 border border-blue-600 shadow-sm">
-                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-                <div className="relative">
-                  <div className="text-xs font-medium text-blue-100 uppercase tracking-wider mb-1.5">Начало</div>
-                  <div className="text-sm font-semibold text-white">{formatDate(item.started_at)}</div>
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center gap-3 px-1">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+          <HistoryIcon className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">История</h2>
+          <p className="text-sm text-gray-500">{history.length} {history.length === 1 ? 'запись' : 'записей'}</p>
+        </div>
+      </div>
+
+      {/* History Items */}
+      <div className="space-y-3">
+        {history.map((item, index) => {
+          const totalDuration = formatDuration(
+            item.started_at,
+            item.finished_at
+          );
+          
+          return (
+            <div
+              key={item.id}
+              className="group relative bg-white rounded-2xl shadow-sm hover:shadow-md border border-gray-200/50 hover:border-gray-300 transition-all duration-300 overflow-hidden"
+            >
+              {/* Gradient accent */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+              
+              <div className="p-5">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <Avatar 
+                      type={(item.avatar_type as AvatarType) || 'default'} 
+                      className="w-12 h-12 ring-2 ring-gray-100" 
+                    />
+                    <div>
+                      <h3 className="font-bold text-gray-900 text-lg">{item.full_name}</h3>
+                      {item.room && (
+                        <span className="text-xs font-medium text-gray-500">Комната {item.room}</span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200">
+                    <CheckIcon className="w-4 h-4 text-emerald-600" />
+                    <span className="text-xs font-semibold text-emerald-700">Завершено</span>
+                  </div>
+                </div>
+
+                {/* Timeline */}
+                <div className="space-y-2 mb-4">
+                  {/* Start */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                      <ClockIcon className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <div className="flex-1 flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">Начало</span>
+                      <span className="text-sm font-bold text-gray-900">{formatTime(item.started_at)}</span>
+                    </div>
+                  </div>
+
+                  {/* Finish */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                      <CheckIcon className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <div className="flex-1 flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">Завершение</span>
+                      <span className="text-sm font-bold text-gray-900">{formatTime(item.finished_at)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-2">
+                  {/* Duration */}
+                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-3 border border-gray-200/50">
+                    <div className="text-xs font-medium text-gray-500 mb-1">Время</div>
+                    <div className="text-lg font-bold text-gray-900">{totalDuration}</div>
+                  </div>
+
+                  {/* Washing time */}
+                  {item.washing_started_at && (
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 border border-blue-200/50">
+                      <div className="text-xs font-medium text-blue-600 mb-1">Стирка</div>
+                      <div className="text-lg font-bold text-blue-900">
+                        {formatDuration(item.washing_started_at, item.return_requested_at || item.finished_at)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Key time */}
+                  {item.ready_at && item.key_issued_at && (
+                    <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-3 border border-amber-200/50">
+                      <div className="text-xs font-medium text-amber-600 mb-1">За ключом</div>
+                      <div className="text-lg font-bold text-amber-900">
+                        {formatDuration(item.ready_at, item.key_issued_at)}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-emerald-600 p-4 border border-emerald-600 shadow-sm">
-                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-                <div className="relative">
-                  <div className="text-xs font-medium text-emerald-100 uppercase tracking-wider mb-1.5">Завершение</div>
-                  <div className="text-sm font-semibold text-white">{formatDate(item.finished_at)}</div>
-                </div>
-              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
