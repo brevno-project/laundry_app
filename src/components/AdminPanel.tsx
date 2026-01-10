@@ -362,61 +362,63 @@ export default function AdminPanel() {
                   key={student.id}
                   className="space-y-2 rounded-lg border border-gray-200 bg-gray-50 p-3"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-3">
-                      <Avatar
-                        type={(student.avatar_type as AvatarType) || "default"}
-                        className="w-12 h-12"
-                      />
+                  {/* Верхняя часть: аватар + имя */}
+                  <div className="flex items-start gap-3">
+                    <Avatar
+                      type={(student.avatar_type as AvatarType) || "default"}
+                      className="w-12 h-12 flex-shrink-0"
+                    />
 
-                      <div>
-                        <div className="text-base font-semibold text-gray-900">
-                          {student.full_name}{" "}
-                          <span className="text-sm font-normal text-gray-500">
-                            ({student.room || "—"})
+                    <div className="min-w-0 flex-1">
+                      <div className="text-base font-semibold text-gray-900 break-words">
+                        {student.full_name}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {student.room || "—"}
+                      </div>
+
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
+                        {student.is_registered && (
+                          <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-medium text-emerald-700">
+                            Зарегистрирован
                           </span>
-                        </div>
+                        )}
 
-                        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
-                          {student.is_registered && (
-                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-medium text-emerald-700">
-                              Зарегистрирован
-                            </span>
-                          )}
+                        {!student.is_registered && (
+                          <span className="rounded-full bg-gray-200 px-2 py-0.5 font-medium text-gray-700">
+                            Не зарегистрирован
+                          </span>
+                        )}
 
-                          {!student.is_registered && (
-                            <span className="rounded-full bg-gray-200 px-2 py-0.5 font-medium text-gray-700">
-                              Не зарегистрирован
-                            </span>
-                          )}
+                        {student.is_banned && (
+                          <span className="rounded-full bg-red-100 px-2 py-0.5 font-medium text-red-700">
+                            Заблокирован
+                          </span>
+                        )}
 
-                          {student.is_banned && (
-                            <span className="rounded-full bg-red-100 px-2 py-0.5 font-medium text-red-700">
-                              Заблокирован
-                            </span>
-                          )}
+                        {student.telegram_chat_id && !student.is_banned && (
+                          <span className="rounded-full bg-sky-100 px-2 py-0.5 font-medium text-sky-700">
+                            Telegram
+                          </span>
+                        )}
 
-                          {student.telegram_chat_id && !student.is_banned && (
-                            <span className="rounded-full bg-sky-100 px-2 py-0.5 font-medium text-sky-700">
-                              Telegram
-                            </span>
-                          )}
+                        {student.is_admin && !student.is_super_admin && (
+                          <span className="rounded-full bg-purple-100 px-2 py-0.5 font-medium text-purple-700">
+                            Админ
+                          </span>
+                        )}
 
-                          {student.is_admin && !student.is_super_admin && (
-                            <span className="rounded-full bg-purple-100 px-2 py-0.5 font-medium text-purple-700">
-                              Админ
-                            </span>
-                          )}
-
-                          {student.is_super_admin && (
-                            <span className="rounded-full bg-yellow-100 px-2 py-0.5 font-semibold text-yellow-800">
-                              Суперадмин
-                            </span>
-                          )}
-                        </div>
+                        {student.is_super_admin && (
+                          <span className="rounded-full bg-yellow-100 px-2 py-0.5 font-semibold text-yellow-800">
+                            Суперадмин
+                          </span>
+                        )}
                       </div>
                     </div>
+                  </div>
 
+                  {/* Нижняя часть: кнопка управления на всю ширину */}
+                  <div className="pt-2">
                     <ActionMenu
                       student={student}
                       isAdmin={isAdmin}

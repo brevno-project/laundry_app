@@ -177,11 +177,11 @@ export default function ActionMenu({
 
   return (
     <>
-      {/* КОМПАКТНАЯ КНОПКА В КАРТОЧКЕ */}
+      {/* КНОПКА УПРАВЛЕНИЯ НА ВСЮ ШИРИНУ */}
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-gray-50"
+        className="flex w-full items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50 active:bg-gray-100"
       >
         <PeopleIcon className="w-4 h-4" />
         <span>Управление</span>
