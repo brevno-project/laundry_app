@@ -133,6 +133,10 @@ export type TelegramNotification = {
     | 'admin_call_for_key'
     | 'admin_key_issued'
     | 'admin_return_key'
+    | 'key_issued'
+    | 'washing_started_by_student'
+    | 'washing_finished'
+    | 'return_key_reminder'
     | 'updated';
 
   full_name?: string;

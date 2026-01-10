@@ -575,6 +575,14 @@ export default function QueueList() {
                               });
                               // Потом меняем статус
                               await setQueueStatus(item.id, QueueStatus.KEY_ISSUED);
+                              
+                              // Отправляем уведомление студенту
+                              await sendTelegramNotification({
+                                type: 'key_issued',
+                                full_name: item.full_name,
+                                room: item.room,
+                                student_id: item.student_id,
+                              });
                             }}
                           >
                             <KeyIcon className="w-4 h-4" /> Выдать ключ
