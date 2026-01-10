@@ -1037,23 +1037,17 @@ const joinQueue = async (
   const getFreshToken = async (): Promise<string> => {
     if (!supabase) throw new Error('Supabase not configured');
     
-    // Сначала пробуем получить текущую сессию
-    const { data: { session } } = await supabase.auth.getSession();
+    // Всегда обновляем сессию для получения свежего токена
+    const { data: { session }, error } = await supabase.auth.refreshSession();
     
-    // Если токен истекает в течение 5 минут, обновляем
-    if (session?.expires_at) {
-      const expiresIn = session.expires_at - Math.floor(Date.now() / 1000);
-      if (expiresIn < 300) { // 5 минут
-        const { data: { session: newSession }, error } = await supabase.auth.refreshSession();
-        if (error || !newSession?.access_token) {
-          throw new Error('Failed to refresh session');
-        }
-        return newSession.access_token;
+    if (error || !session?.access_token) {
+      console.error('Failed to refresh session:', error);
+      // Fallback: пробуем получить текущую сессию
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!currentSession?.access_token) {
+        throw new Error('No active session');
       }
-    }
-    
-    if (!session?.access_token) {
-      throw new Error('No active session');
+      return currentSession.access_token;
     }
     
     return session.access_token;
