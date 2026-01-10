@@ -766,9 +766,9 @@ const resetStudentRegistration = async (studentId: string) => {
       try {
         const { data, error } = await supabase
           .from('history')
-          .select('id, user_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, return_requested_at')
+          .select('id, user_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, return_requested_at, avatar_type')
           .order('finished_at', { ascending: false })
-          .limit(5);
+          .limit(100); // Загружаем больше записей
         
         if (error) throw error;
         setHistory(data || []);

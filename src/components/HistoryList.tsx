@@ -4,9 +4,13 @@ import { useLaundry } from '@/contexts/LaundryContext';
 import { formatDate } from '@/contexts/LaundryContext';
 import { HistoryIcon, ClockIcon, CheckIcon } from './Icons';
 import Avatar, { AvatarType } from '@/components/Avatar';
+import { useState } from 'react';
 
 export default function HistoryList() {
   const { history } = useLaundry();
+  const [showAll, setShowAll] = useState(false);
+  
+  const displayedHistory = showAll ? history : history.slice(0, 5);
 
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -20,6 +24,18 @@ export default function HistoryList() {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return hours > 0 ? `${hours}ч ${mins}м` : `${mins}м`;
+  };
+
+  const getDurationMinutes = (start: string, end: string | null | undefined) => {
+    if (!end) return 0;
+    const ms = new Date(end).getTime() - new Date(start).getTime();
+    return Math.floor(ms / 60000);
+  };
+
+  const getTimeColor = (minutes: number, yellowZone: number, redZone: number) => {
+    if (minutes >= redZone) return 'red';
+    if (minutes >= yellowZone) return 'yellow';
+    return 'green';
   };
 
   if (history.length === 0) {
@@ -51,7 +67,7 @@ export default function HistoryList() {
 
       {/* History Items */}
       <div className="space-y-3">
-        {history.map((item, index) => {
+        {displayedHistory.map((item, index) => {
           const totalDuration = formatDuration(
             item.started_at,
             item.finished_at
@@ -81,9 +97,8 @@ export default function HistoryList() {
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200">
-                    <CheckIcon className="w-4 h-4 text-emerald-600" />
-                    <span className="text-xs font-semibold text-emerald-700">Завершено</span>
+                  <div className="text-xs text-gray-500">
+                    {new Date(item.finished_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
                   </div>
                 </div>
 
@@ -112,39 +127,83 @@ export default function HistoryList() {
                   </div>
                 </div>
 
-                {/* Stats */}
+                {/* Stats with color coding */}
                 <div className="grid grid-cols-3 gap-2">
                   {/* Duration */}
                   <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-3 border border-gray-200/50">
-                    <div className="text-xs font-medium text-gray-500 mb-1">Время</div>
+                    <div className="text-xs font-medium text-gray-500 mb-1">Общее</div>
                     <div className="text-lg font-bold text-gray-900">{totalDuration}</div>
                   </div>
 
-                  {/* Washing time */}
-                  {item.washing_started_at && (
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 border border-blue-200/50">
-                      <div className="text-xs font-medium text-blue-600 mb-1">Стирка</div>
-                      <div className="text-lg font-bold text-blue-900">
-                        {formatDuration(item.washing_started_at, item.return_requested_at || item.finished_at)}
+                  {/* Washing time with color */}
+                  {item.washing_started_at && (() => {
+                    const washMinutes = getDurationMinutes(item.washing_started_at, item.return_requested_at || item.finished_at);
+                    const washColor = getTimeColor(washMinutes, 80, 120);
+                    const colorClasses = {
+                      green: 'from-emerald-50 to-emerald-100 border-emerald-200/50 text-emerald-600',
+                      yellow: 'from-yellow-50 to-yellow-100 border-yellow-300/50 text-yellow-700',
+                      red: 'from-red-50 to-red-100 border-red-300/50 text-red-700 ring-2 ring-red-200'
+                    };
+                    return (
+                      <div className={`bg-gradient-to-br rounded-xl p-3 border ${colorClasses[washColor]}`}>
+                        <div className="text-xs font-medium mb-1">Стирка</div>
+                        <div className="text-lg font-bold">
+                          {formatDuration(item.washing_started_at, item.return_requested_at || item.finished_at)}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
-                  {/* Key time */}
-                  {item.ready_at && item.key_issued_at && (
-                    <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-3 border border-amber-200/50">
-                      <div className="text-xs font-medium text-amber-600 mb-1">За ключом</div>
-                      <div className="text-lg font-bold text-amber-900">
-                        {formatDuration(item.ready_at, item.key_issued_at)}
+                  {/* Key time with color */}
+                  {item.ready_at && item.key_issued_at && (() => {
+                    const keyMinutes = getDurationMinutes(item.ready_at, item.key_issued_at);
+                    const keyColor = getTimeColor(keyMinutes, 5, 15);
+                    const colorClasses = {
+                      green: 'from-emerald-50 to-emerald-100 border-emerald-200/50 text-emerald-600',
+                      yellow: 'from-yellow-50 to-yellow-100 border-yellow-300/50 text-yellow-700',
+                      red: 'from-red-50 to-red-100 border-red-300/50 text-red-700 ring-2 ring-red-200'
+                    };
+                    return (
+                      <div className={`bg-gradient-to-br rounded-xl p-3 border ${colorClasses[keyColor]}`}>
+                        <div className="text-xs font-medium mb-1">За ключом</div>
+                        <div className="text-lg font-bold">
+                          {formatDuration(item.ready_at, item.key_issued_at)}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
               </div>
             </div>
           );
         })}
       </div>
+
+      {/* Load More Button */}
+      {history.length > 5 && (
+        <div className="mt-4 flex justify-center">
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
+          >
+            {showAll ? (
+              <>
+                <span>Скрыть старые</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                </svg>
+              </>
+            ) : (
+              <>
+                <span>Показать старые ({history.length - 5})</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </>
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
