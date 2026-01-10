@@ -28,13 +28,11 @@ export default function AvatarSelector() {
     try {
       if (!supabaseClient) throw new Error('Supabase не настроен');
       
-      // ✅ Обновляем аватар в таблице students
-      const { error: studentError } = await supabaseClient
-        .from('students')
-        .update({ avatar_type: selectedAvatar })
-        .eq('id', user.student_id);
+      // ✅ Используем RPC функцию для безопасного обновления аватара
+      const { error: rpcError } = await supabaseClient
+        .rpc('update_my_avatar', { p_avatar_type: selectedAvatar });
       
-      if (studentError) throw studentError;
+      if (rpcError) throw rpcError;
       
       // ✅ Обновляем аватар во всех записях очереди этого пользователя
       const { error: queueError } = await supabaseClient
