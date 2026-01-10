@@ -29,6 +29,8 @@ interface TelegramNotification {
   expected_finish_at?: string;
   student_id?: string;
   admin_student_id?: string;
+  queue_item_id?: string;
+  message?: string;
 }
 
 // Получить информацию об админе
@@ -204,7 +206,7 @@ async function sendTelegramMessage(chatId: string, message: string): Promise<boo
 
 export async function POST(request: NextRequest) {
   try {
-    // 🔐 ПРОВЕРКА АВТОРИЗАЦИИ: только админы могут отправлять уведомления
+    // 🔐 ПРОВЕРКА АВТОРИЗАЦИИ
     const authHeader = request.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       console.log('❌ No authorization header');
@@ -225,31 +227,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Проверить что пользователь - админ
-    const { data: caller, error: callerError } = await admin
-      .from('students')
-      .select('is_admin, is_super_admin, is_banned, full_name')
-      .eq('user_id', user.id)
-      .single();
-    
-    if (callerError || !caller || !caller.is_admin || caller.is_banned) {
-      console.log('❌ User is not admin or is banned:', { caller, error: callerError?.message });
-      return NextResponse.json(
-        { error: 'Forbidden: Admin access required' },
-        { status: 403 }
-      );
-    }
-
-    console.log('✅ Authorized admin:', caller.full_name);
-
     const notification: TelegramNotification = await request.json();
-    
-    console.log('📨 Telegram notification request:', {
-      type: notification.type,
-      full_name: notification.full_name,
-      student_id: notification.student_id,
-      admin_student_id: notification.admin_student_id
-    });
     
     if (!notification || !notification.type) {
       return NextResponse.json(
@@ -257,6 +235,87 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Получить данные вызывающего
+    const { data: caller, error: callerError } = await admin
+      .from('students')
+      .select('id, is_admin, is_super_admin, is_banned, full_name')
+      .eq('user_id', user.id)
+      .single();
+    
+    if (callerError || !caller || caller.is_banned) {
+      console.log('❌ User not found or is banned:', { caller, error: callerError?.message });
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 }
+      );
+    }
+
+    const isAdmin = !!caller.is_admin || !!caller.is_super_admin;
+    
+    // ✅ Типы уведомлений, которые студенты могут отправлять админам
+    const STUDENT_TO_ADMIN_TYPES = ['washing_started_by_student', 'washing_finished'];
+    const isStudentToAdmin = STUDENT_TO_ADMIN_TYPES.includes(notification.type);
+
+    // ✅ Админ может отправлять любые уведомления
+    if (!isAdmin) {
+      // ✅ Не админ: разрешаем только студентские типы
+      if (!isStudentToAdmin) {
+        console.log('❌ Non-admin trying to send admin-only notification:', notification.type);
+        return NextResponse.json(
+          { error: 'Forbidden: Admin access required' },
+          { status: 403 }
+        );
+      }
+
+      // ✅ Валидация владения: уведомлять можно только про свою запись
+      if (!notification.queue_item_id) {
+        console.log('❌ Missing queue_item_id for student notification');
+        return NextResponse.json(
+          { error: 'Missing queue_item_id' },
+          { status: 400 }
+        );
+      }
+
+      // Проверить что queue item принадлежит студенту
+      const { data: queueItem, error: qiError } = await admin
+        .from('queue')
+        .select('id, student_id')
+        .eq('id', notification.queue_item_id)
+        .single();
+
+      if (qiError || !queueItem) {
+        console.log('❌ Queue item not found:', notification.queue_item_id);
+        return NextResponse.json(
+          { error: 'Queue item not found' },
+          { status: 404 }
+        );
+      }
+
+      // Сравнить владельца: queue.student_id == caller.id
+      if (queueItem.student_id !== caller.id) {
+        console.log('❌ Student trying to notify about someone else\'s queue item');
+        return NextResponse.json(
+          { error: 'Forbidden: Not your queue item' },
+          { status: 403 }
+        );
+      }
+
+      // ✅ Принудительно выставляем данные из caller (защита от подмены)
+      notification.student_id = caller.id;
+      notification.full_name = caller.full_name;
+      
+      console.log('✅ Authorized student:', caller.full_name, '- notification type:', notification.type);
+    } else {
+      console.log('✅ Authorized admin:', caller.full_name);
+    }
+    
+    console.log('📨 Telegram notification request:', {
+      type: notification.type,
+      full_name: notification.full_name,
+      student_id: notification.student_id,
+      queue_item_id: notification.queue_item_id
+    });
 
     const message = await formatMessage(notification);
     let success = false;

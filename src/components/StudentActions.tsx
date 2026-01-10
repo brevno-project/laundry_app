@@ -112,10 +112,26 @@ export default function StudentActions() {
     }
     
     try {
+      // Получить JWT токен
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        alert('❌ Нет авторизации');
+        return;
+      }
+      
       // Отправляем Telegram уведомление админу
       const response = await fetch('/api/telegram/notify', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({
           type: 'washing_started_by_student',
           full_name: myQueueItem.full_name,
@@ -150,10 +166,26 @@ export default function StudentActions() {
     }
     
     try {
+      // Получить JWT токен
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        alert('❌ Нет авторизации');
+        return;
+      }
+      
       // Отправляем Telegram уведомление админу
       const response = await fetch('/api/telegram/notify', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({
           type: 'washing_finished',
           full_name: myQueueItem.full_name,
