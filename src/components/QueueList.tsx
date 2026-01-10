@@ -22,6 +22,7 @@ export default function QueueList() {
     cancelWashing,
     markDone,
     isAdmin,
+    isSuperAdmin,
     students,
     machineState,
     transferSelectedToDate,
@@ -32,6 +33,7 @@ export default function QueueList() {
     optimisticUpdateQueueItem,
     banStudent,
     unbanStudent,
+    clearQueue,
   } = useLaundry();
   
   const [tempTimes, setTempTimes] = useState<{ [key: string]: string }>({});
@@ -45,39 +47,32 @@ export default function QueueList() {
   const [editPaymentType, setEditPaymentType] = useState('money');
   const [editDate, setEditDate] = useState('');
   const [openActionFor, setOpenActionFor] = useState<string | null>(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const toggleSelect = (id: string) => {
     setSelectedItems(prev => 
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
-  const openEditModal = (item: any) => {
-    setEditingItem(item);
-    setEditWashCount(item.wash_count || 1);
-    setEditPaymentType(item.payment_type || 'money');
-    setEditDate(item.queue_date || new Date().toISOString().slice(0, 10));
-    setShowEditModal(true);
-  };
 
   // Функция сохранения изменений:
-  // Функция сохранения изменений:
-const handleSaveEdit = async () => {
-  if (!editingItem) return;
+  const handleSaveEdit = async () => {
+    if (!editingItem) return;
   
-  if (!isAdmin) {
-    alert('❌ Только администратор может редактировать записи');
-    return;
-  }
+    if (!isAdmin) {
+      alert('❌ Только администратор может редактировать записи');
+      return;
+    }
   
-  await updateQueueItemDetails(editingItem.id, {
-    wash_count: editWashCount,
-    payment_type: editPaymentType,
-    chosen_date: editDate,
-  });
+    await updateQueueItemDetails(editingItem.id, {
+      wash_count: editWashCount,
+      payment_type: editPaymentType,
+      chosen_date: editDate,
+    });
   
-  setShowEditModal(false);
-  setEditingItem(null);
-};
+    setShowEditModal(false);
+    setEditingItem(null);
+  };
 
   // ✅ Группировка по датам
   const groupQueueByDate = (items: any[]) => {
@@ -257,6 +252,16 @@ const handleSaveEdit = async () => {
         <h2 className="text-xl font-bold text-gray-800">
           <CalendarIcon className="w-5 h-5 inline-block mr-1" />Очередь ({queuedItems.length})
         </h2>
+        {isSuperAdmin && queuedItems.length > 0 && (
+          <button
+            onClick={() => setShowClearConfirm(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-semibold shadow-md transition-all hover:shadow-lg active:scale-95"
+            title="Очистить всю очередь"
+          >
+            <DeleteIcon className="w-4 h-4" />
+            <span className="hidden sm:inline">Очистить</span>
+          </button>
+        )}
       </div>
       
       {/* ✅ Кнопки переноса для админа - вынесены из header */}
@@ -726,6 +731,41 @@ const handleSaveEdit = async () => {
           className="flex-1 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700"
         >
           Сохранить
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{/* Модальное окно подтверждения очистки очереди */}
+{showClearConfirm && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-2xl">
+      <h3 className="text-xl font-bold text-gray-900 mb-4">⚠️ Подтверждение</h3>
+      <p className="text-gray-700 mb-6">
+        Вы уверены, что хотите <strong className="text-red-600">очистить всю очередь</strong>? 
+        Это действие нельзя отменить!
+      </p>
+      <div className="flex gap-3">
+        <button
+          onClick={() => setShowClearConfirm(false)}
+          className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+        >
+          Отмена
+        </button>
+        <button
+          onClick={async () => {
+            try {
+              await clearQueue();
+              setShowClearConfirm(false);
+              alert('✅ Очередь очищена');
+            } catch (err: any) {
+              alert('❌ Ошибка: ' + err.message);
+            }
+          }}
+          className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+        >
+          Очистить
         </button>
       </div>
     </div>

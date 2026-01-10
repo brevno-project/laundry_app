@@ -21,7 +21,6 @@ export default function AdminPanel() {
     students,
     markDone,
     startNext,
-    clearQueue,
     clearOldQueues,
     clearStuckQueues,
     resetStudentRegistration,
@@ -36,7 +35,6 @@ export default function AdminPanel() {
   } = useLaundry();
 
   const [adminKey, setAdminKey] = useState("");
-  const [showConfirmClear, setShowConfirmClear] = useState(false);
   const [showStudents, setShowStudents] = useState(false);
   const [error, setError] = useState("");
 
@@ -127,15 +125,6 @@ export default function AdminPanel() {
     setAdminKey("");
   };
 
-  const handleClearQueueConfirm = async () => {
-    try {
-      await clearQueue();
-      setShowConfirmClear(false);
-      alert("Очередь очищена");
-    } catch (err: any) {
-      alert("Ошибка: " + err.message);
-    }
-  };
 
   const openResetConfirm = (student: Student) => {
     setSelectedStudent(student);
@@ -343,17 +332,6 @@ export default function AdminPanel() {
               </h3>
 
               <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row">
-                {isSuperAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmClear(true)}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700"
-                  >
-                    <DeleteIcon className="h-4 w-4" />
-                    Очистить очередь
-                  </button>
-                )}
-
                 <button
                   type="button"
                   onClick={() => setShowAddStudent(true)}
