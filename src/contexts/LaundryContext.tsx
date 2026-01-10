@@ -467,6 +467,11 @@ const registerStudent = async (
       throw new Error("Студент уже зарегистрирован. Нажмите «Войти».");
     }
 
+    // Проверка длины пароля
+    if (password.length < 6) {
+      throw new Error("Пароль должен быть не менее 6 символов");
+    }
+
     const email = `student-${studentId.slice(0, 8)}@example.com`;
 
     // 1) Создаём auth user
@@ -478,25 +483,59 @@ const registerStudent = async (
           student_id: studentId,
           full_name: student.full_name,
         },
+        emailRedirectTo: undefined, // Отключаем email redirect
       },
     });
 
     let authUser = signUpData?.user;
 
     if (signUpErr) {
+      console.error("SignUp error:", signUpErr);
       const msg = signUpErr.message?.toLowerCase() || "";
-      if (msg.includes("already registered")) {
-        const { data: signInData } = await supabase.auth.signInWithPassword({
+      
+      // Если пользователь уже существует, пробуем войти
+      if (msg.includes("already registered") || msg.includes("user already registered")) {
+        console.log("User already exists, trying to sign in...");
+        const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
+        
+        if (signInErr) {
+          console.error("SignIn error:", signInErr);
+          throw new Error(`Ошибка входа: ${signInErr.message}`);
+        }
+        
         authUser = signInData?.user;
       } else {
-        throw signUpErr;
+        throw new Error(`Ошибка регистрации: ${signUpErr.message}`);
       }
     }
 
-    if (!authUser) throw new Error("Не удалось создать/получить пользователя");
+    // Если user null, но нет ошибки - возможно включен email confirmation
+    // Пробуем войти с этими же credentials
+    if (!authUser && !signUpErr) {
+      console.log("User is null after signUp (email confirmation?), trying to sign in...");
+      const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (signInErr) {
+        console.error("SignIn after null user error:", signInErr);
+        throw new Error("Не удалось войти после регистрации. Возможно, требуется подтверждение email. Обратитесь к администратору.");
+      }
+      
+      authUser = signInData?.user;
+    }
+
+    // Проверяем что пользователь создан
+    if (!authUser) {
+      console.error("No auth user after all attempts");
+      throw new Error("Не удалось создать пользователя. Проверьте настройки Supabase Auth (отключите Email Confirmation).");
+    }
+
+    console.log("Auth user created/retrieved:", authUser.id);
 
     // 2) ВЫЗЫВАЕМ backend API через service-role
     const response = await fetch("/api/student/register", {
