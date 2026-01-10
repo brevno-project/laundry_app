@@ -972,6 +972,32 @@ const joinQueue = async (
   }
 };
 
+  // Вспомогательная функция для получения свежего JWT токена
+  const getFreshToken = async (): Promise<string> => {
+    if (!supabase) throw new Error('Supabase not configured');
+    
+    // Сначала пробуем получить текущую сессию
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    // Если токен истекает в течение 5 минут, обновляем
+    if (session?.expires_at) {
+      const expiresIn = session.expires_at - Math.floor(Date.now() / 1000);
+      if (expiresIn < 300) { // 5 минут
+        const { data: { session: newSession }, error } = await supabase.auth.refreshSession();
+        if (error || !newSession?.access_token) {
+          throw new Error('Failed to refresh session');
+        }
+        return newSession.access_token;
+      }
+    }
+    
+    if (!session?.access_token) {
+      throw new Error('No active session');
+    }
+    
+    return session.access_token;
+  };
+
   // Admin: Изменить статус записи в очереди
   const setQueueStatus = async (queueItemId: string, status: QueueStatus) => {
     if (!isAdmin) return;
@@ -981,18 +1007,15 @@ const joinQueue = async (
     }
 
     try {
-      // ✅ Получаем JWT
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Нет активной сессии');
-      }
+      // ✅ Получаем свежий JWT
+      const token = await getFreshToken();
 
       // ✅ Вызываем API route с JWT
       const response = await fetch('/api/admin/queue/set-status', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ queue_item_id: queueItemId, status }),
       });
@@ -1111,18 +1134,15 @@ const startWashing = async (queueItemId: string) => {
   }
   
   try {
-    // ✅ Получаем JWT
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      throw new Error('Нет активной сессии');
-    }
+    // ✅ Получаем свежий JWT
+    const token = await getFreshToken();
 
     // ✅ Вызываем API route с JWT
     const response = await fetch('/api/admin/queue/start-washing', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ queue_item_id: queueItemId }),
     });
