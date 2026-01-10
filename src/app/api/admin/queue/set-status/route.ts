@@ -42,6 +42,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // ✅ Сохраняем старый статус для проверки machine_state
+    const oldStatus = queueItem.status;
+
     // ✅ Обновляем статус
     const { error: updateError } = await supabaseAdmin
       .from("queue")
@@ -56,17 +59,17 @@ export async function POST(req: NextRequest) {
     }
 
     // ✅ Если меняем статус с washing на другой, нужно обновить machine_state
-    if (queueItem.status === "washing" && status !== "washing") {
-      // Проверяем, есть ли другие записи со статусом washing
+    if (oldStatus === "washing" && status !== "washing") {
+      // Проверяем, есть ли другие записи со статусом washing (после обновления текущей)
       const { data: washingItems, error: washingError } = await supabaseAdmin
         .from("queue")
         .select("id")
         .eq("status", "washing")
-        .neq("id", queue_item_id)
         .limit(1);
 
       // Если нет других стирающих, сбрасываем machine_state
       if (!washingError && (!washingItems || washingItems.length === 0)) {
+        console.log("🔄 Resetting machine_state to idle - no washing items left");
         await supabaseAdmin
           .from("machine_state")
           .upsert({
@@ -75,6 +78,8 @@ export async function POST(req: NextRequest) {
             started_at: null,
             expected_finish_at: null,
           });
+      } else {
+        console.log("⚠️ Not resetting machine_state - other washing items exist:", washingItems?.length);
       }
     }
 
