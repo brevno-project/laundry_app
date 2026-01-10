@@ -82,13 +82,13 @@ export type QueueItem = {
   note?: string;
   admin_message?: string;
   return_key_alert?: boolean;
-  admin_room?: string; // ✅ Комната админа который позвал
+  admin_room?: string | null; // ✅ Комната админа который позвал
   // ✅ Таймеры для каждого этапа
-  ready_at?: string; // Когда позвали за ключом
-  key_issued_at?: string; // Когда выдали ключ
-  washing_started_at?: string; // Когда начал стирать
-  washing_finished_at?: string; // Когда закончил стирать
-  return_requested_at?: string; // Когда попросили вернуть ключ
+  ready_at?: string | null; // Когда позвали за ключом
+  key_issued_at?: string | null; // Когда выдали ключ
+  washing_started_at?: string | null; // Когда начал стирать
+  washing_finished_at?: string | null; // Когда закончил стирать
+  return_requested_at?: string | null; // Когда попросили вернуть ключ
   status: QueueStatus;
   scheduled_for_date: string; // '2025-11-02'
   queue_date: string; // '2025-11-03'

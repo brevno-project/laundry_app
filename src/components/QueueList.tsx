@@ -611,9 +611,9 @@ export default function QueueList() {
                             className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-gray-500 text-white font-semibold"
                             onClick={async () => {
                               await updateQueueItem(item.id, { 
-                                ready_at: undefined,
-                                return_requested_at: undefined,
-                                admin_room: undefined,
+                                ready_at: null,
+                                return_requested_at: null,
+                                admin_room: null,
                                 return_key_alert: false
                               });
                             }}
