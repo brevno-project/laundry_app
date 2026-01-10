@@ -777,15 +777,15 @@ const resetStudentRegistration = async (studentId: string) => {
         // Получаем уникальные user_id
         const userIds = [...new Set((historyData || []).map((item: any) => item.user_id))];
         
-        // Получаем аватары для всех пользователей
+        // Получаем аватары для всех пользователей (по user_id, не по id!)
         const { data: studentsData, error: studentsError } = await supabase
           .from('students')
-          .select('id, avatar_type')
-          .in('id', userIds);
+          .select('user_id, avatar_type')
+          .in('user_id', userIds);
         
         // Создаем мапу user_id -> avatar_type
         const avatarMap = new Map(
-          (studentsData || []).map((student: any) => [student.id, student.avatar_type])
+          (studentsData || []).map((student: any) => [student.user_id, student.avatar_type])
         );
         
         // Добавляем avatar_type к каждой записи истории
