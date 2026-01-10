@@ -12,6 +12,33 @@ export default function HistoryList() {
   
   const displayedHistory = showAll ? history : history.slice(0, 5);
   
+  // Helper functions - defined before useMemo
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatDuration = (start: string, end: string | null | undefined) => {
+    if (!end) return '—';
+    const ms = new Date(end).getTime() - new Date(start).getTime();
+    const minutes = Math.floor(ms / 60000);
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return hours > 0 ? `${hours}ч ${mins}м` : `${mins}м`;
+  };
+
+  const getDurationMinutes = (start: string, end: string | null | undefined) => {
+    if (!end) return 0;
+    const ms = new Date(end).getTime() - new Date(start).getTime();
+    return Math.floor(ms / 60000);
+  };
+
+  const getTimeColor = (minutes: number, yellowZone: number, redZone: number) => {
+    if (minutes >= redZone) return 'red';
+    if (minutes >= yellowZone) return 'yellow';
+    return 'green';
+  };
+  
   // Статистика
   const stats = useMemo(() => {
     if (history.length === 0) return null;
@@ -40,32 +67,6 @@ export default function HistoryList() {
     
     return { totalWashes, avgWashTime, fastestWash, slowestWash };
   }, [history]);
-
-  const formatTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const formatDuration = (start: string, end: string | null | undefined) => {
-    if (!end) return '—';
-    const ms = new Date(end).getTime() - new Date(start).getTime();
-    const minutes = Math.floor(ms / 60000);
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return hours > 0 ? `${hours}ч ${mins}м` : `${mins}м`;
-  };
-
-  const getDurationMinutes = (start: string, end: string | null | undefined) => {
-    if (!end) return 0;
-    const ms = new Date(end).getTime() - new Date(start).getTime();
-    return Math.floor(ms / 60000);
-  };
-
-  const getTimeColor = (minutes: number, yellowZone: number, redZone: number) => {
-    if (minutes >= redZone) return 'red';
-    if (minutes >= yellowZone) return 'yellow';
-    return 'green';
-  };
 
   if (history.length === 0) {
     return (
