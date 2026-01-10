@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCaller, supabaseAdmin } from "../../../_utils/adminAuth";
+import { getCaller, supabaseAdmin, getQueueItemOr404, isTargetSuperAdmin } from "../../../_utils/adminAuth";
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,14 +17,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ✅ Получаем queue item и проверяем владельца
-    const { data: queueItem, error: queueError } = await supabaseAdmin
+    // ✅ Получаем queue item БЕЗ INNER JOIN
+    const { queueItem, error: queueError } = await getQueueItemOr404(queue_item_id);
+    if (queueError) return queueError;
+
+    // ✅ Получаем полную информацию о queue item для проверки статуса
+    const { data: fullQueueItem, error: fullError } = await supabaseAdmin
       .from("queue")
-      .select("id, student_id, status, students!inner(is_super_admin)")
+      .select("status")
       .eq("id", queue_item_id)
       .single();
 
-    if (queueError || !queueItem) {
+    if (fullError || !fullQueueItem) {
       return NextResponse.json(
         { error: "Queue item not found" },
         { status: 404 }
@@ -32,16 +36,18 @@ export async function POST(req: NextRequest) {
     }
 
     // ✅ Проверка статуса
-    if (queueItem.status !== "washing") {
+    if (fullQueueItem.status !== "washing") {
       return NextResponse.json(
         { error: "Can only cancel washing items" },
         { status: 400 }
       );
     }
 
+    // ✅ Проверяем, супер-админ ли цель
+    const targetIsSuperAdmin = await isTargetSuperAdmin(queueItem.student_id);
+
     // ✅ Защита: обычный админ не может трогать очередь суперадмина
-    const targetStudent = queueItem.students as any;
-    if (targetStudent?.is_super_admin && !caller.is_super_admin) {
+    if (targetIsSuperAdmin && !caller.is_super_admin) {
       return NextResponse.json(
         { error: "Only super admin can modify super admin's queue items" },
         { status: 403 }

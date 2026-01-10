@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCaller, supabaseAdmin } from "../../../_utils/adminAuth";
+import { getCaller, supabaseAdmin, getQueueItemOr404, isTargetSuperAdmin } from "../../../_utils/adminAuth";
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,23 +17,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ✅ Получаем queue item и проверяем владельца
-    const { data: queueItem, error: queueError } = await supabaseAdmin
-      .from("queue")
-      .select("id, student_id, students!inner(is_super_admin)")
-      .eq("id", queue_item_id)
-      .single();
+    // ✅ Получаем queue item БЕЗ INNER JOIN
+    const { queueItem, error: queueError } = await getQueueItemOr404(queue_item_id);
+    if (queueError) return queueError;
 
-    if (queueError || !queueItem) {
-      return NextResponse.json(
-        { error: "Queue item not found" },
-        { status: 404 }
-      );
-    }
+    // ✅ Проверяем, супер-админ ли цель
+    const targetIsSuperAdmin = await isTargetSuperAdmin(queueItem.student_id);
 
     // ✅ Защита: обычный админ не может удалять очередь суперадмина
-    const targetStudent = queueItem.students as any;
-    if (targetStudent?.is_super_admin && !caller.is_super_admin) {
+    if (targetIsSuperAdmin && !caller.is_super_admin) {
       return NextResponse.json(
         { error: "Only super admin can remove super admin's queue items" },
         { status: 403 }

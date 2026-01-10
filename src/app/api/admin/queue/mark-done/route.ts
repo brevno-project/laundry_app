@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCaller, supabaseAdmin } from "../../../_utils/adminAuth";
+import { getCaller, supabaseAdmin, isTargetSuperAdmin } from "../../../_utils/adminAuth";
 import { v4 as uuidv4 } from "uuid";
 
 export async function POST(req: NextRequest) {
@@ -18,12 +18,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ✅ Получаем queue item и проверяем владельца
+    // ✅ Получаем queue item БЕЗ INNER JOIN
     const { data: queueItem, error: queueError } = await supabaseAdmin
       .from("queue")
-      .select("*, students!inner(is_super_admin)")
+      .select("*")
       .eq("id", queue_item_id)
-      .single();
+      .maybeSingle();
 
     if (queueError || !queueItem) {
       return NextResponse.json(
@@ -32,9 +32,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // ✅ Проверяем, супер-админ ли цель
+    const targetIsSuperAdmin = await isTargetSuperAdmin(queueItem.student_id);
+
     // ✅ Защита: обычный админ не может трогать очередь суперадмина
-    const targetStudent = queueItem.students as any;
-    if (targetStudent?.is_super_admin && !caller.is_super_admin) {
+    if (targetIsSuperAdmin && !caller.is_super_admin) {
       return NextResponse.json(
         { error: "Only super admin can modify super admin's queue items" },
         { status: 403 }

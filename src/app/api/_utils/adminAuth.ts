@@ -201,4 +201,43 @@ export async function canModifyQueueItem(
   };
 }
 
+/**
+ * Безопасно получает queue item без INNER JOIN
+ * Возвращает 404 если не найден
+ */
+export async function getQueueItemOr404(queue_item_id: string) {
+  const { data, error } = await supabaseAdmin
+    .from("queue")
+    .select("id, student_id")
+    .eq("id", queue_item_id)
+    .maybeSingle();
+
+  if (error || !data) {
+    return { 
+      error: NextResponse.json(
+        { error: "Queue item not found" }, 
+        { status: 404 }
+      ) 
+    };
+  }
+
+  return { queueItem: data };
+}
+
+/**
+ * Проверяет, является ли студент суперадмином
+ * Возвращает false если студент не найден или student_id пустой
+ */
+export async function isTargetSuperAdmin(student_id: string | null | undefined): Promise<boolean> {
+  if (!student_id) return false;
+  
+  const { data } = await supabaseAdmin
+    .from("students")
+    .select("is_super_admin")
+    .eq("id", student_id)
+    .maybeSingle();
+  
+  return !!data?.is_super_admin;
+}
+
 export { supabaseAdmin };
