@@ -21,6 +21,27 @@ export async function POST(req: NextRequest) {
     const { allowed, error: modifyError } = await canModifyStudent(caller, student_id);
     if (!allowed) return modifyError;
 
+    // ✅ Получить user_id перед сбросом
+    const { data: studentData } = await supabaseAdmin
+      .from("students")
+      .select("user_id")
+      .eq("id", student_id)
+      .single();
+
+    // ✅ Удалить пользователя из Supabase Auth (если есть user_id)
+    if (studentData?.user_id) {
+      const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(
+        studentData.user_id
+      );
+      
+      if (deleteAuthError) {
+        console.error("⚠️ Failed to delete user from Auth:", deleteAuthError.message);
+        // Продолжаем выполнение - не критично
+      } else {
+        console.log("✅ Deleted user from Auth:", studentData.user_id);
+      }
+    }
+
     // ✅ Обнуляем user_id в очереди (необязательно, но безопасно)
     await supabaseAdmin
       .from("queue")
