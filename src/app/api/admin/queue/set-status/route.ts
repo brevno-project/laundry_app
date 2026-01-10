@@ -17,9 +17,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ✅ Получаем queue item БЕЗ INNER JOIN
-    const { queueItem, error: queueError } = await getQueueItemOr404(queue_item_id);
-    if (queueError) return queueError;
+    // ✅ Получаем queue item с полными данными
+    const { data: queueItem, error: queueError } = await supabaseAdmin
+      .from("queue")
+      .select("*")
+      .eq("id", queue_item_id)
+      .maybeSingle();
+
+    if (queueError || !queueItem) {
+      return NextResponse.json(
+        { error: "Queue item not found" },
+        { status: 404 }
+      );
+    }
 
     // ✅ Проверяем, супер-админ ли цель
     const targetIsSuperAdmin = await isTargetSuperAdmin(queueItem.student_id);
@@ -43,6 +53,29 @@ export async function POST(req: NextRequest) {
         { error: updateError.message },
         { status: 500 }
       );
+    }
+
+    // ✅ Если меняем статус с washing на другой, нужно обновить machine_state
+    if (queueItem.status === "washing" && status !== "washing") {
+      // Проверяем, есть ли другие записи со статусом washing
+      const { data: washingItems, error: washingError } = await supabaseAdmin
+        .from("queue")
+        .select("id")
+        .eq("status", "washing")
+        .neq("id", queue_item_id)
+        .limit(1);
+
+      // Если нет других стирающих, сбрасываем machine_state
+      if (!washingError && (!washingItems || washingItems.length === 0)) {
+        await supabaseAdmin
+          .from("machine_state")
+          .upsert({
+            status: "idle",
+            current_queue_item_id: null,
+            started_at: null,
+            expected_finish_at: null,
+          });
+      }
     }
 
     return NextResponse.json({ success: true });

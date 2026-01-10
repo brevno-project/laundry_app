@@ -80,21 +80,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ✅ Сбрасываем состояние машины
-    const { error: machineError } = await supabaseAdmin
-      .from("machine_state")
-      .upsert({
-        status: "idle",
-        current_queue_item_id: null,
-        started_at: null,
-        expected_finish_at: null,
-      });
+    // ✅ Обновляем machine_state только если это был стирающий
+    if (queueItem.status === "washing") {
+      // Проверяем, есть ли другие записи со статусом washing
+      const { data: washingItems, error: washingError } = await supabaseAdmin
+        .from("queue")
+        .select("id")
+        .eq("status", "washing")
+        .limit(1);
 
-    if (machineError) {
-      return NextResponse.json(
-        { error: machineError.message },
-        { status: 500 }
-      );
+      // Если нет других стирающих, сбрасываем machine_state
+      if (!washingError && (!washingItems || washingItems.length === 0)) {
+        await supabaseAdmin
+          .from("machine_state")
+          .upsert({
+            status: "idle",
+            current_queue_item_id: null,
+            started_at: null,
+            expected_finish_at: null,
+          });
+      } else if (washingItems && washingItems.length > 0) {
+        // Если есть другие стирающие, обновляем current_queue_item_id на первого
+        await supabaseAdmin
+          .from("machine_state")
+          .upsert({
+            status: "washing",
+            current_queue_item_id: washingItems[0].id,
+            started_at: new Date().toISOString(),
+            expected_finish_at: null,
+          });
+      }
     }
 
     return NextResponse.json({ success: true });
