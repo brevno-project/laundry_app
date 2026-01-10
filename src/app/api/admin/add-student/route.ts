@@ -47,6 +47,15 @@ export async function POST(req: NextRequest) {
 
     if (insertError) {
       console.error("Error inserting student:", insertError);
+      
+      // Проверка на дубликат
+      if (insertError.code === '23505' || insertError.message?.includes('unique_student_fullname')) {
+        return NextResponse.json(
+          { error: "Студент с таким ФИО и комнатой уже существует" },
+          { status: 409 }
+        );
+      }
+      
       return NextResponse.json(
         { error: insertError.message },
         { status: 500 }

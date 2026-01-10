@@ -12,6 +12,7 @@ import {
 } from "@/components/Icons";
 import ActionMenu from "@/components/ActionMenu";
 import Avatar, { AvatarType } from "@/components/Avatar";
+import AddStudentModal from "@/components/AddStudentModal";
 export default function AdminPanel() {
   const {
     user,
@@ -52,11 +53,6 @@ export default function AdminPanel() {
   const [queuePaymentType, setQueuePaymentType] = useState("money");
   const [queueDate, setQueueDate] = useState("");
 
-  // Форма добавления студента
-  const [newFirstName, setNewFirstName] = useState("");
-  const [newLastName, setNewLastName] = useState("");
-  const [newMiddleName, setNewMiddleName] = useState("");
-  const [newRoom, setNewRoom] = useState("");
 
   // Форма редактирования студента
   const [editFirstname, setEditFirstname] = useState("");
@@ -145,30 +141,6 @@ export default function AdminPanel() {
     }
   };
 
-  const handleAddStudent = async () => {
-    if (!newFirstName.trim()) {
-      alert("Введите имя");
-      return;
-    }
-
-    try {
-      await addStudent(
-        newFirstName.trim(),
-        newLastName.trim() || "",
-        newRoom.trim() || "",
-        newMiddleName.trim() || ""
-      );
-      
-      setNewFirstName("");
-      setNewLastName("");
-      setNewMiddleName("");
-      setNewRoom("");
-      setShowAddStudent(false);
-      alert("✅ Студент добавлен");
-    } catch (err: any) {
-      alert("❌ Ошибка: " + err.message);
-    }
-  };
 
   const handleEditStudent = async () => {
     if (!selectedStudent) return;
@@ -470,57 +442,7 @@ export default function AdminPanel() {
 
       {/* Добавить студента */}
       {showAddStudent && (
-        <Modal onClose={() => setShowAddStudent(false)}>
-          <h3 className="mb-4 text-xl font-bold text-gray-900">
-            Добавить студента
-          </h3>
-          <div className="space-y-3">
-            <input
-              type="text"
-              value={newFirstName}
-              onChange={(e) => setNewFirstName(e.target.value)}
-              placeholder="Имя *"
-              className="w-full rounded-lg border-2 border-gray-300 p-3 text-gray-900"
-            />
-            <input
-              type="text"
-              value={newLastName}
-              onChange={(e) => setNewLastName(e.target.value)}
-              placeholder="Фамилия"
-              className="w-full rounded-lg border-2 border-gray-300 p-3 text-gray-900"
-            />
-            <input
-              type="text"
-              value={newMiddleName}
-              onChange={(e) => setNewMiddleName(e.target.value)}
-              placeholder="Отчество"
-              className="w-full rounded-lg border-2 border-gray-300 p-3 text-gray-900"
-            />
-            <input
-              type="text"
-              value={newRoom}
-              onChange={(e) => setNewRoom(e.target.value)}
-              placeholder="Комната"
-              className="w-full rounded-lg border-2 border-gray-300 p-3 text-gray-900"
-            />
-          </div>
-          <div className="mt-4 flex gap-2">
-            <button
-              type="button"
-              onClick={() => setShowAddStudent(false)}
-              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
-            >
-              Отмена
-            </button>
-            <button
-              type="button"
-              onClick={handleAddStudent}
-              className="flex-1 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
-            >
-              Добавить
-            </button>
-          </div>
-        </Modal>
+        <AddStudentModal onClose={() => setShowAddStudent(false)} />
       )}
 
       {/* Редактировать студента */}

@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Student } from '@/types';
 import { ListIcon, RoomIcon, DoorIcon, TelegramIcon, CheckIcon, CloseIcon, EditIcon, DeleteIcon, PeopleIcon, EyeIcon } from '@/components/Icons';
 import Avatar, { AvatarType } from '@/components/Avatar';
+import AddStudentModal from '@/components/AddStudentModal';
 
 export default function StudentsList() {
   const { students, isAdmin, user, updateStudent, addStudent, deleteStudent } = useLaundry();
@@ -18,10 +19,6 @@ export default function StudentsList() {
   
   // Состояния для добавления студента
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newFirstName, setNewFirstName] = useState('');
-  const [newLastName, setNewLastName] = useState('');
-  const [newMiddleName, setNewMiddleName] = useState('');
-  const [newRoom, setNewRoom] = useState('');
   
   // Состояние для удаления
   const [deletingStudent, setDeletingStudent] = useState<Student | null>(null);
@@ -92,45 +89,6 @@ export default function StudentsList() {
     }
   };
   
-  const handleAddStudent = async () => {
-    if (!newFirstName.trim()) {
-      alert('❌ Укажите имя');
-      return;
-    }
-  
-    if (!newRoom.trim()) {
-      alert('❌ Укажите комнату');
-      return;
-    }
-  
-    const room = newRoom.trim().toUpperCase();
-  
-    // Валидный формат: A101–A999, B101–B999
-    const roomRegex = /^[A-B][1-9][0-9]{2}$/;
-  
-    if (!roomRegex.test(room)) {
-      alert('❌ Формат комнаты неверный.\nПример: A301, B412.\nДопустимы только блоки A и B.');
-      return;
-    }
-  
-    try {
-      await addStudent(
-        newFirstName.trim(),
-        newLastName.trim() || "",
-        room,
-        newMiddleName.trim() || ""
-      );
-      
-      setShowAddModal(false);
-      setNewFirstName('');
-      setNewLastName('');
-      setNewMiddleName('');
-      setNewRoom('');
-      alert('✅ Студент добавлен!');
-    } catch (error) {
-      alert('❌ Ошибка добавления');
-    }
-  };
   
   
   const handleDeleteStudent = async () => {
@@ -515,80 +473,7 @@ export default function StudentsList() {
       
       {/* Модальное окно добавления студента */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">➕ Добавить студента</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold mb-2 text-gray-900">Комната *</label>
-                <input
-                  type="text"
-                  value={newRoom}
-                  onChange={(e) => setNewRoom(e.target.value.toUpperCase())}
-                  placeholder="A301 или B402"
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
-                  maxLength={4}
-                />
-                <p className="text-xs text-gray-500 mt-1">Только блоки A или B (например: A301, B402)</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-bold mb-2 text-gray-900">Фамилия *</label>
-                <input
-                  type="text"
-                  value={newLastName}
-                  onChange={(e) => setNewLastName(e.target.value)}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
-                  placeholder="Иванов"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-bold mb-2 text-gray-900">Имя *</label>
-                <input
-                  type="text"
-                  value={newFirstName}
-                  onChange={(e) => setNewFirstName(e.target.value)}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
-                  placeholder="Иван"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-bold mb-2 text-gray-900">Отчество</label>
-                <input
-                  type="text"
-                  value={newMiddleName}
-                  onChange={(e) => setNewMiddleName(e.target.value)}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
-                  placeholder="Иванович"
-                />
-              </div>
-            </div>
-            
-            <div className="flex gap-2 mt-6">
-              <button
-                onClick={() => {
-                  setShowAddModal(false);
-                  setNewFirstName('');
-                  setNewLastName('');
-                  setNewMiddleName('');
-                  setNewRoom('');
-                }}
-                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
-              >
-                Отмена
-              </button>
-              <button
-                onClick={handleAddStudent}
-                className="flex-1 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700"
-              >
-                ➕ Добавить
-              </button>
-            </div>
-          </div>
-        </div>
+        <AddStudentModal onClose={() => setShowAddModal(false)} />
       )}
       
       {/* Модальное окно удаления студента */}
