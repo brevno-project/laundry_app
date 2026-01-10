@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-);
+const supabaseUrl =
+  process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl) throw new Error("Missing SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL)");
+if (!serviceKey) throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY");
+
+const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+  },
+});
 
 export interface Caller {
   user_id: string;
@@ -39,7 +49,7 @@ export async function getCaller(req: NextRequest): Promise<{ caller: Caller; err
   if (authError || !user) {
     return {
       error: NextResponse.json(
-        { error: "Invalid or expired token" },
+        { error: "Invalid token", details: authError?.message ?? null },
         { status: 401 }
       ),
     };
