@@ -21,42 +21,23 @@ export async function POST(req: NextRequest) {
     const { allowed, error: modifyError } = await canModifyStudent(caller, student_id);
     if (!allowed) return modifyError;
 
-    // ✅ Получить user_id перед сбросом
-    const { data: studentData } = await supabaseAdmin
-      .from("students")
-      .select("user_id")
-      .eq("id", student_id)
-      .single();
-
-    // ✅ Удалить пользователя из Supabase Auth (если есть user_id)
-    if (studentData?.user_id) {
-      const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(
-        studentData.user_id
-      );
-      
-      if (deleteAuthError) {
-        console.error("⚠️ Failed to delete user from Auth:", deleteAuthError.message);
-        // Продолжаем выполнение - не критично
-      } else {
-        console.log("✅ Deleted user from Auth:", studentData.user_id);
-      }
-    }
-
-    // ✅ Обнуляем user_id в очереди (необязательно, но безопасно)
+    // ✅ Удаляем активные записи очереди студента (выкидываем из очереди)
     await supabaseAdmin
       .from("queue")
-      .update({ user_id: null })
-      .eq("student_id", student_id);
+      .delete()
+      .eq("student_id", student_id)
+      .in("status", ["waiting", "ready", "key_issued", "washing", "returning_key"]);
 
-    // ✅ Сбрасываем регистрацию
+    // ✅ Сбрасываем только профильные данные (НЕ трогаем user_id!)
+    // user_id остаётся → пользователь может войти тем же паролем
     const { error: updateError } = await supabaseAdmin
       .from("students")
       .update({
         is_registered: false,
         registered_at: null,
-        user_id: null,
         telegram_chat_id: null,
         avatar_type: "default",
+        // user_id НЕ обнуляем - оставляем связь Auth → students
       })
       .eq("id", student_id);
 
