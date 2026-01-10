@@ -764,7 +764,7 @@ const resetStudentRegistration = async (studentId: string) => {
       }
       
       try {
-        // Получаем историю с аватарами из связанной таблицы students
+        // Получаем историю с аватарами из связанной таблицы students (LEFT JOIN)
         const { data, error } = await supabase
           .from('history')
           .select(`
@@ -778,7 +778,7 @@ const resetStudentRegistration = async (studentId: string) => {
             key_issued_at, 
             washing_started_at, 
             return_requested_at,
-            students!inner(avatar_type)
+            students(avatar_type)
           `)
           .order('finished_at', { ascending: false })
           .limit(100);
