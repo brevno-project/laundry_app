@@ -53,9 +53,9 @@ export default function AvatarSelector() {
       await loadStudents();
       await fetchQueue();
       await fetchHistory();
-      alert('✅ Аватар обновлен');
+      alert('✅ Аватар обновлен' + " \u2705");
     } catch (error) {
-      alert('❌ Ошибка обновления аватара');
+      alert('❌ Ошибка обновления аватара' + " \u2705");
     } finally {
       setIsSaving(false);
     }

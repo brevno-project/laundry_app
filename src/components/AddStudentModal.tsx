@@ -47,20 +47,20 @@ export default function AddStudentModal({ onClose }: AddStudentModalProps) {
   const handleSubmit = async () => {
     // Валидация имени
     if (!firstName.trim()) {
-      alert('❌ Укажите имя');
+      alert('❌ Укажите имя' + " \u2705");
       return;
     }
 
     // Валидация фамилии
     if (!lastName.trim()) {
-      alert('❌ Укажите фамилию');
+      alert('❌ Укажите фамилию' + " \u2705");
       return;
     }
 
     // Валидация комнаты
     const roomValidation = validateRoom(room);
     if (!roomValidation.valid) {
-      alert(`❌ ${roomValidation.error}`);
+      alert(`❌ ${roomValidation.error}` + " \u2705");
       return;
     }
 
@@ -75,16 +75,16 @@ export default function AddStudentModal({ onClose }: AddStudentModalProps) {
         middleName.trim() || ""
       );
       
-      alert('✅ Студент добавлен!');
+      alert('✅ Студент добавлен!' + " \u2705");
       onClose();
     } catch (error: any) {
       console.error('Error adding student:', error);
       
       // Проверка на дубликат
       if (error.message?.includes('duplicate key') || error.message?.includes('unique_student_fullname')) {
-        alert('❌ Студент с таким ФИО и комнатой уже существует');
+        alert('❌ Студент с таким ФИО и комнатой уже существует' + " \u2705");
       } else {
-        alert('❌ Ошибка добавления: ' + (error.message || 'Неизвестная ошибка'));
+        alert('❌ Ошибка добавления: ' + (error.message || 'Неизвестная ошибка') + " \u2705");
       }
     } finally {
       setIsSubmitting(false);

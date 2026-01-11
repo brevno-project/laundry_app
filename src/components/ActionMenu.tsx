@@ -58,6 +58,13 @@ export default function ActionMenu({
   const targetIsAdmin = !!student.is_admin;
   const targetIsSuperAdmin = !!student.is_super_admin;
   const targetIsBanned = !!student.is_banned;
+  const telegramChatId =
+    typeof student.telegram_chat_id === "string"
+      ? student.telegram_chat_id.trim()
+      : "";
+  const hasTelegram = !!telegramChatId && !!student.is_registered && !student.is_banned;
+
+  if (targetIsSuperAdmin && !isSelf) return null;
 
   function can(action: ActionKey): boolean {
     // Суперадмин
@@ -220,7 +227,7 @@ export default function ActionMenu({
                   )}
                   {student.is_registered && <Badge color="green">Зарегистрирован</Badge>}
                   {student.is_banned && <Badge color="red">Забанен</Badge>}
-                  {student.telegram_chat_id && <Badge color="blue">Telegram</Badge>}
+                  {hasTelegram && <Badge color="blue">Telegram</Badge>}
                 </div>
               </div>
             </div>

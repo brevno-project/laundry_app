@@ -114,7 +114,7 @@ export default function PasswordChanger() {
           <label className="block text-sm font-bold mb-1 text-gray-900">
             Текущий пароль
           </label>
-          <div className="relative">
+          <div className="flex items-stretch gap-2">
             <input
               type={showCurrent ? "text" : "password"}
               value={currentPassword}
@@ -123,13 +123,13 @@ export default function PasswordChanger() {
                 setError('');
                 setSuccess('');
               }}
-              className="w-full rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-3 pr-16 text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              className="flex-1 rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-3 text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
               placeholder="Введите текущий пароль"
             />
             <button
               type="button"
               onClick={() => setShowCurrent(!showCurrent)}
-              className="absolute inset-y-0 right-3 flex items-center text-xs font-semibold text-gray-700 hover:text-gray-900"
+              className="px-3 rounded-lg border border-gray-300 text-xs font-semibold text-gray-700 hover:text-gray-900 hover:border-gray-400"
             >
               {showCurrent ? "Скрыть" : "Показать"}
             </button>
@@ -141,7 +141,7 @@ export default function PasswordChanger() {
           <label className="block text-sm font-bold mb-1 text-gray-900">
             Новый пароль
           </label>
-          <div className="relative">
+          <div className="flex items-stretch gap-2">
             <input
               type={showNew ? "text" : "password"}
               value={newPassword}
@@ -150,13 +150,13 @@ export default function PasswordChanger() {
                 setError('');
                 setSuccess('');
               }}
-              className="w-full rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-3 pr-16 text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              className="flex-1 rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-3 text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
               placeholder="Введите новый пароль (минимум 6 символов)"
             />
             <button
               type="button"
               onClick={() => setShowNew(!showNew)}
-              className="absolute inset-y-0 right-3 flex items-center text-xs font-semibold text-gray-700 hover:text-gray-900"
+              className="px-3 rounded-lg border border-gray-300 text-xs font-semibold text-gray-700 hover:text-gray-900 hover:border-gray-400"
             >
               {showNew ? "Скрыть" : "Показать"}
             </button>
@@ -168,7 +168,7 @@ export default function PasswordChanger() {
           <label className="block text-sm font-bold mb-1 text-gray-900">
             Подтвердите новый пароль
           </label>
-          <div className="relative">
+          <div className="flex items-stretch gap-2">
             <input
               type={showConfirm ? "text" : "password"}
               value={confirmPassword}
@@ -177,13 +177,13 @@ export default function PasswordChanger() {
                 setError('');
                 setSuccess('');
               }}
-              className="w-full rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-3 pr-16 text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              className="flex-1 rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-3 text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
               placeholder="Повторите новый пароль"
             />
             <button
               type="button"
               onClick={() => setShowConfirm(!showConfirm)}
-              className="absolute inset-y-0 right-3 flex items-center text-xs font-semibold text-gray-700 hover:text-gray-900"
+              className="px-3 rounded-lg border border-gray-300 text-xs font-semibold text-gray-700 hover:text-gray-900 hover:border-gray-400"
             >
               {showConfirm ? "Скрыть" : "Показать"}
             </button>

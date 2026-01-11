@@ -86,6 +86,7 @@ export type QueueItem = {
   // ✅ Таймеры для каждого этапа
   ready_at?: string | null; // Когда позвали за ключом
   key_issued_at?: string | null; // Когда выдали ключ
+  key_lost?: boolean; // Потерян ли ключ
   washing_started_at?: string | null; // Когда начал стирать
   washing_finished_at?: string | null; // Когда закончил стирать
   return_requested_at?: string | null; // Когда попросили вернуть ключ
@@ -135,6 +136,8 @@ export type TelegramNotification = {
     | 'admin_key_issued'
     | 'admin_return_key'
     | 'key_issued'
+    | 'key_lost'
+    | 'key_found'
     | 'washing_started_by_student'
     | 'washing_finished'
     | 'return_key_reminder'

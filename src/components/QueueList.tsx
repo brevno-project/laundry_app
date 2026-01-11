@@ -56,12 +56,36 @@ export default function QueueList() {
     );
   };
 
+  // Функция для переключения статуса потери ключа
+  const toggleKeyLost = async (itemId: string, currentKeyLost: boolean, studentName: string, studentRoom: string, studentId: string) => {
+    if (!isAdmin) {
+      alert('❌ Только администратор может изменять статус ключа' + " \u2705");
+      return;
+    }
+    
+    try {
+      await updateQueueItem(itemId, { 
+        key_lost: !currentKeyLost
+      });
+      
+      // Отправляем уведомление о потере/возврате ключа
+      await sendTelegramNotification({
+        type: !currentKeyLost ? 'key_lost' : 'key_found',
+        full_name: studentName,
+        room: studentRoom,
+        student_id: studentId,
+      });
+    } catch (error) {
+      console.error('❌ Error in toggleKeyLost:', error);
+    }
+  };
+
   // Функция сохранения изменений:
   const handleSaveEdit = async () => {
     if (!editingItem) return;
   
     if (!isAdmin) {
-      alert('❌ Только администратор может редактировать записи');
+      alert('❌ Только администратор может редактировать записи' + " \u2705");
       return;
     }
   
@@ -138,7 +162,7 @@ export default function QueueList() {
   return dates;
 };
     // Функция для получения цвета и текста статуса с SVG иконками
-    const getStatusDisplay = (status: QueueStatus) => {
+    const getStatusDisplay = (status: QueueStatus, item?: any) => {
       switch(status) {
         case QueueStatus.WAITING:
           return { 
@@ -166,15 +190,17 @@ export default function QueueList() {
           };
         case QueueStatus.KEY_ISSUED:
           return { 
-            bg: 'bg-blue-50', 
-            text: 'text-blue-900', 
+            bg: item?.key_lost ? 'bg-red-50' : 'bg-blue-50', 
+            text: item?.key_lost ? 'text-red-900' : 'text-blue-900', 
             badge: (
               <span className="flex items-center gap-1.5">
                 <KeyIcon className="w-4 h-4" />
-                КЛЮЧ ПОЛУЧЕН
+                {item?.key_lost ? 'КЛЮЧ ПОТЕРЯН' : 'КЛЮЧ ПОЛУЧЕН'}
               </span>
             ), 
-            badgeColor: 'bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold shadow-md' 
+            badgeColor: item?.key_lost 
+              ? 'bg-gradient-to-r from-red-400 to-red-500 text-white font-bold shadow-md animate-pulse' 
+              : 'bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold shadow-md'
           };
         case QueueStatus.WASHING:
           return { 
@@ -337,7 +363,7 @@ export default function QueueList() {
             <div className="space-y-3">
             {groupedQueue[dateKey].map((item: any, index: number) => {
                 const isCurrentUser = user && item.student_id === user.student_id;
-                const statusDisplay = getStatusDisplay(item.status);
+                const statusDisplay = getStatusDisplay(item.status, item);
                 const globalIndex = queuedItems.findIndex((q: any) => q.id === item.id);
                 // Найти студента по item.student_id и проверить is_super_admin
                 const targetStudent = students.find(s => s.id === item.student_id);
@@ -412,7 +438,7 @@ export default function QueueList() {
                     {/* ✅ Таймеры - показываем всю историю */}
                     {(item.ready_at || item.key_issued_at || item.washing_started_at || item.return_requested_at) && (
                       <div className="flex flex-wrap gap-2 mb-2">
-                        {item.ready_at && (
+                        {item.ready_at && item.status !== QueueStatus.READY && (
                           <Timer 
                             startTime={item.ready_at} 
                             endTime={item.key_issued_at || (item.status !== QueueStatus.READY ? new Date().toISOString() : undefined)}
@@ -420,7 +446,7 @@ export default function QueueList() {
                             color="yellow" 
                           />
                         )}
-                        {item.key_issued_at && (
+                        {item.key_issued_at && item.status !== QueueStatus.KEY_ISSUED && (
                           <Timer 
                             startTime={item.key_issued_at} 
                             endTime={item.washing_started_at || (item.status !== QueueStatus.KEY_ISSUED ? new Date().toISOString() : undefined)}
@@ -428,7 +454,7 @@ export default function QueueList() {
                             color="blue" 
                           />
                         )}
-                        {item.washing_started_at && (
+                        {item.washing_started_at && item.status !== QueueStatus.WASHING && (
                           <Timer 
                             startTime={item.washing_started_at} 
                             endTime={item.return_requested_at || item.finished_at || (item.status !== QueueStatus.WASHING ? new Date().toISOString() : undefined)}
@@ -436,7 +462,7 @@ export default function QueueList() {
                             color="green" 
                           />
                         )}
-                        {item.return_requested_at && (
+                        {item.return_requested_at && item.status !== QueueStatus.RETURNING_KEY && (
                           <Timer 
                             startTime={item.return_requested_at} 
                             endTime={item.finished_at || (item.status !== QueueStatus.RETURNING_KEY ? new Date().toISOString() : undefined)}
@@ -813,9 +839,9 @@ export default function QueueList() {
             try {
               await clearQueue();
               setShowClearConfirm(false);
-              alert('✅ Очередь очищена');
+              alert('✅ Очередь очищена' + " \u2705");
             } catch (err: any) {
-              alert('❌ Ошибка: ' + err.message);
+              alert('❌ Ошибка: ' + err.message + " \u2705");
             }
           }}
           className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"

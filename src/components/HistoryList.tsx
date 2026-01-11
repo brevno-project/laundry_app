@@ -131,6 +131,38 @@ export default function HistoryList() {
                   </div>
                 </div>
 
+                {item.washing_started_at && (
+                  <div className="bg-white rounded-xl p-3 border-2 border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
+                          <ClockIcon className="w-4 h-4 text-white" />
+                        </div>
+                        <span className="text-sm font-medium text-gray-700">Wash start</span>
+                      </div>
+                      <span className="text-lg font-bold text-gray-900">
+                        {formatTime(item.washing_started_at)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {(item.return_requested_at || item.finished_at) && (
+                  <div className="bg-white rounded-xl p-3 border-2 border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
+                          <CheckIcon className="w-4 h-4 text-white" />
+                        </div>
+                        <span className="text-sm font-medium text-gray-700">Wash end</span>
+                      </div>
+                      <span className="text-lg font-bold text-gray-900">
+                        {formatTime(item.return_requested_at || item.finished_at)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Key Pickup Timer (before washing) */}
                 {item.started_at && item.washing_started_at && (() => {
                   const keyPickupMinutes = getDurationMinutes(item.started_at, item.washing_started_at);

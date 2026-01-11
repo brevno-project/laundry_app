@@ -9,6 +9,7 @@ import {
   CloseIcon,
   EditIcon,
   PeopleIcon,
+  EyeIcon,
 } from "@/components/Icons";
 import ActionMenu from "@/components/ActionMenu";
 import Avatar, { AvatarType } from "@/components/Avatar";
@@ -38,6 +39,7 @@ export default function AdminPanel() {
   const [adminKey, setAdminKey] = useState("");
   const [showStudents, setShowStudents] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   // Модальные окна
   const [showAddStudent, setShowAddStudent] = useState(false);
@@ -95,6 +97,11 @@ export default function AdminPanel() {
     return dates;
   };
 
+  const hasTelegram = (student: Student) => {
+    const chat = typeof student.telegram_chat_id === "string" ? student.telegram_chat_id.trim() : "";
+    return !!chat && !!student.is_registered && !student.is_banned;
+  };
+
   // Фильтрация студентов
   const filteredStudents = students.filter((student) => {
     const q = searchQuery.toLowerCase();
@@ -135,9 +142,9 @@ export default function AdminPanel() {
       await resetStudentRegistration(selectedStudent.id);
       setShowResetConfirm(false);
       setSelectedStudent(null);
-      alert("Регистрация сброшена");
+      alert("Регистрация сброшена" + " \u2705");
     } catch (err: any) {
-      alert("Ошибка сброса регистрации");
+      alert("Ошибка сброса регистрации" + " \u2705");
     }
   };
 
@@ -150,16 +157,17 @@ export default function AdminPanel() {
         first_name: editFirstname || undefined,
         last_name: editLastname || undefined,
         room: editRoom || undefined,
+        can_view_students: isSuperAdmin ? editCanViewStudents : undefined,
       });
       setShowEditStudent(false);
       setSelectedStudent(null);
-      alert("Данные обновлены");
+      setNotice({ type: "success", message: "������� ��������." });
     } catch (err: any) {
-      alert("Ошибка: " + err.message);
+      setNotice({ type: "error", message: "������ ���������� ��������." });
     }
   };
 
-  const handleBanStudent = async () => {
+  const handleBanStudent = async () => { = async () => {
     if (!selectedStudent) return;
 
     try {
@@ -167,18 +175,18 @@ export default function AdminPanel() {
       setShowBanStudent(false);
       setSelectedStudent(null);
       setBanReason("");
-      alert("Студент забанен");
+      alert("Студент забанен" + " \u2705");
     } catch (err: any) {
-      alert("Ошибка: " + err.message);
+      alert("Ошибка: " + err.message + " \u2705");
     }
   };
 
   const handleUnbanStudent = async (studentId: string) => {
     try {
       await unbanStudent(studentId);
-      alert("Студент разбанен");
+      alert("Студент разбанен" + " \u2705");
     } catch (err: any) {
-      alert("Ошибка: " + err.message);
+      alert("Ошибка: " + err.message + " \u2705");
     }
   };
 
@@ -189,9 +197,9 @@ export default function AdminPanel() {
       await deleteStudent(selectedStudent.id);
       setShowDeleteConfirm(false);
       setSelectedStudent(null);
-      alert("Студент удалён");
+      alert("Студент удалён" + " \u2705");
     } catch (err: any) {
-      alert("Ошибка: " + err.message);
+      alert("Ошибка: " + err.message + " \u2705");
     }
   };
 
@@ -209,22 +217,22 @@ export default function AdminPanel() {
       );
 
       setShowAddToQueue(false);
-      alert("Студент добавлен в очередь");
+      alert("Студент добавлен в очередь" + " \u2705");
     } catch (err: any) {
-      alert("Ошибка: " + err.message);
+      alert("Ошибка: " + err.message + " \u2705");
     }
   };
 
   const handleToggleAdmin = async (studentId: string, makeAdmin: boolean) => {
     try {
       await toggleAdminStatus(studentId, makeAdmin);
-      alert(makeAdmin ? "Студент стал админом" : "Админские права сняты");
+      alert((makeAdmin ? "������� ���� �������" : "��������� ����� �����") + " \u2705");
     } catch (error: any) {
-      alert("Ошибка: " + error.message);
+      alert("������: " + error.message + " \u2705");
     }
   };
 
-  const openAddToQueueModal = (student: Student) => {
+  const openAddToQueueModal = (student: Student) => { = (student: Student) => {
     setSelectedStudent(student);
     setQueueWashCount(1);
     setQueuePaymentType("money");
@@ -305,6 +313,11 @@ export default function AdminPanel() {
         {/* СПИСОК СТУДЕНТОВ */}
         {showStudents && (
           <div className="space-y-4 rounded-lg bg-white p-5 shadow-sm">
+            {notice && (
+              <div className={`rounded-lg border px-3 py-2 text-sm ${notice.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`}>
+                {notice.message}
+              </div>
+            )}
             <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <h3 className="text-xl font-semibold text-gray-900">
                 Студенты ({filteredStudents.length})
@@ -396,7 +409,7 @@ export default function AdminPanel() {
                           </span>
                         )}
 
-                        {student.telegram_chat_id && !student.is_banned && (
+                        {hasTelegram(student) && (
                           <span className="rounded-full bg-sky-100 px-2 py-0.5 font-medium text-sky-700">
                             Telegram
                           </span>
