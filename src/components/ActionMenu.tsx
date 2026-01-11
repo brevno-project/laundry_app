@@ -62,7 +62,7 @@ export default function ActionMenu({
     typeof student.telegram_chat_id === "string"
       ? student.telegram_chat_id.trim()
       : "";
-  const hasTelegram = !!telegramChatId && !!student.is_registered && !student.is_banned;
+  const hasTelegram = !!telegramChatId && !student.is_banned;
 
   if (targetIsSuperAdmin && !isSelf) return null;
 

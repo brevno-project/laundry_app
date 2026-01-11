@@ -434,6 +434,43 @@ export default function QueueList() {
                     <div className="mb-2">
                       <QueueTimers item={item} />
                     </div>
+
+                    {(item.key_issued_at ||
+                      item.status === QueueStatus.KEY_ISSUED ||
+                      item.status === QueueStatus.WASHING ||
+                      item.status === QueueStatus.RETURNING_KEY) && (
+                      <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 font-semibold text-blue-700">
+                          <KeyIcon className="w-3.5 h-3.5" />
+                          Ключ выдан
+                        </span>
+                        {item.key_lost && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-1 font-semibold text-red-700">
+                            <CloseIcon className="w-3.5 h-3.5" />
+                            Ключ потерян
+                          </span>
+                        )}
+                        {isAdmin && (
+                          <label className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-2 py-1 font-semibold text-gray-700">
+                            <input
+                              type="checkbox"
+                              checked={!!item.key_lost}
+                              onChange={() =>
+                                toggleKeyLost(
+                                  item.id,
+                                  !!item.key_lost,
+                                  item.full_name,
+                                  item.room || "",
+                                  item.student_id
+                                )
+                              }
+                              className="h-4 w-4"
+                            />
+                            Потерял ключ
+                          </label>
+                        )}
+                      </div>
+                    )}
                     
                     {/* ✅ Таймеры - показываем всю историю */}
                     {(item.ready_at || item.key_issued_at || item.washing_started_at || item.return_requested_at) && (

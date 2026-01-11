@@ -388,24 +388,64 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured || !supabase) {
       return;
     }
-  
-    const client = supabase; // 👈 для TS, чтобы точно не null
-  
+
+    const client = supabase;
+    const canLoadFull = !!(isAdmin || isSuperAdmin || user?.can_view_students);
+
     try {
+      if (canLoadFull) {
+        const { data, error } = await client
+          .from("students")
+          .select(
+            "id, first_name, last_name, middle_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at"
+          )
+          .order("full_name", { ascending: true });
+
+        if (error) throw error;
+
+        const students: Student[] = (data || []).map((item: any): Student => {
+          const fullName =
+            item.full_name ||
+            [item.first_name, item.last_name, item.middle_name].filter(Boolean).join(" ");
+
+          return {
+            id: item.id,
+            first_name: item.first_name || "",
+            last_name: item.last_name || "",
+            middle_name: item.middle_name || "",
+            full_name: fullName || "",
+            room: item.room ?? null,
+            is_registered: !!item.is_registered,
+            created_at: item.created_at || new Date().toISOString(),
+            is_banned: !!item.is_banned,
+            ban_reason: item.ban_reason || null,
+            user_id: item.user_id || undefined,
+            is_admin: !!item.is_admin,
+            is_super_admin: !!item.is_super_admin,
+            can_view_students: !!item.can_view_students,
+            telegram_chat_id: item.telegram_chat_id || undefined,
+            avatar: item.avatar_type || "default",
+            avatar_type: item.avatar_type || "default",
+          };
+        });
+
+        setStudents(students);
+        return;
+      }
+
       const { data, error } = await client
         .from("students_login_list")
         .select("id, full_name, room, avatar_type, is_registered")
         .order("full_name", { ascending: true });
-  
+
       if (error) throw error;
-  
-      // Маппим StudentLoginList в Student (добавляем недостающие поля)
+
       const students: Student[] = (data || []).map((item: any): Student => ({
         ...item,
-        first_name: item.full_name.split(' ')[0] || '',
-        last_name: item.full_name.split(' ').slice(1).join(' ') || '',
-        middle_name: '',
-        is_registered: item.is_registered || false, // Используем реальное значение
+        first_name: item.full_name?.split(" ")[0] || "",
+        last_name: item.full_name?.split(" ").slice(1).join(" ") || "",
+        middle_name: "",
+        is_registered: item.is_registered || false,
         created_at: new Date().toISOString(),
         is_banned: false,
         user_id: undefined,
@@ -413,15 +453,20 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         is_super_admin: false,
         can_view_students: false,
         telegram_chat_id: undefined,
-        avatar: item.avatar_type || 'default',
+        avatar: item.avatar_type || "default",
       }));
-      
+
       setStudents(students);
     } catch (error) {
       console.error("Error loading students", error);
       setStudents([]);
     }
   };
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) return;
+    loadStudents();
+  }, [isAdmin, isSuperAdmin, user?.can_view_students]);
   
 
  

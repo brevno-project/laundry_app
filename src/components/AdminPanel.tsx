@@ -85,7 +85,7 @@ export default function AdminPanel() {
 
   const hasTelegram = (student: Student) => {
     const chat = typeof student.telegram_chat_id === "string" ? student.telegram_chat_id.trim() : "";
-    return !!chat && !!student.is_registered && !student.is_banned;
+    return !!chat && !student.is_banned;
   };
 
   // Filter students
