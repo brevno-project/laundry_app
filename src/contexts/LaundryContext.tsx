@@ -73,7 +73,6 @@ type LaundryContextType = {
   loginStudent: (studentId: string, password: string) => Promise<User | null>;
   // ❌ УДАЛЕНО: adminLogin - админы входят через loginStudent
   logoutStudent: () => void;
-  resetPasswordForEmail: (studentId: string) => Promise<boolean>;
   resetStudentRegistration: (studentId: string) => Promise<void>;
   linkTelegram: (telegramCode: string) => Promise<{ success: boolean; error?: string }>;
   joinQueue: (name: string, room?: string, washCount?: number, paymentType?: string, expectedFinishAt?: string, chosenDate?: string) => Promise<void>;
@@ -525,7 +524,7 @@ const registerStudent = async (
       // Если пользователь уже существует - выбрасываем специальную ошибку
       if (msg.includes("already registered") || msg.includes("user already registered")) {
         console.log("User already exists - showing login form");
-        const error = new Error("Аккаунт уже существует. Войдите или восстановите пароль.") as any;
+        const error = new Error("Аккаунт уже существует. Войдите в систему.") as any;
         error.code = "USER_ALREADY_REGISTERED";
         throw error;
       } else {
@@ -688,28 +687,6 @@ const loginStudent = async (
     // ✅ Права больше не хранятся в localStorage
   };
 
-  // Reset password for email
-  const resetPasswordForEmail = async (studentId: string) => {
-    if (!isSupabaseConfigured || !supabase) {
-      throw new Error("Supabase не настроен");
-    }
-
-    try {
-      const email = `student-${studentId.slice(0, 8)}@example.com`;
-      
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      });
-
-      if (error) {
-        throw new Error(error.message || "Ошибка отправки ссылки восстановления");
-      }
-
-      return true;
-    } catch (error: any) {
-      throw error;
-    }
-  };
 
 // Admin: Reset student registration
 const resetStudentRegistration = async (studentId: string) => {
@@ -2368,7 +2345,6 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     loginStudent,
     // ❌ УДАЛЕНО: adminLogin, finalizeUserSession (внутренний хелпер)
     logoutStudent,
-    resetPasswordForEmail,
     resetStudentRegistration,
     linkTelegram,
     joinQueue,

@@ -16,6 +16,7 @@ import { HomeIcon, HistoryIcon, PeopleIcon, SettingsIcon, WashingIcon, DoorIcon,
 import TelegramBanner from '@/components/TelegramBanner';
 import StudentActions from '@/components/StudentActions';
 import AvatarSelector from '@/components/AvatarSelector';
+import PasswordChanger from '@/components/PasswordChanger';
 
 export default function Home() {
   const { user, isLoading, logoutStudent, isAdmin, machineState, queue, isNewUser, setIsNewUser, students, needsClaim } = useLaundry();
@@ -325,6 +326,7 @@ export default function Home() {
         {activeTab === 'settings' && user && (
           <div className="w-full space-y-4 px-3">
             <AvatarSelector />
+            <PasswordChanger />
             {!user.can_view_students && <TelegramSetup />}
             
             <div className="bg-white p-4 rounded-lg shadow-sm">
