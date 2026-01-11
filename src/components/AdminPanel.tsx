@@ -336,7 +336,7 @@ export default function AdminPanel() {
 
 
 
-  const handleBanStudent = async () => { = async () => {
+  const handleBanStudent = async () => {
 
     if (!selectedStudent) return;
 
