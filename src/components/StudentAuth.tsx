@@ -7,15 +7,16 @@ import { DoorIcon, CheckIcon, CloseIcon, BackIcon } from "@/components/Icons";
 import Avatar, { AvatarType } from "@/components/Avatar";
 
 export default function StudentAuth() {
-  const { students, registerStudent, loginStudent } = useLaundry();
+  const { students, registerStudent, loginStudent, resetPasswordForEmail } = useLaundry();
 
-  const [step, setStep] = useState<"select" | "auth">("select");
+  const [step, setStep] = useState<"select" | "auth" | "forgot-password">("select");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   const filteredStudents = students.filter((s) => {
     if (!searchQuery) return true;
@@ -50,17 +51,52 @@ export default function StudentAuth() {
     setLoading(true);
     try {
       if (selectedStudent.is_registered) {
+        // Студент уже зарегистрирован - логиним
         await loginStudent(selectedStudent.id, password);
       } else {
-        await registerStudent(selectedStudent.id, password);
+        // Студент не зарегистрирован
+        // Сначала пробуем войти (может быть перерегистрирован и пароль старый)
+        try {
+          await loginStudent(selectedStudent.id, password);
+        } catch (loginErr: any) {
+          // Если логин не сработал - пробуем регистрацию
+          if (loginErr.message === "Неправильный пароль") {
+            // Пароль неправильный - показываем ошибку
+            throw loginErr;
+          }
+          // Иначе пробуем регистрацию
+          await registerStudent(selectedStudent.id, password);
+        }
       }
     } catch (err: any) {
-      setError(
-        err.message ||
-          (selectedStudent.is_registered
-            ? "Неправильный пароль"
-            : "Ошибка регистрации")
-      );
+      // Если аккаунт уже существует - показываем экран восстановления пароля
+      if ((err as any).code === "USER_ALREADY_REGISTERED") {
+        setStep("forgot-password");
+        setError("");
+        setPassword("");
+      } else {
+        setError(
+          err.message ||
+            (selectedStudent.is_registered
+              ? "Неправильный пароль"
+              : "Ошибка регистрации")
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!selectedStudent) return;
+
+    setLoading(true);
+    try {
+      await resetPasswordForEmail(selectedStudent.id);
+      setResetSent(true);
+      setError("");
+    } catch (err: any) {
+      setError(err.message || "Ошибка отправки ссылки восстановления");
     } finally {
       setLoading(false);
     }
@@ -141,105 +177,201 @@ export default function StudentAuth() {
   // -------------------------------
   // STEP 2: AUTH PAGE
   // -------------------------------
-  return (
-    <div className="bg-white p-6 rounded-lg shadow-xl border-2 border-gray-200">
-      <button
-        onClick={() => {
-          setStep("select");
-          setPassword("");
-          setError("");
-        }}
-        className="text-blue-600 hover:text-blue-800 font-bold mb-4 flex items-center gap-2"
-      >
-        <BackIcon className="w-5 h-5" /> Назад
-      </button>
+  if (step === "auth") {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-xl border-2 border-gray-200">
+        <button
+          onClick={() => {
+            setStep("select");
+            setPassword("");
+            setError("");
+          }}
+          className="text-blue-600 hover:text-blue-800 font-bold mb-4 flex items-center gap-2"
+        >
+          <BackIcon className="w-5 h-5" /> Назад
+        </button>
 
-      <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6 flex items-center gap-3">
-        <Avatar
-          type={(selectedStudent?.avatar_type as AvatarType) || "default"}
-          className="w-14 h-14"
-        />
-        <div>
-          <div className="font-black text-xl text-gray-900">
-            {selectedStudent?.full_name}
+        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6 flex items-center gap-3">
+          <Avatar
+            type={(selectedStudent?.avatar_type as AvatarType) || "default"}
+            className="w-14 h-14"
+          />
+          <div>
+            <div className="font-black text-xl text-gray-900">
+              {selectedStudent?.full_name}
+            </div>
+            {selectedStudent?.room && (
+              <div className="text-sm text-gray-900 font-medium flex items-center gap-1">
+                <DoorIcon className="w-4 h-4" /> Комната {selectedStudent.room}
+              </div>
+            )}
           </div>
-          {selectedStudent?.room && (
-            <div className="text-sm text-gray-900 font-medium flex items-center gap-1">
-              <DoorIcon className="w-4 h-4" /> Комната {selectedStudent.room}
+        </div>
+
+        <h2 className="text-2xl font-black mb-2 text-gray-900">
+          {selectedStudent?.is_registered ? "Вход" : "Первый раз?"}
+        </h2>
+
+        <p className="text-gray-900 mb-6 font-medium">
+          {selectedStudent?.is_registered
+            ? "Введите ваш пароль"
+            : "Придумайте пароль для регистрации"}
+        </p>
+
+        <div className="space-y-4">
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-bold mb-2 text-gray-900"
+            >
+              Пароль
+            </label>
+
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handleAuth()}
+                className="w-full rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-4 pr-20 text-lg font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                placeholder="Введите пароль"
+                autoFocus
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-gray-700 hover:text-gray-900"
+              >
+                {showPassword ? "Скрыть" : "Показать"}
+              </button>
+            </div>
+
+            {!selectedStudent?.is_registered && (
+              <p className="text-xs text-gray-700 mt-1 font-medium">
+                От 6 символов
+              </p>
+            )}
+          </div>
+
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+              <CloseIcon className="w-5 h-5 inline-block mr-1" />
+              {error}
             </div>
           )}
+
+          <button
+            onClick={handleAuth}
+            disabled={loading || !password}
+            className="w-full bg-blue-600 text-white font-bold py-4 px-6 rounded-lg hover:bg-blue-700 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+          >
+            {loading
+              ? "Загрузка..."
+              : selectedStudent?.is_registered
+              ? "Войти"
+              : "Зарегистрироваться"}
+          </button>
         </div>
       </div>
+    );
+  }
 
-      <h2 className="text-2xl font-black mb-2 text-gray-900">
-        {selectedStudent?.is_registered ? "Вход" : "Первый раз?"}
-      </h2>
+  // -------------------------------
+  // STEP 3: FORGOT PASSWORD PAGE
+  // -------------------------------
+  if (step === "forgot-password") {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-xl border-2 border-gray-200">
+        <button
+          onClick={() => {
+            setStep("auth");
+            setPassword("");
+            setError("");
+            setResetSent(false);
+          }}
+          className="text-blue-600 hover:text-blue-800 font-bold mb-4 flex items-center gap-2"
+        >
+          <BackIcon className="w-5 h-5" /> Назад
+        </button>
 
-      <p className="text-gray-900 mb-6 font-medium">
-        {selectedStudent?.is_registered
-          ? "Введите ваш пароль"
-          : "Придумайте пароль для регистрации"}
-      </p>
+        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6 flex items-center gap-3">
+          <Avatar
+            type={(selectedStudent?.avatar_type as AvatarType) || "default"}
+            className="w-14 h-14"
+          />
+          <div>
+            <div className="font-black text-xl text-gray-900">
+              {selectedStudent?.full_name}
+            </div>
+            {selectedStudent?.room && (
+              <div className="text-sm text-gray-900 font-medium flex items-center gap-1">
+                <DoorIcon className="w-4 h-4" /> Комната {selectedStudent.room}
+              </div>
+            )}
+          </div>
+        </div>
 
-      <div className="space-y-4">
-        <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-bold mb-2 text-gray-900"
-          >
-            Пароль
-          </label>
+        {resetSent ? (
+          <>
+            <h2 className="text-2xl font-black mb-2 text-gray-900">
+              Ссылка отправлена
+            </h2>
 
-          <div className="relative">
-            <input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setError("");
-              }}
-              onKeyDown={(e) => e.key === "Enter" && handleAuth()}
-              className="w-full rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-4 pr-20 text-lg font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-              placeholder="Введите пароль"
-              autoFocus
-            />
+            <p className="text-gray-900 mb-6 font-medium">
+              Проверьте вашу почту. Мы отправили ссылку для восстановления пароля.
+            </p>
+
+            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-4">
+              <CheckIcon className="w-5 h-5 inline-block mr-2" />
+              Письмо отправлено успешно
+            </div>
 
             <button
-              type="button"
-              onClick={() => setShowPassword((v) => !v)}
-              className="absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-gray-700 hover:text-gray-900"
+              onClick={() => {
+                setStep("select");
+                setPassword("");
+                setError("");
+                setResetSent(false);
+              }}
+              className="w-full bg-blue-600 text-white font-bold py-4 px-6 rounded-lg hover:bg-blue-700 transition-colors shadow-lg text-lg"
             >
-              {showPassword ? "Скрыть" : "Показать"}
+              Вернуться к выбору студента
             </button>
-          </div>
+          </>
+        ) : (
+          <>
+            <h2 className="text-2xl font-black mb-2 text-gray-900">
+              Восстановить пароль
+            </h2>
 
-          {!selectedStudent?.is_registered && (
-            <p className="text-xs text-gray-700 mt-1 font-medium">
-              От 6 символов
+            <p className="text-gray-900 mb-6 font-medium">
+              Аккаунт уже существует. Мы отправим вам ссылку для восстановления пароля на вашу почту.
             </p>
-          )}
-        </div>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
-            <CloseIcon className="w-5 h-5 inline-block mr-1" />
-            {error}
-          </div>
+            {error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
+                <CloseIcon className="w-5 h-5 inline-block mr-1" />
+                {error}
+              </div>
+            )}
+
+            <button
+              onClick={handleResetPassword}
+              disabled={loading}
+              className="w-full bg-blue-600 text-white font-bold py-4 px-6 rounded-lg hover:bg-blue-700 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+            >
+              {loading ? "Отправка..." : "Отправить ссылку восстановления"}
+            </button>
+          </>
         )}
-
-        <button
-          onClick={handleAuth}
-          disabled={loading || !password}
-          className="w-full bg-blue-600 text-white font-bold py-4 px-6 rounded-lg hover:bg-blue-700 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg"
-        >
-          {loading
-            ? "Загрузка..."
-            : selectedStudent?.is_registered
-            ? "Войти"
-            : "Зарегистрироваться"}
-        </button>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return null;
 }
