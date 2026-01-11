@@ -53,19 +53,8 @@ export default function StudentAuth() {
         // Студент уже зарегистрирован - логиним
         await loginStudent(selectedStudent.id, password);
       } else {
-        // Студент не зарегистрирован
-        // Сначала пробуем войти (может быть перерегистрирован и пароль старый)
-        try {
-          await loginStudent(selectedStudent.id, password);
-        } catch (loginErr: any) {
-          // Если логин не сработал - пробуем регистрацию
-          if (loginErr.message === "Неправильный пароль") {
-            // Пароль неправильный - показываем ошибку
-            throw loginErr;
-          }
-          // Иначе пробуем регистрацию
-          await registerStudent(selectedStudent.id, password);
-        }
+        // Студент не зарегистрирован - сразу регистрируем
+        await registerStudent(selectedStudent.id, password);
       }
     } catch (err: any) {
       setError(
