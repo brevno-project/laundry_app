@@ -499,11 +499,21 @@ const registerStudent = async (
       throw new Error("Пароль должен быть не менее 6 символов");
     }
 
-    const email = `student-${studentId.slice(0, 8)}@example.com`;
+    // 1) Получаем auth_email из БД (обязательное поле после миграции)
+    const { data: studentData, error: emailErr } = await supabase
+      .from('students')
+      .select('auth_email')
+      .eq('id', studentId)
+      .single();
 
-    // 1) Создаём auth user
+    if (emailErr) throw emailErr;
+
+    const authEmail = studentData?.auth_email;
+    if (!authEmail) throw new Error("Student auth_email is missing (check trigger)");
+
+    // 2) Создаём auth user
     const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
-      email,
+      email: authEmail,
       password,
       options: {
         data: {
@@ -537,7 +547,7 @@ const registerStudent = async (
     if (!authUser && !signUpErr) {
       console.log("User is null after signUp (email confirmation?), trying to sign in...");
       const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
-        email,
+        email: authEmail,
         password,
       });
       
@@ -608,13 +618,22 @@ const loginStudent = async (
   }
 
   try {
-    // 1) Генерируем email для Supabase Auth
-    const email = `student-${studentId.slice(0, 8)}@example.com`;
+    // 1) Получаем auth_email из БД (обязательное поле после миграции)
+    const { data: studentData, error: emailErr } = await supabase
+      .from('students')
+      .select('auth_email')
+      .eq('id', studentId)
+      .single();
 
-    // 2) Логин через Supabase Auth (без предварительной проверки students)
+    if (emailErr) throw emailErr;
+
+    const authEmail = studentData?.auth_email;
+    if (!authEmail) throw new Error("Student auth_email is missing (check trigger)");
+
+    // 2) Логин через Supabase Auth
     const { data: authData, error: authError } =
       await supabase.auth.signInWithPassword({
-        email,
+        email: authEmail,
         password,
       });
 

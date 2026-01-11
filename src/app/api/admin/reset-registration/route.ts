@@ -46,10 +46,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Super admin only" }, { status: 403 });
     }
 
-    // 2) Берём old_user_id у сбрасываемого студента
+    // 2) Берём old_user_id и last_user_id у сбрасываемого студента
     const { data: student, error: sErr } = await supabaseAdmin
       .from("students")
-      .select("id, user_id")
+      .select("id, user_id, last_user_id")
       .eq("id", studentId)
       .single();
 
@@ -58,6 +58,7 @@ export async function POST(req: Request) {
     }
 
     const oldUserId = student.user_id as string | null;
+    const lastUserId = student.last_user_id as string | null;
     console.log("🔄 RESET: oldUserId =", oldUserId);
 
     // 3) Чистим данные студента
@@ -69,11 +70,28 @@ export async function POST(req: Request) {
     const { error: aErr } = await supabaseAdmin.from("student_auth").delete().eq("student_id", studentId);
     if (aErr) return NextResponse.json({ error: aErr.message }, { status: 400 });
 
-    // 4) Сброс полей в students (карточка остаётся)
+    // 4) Удаляем auth user (сначала!)
+    // history удалится каскадом (ты уже сделал ON DELETE CASCADE)
+    const authIdToDelete = oldUserId || lastUserId;
+    
+    if (authIdToDelete) {
+      console.log("🔄 RESET: Deleting auth user by ID", authIdToDelete);
+      const { error: delErr } = await supabaseAdmin.auth.admin.deleteUser(authIdToDelete);
+      if (delErr) {
+        console.error("🔄 RESET: deleteUser error:", delErr);
+        return NextResponse.json({ error: delErr.message }, { status: 400 });
+      }
+      console.log("🔄 RESET: Auth user deleted successfully");
+    } else {
+      console.log("🔄 RESET: No auth user ID to delete");
+    }
+
+    // 5) Теперь сбрасываем students (после успешного deleteUser)
     const { error: uErr } = await supabaseAdmin
       .from("students")
       .update({
         user_id: null,
+        last_user_id: null,
         is_registered: false,
         registered_at: null,
         telegram_chat_id: null,
@@ -84,47 +102,6 @@ export async function POST(req: Request) {
       .eq("id", studentId);
 
     if (uErr) return NextResponse.json({ error: uErr.message }, { status: 400 });
-
-    // 5) Удаляем auth user (освобождаем email)
-    // history удалится каскадом (ты уже сделал ON DELETE CASCADE)
-    if (oldUserId) {
-      console.log("🔄 RESET: Deleting auth user by ID", oldUserId);
-      const { error: delErr } = await supabaseAdmin.auth.admin.deleteUser(oldUserId);
-      if (delErr) {
-        console.error("🔄 RESET: deleteUser error:", delErr);
-        return NextResponse.json({ error: delErr.message }, { status: 400 });
-      }
-      console.log("🔄 RESET: Auth user deleted successfully by ID");
-    } else {
-      // Если user_id=null, удаляем по email (генерируем тот же email что в signUp)
-      const email = `student-${studentId.slice(0, 8)}@example.com`;
-      console.log("🔄 RESET: No oldUserId, trying to delete by email:", email);
-      
-      try {
-        // Ищем пользователя по email
-        const { data: users, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
-        if (listErr) {
-          console.error("🔄 RESET: listUsers error:", listErr);
-          // Не критичная ошибка, продолжаем
-        } else {
-          const targetUser = users.users.find(u => u.email === email);
-          if (targetUser) {
-            console.log("🔄 RESET: Found user by email, deleting:", targetUser.id);
-            const { error: delErr } = await supabaseAdmin.auth.admin.deleteUser(targetUser.id);
-            if (delErr) {
-              console.error("🔄 RESET: deleteUser by email error:", delErr);
-              return NextResponse.json({ error: delErr.message }, { status: 400 });
-            }
-            console.log("🔄 RESET: Auth user deleted successfully by email");
-          } else {
-            console.log("🔄 RESET: No user found with email:", email);
-          }
-        }
-      } catch (e: any) {
-        console.error("🔄 RESET: Email deletion error:", e);
-        // Не блокируем операцию
-      }
-    }
 
     return NextResponse.json({ ok: true });
   } catch (e: any) {

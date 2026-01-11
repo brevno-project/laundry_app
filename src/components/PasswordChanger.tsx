@@ -47,12 +47,21 @@ export default function PasswordChanger() {
     try {
       if (!supabase) throw new Error('Supabase не настроен');
 
-      // Генерируем email для студента
-      const email = `student-${user.student_id.slice(0, 8)}@example.com`;
+      // 1. Получаем auth_email из БД (обязательное поле после миграции)
+      const { data: studentData, error: emailErr } = await supabase
+        .from('students')
+        .select('auth_email')
+        .eq('id', user.student_id)
+        .single();
 
-      // 1. Проверяем текущий пароль через signIn
+      if (emailErr) throw emailErr;
+
+      const authEmail = studentData?.auth_email;
+      if (!authEmail) throw new Error("Student auth_email is missing (check trigger)");
+
+      // 2. Проверяем текущий пароль через signIn
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
+        email: authEmail,
         password: currentPassword,
       });
 

@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
       .from("students")
       .update({
         user_id: auth_user_id,
+        last_user_id: auth_user_id, // Сохраняем последний auth user ID
         is_registered: true,
         registered_at: new Date().toISOString(),
         is_banned: false,
