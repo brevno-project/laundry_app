@@ -690,42 +690,32 @@ const loginStudent = async (
 
 // Admin: Reset student registration
 const resetStudentRegistration = async (studentId: string) => {
-  if (!isSupabaseConfigured || !supabase) {
-    throw new Error('Supabase не настроен');
-  }
+  if (!isSuperAdmin) throw new Error("Недостаточно прав - только суперадмин может сбрасывать регистрацию");
+  if (!isSupabaseConfigured || !supabase) throw new Error("Supabase не настроен");
 
-  try {
-    // ✅ Получаем JWT (безопасность на сервере)
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      throw new Error('Нет активной сессии');
-    }
+  // берём JWT текущей сессии, чтобы сервер мог проверить super_admin
+  const { data: { session }, error: sessErr } = await supabase.auth.getSession();
+  if (sessErr) throw sessErr;
+  if (!session?.access_token) throw new Error("No active session");
 
-    // ✅ Вызываем API route с JWT
-    const response = await fetch('/api/admin/reset-registration', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({ student_id: studentId }),
-    });
+  const res = await fetch("/api/admin/reset-registration", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ studentId }),
+  });
 
-    const result = await response.json();
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || "Reset failed");
 
-    if (!response.ok) {
-      throw new Error(result.error || 'Ошибка сброса регистрации');
-    }
+  await fetchQueue();
+  await loadStudents();
 
-    // Обновляем локальный список
-    await loadStudents();
-
-    // Если админ сбросил САМ СЕБЕ регистрацию — разлогиниваем его
-    if (user && user.student_id === studentId) {
-      await logoutStudent();
-    }
-  } catch (error: any) {
-    throw error;
+  // если сбросили себя — разлогин
+  if (user && user.student_id === studentId) {
+    await logoutStudent();
   }
 };
 

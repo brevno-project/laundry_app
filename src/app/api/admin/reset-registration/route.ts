@@ -1,59 +1,97 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getCaller, canModifyStudent, supabaseAdmin } from "../../_utils/adminAuth";
+import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    // ✅ Проверяем JWT и получаем инициатора
-    const { caller, error: authError } = await getCaller(req);
-    if (authError) return authError;
+    const { studentId } = await req.json();
 
-    // ✅ Получаем student_id из body
-    const { student_id } = await req.json();
-
-    if (!student_id) {
-      return NextResponse.json(
-        { error: "Missing student_id" },
-        { status: 400 }
-      );
+    if (!studentId) {
+      return NextResponse.json({ error: "studentId is required" }, { status: 400 });
     }
 
-    // ✅ Проверяем права на изменение целевого студента
-    const { allowed, error: modifyError } = await canModifyStudent(caller, student_id);
-    if (!allowed) return modifyError;
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false } }
+    );
 
-    // ✅ Удаляем активные записи очереди студента (выкидываем из очереди)
-    await supabaseAdmin
-      .from("queue")
-      .delete()
-      .eq("student_id", student_id)
-      .in("status", ["waiting", "ready", "key_issued", "washing", "returning_key"]);
+    // 1) Проверяем, что запрос делает супер-админ (по JWT)
+    const authHeader = req.headers.get("authorization") || "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+    if (!token) {
+      return NextResponse.json({ error: "Missing Authorization Bearer token" }, { status: 401 });
+    }
 
-    // ✅ Сбрасываем только профильные данные (НЕ трогаем user_id!)
-    // user_id остаётся → пользователь может войти тем же паролем
-    const { error: updateError } = await supabaseAdmin
+    const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token);
+    if (userErr || !userData?.user) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    const requesterId = userData.user.id;
+
+    const { data: requester, error: reqErr } = await supabaseAdmin
+      .from("students")
+      .select("is_super_admin, is_banned")
+      .eq("user_id", requesterId)
+      .single();
+
+    if (reqErr || !requester) {
+      return NextResponse.json({ error: "Requester not found in students" }, { status: 403 });
+    }
+    if (requester.is_banned) {
+      return NextResponse.json({ error: "Requester is banned" }, { status: 403 });
+    }
+    if (!requester.is_super_admin) {
+      return NextResponse.json({ error: "Super admin only" }, { status: 403 });
+    }
+
+    // 2) Берём old_user_id у сбрасываемого студента
+    const { data: student, error: sErr } = await supabaseAdmin
+      .from("students")
+      .select("id, user_id")
+      .eq("id", studentId)
+      .single();
+
+    if (sErr || !student) {
+      return NextResponse.json({ error: "Student not found" }, { status: 404 });
+    }
+
+    const oldUserId = student.user_id as string | null;
+
+    // 3) Чистим данные студента
+    // queue — полностью удалить, чтобы гарантированно не было мусора/конфликтов
+    const { error: qErr } = await supabaseAdmin.from("queue").delete().eq("student_id", studentId);
+    if (qErr) return NextResponse.json({ error: qErr.message }, { status: 400 });
+
+    // student_auth — удалить
+    const { error: aErr } = await supabaseAdmin.from("student_auth").delete().eq("student_id", studentId);
+    if (aErr) return NextResponse.json({ error: aErr.message }, { status: 400 });
+
+    // 4) Сброс полей в students (карточка остаётся)
+    const { error: uErr } = await supabaseAdmin
       .from("students")
       .update({
+        user_id: null,
         is_registered: false,
         registered_at: null,
         telegram_chat_id: null,
         avatar_type: "default",
-        // user_id НЕ обнуляем - оставляем связь Auth → students
+        claim_code_hash: null,
+        claim_code_issued_at: null,
       })
-      .eq("id", student_id);
+      .eq("id", studentId);
 
-    if (updateError) {
-      return NextResponse.json(
-        { error: updateError.message },
-        { status: 500 }
-      );
+    if (uErr) return NextResponse.json({ error: uErr.message }, { status: 400 });
+
+    // 5) Удаляем auth user (освобождаем email)
+    // history удалится каскадом (ты уже сделал ON DELETE CASCADE)
+    if (oldUserId) {
+      const { error: delErr } = await supabaseAdmin.auth.admin.deleteUser(oldUserId);
+      if (delErr) return NextResponse.json({ error: delErr.message }, { status: 400 });
     }
 
-    return NextResponse.json({ success: true });
-  } catch (err: any) {
-    console.error("❌ Error in reset-registration:", err);
-    return NextResponse.json(
-      { error: err.message || "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ ok: true });
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
   }
 }
