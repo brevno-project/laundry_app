@@ -713,15 +713,13 @@ const resetStudentRegistration = async (studentId: string) => {
   if (!isSupabaseConfigured || !supabase) throw new Error("Supabase не настроен");
 
   // берём JWT текущей сессии, чтобы сервер мог проверить super_admin
-  const { data: { session }, error: sessErr } = await supabase.auth.getSession();
-  if (sessErr) throw sessErr;
-  if (!session?.access_token) throw new Error("No active session");
+  const token = await getFreshToken();
 
   const res = await fetch("/api/admin/reset-registration", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${session.access_token}`,
+      "Authorization": `Bearer ${token}`,
     },
     body: JSON.stringify({ studentId }),
   });
@@ -1186,17 +1184,14 @@ const joinQueue = async (
 
     try {
       // ✅ Получаем JWT
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Нет активной сессии');
-      }
+      const token = await getFreshToken();
 
       // ✅ Вызываем API route с JWT
       const response = await fetch('/api/admin/queue/set-return-key-alert', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ queue_item_id: queueItemId, alert }),
       });
@@ -1278,17 +1273,14 @@ const startWashing = async (queueItemId: string) => {
     
     try {
       // ✅ Получаем JWT
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Нет активной сессии');
-      }
+      const token = await getFreshToken();
 
       // ✅ Вызываем API route с JWT
       const response = await fetch('/api/admin/queue/mark-done', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ queue_item_id: queueItemId }),
       });
@@ -1330,17 +1322,14 @@ const startWashing = async (queueItemId: string) => {
     
     try {
       // ✅ Получаем JWT
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Нет активной сессии');
-      }
+      const token = await getFreshToken();
 
       // ✅ Вызываем API route с JWT
       const response = await fetch('/api/admin/queue/cancel-washing', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ queue_item_id: queueItemId }),
       });
@@ -1394,17 +1383,14 @@ const startWashing = async (queueItemId: string) => {
     
     try {
       // ✅ Получаем JWT
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Нет активной сессии');
-      }
+      const token = await getFreshToken();
 
       // ✅ Вызываем API route с JWT
       const response = await fetch('/api/admin/queue/clear', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ mode: 'all' }),
       });
@@ -1439,17 +1425,14 @@ const startWashing = async (queueItemId: string) => {
 
     try {
       // ✅ Получаем JWT
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Нет активной сессии');
-      }
+      const token = await getFreshToken();
 
       // ✅ Вызываем API route с JWT
       const response = await fetch('/api/admin/queue/remove', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ queue_item_id: queueItemId }),
       });
@@ -1481,17 +1464,14 @@ const startWashing = async (queueItemId: string) => {
 
     try {
       // ✅ Получаем JWT
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Нет активной сессии');
-      }
+      const token = await getFreshToken();
 
       // ✅ Вызываем API route с JWT
       const response = await fetch('/api/admin/queue/clear', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ mode: 'completed' }),
       });
@@ -1528,17 +1508,14 @@ const startWashing = async (queueItemId: string) => {
 
     try {
       // ✅ Получаем JWT
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Нет активной сессии');
-      }
+      const token = await getFreshToken();
 
       // ✅ Вызываем API route с JWT
       const response = await fetch('/api/admin/queue/clear', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ mode: 'old' }),
       });
@@ -1576,17 +1553,14 @@ const startWashing = async (queueItemId: string) => {
 
     try {
       // ✅ Получаем JWT
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Нет активной сессии');
-      }
+      const token = await getFreshToken();
 
       // ✅ Вызываем API route с JWT
       const response = await fetch('/api/admin/queue/clear', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ mode: 'stuck' }),
       });
@@ -1612,17 +1586,14 @@ const startWashing = async (queueItemId: string) => {
   
     try {
       // ✅ Получаем JWT
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Нет активной сессии');
-      }
+      const token = await getFreshToken();
 
       // ✅ Вызываем API route с JWT
       const response = await fetch('/api/admin/ban-student', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ student_id: studentId, reason, ban: true }),
       });
@@ -1656,17 +1627,14 @@ const startWashing = async (queueItemId: string) => {
 
     try {
       // ✅ Получаем JWT
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Нет активной сессии');
-      }
+      const token = await getFreshToken();
 
       // ✅ Вызываем API route с JWT
       const response = await fetch('/api/admin/ban-student', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ student_id: studentId, ban: false }),
       });
@@ -1697,17 +1665,14 @@ const startWashing = async (queueItemId: string) => {
   
     try {
       // ✅ Получаем JWT
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Нет активной сессии');
-      }
+      const token = await getFreshToken();
 
       // ✅ Вызываем API route с JWT
       const response = await fetch('/api/admin/add-student', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ 
           first_name: firstName,
@@ -1751,17 +1716,14 @@ const startWashing = async (queueItemId: string) => {
   
     try {
       // ✅ Получаем JWT
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Нет активной сессии');
-      }
+      const token = await getFreshToken();
 
       // ✅ Вызываем API route с JWT
       const response = await fetch('/api/admin/update-student', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ student_id: studentId, updates }),
       });
@@ -2282,10 +2244,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     const currentIndex = sameDayItems.findIndex(item => item.id === queueId);
     
     // ✅ Получаем JWT
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      throw new Error('Нет активной сессии');
-    }
+    const token = await getFreshToken();
     
     if (direction === 'up' && currentIndex > 0) {
       const prevItem = sameDayItems[currentIndex - 1];
@@ -2295,7 +2254,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ 
           a_id: itemToMove.id, 
@@ -2316,7 +2275,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ 
           a_id: itemToMove.id, 

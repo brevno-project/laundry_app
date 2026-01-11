@@ -77,11 +77,24 @@ export async function POST(req: Request) {
     if (authIdToDelete) {
       console.log("🔄 RESET: Deleting auth user by ID", authIdToDelete);
       const { error: delErr } = await supabaseAdmin.auth.admin.deleteUser(authIdToDelete);
+      
       if (delErr) {
-        console.error("🔄 RESET: deleteUser error:", delErr);
-        return NextResponse.json({ error: delErr.message }, { status: 400 });
+        const msg = (delErr.message || "").toLowerCase();
+        const notFound =
+          msg.includes("not found") ||
+          msg.includes("user not found") ||
+          msg.includes("404");
+        
+        if (!notFound) {
+          console.error("🔄 RESET: deleteUser error:", delErr);
+          return NextResponse.json({ error: delErr.message }, { status: 400 });
+        }
+        
+        // user already deleted -> OK, продолжаем
+        console.log("🔄 RESET: Auth user already deleted, continuing");
+      } else {
+        console.log("🔄 RESET: Auth user deleted successfully");
       }
-      console.log("🔄 RESET: Auth user deleted successfully");
     } else {
       console.log("🔄 RESET: No auth user ID to delete");
     }
