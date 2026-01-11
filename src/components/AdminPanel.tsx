@@ -466,7 +466,7 @@ export default function AdminPanel() {
 
 
 
-  const openAddToQueueModal = (student: Student) => { = (student: Student) => {
+  const openAddToQueueModal = (student: Student) => {
 
     setSelectedStudent(student);
 
