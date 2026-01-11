@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 export async function POST(req: Request) {
   try {
     const { studentId } = await req.json();
+    console.log("🔄 RESET REQUEST: studentId =", studentId);
 
     if (!studentId) {
       return NextResponse.json({ error: "studentId is required" }, { status: 400 });
@@ -57,6 +58,7 @@ export async function POST(req: Request) {
     }
 
     const oldUserId = student.user_id as string | null;
+    console.log("🔄 RESET: oldUserId =", oldUserId);
 
     // 3) Чистим данные студента
     // queue — полностью удалить, чтобы гарантированно не было мусора/конфликтов
@@ -86,8 +88,15 @@ export async function POST(req: Request) {
     // 5) Удаляем auth user (освобождаем email)
     // history удалится каскадом (ты уже сделал ON DELETE CASCADE)
     if (oldUserId) {
+      console.log("🔄 RESET: Deleting auth user", oldUserId);
       const { error: delErr } = await supabaseAdmin.auth.admin.deleteUser(oldUserId);
-      if (delErr) return NextResponse.json({ error: delErr.message }, { status: 400 });
+      if (delErr) {
+        console.error("🔄 RESET: deleteUser error:", delErr);
+        return NextResponse.json({ error: delErr.message }, { status: 400 });
+      }
+      console.log("🔄 RESET: Auth user deleted successfully");
+    } else {
+      console.log("🔄 RESET: No oldUserId to delete");
     }
 
     return NextResponse.json({ ok: true });
