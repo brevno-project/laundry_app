@@ -121,6 +121,7 @@ export default function AdminPanel() {
   const [editLastname, setEditLastname] = useState("");
 
   const [editRoom, setEditRoom] = useState("");
+  const [editCanViewStudents, setEditCanViewStudents] = useState(false);
 
 
 
@@ -493,6 +494,7 @@ export default function AdminPanel() {
     setEditLastname(student.last_name || "");
 
     setEditRoom(student.room || "");
+    setEditCanViewStudents(student.can_view_students || false);
 
     setShowEditStudent(true);
 
@@ -979,6 +981,21 @@ export default function AdminPanel() {
               className="w-full rounded-lg border-2 border-gray-300 p-3 text-gray-900"
 
             />
+
+            {isSuperAdmin && (
+              <div className="mt-3 flex items-center gap-2 rounded-lg bg-blue-50 p-3">
+                <input
+                  type="checkbox"
+                  id="adminEditCanViewStudents"
+                  checked={editCanViewStudents}
+                  onChange={(e) => setEditCanViewStudents(e.target.checked)}
+                  className="h-5 w-5 cursor-pointer"
+                />
+                <label htmlFor="adminEditCanViewStudents" className="text-sm font-semibold text-gray-900 flex items-center gap-1">
+                  <EyeIcon className="w-4 h-4" />?????? ? ??????? ?????????
+                </label>
+              </div>
+            )}
 
           </div>
 
