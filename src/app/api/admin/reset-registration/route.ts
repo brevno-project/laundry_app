@@ -88,15 +88,42 @@ export async function POST(req: Request) {
     // 5) Удаляем auth user (освобождаем email)
     // history удалится каскадом (ты уже сделал ON DELETE CASCADE)
     if (oldUserId) {
-      console.log("🔄 RESET: Deleting auth user", oldUserId);
+      console.log("🔄 RESET: Deleting auth user by ID", oldUserId);
       const { error: delErr } = await supabaseAdmin.auth.admin.deleteUser(oldUserId);
       if (delErr) {
         console.error("🔄 RESET: deleteUser error:", delErr);
         return NextResponse.json({ error: delErr.message }, { status: 400 });
       }
-      console.log("🔄 RESET: Auth user deleted successfully");
+      console.log("🔄 RESET: Auth user deleted successfully by ID");
     } else {
-      console.log("🔄 RESET: No oldUserId to delete");
+      // Если user_id=null, удаляем по email (генерируем тот же email что в signUp)
+      const email = `student-${studentId.slice(0, 8)}@example.com`;
+      console.log("🔄 RESET: No oldUserId, trying to delete by email:", email);
+      
+      try {
+        // Ищем пользователя по email
+        const { data: users, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
+        if (listErr) {
+          console.error("🔄 RESET: listUsers error:", listErr);
+          // Не критичная ошибка, продолжаем
+        } else {
+          const targetUser = users.users.find(u => u.email === email);
+          if (targetUser) {
+            console.log("🔄 RESET: Found user by email, deleting:", targetUser.id);
+            const { error: delErr } = await supabaseAdmin.auth.admin.deleteUser(targetUser.id);
+            if (delErr) {
+              console.error("🔄 RESET: deleteUser by email error:", delErr);
+              return NextResponse.json({ error: delErr.message }, { status: 400 });
+            }
+            console.log("🔄 RESET: Auth user deleted successfully by email");
+          } else {
+            console.log("🔄 RESET: No user found with email:", email);
+          }
+        }
+      } catch (e: any) {
+        console.error("🔄 RESET: Email deletion error:", e);
+        // Не блокируем операцию
+      }
     }
 
     return NextResponse.json({ ok: true });
