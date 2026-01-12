@@ -1,5 +1,5 @@
--- Создание view для безопасного списка студентов на экране логина
--- Включает только базовые поля и проверку на бан
+﻿-- گِگ?گْগ?গّگ?گٌگç view گ?گ>‘? گ+گçগْগ?গُগّ‘?گ?গ?گ?গ? ‘?গُগٌ‘?গَگّ ‘?‘'‘?গ?গçগ?‘'گ?গ? گ?ग?‘?گَ‘?গّগ?গç গ>গ?গ?গٌग?গّ
+-- گ'গَগ>‘?‘طগّگç‘' ‘'گ?গ>‘?গَگ? গ+গّগْগ?গ?‘<গç গُগ?গ>‘? গٌ গُ‘?গ?গ?গç‘?গَ‘? গ?গ? گ+গّগ?
 
 create or replace view public.students_login_list as
 select
@@ -7,10 +7,10 @@ select
   full_name,
   room,
   avatar_type,
-  is_registered  -- Добавлено поле статуса регистрации
+  is_registered  -- گ"গ?গ+গّগ?গ>গçগ?গ? গُগ?গ>গç ‘?‘'গّ‘'‘?‘?গّ ‘?গçগ?গٌ‘?‘'‘?গّ‘إگٌگٌ
 from public.students
 where is_banned = false;
 
--- Даем права на чтение view
+-- গ"گّগçগ? গُ‘?গّগ?গّ গ?গ? ‘ط‘'গçগ?গٌগç view
 grant select on public.students_login_list to anon;
 grant select on public.students_login_list to authenticated;

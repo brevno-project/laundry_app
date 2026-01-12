@@ -25,11 +25,15 @@ export default function StudentsList() {
   const [editLastName, setEditLastName] = useState("");
   const [editMiddleName, setEditMiddleName] = useState("");
   const [editCanViewStudents, setEditCanViewStudents] = useState(false);
+  const [editKeyIssued, setEditKeyIssued] = useState(false);
+  const [editKeyLost, setEditKeyLost] = useState(false);
   const [notice, setNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
 
+  const isAdminUser = isAdmin || isSuperAdmin;
+
   const canManageStudent = (student: Student) =>
-    isAdmin && (!student.is_super_admin || student.id === user?.student_id);
+    isAdminUser && (!student.is_super_admin || student.id === user?.student_id);
 
   if (!students || students.length === 0) {
     return (
@@ -70,6 +74,8 @@ export default function StudentsList() {
     setEditLastName(student.last_name || "");
     setEditMiddleName(student.middle_name || "");
     setEditCanViewStudents(!!student.can_view_students);
+    setEditKeyIssued(!!student.key_issued);
+    setEditKeyLost(!!student.key_lost);
     setNotice(null);
   };
 
@@ -83,6 +89,8 @@ export default function StudentsList() {
         last_name: editLastName || undefined,
         middle_name: editMiddleName || undefined,
         can_view_students: isSuperAdmin ? editCanViewStudents : undefined,
+        key_issued: editKeyIssued,
+        key_lost: editKeyLost,
       });
 
       setEditingStudent(null);
@@ -130,7 +138,21 @@ export default function StudentsList() {
           <td className="p-3 text-gray-900">
             <div className="flex items-center gap-3">
               <Avatar type={(student.avatar_type as AvatarType) || "default"} className="w-10 h-10" />
-              <span>{displayName}</span>
+              <div className="flex flex-col">
+                <span>{displayName}</span>
+                {isAdminUser && (
+                  <span className="mt-1 flex flex-wrap gap-1 text-[11px] font-semibold text-gray-600">
+                    <span className={`rounded-full px-2 py-0.5 ${student.key_issued ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}>
+                      {student.key_issued ? "Ключ выдан" : "Ключ не выдавался"}
+                    </span>
+                    {student.key_lost && (
+                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-red-700">
+                        Ключ потерян
+                      </span>
+                    )}
+                  </span>
+                )}
+              </div>
             </div>
           </td>
           <td className="p-3 text-center text-gray-900">
@@ -193,7 +215,7 @@ export default function StudentsList() {
                 : "bg-gradient-to-r from-transparent via-green-300 to-transparent"
             }
           >
-            <td colSpan={isAdmin ? 5 : 4} className="h-0.5"></td>
+            <td colSpan={isAdminUser ? 5 : 4} className="h-0.5"></td>
           </tr>
         )}
         <tr className={`border-b ${rowBorder}`}>
@@ -201,7 +223,21 @@ export default function StudentsList() {
           <td className="p-1 text-gray-900">
             <div className="flex items-center gap-2">
               <Avatar type={(student.avatar_type as AvatarType) || "default"} className="w-8 h-8" />
-              <span className="text-xs">{displayName}</span>
+              <div className="flex flex-col">
+                <span className="text-xs">{displayName}</span>
+                {isAdminUser && (
+                  <span className="mt-1 flex flex-wrap gap-1 text-[10px] font-semibold text-gray-600">
+                    <span className={`rounded-full px-1.5 py-0.5 ${student.key_issued ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}>
+                      {student.key_issued ? "Ключ выдан" : "Ключ нет"}
+                    </span>
+                    {student.key_lost && (
+                      <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-red-700">
+                        Потерян
+                      </span>
+                    )}
+                  </span>
+                )}
+              </div>
             </div>
           </td>
           <td className="p-1 text-center text-gray-700 whitespace-nowrap">{student.room || "-"}</td>
@@ -212,7 +248,7 @@ export default function StudentsList() {
               <CloseIcon className="w-5 h-5 text-gray-400" />
             )}
           </td>
-          {isAdmin && (
+          {isAdminUser && (
             <td className="p-1">
               {canManageStudent(student) && (
                 <div className="flex items-center gap-1">
@@ -244,7 +280,7 @@ export default function StudentsList() {
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
             <ListIcon className="w-8 h-8" />Список студентов ({students.length})
           </h2>
-          {isAdmin && (
+          {isAdminUser && (
             <button
               onClick={() => setShowAddModal(true)}
               className="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600"
@@ -278,7 +314,7 @@ export default function StudentsList() {
                 <col className="w-auto" />
                 <col className="w-28" />
                 <col className="w-36" />
-                {isAdmin && <col className="w-72" />}
+                {isAdminUser && <col className="w-72" />}
               </colgroup>
               <thead>
                 <tr className="bg-blue-100 border-b-2 border-blue-300">
@@ -286,7 +322,7 @@ export default function StudentsList() {
                   <th className="text-left p-3 font-bold text-gray-900">Имя</th>
                   <th className="text-center p-3 font-bold text-gray-900">Комната</th>
                   <th className="text-center p-3 font-bold text-gray-900">Telegram</th>
-                  {isAdmin && <th className="text-center p-3 font-bold text-gray-900">Действия</th>}
+                  {isAdminUser && <th className="text-center p-3 font-bold text-gray-900">Действия</th>}
                 </tr>
               </thead>
               <tbody>
@@ -307,7 +343,7 @@ export default function StudentsList() {
                   <th className="text-center p-1 font-bold text-gray-900">
                     <TelegramIcon className="w-5 h-5 inline-block" />
                   </th>
-                  {isAdmin && <th className="text-left p-1 font-bold text-gray-900">Действия</th>}
+                  {isAdminUser && <th className="text-left p-1 font-bold text-gray-900">Действия</th>}
                 </tr>
               </thead>
               <tbody>
@@ -329,7 +365,7 @@ export default function StudentsList() {
                 <col className="w-auto" />
                 <col className="w-28" />
                 <col className="w-36" />
-                {isAdmin && <col className="w-72" />}
+                {isAdminUser && <col className="w-72" />}
               </colgroup>
               <thead>
                 <tr className="bg-green-100 border-b-2 border-green-300">
@@ -337,7 +373,7 @@ export default function StudentsList() {
                   <th className="text-left p-3 font-bold text-gray-900">Имя</th>
                   <th className="text-center p-3 font-bold text-gray-900">Комната</th>
                   <th className="text-center p-3 font-bold text-gray-900">Telegram</th>
-                  {isAdmin && <th className="text-center p-3 font-bold text-gray-900">Действия</th>}
+                  {isAdminUser && <th className="text-center p-3 font-bold text-gray-900">Действия</th>}
                 </tr>
               </thead>
               <tbody>
@@ -358,7 +394,7 @@ export default function StudentsList() {
                   <th className="text-center p-1 font-bold text-gray-900">
                     <TelegramIcon className="w-5 h-5 inline-block" />
                   </th>
-                  {isAdmin && <th className="text-left p-1 font-bold text-gray-900">Действия</th>}
+                  {isAdminUser && <th className="text-left p-1 font-bold text-gray-900">Действия</th>}
                 </tr>
               </thead>
               <tbody>
@@ -419,6 +455,41 @@ export default function StudentsList() {
                   className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
                 />
               </div>
+
+              {isAdminUser && (
+                <div className="flex flex-wrap gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                    <input
+                      type="checkbox"
+                      checked={editKeyIssued}
+                      onChange={(e) => {
+                        const next = e.target.checked;
+                        setEditKeyIssued(next);
+                        if (!next) {
+                          setEditKeyLost(false);
+                        }
+                      }}
+                      className="h-5 w-5 cursor-pointer"
+                    />
+                    Ключ выдан
+                  </label>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                    <input
+                      type="checkbox"
+                      checked={editKeyLost}
+                      onChange={(e) => {
+                        const next = e.target.checked;
+                        setEditKeyLost(next);
+                        if (next) {
+                          setEditKeyIssued(true);
+                        }
+                      }}
+                      className="h-5 w-5 cursor-pointer"
+                    />
+                    Ключ потерян
+                  </label>
+                </div>
+              )}
 
               {isSuperAdmin && (
                 <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">

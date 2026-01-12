@@ -18,6 +18,8 @@ export type Student = {
   is_admin?: boolean;
   is_super_admin?: boolean;
   can_view_students?: boolean; // Может ли студент видеть список студентов
+  key_issued?: boolean; // ????? ?? ????
+  key_lost?: boolean; // ??????? ?? ????
   avatar?: string; // SVG аватар (default, male1, male2, female1, female2, etc.)
   avatar_type?: string; // Тип аватара
 };
@@ -86,7 +88,6 @@ export type QueueItem = {
   // ✅ Таймеры для каждого этапа
   ready_at?: string | null; // Когда позвали за ключом
   key_issued_at?: string | null; // Когда выдали ключ
-  key_lost?: boolean; // Потерян ли ключ
   washing_started_at?: string | null; // Когда начал стирать
   washing_finished_at?: string | null; // Когда закончил стирать
   return_requested_at?: string | null; // Когда попросили вернуть ключ

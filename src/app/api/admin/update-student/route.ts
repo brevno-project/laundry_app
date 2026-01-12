@@ -59,6 +59,12 @@ export async function POST(req: NextRequest) {
     if (updates.can_view_students !== undefined) {
       updateData.can_view_students = updates.can_view_students;
     }
+    if (updates.key_issued !== undefined) {
+      updateData.key_issued = updates.key_issued;
+    }
+    if (updates.key_lost !== undefined) {
+      updateData.key_lost = updates.key_lost;
+    }
     if (updates.avatar_type !== undefined) {
       updateData.avatar_type = updates.avatar_type;
     }

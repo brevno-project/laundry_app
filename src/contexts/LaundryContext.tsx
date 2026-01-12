@@ -104,7 +104,18 @@ type LaundryContextType = {
   isNewUser: boolean; // 
   setIsNewUser: (isNewUser: boolean) => void; // 
   addStudent: (firstName: string, lastName: string, room?: string, middleName?: string) => Promise<void>;
-  updateStudent: (studentId: string, updates: { first_name?: string; last_name?: string; middle_name?: string; room?: string; can_view_students?: boolean }) => Promise<void>;
+  updateStudent: (
+    studentId: string,
+    updates: {
+      first_name?: string;
+      last_name?: string;
+      middle_name?: string;
+      room?: string;
+      can_view_students?: boolean;
+      key_issued?: boolean;
+      key_lost?: boolean;
+    }
+  ) => Promise<void>;
   deleteStudent: (studentId: string) => Promise<void>;
   adminAddToQueue: (studentRoom?: string, washCount?: number, paymentType?: string, expectedFinishAt?: string, chosenDate?: string, studentId?: string) => Promise<void>;
   updateQueueItemDetails: (queueId: string, updates: { wash_count?: number; payment_type?: string; expected_finish_at?: string; chosen_date?: string }) => Promise<void>;
@@ -397,7 +408,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         const { data, error } = await client
           .from("students")
           .select(
-            "id, first_name, last_name, middle_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at"
+            "id, first_name, last_name, middle_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, key_issued, key_lost"
           )
           .order("full_name", { ascending: true });
 
@@ -424,6 +435,8 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
             is_super_admin: !!item.is_super_admin,
             can_view_students: !!item.can_view_students,
             telegram_chat_id: item.telegram_chat_id || undefined,
+            key_issued: !!item.key_issued,
+            key_lost: !!item.key_lost,
             avatar: item.avatar_type || "default",
             avatar_type: item.avatar_type || "default",
           };
@@ -433,9 +446,43 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      const { data: { session } } = await client.auth.getSession();
+      if (session?.access_token) {
+        const response = await fetch("/api/students/list", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          const apiStudents: Student[] = (result.students || []).map((item: any): Student => ({
+            ...item,
+            first_name: item.first_name || item.full_name?.split(" ")[0] || "",
+            last_name: item.last_name || item.full_name?.split(" ").slice(1).join(" ") || "",
+            middle_name: item.middle_name || "",
+            is_registered: item.is_registered || false,
+            created_at: item.created_at || new Date().toISOString(),
+            is_banned: !!item.is_banned,
+            is_admin: !!item.is_admin,
+            is_super_admin: !!item.is_super_admin,
+            can_view_students: !!item.can_view_students,
+            telegram_chat_id: item.telegram_chat_id || undefined,
+            key_issued: !!item.key_issued,
+            key_lost: !!item.key_lost,
+            avatar: item.avatar_type || "default",
+            avatar_type: item.avatar_type || "default",
+          }));
+
+          setStudents(apiStudents);
+          return;
+        }
+      }
+
       const { data, error } = await client
         .from("students_login_list")
-        .select("id, full_name, room, avatar_type, is_registered")
+        .select("id, full_name, room, avatar_type, is_registered, is_banned, key_issued, key_lost")
         .order("full_name", { ascending: true });
 
       if (error) throw error;
@@ -447,12 +494,14 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         middle_name: "",
         is_registered: item.is_registered || false,
         created_at: new Date().toISOString(),
-        is_banned: false,
+        is_banned: !!item.is_banned,
         user_id: undefined,
         is_admin: false,
         is_super_admin: false,
         can_view_students: false,
         telegram_chat_id: undefined,
+        key_issued: !!item.key_issued,
+        key_lost: !!item.key_lost,
         avatar: item.avatar_type || "default",
       }));
 
@@ -1140,7 +1189,7 @@ const joinQueue = async (
 
   // Admin: Изменить статус записи в очереди
   const setQueueStatus = async (queueItemId: string, status: QueueStatus) => {
-    if (!isAdmin) return;
+    if (!isAdmin && !isSuperAdmin) return;
     
     if (!isSupabaseConfigured || !supabase) {
       return;
@@ -1751,6 +1800,8 @@ const startWashing = async (queueItemId: string) => {
       room?: string;
       can_view_students?: boolean;
       avatar_type?: string;
+      key_issued?: boolean;
+      key_lost?: boolean;
     }
   ) => {
     if (!isAdmin) return;

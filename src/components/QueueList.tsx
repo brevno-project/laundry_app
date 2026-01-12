@@ -57,28 +57,6 @@ export default function QueueList() {
   };
 
   // Функция для переключения статуса потери ключа
-  const toggleKeyLost = async (itemId: string, currentKeyLost: boolean, studentName: string, studentRoom: string, studentId: string) => {
-    if (!isAdmin) {
-      alert('❌ Только администратор может изменять статус ключа' + " \u2705");
-      return;
-    }
-    
-    try {
-      await updateQueueItem(itemId, { 
-        key_lost: !currentKeyLost
-      });
-      
-      // Отправляем уведомление о потере/возврате ключа
-      await sendTelegramNotification({
-        type: !currentKeyLost ? 'key_lost' : 'key_found',
-        full_name: studentName,
-        room: studentRoom,
-        student_id: studentId,
-      });
-    } catch (error) {
-      console.error('❌ Error in toggleKeyLost:', error);
-    }
-  };
 
   // Функция сохранения изменений:
   const handleSaveEdit = async () => {
@@ -189,18 +167,16 @@ export default function QueueList() {
             badgeColor: 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 font-bold shadow-md' 
           };
         case QueueStatus.KEY_ISSUED:
-          return { 
-            bg: item?.key_lost ? 'bg-red-50' : 'bg-blue-50', 
-            text: item?.key_lost ? 'text-red-900' : 'text-blue-900', 
+          return {
+            bg: 'bg-blue-50',
+            text: 'text-blue-900',
             badge: (
               <span className="flex items-center gap-1.5">
                 <KeyIcon className="w-4 h-4" />
-                {item?.key_lost ? 'КЛЮЧ ПОТЕРЯН' : 'КЛЮЧ ПОЛУЧЕН'}
+                ???? ?????
               </span>
-            ), 
-            badgeColor: item?.key_lost 
-              ? 'bg-gradient-to-r from-red-400 to-red-500 text-white font-bold shadow-md animate-pulse' 
-              : 'bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold shadow-md'
+            ),
+            badgeColor: 'bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold shadow-md'
           };
         case QueueStatus.WASHING:
           return { 
@@ -374,103 +350,6 @@ export default function QueueList() {
                   <div key={item.id} className={`${statusDisplay.bg} border-l-4 ${isCurrentUser ? 'border-blue-600' : 'border-gray-300'} rounded-lg p-3 shadow-sm`}>
                     {/* Заголовок с кнопками управления */}
                     {/* Чекбокс для выбора */}
-                    {isAdmin && (
-                      <input
-                        type="checkbox"
-                        checked={selectedItems.includes(item.id)}
-                        onChange={() => toggleSelect(item.id)}
-                        className="mr-2 mb-2"
-                      />
-                    )}
-
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        {/* ✅ Кнопки перемещения для админа */}
-                        {isAdmin && item.status === QueueStatus.WAITING && (
-                          <div className="flex flex-col gap-1">
-                            <button
-                              onClick={() => changeQueuePosition(item.id, 'up')}
-                              disabled={index === 0}
-                              className="px-2 py-0.5 bg-gray-200 text-gray-700 text-xs rounded disabled:opacity-30 hover:bg-gray-300"
-                            >
-                              ▲
-                            </button>
-                            <button
-                              onClick={() => changeQueuePosition(item.id, 'down')}
-                              disabled={index === groupedQueue[dateKey].length - 1}
-                              className="px-2 py-0.5 bg-gray-200 text-gray-700 text-xs rounded disabled:opacity-30 hover:bg-gray-300"
-                            >
-                              ▼
-                            </button>
-                          </div>
-                        )}
-                        
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xl font-black text-gray-900">
-                              #{globalIndex + 1}
-                            </span>
-                            {item.position && (
-                              <span className="text-sm text-gray-500 font-semibold">
-                                (поз.{item.position})
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Avatar type={(item.avatar_type as AvatarType) || 'default'} className="w-14 h-14" />
-                            <div>
-                              <div className="font-bold text-lg text-gray-900">{item.full_name}</div>
-                              {item.room && <div className="text-xs text-gray-600">Комната {item.room}</div>}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${statusDisplay.badgeColor} whitespace-nowrap`}>
-                        {statusDisplay.badge}
-                      </span>
-                    </div>
-                    
-                    {/* ✅ Таймер с цветовой индикацией */}
-                    <div className="mb-2">
-                      <QueueTimers item={item} />
-                    </div>
-
-                    {(item.key_issued_at ||
-                      item.status === QueueStatus.KEY_ISSUED ||
-                      item.status === QueueStatus.WASHING ||
-                      item.status === QueueStatus.RETURNING_KEY) && (
-                      <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 font-semibold text-blue-700">
-                          <KeyIcon className="w-3.5 h-3.5" />
-                          Ключ выдан
-                        </span>
-                        {item.key_lost && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-1 font-semibold text-red-700">
-                            <CloseIcon className="w-3.5 h-3.5" />
-                            Ключ потерян
-                          </span>
-                        )}
-                        {isAdmin && (
-                          <label className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-2 py-1 font-semibold text-gray-700">
-                            <input
-                              type="checkbox"
-                              checked={!!item.key_lost}
-                              onChange={() =>
-                                toggleKeyLost(
-                                  item.id,
-                                  !!item.key_lost,
-                                  item.full_name,
-                                  item.room || "",
-                                  item.student_id
-                                )
-                              }
-                              className="h-4 w-4"
-                            />
-                            Потерял ключ
-                          </label>
-                        )}
-                      </div>
-                    )}
                     
                     {/* ✅ Таймеры - показываем всю историю */}
                     {(item.ready_at || item.key_issued_at || item.washing_started_at || item.return_requested_at) && (

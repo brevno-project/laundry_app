@@ -1,7 +1,7 @@
-﻿-- Add key_lost to queue RPC results
+﻿-- Remove key_lost from queue RPC results
 
 alter table public.queue
-  add column if not exists key_lost boolean not null default false;
+  drop column if exists key_lost;
 
 create or replace function public.get_queue_active()
 returns table(
@@ -21,7 +21,6 @@ returns table(
   admin_room text,
   ready_at timestamptz,
   key_issued_at timestamptz,
-  key_lost boolean,
   washing_started_at timestamptz,
   washing_finished_at timestamptz,
   return_requested_at timestamptz,
@@ -52,7 +51,6 @@ as $$
     q.admin_room,
     q.ready_at,
     q.key_issued_at,
-    q.key_lost,
     q.washing_started_at,
     q.washing_finished_at,
     q.return_requested_at,
@@ -82,8 +80,7 @@ returns table(
   scheduled_for_date date,
   queue_date date,
   queue_position integer,
-  avatar_type text,
-  key_lost boolean
+  avatar_type text
 )
 language sql
 security definer
@@ -102,8 +99,7 @@ as $$
     q.scheduled_for_date,
     q.queue_date,
     q.queue_position,
-    q.avatar_type,
-    q.key_lost
+    q.avatar_type
   from public.queue q
   where q.scheduled_for_date = p_date
   order by q.queue_position asc, q.joined_at asc;
