@@ -125,6 +125,7 @@ export type HistoryItem = {
   ready_at?: string;
   key_issued_at?: string;
   washing_started_at?: string;
+  washing_finished_at?: string;
   return_requested_at?: string;
 };
 

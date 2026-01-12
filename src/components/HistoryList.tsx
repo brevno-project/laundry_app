@@ -43,8 +43,8 @@ const formatDuration = (start?: string | null, end?: string | null) => {
   const minutes = getDurationMinutes(start, end);
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  if (hours > 0) return `${hours}? ${mins}?`;
-  return `${mins}?`;
+  if (hours > 0) return `${hours}h ${mins}min`;
+  return `${mins}min`;
 };
 
 const getTimerColor = (minutes: number, normalLimit: number, warningLimit: number): TimerColors => {
@@ -110,9 +110,10 @@ export default function HistoryList() {
       <div className="space-y-3">
         {displayedHistory.map((item) => {
           const washStart = item.washing_started_at || null;
-          const washEnd = item.return_requested_at || item.finished_at || null;
-          const totalMinutes = getDurationMinutes(washStart, washEnd);
-          const totalDuration = formatDuration(washStart, washEnd);
+          const washEnd = item.washing_finished_at || item.return_requested_at || item.finished_at || null;
+          const hasWashTimes = !!(washStart && washEnd);
+          const totalMinutes = hasWashTimes ? getDurationMinutes(washStart, washEnd) : 0;
+          const totalDuration = hasWashTimes ? formatDuration(washStart, washEnd) : '-';
           const borderColor = getCardBorderColor(totalMinutes);
 
           const keyIssuedMinutes = item.ready_at && item.key_issued_at
@@ -121,6 +122,8 @@ export default function HistoryList() {
           const keyReturnMinutes = item.return_requested_at && item.finished_at
             ? getDurationMinutes(item.return_requested_at, item.finished_at)
             : null;
+          const washCount = item.wash_count ?? 1;
+          const paymentLabel = getPaymentLabel(item.payment_type || 'money');
 
           const keyIssuedColors = keyIssuedMinutes === null
             ? neutralColors
@@ -188,14 +191,14 @@ export default function HistoryList() {
                   <div className="bg-white rounded-xl p-3 border-2 border-gray-200">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-700">Количество стирок</span>
-                      <span className="text-lg font-bold text-gray-900">{item.wash_count ?? '-'}</span>
+                      <span className="text-lg font-bold text-gray-900">{washCount}</span>
                     </div>
                   </div>
 
                   <div className="bg-white rounded-xl p-3 border-2 border-gray-200">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-700">Оплата</span>
-                      <span className="text-sm font-bold text-gray-900">{getPaymentLabel(item.payment_type)}</span>
+                      <span className="text-sm font-bold text-gray-900">{paymentLabel}</span>
                     </div>
                   </div>
                 </div>

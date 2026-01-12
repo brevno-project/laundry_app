@@ -1050,7 +1050,7 @@ const resetStudentRegistration = async (studentId: string) => {
         try {
           const { data, error } = await supabase
             .from('history')
-            .select('id, user_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, return_requested_at, wash_count, payment_type')
+            .select('id, user_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, washing_finished_at, return_requested_at, wash_count, payment_type')
             .order('finished_at', { ascending: false })
             .limit(100);
           

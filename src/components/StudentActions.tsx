@@ -18,7 +18,7 @@ const setStoredFlag = (key: string) => {
 const buildNotifyKey = (type: "start" | "finish", id: string) => `laundryNotify:${type}:${id}`;
 
 export default function StudentActions() {
-  const { user, queue } = useLaundry();
+  const { user, queue, updateQueueItem } = useLaundry();
   const [washingTime, setWashingTime] = useState("0:00");
   const [startSent, setStartSent] = useState(false);
   const [finishSent, setFinishSent] = useState(false);
@@ -87,6 +87,13 @@ export default function StudentActions() {
       });
 
       if (response.ok) {
+        if (!myQueueItem.washing_started_at) {
+          try {
+            await updateQueueItem(myQueueItem.id, { washing_started_at: new Date().toISOString() });
+          } catch (error) {
+            console.error("Failed to update washing_started_at:", error);
+          }
+        }
         const key = buildNotifyKey("start", myQueueItem.id);
         setStartSent(true);
         setStoredFlag(key);
@@ -133,6 +140,13 @@ export default function StudentActions() {
       });
 
       if (response.ok) {
+        if (!myQueueItem.washing_finished_at) {
+          try {
+            await updateQueueItem(myQueueItem.id, { washing_finished_at: new Date().toISOString() });
+          } catch (error) {
+            console.error("Failed to update washing_finished_at:", error);
+          }
+        }
         const key = buildNotifyKey("finish", myQueueItem.id);
         setFinishSent(true);
         setStoredFlag(key);

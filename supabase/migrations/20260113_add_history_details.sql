@@ -5,3 +5,6 @@ alter table public.history
 
 alter table public.history
   add column if not exists payment_type text;
+
+alter table public.history
+  add column if not exists washing_finished_at timestamptz;

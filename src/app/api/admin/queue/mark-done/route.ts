@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
       ready_at: queueItem.ready_at,
       key_issued_at: queueItem.key_issued_at,
       washing_started_at: queueItem.washing_started_at,
+      washing_finished_at: queueItem.washing_finished_at,
       return_requested_at: queueItem.return_requested_at,
       wash_count: queueItem.wash_count,
       payment_type: queueItem.payment_type,

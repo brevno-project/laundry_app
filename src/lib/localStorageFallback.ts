@@ -177,6 +177,7 @@ export const add_to_local_history = (queueItemId: string): boolean => {
     wash_count: currentItem.wash_count,
     payment_type: currentItem.payment_type,
     washing_started_at: machineState.started_at || new Date().toISOString(),
+    washing_finished_at: new Date().toISOString(),
     return_requested_at: new Date().toISOString(),
   };
   
@@ -227,6 +228,7 @@ export const mark_local_done = (): HistoryItem | null => {
     wash_count: currentItem.wash_count,
     payment_type: currentItem.payment_type,
     washing_started_at: machineState.started_at || new Date().toISOString(),
+    washing_finished_at: new Date().toISOString(),
     return_requested_at: new Date().toISOString(),
   };
   
