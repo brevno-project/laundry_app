@@ -480,35 +480,66 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      const { data, error } = await client
-        .from("students_login_list")
-        .select("id, full_name, room, avatar_type, is_registered, is_banned, key_issued, key_lost")
-        .order("full_name", { ascending: true });
+      try {
+        const { data, error } = await client
+          .from("students_login_list")
+          .select("id, full_name, room, avatar_type, is_registered, is_banned, key_issued, key_lost")
+          .order("full_name", { ascending: true });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      const students: Student[] = (data || []).map((item: any): Student => ({
-        ...item,
-        first_name: item.full_name?.split(" ")[0] || "",
-        last_name: item.full_name?.split(" ").slice(1).join(" ") || "",
-        middle_name: "",
-        is_registered: item.is_registered || false,
-        created_at: new Date().toISOString(),
-        is_banned: !!item.is_banned,
-        user_id: undefined,
-        is_admin: false,
-        is_super_admin: false,
-        can_view_students: false,
-        telegram_chat_id: undefined,
-        key_issued: !!item.key_issued,
-        key_lost: !!item.key_lost,
-        avatar: item.avatar_type || "default",
-      }));
+        const students: Student[] = (data || []).map((item: any): Student => ({
+          ...item,
+          first_name: item.full_name?.split(" ")[0] || "",
+          last_name: item.full_name?.split(" ").slice(1).join(" ") || "",
+          middle_name: "",
+          is_registered: item.is_registered || false,
+          created_at: new Date().toISOString(),
+          is_banned: !!item.is_banned,
+          user_id: undefined,
+          is_admin: false,
+          is_super_admin: false,
+          can_view_students: false,
+          telegram_chat_id: undefined,
+          key_issued: !!item.key_issued,
+          key_lost: !!item.key_lost,
+          avatar: item.avatar_type || "default",
+        }));
 
-      setStudents(students);
+        setStudents(students);
+        return;
+      } catch (error) {
+        const { data, error: legacyError } = await client
+          .from("students_login_list")
+          .select("id, full_name, room, avatar_type, is_registered")
+          .order("full_name", { ascending: true });
+
+        if (legacyError) throw legacyError;
+
+        const students: Student[] = (data || []).map((item: any): Student => ({
+          ...item,
+          first_name: item.full_name?.split(" ")[0] || "",
+          last_name: item.full_name?.split(" ").slice(1).join(" ") || "",
+          middle_name: "",
+          is_registered: item.is_registered || false,
+          created_at: new Date().toISOString(),
+          is_banned: false,
+          user_id: undefined,
+          is_admin: false,
+          is_super_admin: false,
+          can_view_students: false,
+          telegram_chat_id: undefined,
+          key_issued: false,
+          key_lost: false,
+          avatar: item.avatar_type || "default",
+        }));
+
+        setStudents(students);
+        return;
+      }
     } catch (error) {
       console.error("Error loading students", error);
-      setStudents([]);
+      setStudents((prev) => (prev.length ? prev : []));
     }
   };
 

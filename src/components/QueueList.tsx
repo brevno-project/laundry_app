@@ -348,6 +348,19 @@ export default function QueueList() {
                 
                 return (
                   <div key={item.id} className={`${statusDisplay.bg} border-l-4 ${isCurrentUser ? 'border-blue-600' : 'border-gray-300'} rounded-lg p-3 shadow-sm`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <Avatar type={(item.avatar_type as AvatarType) || 'default'} className="w-12 h-12" />
+                        <div>
+                          <div className="font-bold text-lg text-gray-900">{item.full_name || '—'}</div>
+                          {item.room && <div className="text-xs text-gray-600">Комната {item.room}</div>}
+                        </div>
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${statusDisplay.badgeColor} whitespace-nowrap`}>
+                        {statusDisplay.badge}
+                      </span>
+                    </div>
+
                     {/* Заголовок с кнопками управления */}
                     {/* Чекбокс для выбора */}
                     
