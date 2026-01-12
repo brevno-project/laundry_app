@@ -18,8 +18,8 @@ export type Student = {
   is_admin?: boolean;
   is_super_admin?: boolean;
   can_view_students?: boolean; // Может ли студент видеть список студентов
-  key_issued?: boolean; // ????? ?? ????
-  key_lost?: boolean; // ??????? ?? ????
+  key_issued?: boolean; // ключ выдан
+  key_lost?: boolean; // ключ потерян
   avatar?: string; // SVG аватар (default, male1, male2, female1, female2, etc.)
   avatar_type?: string; // Тип аватара
 };

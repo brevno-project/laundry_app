@@ -173,7 +173,7 @@ export default function QueueList() {
             badge: (
               <span className="flex items-center gap-1.5">
                 <KeyIcon className="w-4 h-4" />
-                ???? ?????
+                Ключ выдан
               </span>
             ),
             badgeColor: 'bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold shadow-md'

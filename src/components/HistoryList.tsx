@@ -65,9 +65,9 @@ const getCardBorderColor = (totalMinutes: number) => {
 
 const getPaymentLabel = (paymentType?: string) => {
   if (!paymentType) return '-';
-  if (paymentType === 'coupon') return '?????';
-  if (paymentType === 'both') return '?????? + ?????';
-  if (paymentType === 'money') return '??????';
+  if (paymentType === 'coupon') return 'Купон';
+  if (paymentType === 'both') return 'Деньги + Купон';
+  if (paymentType === 'money') return 'Деньги';
   return paymentType;
 };
 
@@ -84,8 +84,8 @@ export default function HistoryList() {
           <div className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center shadow-lg">
             <HistoryIcon className="w-10 h-10 text-white" />
           </div>
-          <h3 className="text-2xl font-bold text-gray-800">??????? ?????</h3>
-          <p className="text-gray-600">??????????? ?????? ???????? ?????.</p>
+          <h3 className="text-2xl font-bold text-gray-800">История пуста</h3>
+          <p className="text-gray-600">Завершенные стирки появятся здесь.</p>
         </div>
       </div>
     );
@@ -100,8 +100,8 @@ export default function HistoryList() {
               <HistoryIcon className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">???????</h2>
-              <p className="text-green-100 text-sm">{history.length} ??????????? ??????</p>
+              <h2 className="text-2xl font-bold text-white">История</h2>
+              <p className="text-green-100 text-sm">{history.length} завершенных стирок</p>
             </div>
           </div>
         </div>
@@ -148,7 +148,7 @@ export default function HistoryList() {
                   <div>
                     <h3 className="font-bold text-gray-900 text-lg">{item.full_name}</h3>
                     <p className="text-sm text-gray-600">
-                      {item.room ? `??????? ${item.room} ? ` : ''}{formatDate(item.finished_at)}
+                      {item.room ? `Комната ${item.room} • ` : ''}{formatDate(item.finished_at)}
                     </p>
                   </div>
                 </div>
@@ -159,13 +159,13 @@ export default function HistoryList() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 text-sm font-semibold text-blue-800">
-                        <ClockIcon className="w-4 h-4" />?????? ??????
+                        <ClockIcon className="w-4 h-4" />Начало стирки
                       </div>
                       <span className="text-sm font-bold text-blue-900">{formatTime(washStart)}</span>
                     </div>
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 text-sm font-semibold text-blue-800">
-                        <CheckIcon className="w-4 h-4" />????? ??????
+                        <CheckIcon className="w-4 h-4" />Конец стирки
                       </div>
                       <span className="text-sm font-bold text-blue-900">{formatTime(washEnd)}</span>
                     </div>
@@ -179,7 +179,7 @@ export default function HistoryList() {
                         <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
                           <ClockIcon className="w-4 h-4 text-white" />
                         </div>
-                        <span className="text-sm font-medium text-gray-700">????? ?????</span>
+                        <span className="text-sm font-medium text-gray-700">Общее время</span>
                       </div>
                       <span className="text-lg font-bold text-gray-900">{totalDuration}</span>
                     </div>
@@ -187,14 +187,14 @@ export default function HistoryList() {
 
                   <div className="bg-white rounded-xl p-3 border-2 border-gray-200">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">?????????? ??????</span>
+                      <span className="text-sm font-medium text-gray-700">Количество стирок</span>
                       <span className="text-lg font-bold text-gray-900">{item.wash_count ?? '-'}</span>
                     </div>
                   </div>
 
                   <div className="bg-white rounded-xl p-3 border-2 border-gray-200">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">??????</span>
+                      <span className="text-sm font-medium text-gray-700">Оплата</span>
                       <span className="text-sm font-bold text-gray-900">{getPaymentLabel(item.payment_type)}</span>
                     </div>
                   </div>
@@ -207,7 +207,7 @@ export default function HistoryList() {
                         <div className={`w-8 h-8 ${keyIssuedColors.icon} rounded-lg flex items-center justify-center`}>
                           <CheckIcon className="w-4 h-4 text-white" />
                         </div>
-                        <span className={`text-sm font-medium ${keyIssuedColors.text}`}>???? ?????</span>
+                        <span className={`text-sm font-medium ${keyIssuedColors.text}`}>Ключ выдан</span>
                       </div>
                       <span className={`text-lg font-bold ${keyIssuedColors.text}`}>
                         {keyIssuedMinutes === null ? '-' : formatDuration(item.ready_at, item.key_issued_at)}
@@ -221,7 +221,7 @@ export default function HistoryList() {
                         <div className={`w-8 h-8 ${keyReturnColors.icon} rounded-lg flex items-center justify-center`}>
                           <CheckIcon className="w-4 h-4 text-white" />
                         </div>
-                        <span className={`text-sm font-medium ${keyReturnColors.text}`}>???? ??????????</span>
+                        <span className={`text-sm font-medium ${keyReturnColors.text}`}>Ключ возвращает</span>
                       </div>
                       <span className={`text-lg font-bold ${keyReturnColors.text}`}>
                         {keyReturnMinutes === null ? '-' : formatDuration(item.return_requested_at, item.finished_at)}
@@ -240,7 +240,7 @@ export default function HistoryList() {
           onClick={() => setShowAll(!showAll)}
           className="w-full py-4 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3"
         >
-          <span className="text-lg">{showAll ? '??????' : `???????? ??? ${history.length - 10}`}</span>
+          <span className="text-lg">{showAll ? 'Скрыть' : `Показать еще ${history.length - 10}`}</span>
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d={showAll ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"} />
           </svg>
