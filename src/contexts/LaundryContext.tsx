@@ -330,7 +330,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       console.log('🔐 Active session found, fetching user data...');
       const { data: me, error } = await supabase
         .from("students")
-        .select("id, first_name, last_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students")
+        .select("id, first_name, last_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason")
         .eq("user_id", uid)
         .maybeSingle();
 
@@ -351,6 +351,22 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       }
 
       console.log('✅ User data loaded:', { full_name: me.full_name, is_admin: me.is_admin, is_super_admin: me.is_super_admin });
+
+      if (me.is_banned) {
+        const banReason = me.ban_reason || "Не указана";
+        if (typeof window !== "undefined") {
+          localStorage.setItem(
+            "banNotice",
+            `Вы забанены. Причина: ${banReason}. Обратитесь к администратору.`
+          );
+        }
+
+        await supabase.auth.signOut();
+        setUser(null);
+        setIsAdmin(false);
+        setIsSuperAdmin(false);
+        return;
+      }
 
       const newUser: User = {
         id: uid,
@@ -664,7 +680,8 @@ const registerStudent = async (
     if (!student) throw new Error("Студент не найден");
 
     if (student.is_banned) {
-      throw new Error(`Вы забанены. Причина: ${student.ban_reason || "Не указана"}`);
+      const banReason = student.ban_reason || "Не указана";
+      throw new Error(`Вы забанены. Причина: ${banReason}. Обратитесь к администратору.`);
     }
 
     if (student.is_registered && student.user_id) {
@@ -768,7 +785,7 @@ const registerStudent = async (
     // 4) Загрузка обновлённого студента (теперь безопасно - сессия есть)
     const { data: updatedStudent } = await supabase
       .from("students")
-      .select("id, first_name, last_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, user_id, is_registered, created_at")
+      .select("id, first_name, last_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at")
       .eq("id", studentId)
       .single();
 
@@ -836,7 +853,7 @@ const loginStudent = async (
     // 4) Только ПОСЛЕ логина и установки сессии читаем students по user_id (RLS безопасно)
     const { data: updatedStudent, error: studentError } = await supabase
       .from("students")
-      .select("id, first_name, last_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, user_id, is_registered, created_at")
+      .select("id, first_name, last_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at")
       .eq("user_id", authUser.id)
       .maybeSingle();
     
@@ -851,8 +868,15 @@ const loginStudent = async (
 
     // 4) Проверяем бан (только после логина)
     if (updatedStudent.is_banned) {
-      await supabase.auth.signOut(); // Выходим, если забанен
-      throw new Error("Доступ запрещен");
+      const banReason = updatedStudent.ban_reason || "Не указана";
+      if (typeof window !== "undefined") {
+        localStorage.setItem(
+          "banNotice",
+          `Вы забанены. Причина: ${banReason}. Обратитесь к администратору.`
+        );
+      }
+      await supabase.auth.signOut();
+      throw new Error(`Вы забанены. Причина: ${banReason}. Обратитесь к администратору.`);
     }
 
     await fetchQueue();
@@ -1120,8 +1144,13 @@ const joinQueue = async (
 
       if (studentData.is_banned) {
         const banReason = studentData.ban_reason || 'Не указана';
-        throw new Error(`Вы забанены. Причина: ${banReason}`);
-        logoutStudent();
+        if (typeof window !== "undefined") {
+          localStorage.setItem(
+            "banNotice",
+            `Вы забанены. Причина: ${banReason}. Обратитесь к администратору.`
+          );
+        }
+        await logoutStudent();
         return;
       }
     } catch (err) {
@@ -1138,8 +1167,13 @@ const joinQueue = async (
       
       if (studentData?.is_banned) {
         const banReason = studentData.ban_reason || 'Не указана';
-      
-        logoutStudent();
+        if (typeof window !== "undefined") {
+          localStorage.setItem(
+            "banNotice",
+            `Вы забанены. Причина: ${banReason}. Обратитесь к администратору.`
+          );
+        }
+        await logoutStudent();
         return;
       }
     } catch (err) {

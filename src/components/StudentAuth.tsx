@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLaundry } from "@/contexts/LaundryContext";
 import { Student } from "@/types";
 import { DoorIcon, CheckIcon, CloseIcon, BackIcon } from "@/components/Icons";
@@ -16,6 +16,23 @@ export default function StudentAuth() {
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [banNotice, setBanNotice] = useState("");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const notice = localStorage.getItem("banNotice");
+    if (notice) {
+      setBanNotice(notice);
+      localStorage.removeItem("banNotice");
+    }
+  }, []);
+
+  const banNoticeBanner = banNotice ? (
+    <div className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-red-700">
+      <CloseIcon className="mr-2 inline-block h-5 w-5" />
+      {banNotice}
+    </div>
+  ) : null;
 
   const filteredStudents = students.filter((s) => {
     if (!searchQuery) return true;
@@ -74,6 +91,7 @@ export default function StudentAuth() {
   if (step === "select") {
     return (
       <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg shadow-xl border-2 border-blue-200 relative">
+        {banNoticeBanner}
 
         <h2 className="text-2xl font-bold mb-4 text-gray-900 text-center">
           Очередь на стирку
@@ -145,6 +163,7 @@ export default function StudentAuth() {
   // -------------------------------
   return (
     <div className="bg-white p-6 rounded-lg shadow-xl border-2 border-gray-200">
+      {banNoticeBanner}
       <button
         onClick={() => {
           setStep("select");
