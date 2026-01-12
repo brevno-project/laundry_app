@@ -118,6 +118,8 @@ export type HistoryItem = {
   room?: string;
   started_at: string;
   finished_at: string;
+  wash_count?: number;
+  payment_type?: string;
   avatar_type?: string;
   // ✅ Таймеры
   ready_at?: string;

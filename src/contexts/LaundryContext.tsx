@@ -1045,14 +1045,27 @@ const resetStudentRegistration = async (studentId: string) => {
       }
       
       try {
-        // Получаем историю
-        const { data: historyData, error: historyError } = await supabase
-          .from('history')
-          .select('id, user_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, return_requested_at')
-          .order('finished_at', { ascending: false })
-          .limit(100);
-        
-        if (historyError) throw historyError;
+        // Получаем историю (с fallback для старой схемы)
+        let historyData: any[] = [];
+        try {
+          const { data, error } = await supabase
+            .from('history')
+            .select('id, user_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, return_requested_at, wash_count, payment_type')
+            .order('finished_at', { ascending: false })
+            .limit(100);
+          
+          if (error) throw error;
+          historyData = data || [];
+        } catch (err) {
+          const { data, error } = await supabase
+            .from('history')
+            .select('id, user_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, return_requested_at')
+            .order('finished_at', { ascending: false })
+            .limit(100);
+          
+          if (error) throw error;
+          historyData = data || [];
+        }
         
         // Получаем уникальные user_id
         const userIds = [...new Set((historyData || []).map((item: any) => item.user_id))];

@@ -174,6 +174,10 @@ export const add_to_local_history = (queueItemId: string): boolean => {
     room: currentItem.room,
     started_at: machineState.started_at || new Date().toISOString(),
     finished_at: new Date().toISOString(),
+    wash_count: currentItem.wash_count,
+    payment_type: currentItem.payment_type,
+    washing_started_at: machineState.started_at || new Date().toISOString(),
+    return_requested_at: new Date().toISOString(),
   };
   
   const history = get_local_history();
@@ -220,6 +224,10 @@ export const mark_local_done = (): HistoryItem | null => {
     room: currentItem.room,
     started_at: machineState.started_at || new Date().toISOString(),
     finished_at: new Date().toISOString(),
+    wash_count: currentItem.wash_count,
+    payment_type: currentItem.payment_type,
+    washing_started_at: machineState.started_at || new Date().toISOString(),
+    return_requested_at: new Date().toISOString(),
   };
   
   const history = get_local_history();
