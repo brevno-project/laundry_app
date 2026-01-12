@@ -41,10 +41,11 @@ const getDurationMinutes = (start?: string | null, end?: string | null) => {
 const formatDuration = (start?: string | null, end?: string | null) => {
   if (!start || !end) return '-';
   const minutes = getDurationMinutes(start, end);
+  if (minutes <= 0) return 'меньше 1 мин';
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  if (hours > 0) return `${hours}h ${mins}min`;
-  return `${mins}min`;
+  if (hours > 0) return `${hours} ч ${mins} мин`;
+  return `${mins} мин`;
 };
 
 const getTimerColor = (minutes: number, normalLimit: number, warningLimit: number): TimerColors => {
@@ -110,7 +111,7 @@ export default function HistoryList() {
       <div className="space-y-3">
         {displayedHistory.map((item) => {
           const washStart = item.washing_started_at || null;
-          const washEnd = item.washing_finished_at || item.return_requested_at || item.finished_at || null;
+          const washEnd = item.washing_finished_at || item.return_requested_at || null;
           const hasWashTimes = !!(washStart && washEnd);
           const totalMinutes = hasWashTimes ? getDurationMinutes(washStart, washEnd) : 0;
           const totalDuration = hasWashTimes ? formatDuration(washStart, washEnd) : '-';
@@ -224,7 +225,7 @@ export default function HistoryList() {
                         <div className={`w-8 h-8 ${keyReturnColors.icon} rounded-lg flex items-center justify-center`}>
                           <CheckIcon className="w-4 h-4 text-white" />
                         </div>
-                        <span className={`text-sm font-medium ${keyReturnColors.text}`}>Ключ возвращает</span>
+                        <span className={`text-sm font-medium ${keyReturnColors.text}`}>Ключ возвращал</span>
                       </div>
                       <span className={`text-lg font-bold ${keyReturnColors.text}`}>
                         {keyReturnMinutes === null ? '-' : formatDuration(item.return_requested_at, item.finished_at)}

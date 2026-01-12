@@ -369,34 +369,48 @@ export default function QueueList() {
                     {/* ✅ Таймеры - показываем всю историю */}
                     {(item.ready_at || item.key_issued_at || item.washing_started_at || item.return_requested_at) && (
                       <div className="flex flex-wrap gap-2 mb-2">
-                        {item.ready_at && item.status !== QueueStatus.READY && (
+                        {item.ready_at && (
                           <Timer 
                             startTime={item.ready_at} 
-                            endTime={item.key_issued_at || (item.status !== QueueStatus.READY ? new Date().toISOString() : undefined)}
+                            endTime={
+                              item.key_issued_at ||
+                              (item.status === QueueStatus.READY ? undefined : new Date().toISOString())
+                            }
                             label="Идет за ключом" 
                             color="yellow" 
                           />
                         )}
-                        {item.key_issued_at && item.status !== QueueStatus.KEY_ISSUED && (
+                        {item.key_issued_at && (
                           <Timer 
                             startTime={item.key_issued_at} 
-                            endTime={item.washing_started_at || (item.status !== QueueStatus.KEY_ISSUED ? new Date().toISOString() : undefined)}
+                            endTime={
+                              item.washing_started_at ||
+                              (item.status === QueueStatus.KEY_ISSUED ? undefined : new Date().toISOString())
+                            }
                             label="Ключ выдан" 
                             color="blue" 
                           />
                         )}
-                        {item.washing_started_at && item.status !== QueueStatus.WASHING && (
+                        {item.washing_started_at && (
                           <Timer 
                             startTime={item.washing_started_at} 
-                            endTime={item.return_requested_at || item.finished_at || (item.status !== QueueStatus.WASHING ? new Date().toISOString() : undefined)}
+                            endTime={
+                              item.washing_finished_at ||
+                              item.return_requested_at ||
+                              item.finished_at ||
+                              (item.status === QueueStatus.WASHING ? undefined : new Date().toISOString())
+                            }
                             label="Стирает" 
                             color="green" 
                           />
                         )}
-                        {item.return_requested_at && item.status !== QueueStatus.RETURNING_KEY && (
+                        {item.return_requested_at && (
                           <Timer 
                             startTime={item.return_requested_at} 
-                            endTime={item.finished_at || (item.status !== QueueStatus.RETURNING_KEY ? new Date().toISOString() : undefined)}
+                            endTime={
+                              item.finished_at ||
+                              (item.status === QueueStatus.RETURNING_KEY ? undefined : new Date().toISOString())
+                            }
                             label="Возвращает ключ" 
                             color="orange" 
                           />
