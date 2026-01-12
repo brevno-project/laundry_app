@@ -344,6 +344,8 @@ export default function QueueList() {
                 // Найти студента по item.student_id и проверить is_super_admin
                 const targetStudent = students.find(s => s.id === item.student_id);
                 const targetIsSuperAdmin = targetStudent?.is_super_admin === true;
+                const displayName = item.full_name || targetStudent?.full_name || "-";
+                const displayRoom = item.room || targetStudent?.room;
 
                 
                 return (
@@ -352,8 +354,8 @@ export default function QueueList() {
                       <div className="flex items-center gap-3">
                         <Avatar type={(item.avatar_type as AvatarType) || 'default'} className="w-12 h-12" />
                         <div>
-                          <div className="font-bold text-lg text-gray-900">{item.full_name || '—'}</div>
-                          {item.room && <div className="text-xs text-gray-600">Комната {item.room}</div>}
+                          <div className="font-bold text-lg text-gray-900">{displayName}</div>
+                          {displayRoom && <div className="text-xs text-gray-600">Комната {displayRoom}</div>}
                         </div>
                       </div>
                       <span className={`px-2 py-1 rounded-full text-xs font-bold ${statusDisplay.badgeColor} whitespace-nowrap`}>

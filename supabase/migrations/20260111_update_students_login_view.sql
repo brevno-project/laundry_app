@@ -2,7 +2,7 @@
 create or replace view public.students_login_list as
 select
   id,
-  full_name,
+  coalesce(nullif(full_name, ''), trim(concat_ws(' ', first_name, last_name, middle_name))) as full_name,
   room,
   avatar_type,
   is_registered,

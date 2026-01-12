@@ -150,6 +150,12 @@ export default function StudentsList() {
                         Ключ потерян
                       </span>
                     )}
+                    {isSuperAdmin && (
+                      <span className={`rounded-full px-2 py-0.5 ${student.can_view_students ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-500"}`}>
+                        <EyeIcon className="w-3 h-3 inline-block mr-1" />
+                        {student.can_view_students ? "Список открыт" : "Список закрыт"}
+                      </span>
+                    )}
                   </span>
                 )}
               </div>
@@ -233,6 +239,12 @@ export default function StudentsList() {
                     {student.key_lost && (
                       <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-red-700">
                         Потерян
+                      </span>
+                    )}
+                    {isSuperAdmin && (
+                      <span className={`rounded-full px-1.5 py-0.5 ${student.can_view_students ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-500"}`}>
+                        <EyeIcon className="w-3 h-3 inline-block mr-1" />
+                        {student.can_view_students ? "Открыт" : "Закрыт"}
                       </span>
                     )}
                   </span>
@@ -462,13 +474,7 @@ export default function StudentsList() {
                     <input
                       type="checkbox"
                       checked={editKeyIssued}
-                      onChange={(e) => {
-                        const next = e.target.checked;
-                        setEditKeyIssued(next);
-                        if (!next) {
-                          setEditKeyLost(false);
-                        }
-                      }}
+                      onChange={(e) => setEditKeyIssued(e.target.checked)}
                       className="h-5 w-5 cursor-pointer"
                     />
                     Ключ выдан
@@ -477,13 +483,7 @@ export default function StudentsList() {
                     <input
                       type="checkbox"
                       checked={editKeyLost}
-                      onChange={(e) => {
-                        const next = e.target.checked;
-                        setEditKeyLost(next);
-                        if (next) {
-                          setEditKeyIssued(true);
-                        }
-                      }}
+                      onChange={(e) => setEditKeyLost(e.target.checked)}
                       className="h-5 w-5 cursor-pointer"
                     />
                     Ключ потерян

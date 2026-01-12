@@ -401,82 +401,134 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     }
 
     const client = supabase;
-    const canLoadFull = !!(isAdmin || isSuperAdmin || user?.can_view_students);
+    const isAdminUser = !!(isAdmin || isSuperAdmin);
+    const canViewStudents = !!(isAdminUser || user?.can_view_students);
 
     try {
-      if (canLoadFull) {
-        const { data, error } = await client
-          .from("students")
-          .select(
-            "id, first_name, last_name, middle_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, key_issued, key_lost"
-          )
-          .order("full_name", { ascending: true });
+      if (isAdminUser) {
+        try {
+          const { data, error } = await client
+            .from("students")
+            .select(
+              "id, first_name, last_name, middle_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, key_issued, key_lost"
+            )
+            .order("full_name", { ascending: true });
 
-        if (error) throw error;
+          if (error) throw error;
 
-        const students: Student[] = (data || []).map((item: any): Student => {
-          const fullName =
-            item.full_name ||
-            [item.first_name, item.last_name, item.middle_name].filter(Boolean).join(" ");
+          const students: Student[] = (data || []).map((item: any): Student => {
+            const fullName =
+              item.full_name ||
+              [item.first_name, item.last_name, item.middle_name].filter(Boolean).join(" ");
 
-          return {
-            id: item.id,
-            first_name: item.first_name || "",
-            last_name: item.last_name || "",
-            middle_name: item.middle_name || "",
-            full_name: fullName || "",
-            room: item.room ?? null,
-            is_registered: !!item.is_registered,
-            created_at: item.created_at || new Date().toISOString(),
-            is_banned: !!item.is_banned,
-            ban_reason: item.ban_reason || null,
-            user_id: item.user_id || undefined,
-            is_admin: !!item.is_admin,
-            is_super_admin: !!item.is_super_admin,
-            can_view_students: !!item.can_view_students,
-            telegram_chat_id: item.telegram_chat_id || undefined,
-            key_issued: !!item.key_issued,
-            key_lost: !!item.key_lost,
-            avatar: item.avatar_type || "default",
-            avatar_type: item.avatar_type || "default",
-          };
-        });
+            return {
+              id: item.id,
+              first_name: item.first_name || "",
+              last_name: item.last_name || "",
+              middle_name: item.middle_name || "",
+              full_name: fullName || "",
+              room: item.room ?? null,
+              is_registered: !!item.is_registered,
+              created_at: item.created_at || new Date().toISOString(),
+              is_banned: !!item.is_banned,
+              ban_reason: item.ban_reason || null,
+              user_id: item.user_id || undefined,
+              is_admin: !!item.is_admin,
+              is_super_admin: !!item.is_super_admin,
+              can_view_students: !!item.can_view_students,
+              telegram_chat_id: item.telegram_chat_id || undefined,
+              key_issued: !!item.key_issued,
+              key_lost: !!item.key_lost,
+              avatar: item.avatar_type || "default",
+              avatar_type: item.avatar_type || "default",
+            };
+          });
 
-        setStudents(students);
-        return;
+          setStudents(students);
+          return;
+        } catch (error) {
+          const { data, error: legacyError } = await client
+            .from("students")
+            .select(
+              "id, first_name, last_name, middle_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at"
+            )
+            .order("full_name", { ascending: true });
+
+          if (legacyError) throw legacyError;
+
+          const students: Student[] = (data || []).map((item: any): Student => {
+            const fullName =
+              item.full_name ||
+              [item.first_name, item.last_name, item.middle_name].filter(Boolean).join(" ");
+
+            return {
+              id: item.id,
+              first_name: item.first_name || "",
+              last_name: item.last_name || "",
+              middle_name: item.middle_name || "",
+              full_name: fullName || "",
+              room: item.room ?? null,
+              is_registered: !!item.is_registered,
+              created_at: item.created_at || new Date().toISOString(),
+              is_banned: !!item.is_banned,
+              ban_reason: item.ban_reason || null,
+              user_id: item.user_id || undefined,
+              is_admin: !!item.is_admin,
+              is_super_admin: !!item.is_super_admin,
+              can_view_students: !!item.can_view_students,
+              telegram_chat_id: item.telegram_chat_id || undefined,
+              key_issued: false,
+              key_lost: false,
+              avatar: item.avatar_type || "default",
+              avatar_type: item.avatar_type || "default",
+            };
+          });
+
+          setStudents(students);
+          return;
+        }
       }
 
-      const { data: { session } } = await client.auth.getSession();
-      if (session?.access_token) {
-        const response = await fetch("/api/students/list", {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        });
+      if (canViewStudents) {
+        const { data: { session } } = await client.auth.getSession();
+        if (session?.access_token) {
+          const response = await fetch("/api/students/list", {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
+          });
 
-        if (response.ok) {
-          const result = await response.json();
-          const apiStudents: Student[] = (result.students || []).map((item: any): Student => ({
-            ...item,
-            first_name: item.first_name || item.full_name?.split(" ")[0] || "",
-            last_name: item.last_name || item.full_name?.split(" ").slice(1).join(" ") || "",
-            middle_name: item.middle_name || "",
-            is_registered: item.is_registered || false,
-            created_at: item.created_at || new Date().toISOString(),
-            is_banned: !!item.is_banned,
-            is_admin: !!item.is_admin,
-            is_super_admin: !!item.is_super_admin,
-            can_view_students: !!item.can_view_students,
-            telegram_chat_id: item.telegram_chat_id || undefined,
-            key_issued: !!item.key_issued,
-            key_lost: !!item.key_lost,
-            avatar: item.avatar_type || "default",
-            avatar_type: item.avatar_type || "default",
-          }));
+          if (response.ok) {
+            const result = await response.json();
+            const apiStudents: Student[] = (result.students || []).map((item: any): Student => {
+              const fullName =
+                item.full_name ||
+                [item.first_name, item.last_name, item.middle_name].filter(Boolean).join(" ");
 
-          setStudents(apiStudents);
-          return;
+              return {
+                ...item,
+                first_name: item.first_name || item.full_name?.split(" ")[0] || "",
+                last_name: item.last_name || item.full_name?.split(" ").slice(1).join(" ") || "",
+                middle_name: item.middle_name || "",
+                full_name: fullName || "",
+                is_registered: item.is_registered || false,
+                created_at: item.created_at || new Date().toISOString(),
+                is_banned: !!item.is_banned,
+                is_admin: !!item.is_admin,
+                is_super_admin: !!item.is_super_admin,
+                can_view_students: !!item.can_view_students,
+                telegram_chat_id: item.telegram_chat_id || undefined,
+                key_issued: !!item.key_issued,
+                key_lost: !!item.key_lost,
+                avatar: item.avatar_type || "default",
+                avatar_type: item.avatar_type || "default",
+              };
+            });
+
+            setStudents(apiStudents);
+            return;
+          }
         }
       }
 

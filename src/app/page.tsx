@@ -19,7 +19,8 @@ import AvatarSelector from '@/components/AvatarSelector';
 import PasswordChanger from '@/components/PasswordChanger';
 
 export default function Home() {
-  const { user, isLoading, logoutStudent, isAdmin, machineState, queue, isNewUser, setIsNewUser, students, needsClaim } = useLaundry();
+  const { user, isLoading, logoutStudent, isAdmin, isSuperAdmin, machineState, queue, isNewUser, setIsNewUser, students, needsClaim } = useLaundry();
+  const canViewStudentsTab = isAdmin || isSuperAdmin || !!user?.can_view_students;
   
   // ✅ Восстанавливаем activeTab из localStorage
   const [activeTab, setActiveTab] = React.useState(() => {
@@ -130,7 +131,7 @@ export default function Home() {
                 <HistoryIcon className="w-5 h-5 inline-block mr-2" />История
               </button>
             {/* Вкладка Студенты доступна админам и пользователям с флагом can_view_students */}
-            {(isAdmin || (user && students.find(s => s.id === user.student_id)?.can_view_students)) && (
+            {canViewStudentsTab && (
               <button
                 onClick={() => handleTabChange('students')}
                 className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
@@ -316,7 +317,7 @@ export default function Home() {
         )}
 
         {/* Студенты - доступно админам и пользователям с can_view_students */}
-        {activeTab === 'students' && (isAdmin || (user && students.find(s => s.id === user.student_id)?.can_view_students)) && (
+        {activeTab === 'students' && canViewStudentsTab && (
           <div className="w-full space-y-4">
             <StudentsList />
           </div>
