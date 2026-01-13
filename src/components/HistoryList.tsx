@@ -33,7 +33,14 @@ const formatDate = (dateStr?: string | null) => {
 
 const getDurationMinutes = (start?: string | null, end?: string | null) => {
   if (!start || !end) return 0;
-  const ms = new Date(end).getTime() - new Date(start).getTime();
+  const startMs = new Date(start).getTime();
+  let endMs = new Date(end).getTime();
+  if (Number.isNaN(startMs) || Number.isNaN(endMs)) return 0;
+  const oneDayMs = 24 * 60 * 60 * 1000;
+  if (endMs < startMs) {
+    endMs += oneDayMs;
+  }
+  const ms = endMs - startMs;
   const minutes = Math.floor(ms / 60000);
   return minutes < 0 ? 0 : minutes;
 };
@@ -41,11 +48,9 @@ const getDurationMinutes = (start?: string | null, end?: string | null) => {
 const formatDuration = (start?: string | null, end?: string | null) => {
   if (!start || !end) return '-';
   const minutes = getDurationMinutes(start, end);
-  if (minutes <= 0) return 'меньше 1 мин';
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  if (hours > 0) return `${hours} ч ${mins} мин`;
-  return `${mins} мин`;
+  return `${hours} ч ${mins} мин`;
 };
 
 const getTimerColor = (minutes: number, normalLimit: number, warningLimit: number): TimerColors => {
