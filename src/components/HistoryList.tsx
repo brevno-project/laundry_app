@@ -13,10 +13,10 @@ type TimerColors = {
 };
 
 const neutralColors: TimerColors = {
-  bg: 'bg-gray-100',
-  border: 'border-gray-200',
-  text: 'text-gray-500',
-  icon: 'bg-gray-400',
+  bg: 'bg-slate-50',
+  border: 'border-slate-200',
+  text: 'text-slate-700',
+  icon: 'bg-slate-400',
 };
 
 const formatTime = (dateStr?: string | null) => {
@@ -55,18 +55,18 @@ const formatDuration = (start?: string | null, end?: string | null) => {
 
 const getTimerColor = (minutes: number, normalLimit: number, warningLimit: number): TimerColors => {
   if (minutes > warningLimit) {
-    return { bg: 'bg-red-100', border: 'border-red-300', text: 'text-red-700', icon: 'bg-red-500' };
+    return { bg: 'bg-slate-50', border: 'border-blue-300', text: 'text-blue-800', icon: 'bg-blue-600' };
   }
   if (minutes > normalLimit) {
-    return { bg: 'bg-yellow-100', border: 'border-yellow-300', text: 'text-yellow-700', icon: 'bg-yellow-500' };
+    return { bg: 'bg-slate-50', border: 'border-blue-200', text: 'text-blue-700', icon: 'bg-blue-500' };
   }
-  return { bg: 'bg-green-100', border: 'border-green-300', text: 'text-green-700', icon: 'bg-green-500' };
+  return { bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-700', icon: 'bg-slate-400' };
 };
 
 const getCardTone = (totalMinutes: number) => {
-  if (totalMinutes > 120) return { border: 'border-red-400', bg: 'bg-red-50' };
-  if (totalMinutes > 90) return { border: 'border-yellow-400', bg: 'bg-yellow-50' };
-  return { border: 'border-green-400', bg: 'bg-green-50' };
+  if (totalMinutes > 120) return { border: 'border-blue-300', bg: 'bg-white' };
+  if (totalMinutes > 90) return { border: 'border-blue-200', bg: 'bg-white' };
+  return { border: 'border-slate-200', bg: 'bg-white' };
 };
 
 const getEarliestDate = (dates: Array<string | null | undefined>) => {
@@ -96,9 +96,9 @@ export default function HistoryList() {
 
   if (history.length === 0) {
     return (
-      <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-md border-2 border-green-200 p-12">
+      <div className="bg-slate-50 rounded-2xl shadow-sm border border-slate-200 p-12">
         <div className="flex flex-col items-center justify-center text-center space-y-4">
-          <div className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center shadow-lg">
+          <div className="w-20 h-20 rounded-full bg-slate-900 flex items-center justify-center shadow-md">
             <HistoryIcon className="w-10 h-10 text-white" />
           </div>
           <h3 className="text-2xl font-bold text-gray-800">История пуста</h3>
@@ -110,15 +110,15 @@ export default function HistoryList() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-lg p-5">
+      <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl shadow-md p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
               <HistoryIcon className="w-6 h-6 text-white" />
             </div>
             <div>
               <h2 className="text-2xl font-bold text-white">История</h2>
-              <p className="text-green-100 text-sm">{history.length} записей о стирках</p>
+              <p className="text-slate-300 text-sm">{history.length} записей о стирках</p>
             </div>
           </div>
         </div>
@@ -136,7 +136,7 @@ export default function HistoryList() {
           const hasCycleTimes = Boolean(cycleStart && cycleEnd);
           const totalMinutes = hasCycleTimes ? getDurationMinutes(cycleStart, cycleEnd) : 0;
           const totalDuration = hasCycleTimes ? formatDuration(cycleStart, cycleEnd) : '-';
-          const cardTone = hasCycleTimes ? getCardTone(totalMinutes) : { border: 'border-gray-200', bg: 'bg-white' };
+          const cardTone = hasCycleTimes ? getCardTone(totalMinutes) : { border: 'border-slate-200', bg: 'bg-white' };
 
           const washStart = item.washing_started_at ?? null;
           const washEnd = item.washing_finished_at ?? (washStart ? item.finished_at ?? null : null);
@@ -154,16 +154,16 @@ export default function HistoryList() {
           const paymentType = item.payment_type ?? null;
           const paymentLabel = getPaymentLabel(paymentType);
           const paymentIcons = paymentType === 'coupon'
-            ? <TicketIcon className="w-4 h-4 text-purple-600" />
+            ? <TicketIcon className="w-4 h-4 text-blue-600" />
             : paymentType === 'both'
               ? (
                 <>
-                  <MoneyIcon className="w-4 h-4 text-green-600" />
-                  <TicketIcon className="w-4 h-4 text-purple-600" />
+                  <MoneyIcon className="w-4 h-4 text-blue-600" />
+                  <TicketIcon className="w-4 h-4 text-blue-600" />
                 </>
               )
               : paymentType === 'money' || paymentType === 'cash'
-                ? <MoneyIcon className="w-4 h-4 text-green-600" />
+                ? <MoneyIcon className="w-4 h-4 text-blue-600" />
                 : null;
 
           const keyIssuedColors = keyIssuedMinutes === null
@@ -176,7 +176,7 @@ export default function HistoryList() {
           return (
             <div
               key={item.id}
-              className={`rounded-2xl shadow-md border-2 ${cardTone.border} ${cardTone.bg} hover:shadow-lg transition-all p-5`}
+              className={`rounded-2xl shadow-sm border ${cardTone.border} ${cardTone.bg} hover:shadow-md transition-all p-5`}
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -185,7 +185,7 @@ export default function HistoryList() {
                       type={(item.avatar_type as AvatarType) || 'default'}
                       className="w-12 h-12 ring-4 ring-white shadow-md"
                     />
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-md">
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center shadow-md">
                       <CheckIcon className="w-3.5 h-3.5 text-white" />
                     </div>
                   </div>
@@ -199,47 +199,47 @@ export default function HistoryList() {
               </div>
 
               <div className="space-y-3">
-                <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-blue-800">
-                        <ClockIcon className="w-4 h-4" />Начало стирки
+                      <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                        <ClockIcon className="w-4 h-4 text-slate-600" />Начало стирки
                       </div>
-                      <span className="text-sm font-bold text-blue-900">{formatTime(cycleStart)}</span>
+                      <span className="text-sm font-bold text-slate-900">{formatTime(cycleStart)}</span>
                     </div>
                     <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-blue-800">
-                        <CheckIcon className="w-4 h-4" />Конец стирки
+                      <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                        <CheckIcon className="w-4 h-4 text-slate-600" />Конец стирки
                       </div>
-                      <span className="text-sm font-bold text-blue-900">{formatTime(cycleEnd)}</span>
+                      <span className="text-sm font-bold text-slate-900">{formatTime(cycleEnd)}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <div className="bg-white rounded-xl p-3 border-2 border-gray-200">
+                  <div className="bg-white rounded-xl p-3 border border-slate-200">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                        <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
                           <ClockIcon className="w-4 h-4 text-white" />
                         </div>
-                        <span className="text-sm font-medium text-gray-700">Общее время</span>
+                        <span className="text-sm font-medium text-slate-600">Общее время</span>
                       </div>
-                      <span className="text-lg font-bold text-gray-900">{totalDuration}</span>
+                      <span className="text-lg font-bold text-slate-900">{totalDuration}</span>
                     </div>
                   </div>
 
-                  <div className="bg-white rounded-xl p-3 border-2 border-gray-200">
+                  <div className="bg-white rounded-xl p-3 border border-slate-200">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Количество стирок</span>
-                      <span className="text-lg font-bold text-gray-900">{washCount}</span>
+                      <span className="text-sm font-medium text-slate-600">Количество стирок</span>
+                      <span className="text-lg font-bold text-slate-900">{washCount}</span>
                     </div>
                   </div>
 
-                  <div className="bg-white rounded-xl p-3 border-2 border-gray-200">
+                  <div className="bg-white rounded-xl p-3 border border-slate-200">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Оплата</span>
-                      <span className="text-sm font-bold text-gray-900 flex items-center gap-1">
+                      <span className="text-sm font-medium text-slate-600">Оплата</span>
+                      <span className="text-sm font-bold text-slate-900 flex items-center gap-1">
                         {paymentIcons}
                         {paymentLabel}
                       </span>
@@ -248,7 +248,7 @@ export default function HistoryList() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div className={`${keyIssuedColors.bg} rounded-xl p-3 border-2 ${keyIssuedColors.border}`}>
+                  <div className={`${keyIssuedColors.bg} rounded-xl p-3 border ${keyIssuedColors.border}`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className={`w-8 h-8 ${keyIssuedColors.icon} rounded-lg flex items-center justify-center`}>
@@ -262,7 +262,7 @@ export default function HistoryList() {
                     </div>
                   </div>
 
-                  <div className={`${keyReturnColors.bg} rounded-xl p-3 border-2 ${keyReturnColors.border}`}>
+                  <div className={`${keyReturnColors.bg} rounded-xl p-3 border ${keyReturnColors.border}`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className={`w-8 h-8 ${keyReturnColors.icon} rounded-lg flex items-center justify-center`}>
@@ -277,12 +277,12 @@ export default function HistoryList() {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-indigo-800">
-                      <WashingIcon className="w-4 h-4" />Время стирки
+                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                      <WashingIcon className="w-4 h-4 text-slate-600" />Время стирки
                     </div>
-                    <span className="text-sm font-bold text-indigo-900">{washingDuration}</span>
+                    <span className="text-sm font-bold text-slate-900">{washingDuration}</span>
                   </div>
                 </div>
               </div>
@@ -294,7 +294,7 @@ export default function HistoryList() {
       {history.length > 10 && (
         <button
           onClick={() => setShowAll(!showAll)}
-          className="w-full py-4 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3"
+          className="w-full py-4 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-900 hover:to-slate-950 text-white font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3"
         >
           <span className="text-lg">
             {showAll ? 'Скрыть' : `Показать еще ${history.length - 10}`}
