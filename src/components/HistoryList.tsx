@@ -1,7 +1,7 @@
 "use client";
 
 import { useLaundry } from '@/contexts/LaundryContext';
-import { HistoryIcon, ClockIcon, CheckIcon } from './Icons';
+import { HistoryIcon, ClockIcon, CheckIcon, MoneyIcon, TicketIcon } from './Icons';
 import Avatar, { AvatarType } from '@/components/Avatar';
 import { useState } from 'react';
 
@@ -19,19 +19,19 @@ const neutralColors: TimerColors = {
   icon: 'bg-gray-400',
 };
 
-const formatTime = (dateStr?: string | null) => {
+const formatTime = (dateStr-: string | null) => {
   if (!dateStr) return '-';
   const date = new Date(dateStr);
   return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 };
 
-const formatDate = (dateStr?: string | null) => {
+const formatDate = (dateStr-: string | null) => {
   if (!dateStr) return '-';
   const date = new Date(dateStr);
   return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
-const getDurationMinutes = (start?: string | null, end?: string | null) => {
+const getDurationMinutes = (start-: string | null, end-: string | null) => {
   if (!start || !end) return 0;
   const startMs = new Date(start).getTime();
   let endMs = new Date(end).getTime();
@@ -42,15 +42,16 @@ const getDurationMinutes = (start?: string | null, end?: string | null) => {
   }
   const ms = endMs - startMs;
   const minutes = Math.floor(ms / 60000);
-  return minutes < 0 ? 0 : minutes;
+  return minutes < 0 - 0 : minutes;
 };
 
-const formatDuration = (start?: string | null, end?: string | null) => {
+const formatDuration = (start-: string | null, end-: string | null) => {
   if (!start || !end) return '-';
   const minutes = getDurationMinutes(start, end);
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  return `${hours} ч ${mins} мин`;
+  if (hours > 0) return `${hours} ч ${mins} мин`;
+  return `${mins} мин`;
 };
 
 const getTimerColor = (minutes: number, normalLimit: number, warningLimit: number): TimerColors => {
@@ -69,7 +70,7 @@ const getCardBorderColor = (totalMinutes: number) => {
   return 'border-green-400';
 };
 
-const getPaymentLabel = (paymentType?: string) => {
+const getPaymentLabel = (paymentType-: string) => {
   if (!paymentType) return '-';
   if (paymentType === 'coupon') return 'Купон';
   if (paymentType === 'both') return 'Деньги + Купон';
@@ -81,7 +82,7 @@ export default function HistoryList() {
   const { history } = useLaundry();
   const [showAll, setShowAll] = useState(false);
 
-  const displayedHistory = showAll ? history : history.slice(0, 10);
+  const displayedHistory = showAll - history : history.slice(0, 10);
 
   if (history.length === 0) {
     return (
@@ -118,24 +119,37 @@ export default function HistoryList() {
           const washStart = item.washing_started_at || null;
           const washEnd = item.washing_finished_at || item.return_requested_at || null;
           const hasWashTimes = !!(washStart && washEnd);
-          const totalMinutes = hasWashTimes ? getDurationMinutes(washStart, washEnd) : 0;
-          const totalDuration = hasWashTimes ? formatDuration(washStart, washEnd) : '-';
+          const totalMinutes = hasWashTimes - getDurationMinutes(washStart, washEnd) : 0;
+          const totalDuration = hasWashTimes - formatDuration(washStart, washEnd) : '-';
           const borderColor = getCardBorderColor(totalMinutes);
 
           const keyIssuedMinutes = item.ready_at && item.key_issued_at
-            ? getDurationMinutes(item.ready_at, item.key_issued_at)
+            - getDurationMinutes(item.ready_at, item.key_issued_at)
             : null;
           const keyReturnMinutes = item.return_requested_at && item.finished_at
-            ? getDurationMinutes(item.return_requested_at, item.finished_at)
+            - getDurationMinutes(item.return_requested_at, item.finished_at)
             : null;
-          const washCount = item.wash_count ?? 1;
-          const paymentLabel = getPaymentLabel(item.payment_type || 'money');
+          const washCount = item.wash_count -- 1;
+          const paymentType = item.payment_type || 'money';
+          const paymentLabel = getPaymentLabel(paymentType);
+          const paymentIcons = paymentType === 'coupon'
+            - <TicketIcon className="w-4 h-4 text-purple-600" />
+            : paymentType === 'both'
+            - (
+              <>
+                <MoneyIcon className="w-4 h-4 text-green-600" />
+                <TicketIcon className="w-4 h-4 text-purple-600" />
+              </>
+            )
+            : paymentType === 'money'
+            - <MoneyIcon className="w-4 h-4 text-green-600" />
+            : null;
 
           const keyIssuedColors = keyIssuedMinutes === null
-            ? neutralColors
+            - neutralColors
             : getTimerColor(keyIssuedMinutes, 3, 10);
           const keyReturnColors = keyReturnMinutes === null
-            ? neutralColors
+            - neutralColors
             : getTimerColor(keyReturnMinutes, 5, 15);
 
           return (
@@ -157,7 +171,7 @@ export default function HistoryList() {
                   <div>
                     <h3 className="font-bold text-gray-900 text-lg">{item.full_name}</h3>
                     <p className="text-sm text-gray-600">
-                      {item.room ? `Комната ${item.room} • ` : ''}{formatDate(item.finished_at)}
+                      {item.room ? `Комната ${item.room} - ` : ''}{formatDate(item.finished_at)}
                     </p>
                   </div>
                 </div>
@@ -204,7 +218,10 @@ export default function HistoryList() {
                   <div className="bg-white rounded-xl p-3 border-2 border-gray-200">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-700">Оплата</span>
-                      <span className="text-sm font-bold text-gray-900">{paymentLabel}</span>
+                      <span className="text-sm font-bold text-gray-900 flex items-center gap-1">
+                        {paymentIcons}
+                        {paymentLabel}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -219,7 +236,7 @@ export default function HistoryList() {
                         <span className={`text-sm font-medium ${keyIssuedColors.text}`}>Ключ выдан</span>
                       </div>
                       <span className={`text-lg font-bold ${keyIssuedColors.text}`}>
-                        {keyIssuedMinutes === null ? '-' : formatDuration(item.ready_at, item.key_issued_at)}
+                        {keyIssuedMinutes === null - '-' : formatDuration(item.ready_at, item.key_issued_at)}
                       </span>
                     </div>
                   </div>
@@ -233,7 +250,7 @@ export default function HistoryList() {
                         <span className={`text-sm font-medium ${keyReturnColors.text}`}>Ключ возвращал</span>
                       </div>
                       <span className={`text-lg font-bold ${keyReturnColors.text}`}>
-                        {keyReturnMinutes === null ? '-' : formatDuration(item.return_requested_at, item.finished_at)}
+                        {keyReturnMinutes === null - '-' : formatDuration(item.return_requested_at, item.finished_at)}
                       </span>
                     </div>
                   </div>
@@ -249,9 +266,9 @@ export default function HistoryList() {
           onClick={() => setShowAll(!showAll)}
           className="w-full py-4 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3"
         >
-          <span className="text-lg">{showAll ? 'Скрыть' : `Показать еще ${history.length - 10}`}</span>
+          <span className="text-lg">{showAll - 'Скрыть' : `Показать еще ${history.length - 10}`}</span>
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d={showAll ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"} />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d={showAll - "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"} />
           </svg>
         </button>
       )}
