@@ -126,15 +126,20 @@ export default function HistoryList() {
 
       <div className="space-y-3">
         {displayedHistory.map((item) => {
-          const cycleStart = getEarliestDate([item.ready_at, item.key_issued_at, item.washing_started_at]);
-          const cycleEnd = item.washing_finished_at ?? null;
+          const cycleStart = getEarliestDate([
+            item.ready_at,
+            item.key_issued_at,
+            item.washing_started_at,
+            item.return_requested_at,
+          ]);
+          const cycleEnd = item.finished_at ?? item.washing_finished_at ?? null;
           const hasCycleTimes = Boolean(cycleStart && cycleEnd);
           const totalMinutes = hasCycleTimes ? getDurationMinutes(cycleStart, cycleEnd) : 0;
           const totalDuration = hasCycleTimes ? formatDuration(cycleStart, cycleEnd) : '-';
           const cardTone = hasCycleTimes ? getCardTone(totalMinutes) : { border: 'border-gray-200', bg: 'bg-white' };
 
           const washStart = item.washing_started_at ?? null;
-          const washEnd = item.washing_finished_at ?? null;
+          const washEnd = item.washing_finished_at ?? (washStart ? item.finished_at ?? null : null);
           const hasWashTimes = Boolean(washStart && washEnd);
           const washingDuration = hasWashTimes ? formatDuration(washStart, washEnd) : '-';
 

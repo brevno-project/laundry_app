@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
 
     // ✅ Добавляем в историю
     const now = new Date().toISOString();
-    const washingFinishedAt = queueItem.washing_finished_at || queueItem.return_requested_at || now;
+    const washingFinishedAt = queueItem.washing_finished_at || now;
     const historyItem = {
       id: uuidv4(),
       user_id: queueItem.user_id,
