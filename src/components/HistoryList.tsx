@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import Avatar, { AvatarType } from '@/components/Avatar';
-import { HistoryIcon, ClockIcon, CheckIcon, MoneyIcon, TicketIcon } from './Icons';
+import { HistoryIcon, ClockIcon, CheckIcon, MoneyIcon, TicketIcon, WashingIcon } from './Icons';
 
 type TimerColors = {
   bg: string;
@@ -69,6 +69,17 @@ const getCardTone = (totalMinutes: number) => {
   return { border: 'border-green-400', bg: 'bg-green-50' };
 };
 
+const getEarliestDate = (dates: Array<string | null | undefined>) => {
+  const parsed = dates
+    .filter((value): value is string => Boolean(value))
+    .map((value) => ({ value, time: new Date(value).getTime() }))
+    .filter((item) => !Number.isNaN(item.time));
+
+  if (parsed.length === 0) return null;
+  parsed.sort((a, b) => a.time - b.time);
+  return parsed[0].value;
+};
+
 const getPaymentLabel = (paymentType?: string | null) => {
   if (!paymentType) return '-';
   if (paymentType === 'coupon') return 'Купон';
@@ -115,12 +126,17 @@ export default function HistoryList() {
 
       <div className="space-y-3">
         {displayedHistory.map((item) => {
+          const cycleStart = getEarliestDate([item.ready_at, item.key_issued_at, item.washing_started_at]);
+          const cycleEnd = item.washing_finished_at ?? null;
+          const hasCycleTimes = Boolean(cycleStart && cycleEnd);
+          const totalMinutes = hasCycleTimes ? getDurationMinutes(cycleStart, cycleEnd) : 0;
+          const totalDuration = hasCycleTimes ? formatDuration(cycleStart, cycleEnd) : '-';
+          const cardTone = hasCycleTimes ? getCardTone(totalMinutes) : { border: 'border-gray-200', bg: 'bg-white' };
+
           const washStart = item.washing_started_at ?? null;
-          const washEnd = item.washing_finished_at ?? item.return_requested_at ?? item.finished_at ?? null;
+          const washEnd = item.washing_finished_at ?? null;
           const hasWashTimes = Boolean(washStart && washEnd);
-          const totalMinutes = hasWashTimes ? getDurationMinutes(washStart, washEnd) : 0;
-          const totalDuration = hasWashTimes ? formatDuration(washStart, washEnd) : '-';
-          const cardTone = hasWashTimes ? getCardTone(totalMinutes) : { border: 'border-gray-200', bg: 'bg-white' };
+          const washingDuration = hasWashTimes ? formatDuration(washStart, washEnd) : '-';
 
           const keyIssuedMinutes = item.ready_at && item.key_issued_at
             ? getDurationMinutes(item.ready_at, item.key_issued_at)
@@ -184,13 +200,13 @@ export default function HistoryList() {
                       <div className="flex items-center gap-2 text-sm font-semibold text-blue-800">
                         <ClockIcon className="w-4 h-4" />Начало стирки
                       </div>
-                      <span className="text-sm font-bold text-blue-900">{formatTime(washStart)}</span>
+                      <span className="text-sm font-bold text-blue-900">{formatTime(cycleStart)}</span>
                     </div>
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 text-sm font-semibold text-blue-800">
                         <CheckIcon className="w-4 h-4" />Конец стирки
                       </div>
-                      <span className="text-sm font-bold text-blue-900">{formatTime(washEnd)}</span>
+                      <span className="text-sm font-bold text-blue-900">{formatTime(cycleEnd)}</span>
                     </div>
                   </div>
                 </div>
@@ -253,6 +269,15 @@ export default function HistoryList() {
                         {keyReturnMinutes === null ? '-' : formatDuration(item.return_requested_at, item.finished_at)}
                       </span>
                     </div>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-indigo-800">
+                      <WashingIcon className="w-4 h-4" />Время стирки
+                    </div>
+                    <span className="text-sm font-bold text-indigo-900">{washingDuration}</span>
                   </div>
                 </div>
               </div>
