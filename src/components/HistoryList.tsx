@@ -233,7 +233,7 @@ export default function HistoryList() {
                         <div className={`w-8 h-8 ${keyIssuedColors.icon} rounded-lg flex items-center justify-center`}>
                           <CheckIcon className="w-4 h-4 text-white" />
                         </div>
-                        <span className={`text-sm font-medium ${keyIssuedColors.text}`}>Ключ выдан</span>
+                        <span className={`text-sm font-medium ${keyIssuedColors.text}`}>Ключ был выдан</span>
                       </div>
                       <span className={`text-lg font-bold ${keyIssuedColors.text}`}>
                         {keyIssuedMinutes === null ? '-' : formatDuration(item.ready_at, item.key_issued_at)}
@@ -247,7 +247,7 @@ export default function HistoryList() {
                         <div className={`w-8 h-8 ${keyReturnColors.icon} rounded-lg flex items-center justify-center`}>
                           <CheckIcon className="w-4 h-4 text-white" />
                         </div>
-                        <span className={`text-sm font-medium ${keyReturnColors.text}`}>Ключ возвращал</span>
+                        <span className={`text-sm font-medium ${keyReturnColors.text}`}>Ключ возвращался</span>
                       </div>
                       <span className={`text-lg font-bold ${keyReturnColors.text}`}>
                         {keyReturnMinutes === null ? '-' : formatDuration(item.return_requested_at, item.finished_at)}
