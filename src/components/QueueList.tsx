@@ -369,52 +369,43 @@ export default function QueueList() {
                     {/* ✅ Таймеры - показываем всю историю */}
                     {(item.ready_at || item.key_issued_at || item.washing_started_at || item.return_requested_at) && (
                       <div className="flex flex-wrap gap-2 mb-2">
-                        {item.ready_at && (
-                          <Timer 
-                            startTime={item.ready_at} 
-                            endTime={
-                              item.key_issued_at ||
-                              (item.status === QueueStatus.READY ? undefined : new Date().toISOString())
-                            }
-                            label="Идет за ключом" 
-                            color="yellow" 
-                          />
-                        )}
-                        {item.key_issued_at && (
-                          <Timer 
-                            startTime={item.key_issued_at} 
-                            endTime={
-                              item.washing_started_at ||
-                              (item.status === QueueStatus.KEY_ISSUED ? undefined : new Date().toISOString())
-                            }
-                            label="Ключ выдан" 
-                            color="blue" 
-                          />
-                        )}
-                        {item.washing_started_at && (
-                          <Timer 
-                            startTime={item.washing_started_at} 
-                            endTime={
-                              item.washing_finished_at ||
-                              item.return_requested_at ||
-                              item.finished_at ||
-                              (item.status === QueueStatus.WASHING ? undefined : new Date().toISOString())
-                            }
-                            label="Стирает" 
-                            color="green" 
-                          />
-                        )}
-                        {item.return_requested_at && (
-                          <Timer 
-                            startTime={item.return_requested_at} 
-                            endTime={
-                              item.finished_at ||
-                              (item.status === QueueStatus.RETURNING_KEY ? undefined : new Date().toISOString())
-                            }
-                            label="Возвращает ключ" 
-                            color="orange" 
-                          />
-                        )}
+                          {item.ready_at && (
+                            <Timer 
+                              startTime={item.ready_at} 
+                              endTime={item.key_issued_at || undefined}
+                              label="Идет за ключом" 
+                              color="yellow" 
+                            />
+                          )}
+                          {item.key_issued_at && (
+                            <Timer 
+                              startTime={item.key_issued_at} 
+                              endTime={item.washing_started_at || undefined}
+                              label="Ключ выдан" 
+                              color="blue" 
+                            />
+                          )}
+                          {item.washing_started_at && (
+                            <Timer 
+                              startTime={item.washing_started_at} 
+                              endTime={
+                                item.washing_finished_at ||
+                                item.return_requested_at ||
+                                item.finished_at ||
+                                undefined
+                              }
+                              label="Стирает" 
+                              color="green" 
+                            />
+                          )}
+                          {item.return_requested_at && (
+                            <Timer 
+                              startTime={item.return_requested_at} 
+                              endTime={item.finished_at || undefined}
+                              label="Возвращает ключ" 
+                              color="orange" 
+                            />
+                          )}
                       </div>
                     )}
                     
@@ -594,20 +585,20 @@ export default function QueueList() {
                           </button>
 
                           {/* Вернуть ключ */}
-                          <button
-                            className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-orange-600 text-white font-semibold"
-                            onClick={async () => {
-                              try {
-                                await setQueueStatus(item.id, QueueStatus.RETURNING_KEY);
-                                await updateQueueItem(item.id, { 
-                                  return_key_alert: true,
-                                  admin_room: user?.room,
-                                  return_requested_at: new Date().toISOString()
-                                });
-                                await sendTelegramNotification({
-                                  type: "admin_return_key",
-                                  full_name: item.full_name,
-                                  student_id: item.student_id,
+                            <button
+                              className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-orange-600 text-white font-semibold"
+                              onClick={async () => {
+                                try {
+                                  await updateQueueItem(item.id, { 
+                                    return_key_alert: true,
+                                    admin_room: user?.room,
+                                    return_requested_at: new Date().toISOString()
+                                  });
+                                  await setQueueStatus(item.id, QueueStatus.RETURNING_KEY);
+                                  await sendTelegramNotification({
+                                    type: "admin_return_key",
+                                    full_name: item.full_name,
+                                    student_id: item.student_id,
                                   admin_student_id: user?.student_id
                                 });
                               } catch (error) {
