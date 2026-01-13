@@ -13,10 +13,10 @@ type TimerColors = {
 };
 
 const neutralColors: TimerColors = {
-  bg: 'bg-slate-50',
+  bg: 'bg-white/80',
   border: 'border-slate-200',
   text: 'text-slate-700',
-  icon: 'bg-slate-400',
+  icon: 'bg-slate-500',
 };
 
 const formatTime = (dateStr?: string | null) => {
@@ -55,19 +55,23 @@ const formatDuration = (start?: string | null, end?: string | null) => {
 
 const getTimerColor = (minutes: number, normalLimit: number, warningLimit: number): TimerColors => {
   if (minutes > warningLimit) {
-    return { bg: 'bg-slate-50', border: 'border-blue-300', text: 'text-blue-800', icon: 'bg-blue-600' };
+    return { bg: 'bg-white/80', border: 'border-rose-200', text: 'text-rose-700', icon: 'bg-rose-500' };
   }
   if (minutes > normalLimit) {
-    return { bg: 'bg-slate-50', border: 'border-blue-200', text: 'text-blue-700', icon: 'bg-blue-500' };
+    return { bg: 'bg-white/80', border: 'border-amber-200', text: 'text-amber-700', icon: 'bg-amber-500' };
   }
-  return { bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-700', icon: 'bg-slate-400' };
+  return { bg: 'bg-white/80', border: 'border-emerald-200', text: 'text-emerald-700', icon: 'bg-emerald-500' };
 };
 
 const getCardTone = (totalMinutes: number) => {
-  if (totalMinutes > 120) return { border: 'border-blue-300', bg: 'bg-white' };
-  if (totalMinutes > 90) return { border: 'border-blue-200', bg: 'bg-white' };
-  return { border: 'border-slate-200', bg: 'bg-white' };
+  if (totalMinutes > 120) return { border: 'border-rose-200', bg: 'bg-rose-50' };
+  if (totalMinutes > 90) return { border: 'border-amber-200', bg: 'bg-amber-50' };
+  return { border: 'border-emerald-200', bg: 'bg-emerald-50' };
 };
+
+const labelIconClass = "w-5 h-5 text-slate-600";
+const labelTextClass = "text-sm font-semibold text-slate-700";
+const valueTextClass = "text-sm font-semibold text-slate-900";
 
 const getEarliestDate = (dates: Array<string | null | undefined>) => {
   const parsed = dates
@@ -139,7 +143,7 @@ export default function HistoryList() {
           const cardTone = hasCycleTimes ? getCardTone(totalMinutes) : { border: 'border-slate-200', bg: 'bg-white' };
 
           const washStart = item.washing_started_at ?? null;
-          const washEnd = item.washing_finished_at ?? (washStart ? item.finished_at ?? null : null);
+          const washEnd = item.washing_finished_at ?? null;
           const hasWashTimes = Boolean(washStart && washEnd);
           const washingDuration = hasWashTimes ? formatDuration(washStart, washEnd) : '-';
 
@@ -199,25 +203,25 @@ export default function HistoryList() {
               </div>
 
               <div className="space-y-3">
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="rounded-xl border border-white/60 bg-white/70 p-3">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                        <ClockIcon className="w-4 h-4 text-slate-600" />Начало стирки
+                      <div className={`flex items-center gap-2 ${labelTextClass}`}>
+                        <ClockIcon className={labelIconClass} />Начало стирки
                       </div>
-                      <span className="text-sm font-bold text-slate-900">{formatTime(cycleStart)}</span>
+                      <span className={valueTextClass}>{formatTime(cycleStart)}</span>
                     </div>
                     <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                        <CheckIcon className="w-4 h-4 text-slate-600" />Конец стирки
+                      <div className={`flex items-center gap-2 ${labelTextClass}`}>
+                        <CheckIcon className={labelIconClass} />Конец стирки
                       </div>
-                      <span className="text-sm font-bold text-slate-900">{formatTime(cycleEnd)}</span>
+                      <span className={valueTextClass}>{formatTime(cycleEnd)}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <div className="bg-white rounded-xl p-3 border border-slate-200">
+                  <div className="bg-white/80 rounded-xl p-3 border border-white/60">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
@@ -229,14 +233,14 @@ export default function HistoryList() {
                     </div>
                   </div>
 
-                  <div className="bg-white rounded-xl p-3 border border-slate-200">
+                  <div className="bg-white/80 rounded-xl p-3 border border-white/60">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-slate-600">Количество стирок</span>
                       <span className="text-lg font-bold text-slate-900">{washCount}</span>
                     </div>
                   </div>
 
-                  <div className="bg-white rounded-xl p-3 border border-slate-200">
+                  <div className="bg-white/80 rounded-xl p-3 border border-white/60">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-slate-600">Оплата</span>
                       <span className="text-sm font-bold text-slate-900 flex items-center gap-1">
@@ -277,12 +281,12 @@ export default function HistoryList() {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="rounded-xl border border-white/60 bg-white/70 p-3">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                      <WashingIcon className="w-4 h-4 text-slate-600" />Время стирки
+                    <div className={`flex items-center gap-2 ${labelTextClass}`}>
+                      <WashingIcon className={labelIconClass} />Время стирки
                     </div>
-                    <span className="text-sm font-bold text-slate-900">{washingDuration}</span>
+                    <span className={valueTextClass}>{washingDuration}</span>
                   </div>
                 </div>
               </div>
