@@ -104,6 +104,11 @@ const formatDateTime = (dateStr?: string | null) => {
   });
 };
 
+const formatTime = (timeStr?: string | null) => {
+  if (!timeStr) return "";
+  return timeStr.slice(0, 5);
+};
+
 const formatPoints = (value: number) => {
   const abs = Math.abs(value);
   const mod10 = abs % 10;
@@ -169,6 +174,10 @@ const mapGrantError = (message?: string) => {
       return "Только суперадмин может выдавать купоны";
     case "Missing student_id or invalid count":
       return "Выберите студента и количество";
+    case "Invalid expires_at":
+      return "Некорректный срок купона";
+    case "expires_at must be in the future":
+      return "Срок купона должен быть в будущем";
     case "Internal server error":
       return "Внутренняя ошибка сервера";
     default:
@@ -205,12 +214,15 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [announcementMode, setAnnouncementMode] = useState("manual");
   const [publishNotice, setPublishNotice] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [checkTime, setCheckTime] = useState("");
   const [transferCouponId, setTransferCouponId] = useState("");
   const [transferRecipientId, setTransferRecipientId] = useState("");
   const [transferNotice, setTransferNotice] = useState<string | null>(null);
   const [grantStudentId, setGrantStudentId] = useState("");
   const [grantCount, setGrantCount] = useState(1);
   const [grantNote, setGrantNote] = useState("");
+  const [grantExpiryMode, setGrantExpiryMode] = useState<"default" | "custom" | "permanent">("default");
+  const [grantExpiresAt, setGrantExpiresAt] = useState("");
   const [grantNotice, setGrantNotice] = useState<string | null>(null);
   const [grantStudents, setGrantStudents] = useState<Student[]>([]);
   const [couponTtlSeconds, setCouponTtlSeconds] = useState<number | null>(null);
@@ -255,7 +267,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const { data } = await supabase
       .from("cleanup_results")
       .select(
-        "id, week_start, block, announcement_text, announcement_mode, template_key, announced_by, published_at, winning_apartment_id, created_at"
+        "id, week_start, block, announcement_text, announcement_mode, template_key, check_time, announced_by, published_at, winning_apartment_id, created_at"
       )
       .order("week_start", { ascending: false })
       .order("created_at", { ascending: false });
@@ -488,6 +500,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
           announcement_text: announcementText,
           announcement_mode: announcementMode,
           template_key: null,
+          check_time: checkTime || null,
         }),
       });
 
@@ -539,7 +552,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       "",
       ...scoreLines,
       "",
-      `?? Победитель: ${winnerCode} ??`,
+      `🏆 Победитель: ${winnerCode} 💪`,
     ];
 
     if (selectedScoreCaption) {
@@ -582,6 +595,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       setGrantNotice("Выберите студента.");
       return;
     }
+    if (grantExpiryMode === "custom" && !grantExpiresAt) {
+      setGrantNotice("Укажите срок действия купона.");
+      return;
+    }
 
     try {
       const { data: session } = await supabase.auth.getSession();
@@ -590,6 +607,9 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         setGrantNotice("Не удалось получить токен.");
         return;
       }
+
+      const expiresAtPayload =
+        grantExpiryMode === "custom" ? new Date(grantExpiresAt).toISOString() : null;
 
       const response = await fetch("/api/admin/coupons/grant", {
         method: "POST",
@@ -601,6 +621,8 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
           student_id: grantStudentId,
           count: grantCount,
           note: grantNote,
+          expiry_mode: grantExpiryMode,
+          expires_at: expiresAtPayload,
         }),
       });
 
@@ -612,6 +634,8 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       setGrantNotice("Купоны выданы.");
       setGrantCount(1);
       setGrantNote("");
+      setGrantExpiryMode("default");
+      setGrantExpiresAt("");
       await refreshCoupons();
     } catch (error: any) {
       setGrantNotice(mapGrantError(error?.message));
@@ -621,6 +645,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const renderResultCard = (item: CleanupResult) => {
     const apartment = apartmentMap[item.winning_apartment_id];
     const announcer = item.announced_by ? announcers[item.announced_by] : null;
+    const checkTimeLabel = formatTime(item.check_time);
 
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -628,6 +653,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
           <div>
             <h4 className="text-lg font-bold text-gray-900">
               Проверка от {formatWeekLabel(item.week_start)}
+              {checkTimeLabel ? `, ${checkTimeLabel}` : ""}
             </h4>
             <p className="text-xs text-gray-500">
               Опубликовано: {formatDateTime(item.published_at)}
@@ -738,6 +764,15 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   type="date"
                   value={weekStart}
                   onChange={(e) => setWeekStart(e.target.value)}
+                  className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Время проверки</label>
+                <input
+                  type="time"
+                  value={checkTime}
+                  onChange={(e) => setCheckTime(e.target.value)}
                   className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
                 />
               </div>
@@ -1014,6 +1049,35 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Срок действия</label>
+                <select
+                  value={grantExpiryMode}
+                  onChange={(e) => {
+                    const mode = e.target.value as "default" | "custom" | "permanent";
+                    setGrantExpiryMode(mode);
+                    if (mode !== "custom") {
+                      setGrantExpiresAt("");
+                    }
+                  }}
+                  className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
+                >
+                  <option value="default">По умолчанию</option>
+                  <option value="custom">До даты/времени</option>
+                  <option value="permanent">Бессрочно</option>
+                </select>
+              </div>
+              {grantExpiryMode === "custom" && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Действует до</label>
+                  <input
+                    type="datetime-local"
+                    value={grantExpiresAt}
+                    onChange={(e) => setGrantExpiresAt(e.target.value)}
+                    className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
+                  />
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Комментарий</label>

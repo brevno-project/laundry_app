@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCaller, supabaseAdmin } from "../../../_utils/adminAuth";
 
 const DEFAULT_COUPON_TTL_SECONDS = 604800;
+const PERMANENT_COUPON_YEARS = 100;
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { student_id, count, note } = await req.json();
+    const { student_id, count, note, expiry_mode, expires_at } = await req.json();
 
     if (!student_id || !count || count <= 0) {
       return NextResponse.json(
@@ -24,20 +25,49 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { data: ttlSetting } = await supabaseAdmin
-      .from("app_settings")
-      .select("value_int")
-      .eq("key", "cleanup_coupon_ttl_seconds")
-      .maybeSingle();
-
-    const ttlSeconds =
-      typeof ttlSetting?.value_int === "number"
-        ? ttlSetting.value_int
-        : DEFAULT_COUPON_TTL_SECONDS;
-
     const now = new Date();
     const nowIso = now.toISOString();
-    const expiresAt = new Date(now.getTime() + ttlSeconds * 1000).toISOString();
+    let expiresAt: string;
+
+    if (expiry_mode === "permanent") {
+      const permanentDate = new Date(now);
+      permanentDate.setFullYear(permanentDate.getFullYear() + PERMANENT_COUPON_YEARS);
+      expiresAt = permanentDate.toISOString();
+    } else if (expiry_mode === "custom") {
+      if (!expires_at) {
+        return NextResponse.json(
+          { error: "Invalid expires_at" },
+          { status: 400 }
+        );
+      }
+      const parsed = new Date(expires_at);
+      if (Number.isNaN(parsed.getTime())) {
+        return NextResponse.json(
+          { error: "Invalid expires_at" },
+          { status: 400 }
+        );
+      }
+      if (parsed.getTime() <= now.getTime()) {
+        return NextResponse.json(
+          { error: "expires_at must be in the future" },
+          { status: 400 }
+        );
+      }
+      expiresAt = parsed.toISOString();
+    } else {
+      const { data: ttlSetting } = await supabaseAdmin
+        .from("app_settings")
+        .select("value_int")
+        .eq("key", "cleanup_coupon_ttl_seconds")
+        .maybeSingle();
+
+      const ttlSeconds =
+        typeof ttlSetting?.value_int === "number"
+          ? ttlSetting.value_int
+          : DEFAULT_COUPON_TTL_SECONDS;
+
+      expiresAt = new Date(now.getTime() + ttlSeconds * 1000).toISOString();
+    }
 
     const coupons = Array.from({ length: count }).map(() => ({
       owner_student_id: student_id,

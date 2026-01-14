@@ -15,6 +15,7 @@ export async function POST(req: NextRequest) {
       announcement_text,
       announcement_mode,
       template_key,
+      check_time,
     } = await req.json();
 
     if (!week_start || !block || !apartment_id || !announcement_text) {
@@ -110,6 +111,7 @@ export async function POST(req: NextRequest) {
         announcement_text,
         announcement_mode: announcement_mode || "template",
         template_key: template_key || null,
+        check_time: check_time || null,
         announced_by: caller.student_id,
         created_by: caller.student_id,
         published_at: nowIso,

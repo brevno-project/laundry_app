@@ -177,6 +177,7 @@ export type CleanupResult = {
   announcement_text: string;
   announcement_mode?: string;
   template_key?: string | null;
+  check_time?: string | null;
   announced_by?: string | null;
   created_by?: string | null;
   published_at?: string | null;

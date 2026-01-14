@@ -110,10 +110,10 @@ export default function Home() {
       {/* Табы */}
       {user && (
         <nav className="bg-white border-b shadow-sm sticky top-14 z-10">
-          <div className="flex">
+          <div className="flex gap-1 overflow-x-auto px-2">
             <button
               onClick={() => handleTabChange('main')}
-              className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
+              className={`flex-none shrink-0 min-w-[96px] py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
                 activeTab === 'main'
                   ? 'border-blue-600 text-blue-600 bg-blue-50'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -123,7 +123,7 @@ export default function Home() {
             </button>
             <button
               onClick={() => handleTabChange('history')}
-              className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
+              className={`flex-none shrink-0 min-w-[96px] py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
                 activeTab === 'history'
                   ? 'border-blue-600 text-blue-600 bg-blue-50'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -133,7 +133,7 @@ export default function Home() {
             </button>
             <button
               onClick={() => handleTabChange('cleanup')}
-              className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
+              className={`flex-none shrink-0 min-w-[96px] py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
                 activeTab === 'cleanup'
                   ? 'border-blue-600 text-blue-600 bg-blue-50'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -145,7 +145,7 @@ export default function Home() {
             {canViewStudentsTab && (
               <button
                 onClick={() => handleTabChange('students')}
-                className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
+                className={`flex-none shrink-0 min-w-[96px] py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
                   activeTab === 'students'
                     ? 'border-blue-600 text-blue-600 bg-blue-50'
                     : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -156,7 +156,7 @@ export default function Home() {
             )}
             <button
               onClick={() => handleTabChange('settings')}
-              className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
+              className={`flex-none shrink-0 min-w-[96px] py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
                 activeTab === 'settings'
                   ? 'border-blue-600 text-blue-600 bg-blue-50'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -381,3 +381,4 @@ export default function Home() {
     </div>
   );
 }
+
