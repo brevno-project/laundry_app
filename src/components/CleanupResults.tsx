@@ -128,7 +128,19 @@ const mapGrantError = (message?: string) => {
   }
 };
 
-export default function CleanupResults() {
+type CleanupResultsProps = {
+  embedded?: boolean;
+};
+
+const formatTtlLabel = (seconds: number) => {
+  if (seconds % 60 === 0) {
+    const minutes = seconds / 60;
+    return `${minutes} мин.`;
+  }
+  return `${seconds} сек.`;
+};
+
+export default function CleanupResults({ embedded = false }: CleanupResultsProps) {
   const { user, isAdmin, isSuperAdmin } = useLaundry();
   const [results, setResults] = useState<CleanupResult[]>([]);
   const [apartments, setApartments] = useState<Apartment[]>([]);
@@ -561,18 +573,20 @@ export default function CleanupResults() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 shadow-lg">
-        <div className="mx-auto max-w-5xl flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Результаты уборки</h1>
-            <p className="text-sm text-blue-100">Объявления по блокам и архив</p>
+    <div className={embedded ? "w-full" : "min-h-screen bg-gray-50"}>
+      {!embedded && (
+        <header className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 shadow-lg">
+          <div className="mx-auto max-w-5xl flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-white">Результаты уборки</h1>
+              <p className="text-sm text-blue-100">Объявления по блокам и архив</p>
+            </div>
+            <Link href="/" className="text-sm text-blue-100 underline">
+              На главную
+            </Link>
           </div>
-          <Link href="/" className="text-sm text-blue-100 underline">
-            На главную
-          </Link>
-        </div>
-      </header>
+        </header>
+      )}
 
       <div className="mx-auto max-w-5xl space-y-6 p-4">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -589,7 +603,7 @@ export default function CleanupResults() {
 
             {couponTtlSeconds !== null && (
               <p className="text-xs text-gray-500">
-                Купоны действуют {couponTtlSeconds} сек.
+                Купоны действуют {formatTtlLabel(couponTtlSeconds)}
               </p>
             )}
 

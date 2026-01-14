@@ -1,7 +1,6 @@
 "use client";
 
 import React from 'react';
-import Link from 'next/link';
 import { useLaundry } from '@/contexts/LaundryContext';
 import TimeBanner from '@/components/TimeBanner';
 import StudentAuth from '@/components/StudentAuth';
@@ -11,9 +10,10 @@ import AdminPanel from '@/components/AdminPanel';
 import TelegramSetup from '@/components/TelegramSetup';
 import HistoryList from '@/components/HistoryList';
 import StudentsList from '@/components/StudentsList';
+import CleanupResults from '@/components/CleanupResults';
 import ClaimAccount from '@/components/ClaimAccount';
 import GlobalAlert from '@/components/GlobalAlert';
-import { HomeIcon, HistoryIcon, PeopleIcon, SettingsIcon, WashingIcon, DoorIcon, ListIcon, LaundryIcon } from '@/components/Icons';
+import { HomeIcon, HistoryIcon, PeopleIcon, SettingsIcon, DoorIcon, ListIcon, LaundryIcon } from '@/components/Icons';
 import TelegramBanner from '@/components/TelegramBanner';
 import StudentActions from '@/components/StudentActions';
 import AvatarSelector from '@/components/AvatarSelector';
@@ -98,11 +98,6 @@ export default function Home() {
       <header className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 shadow-lg sticky top-0 z-10">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white flex items-center justify-center gap-2"><LaundryIcon className="w-7 h-7" />Очередь на стирку</h1>
-          <div className="mt-1">
-            <Link href="/cleanup" className="text-sm text-blue-100 underline">
-              Результаты уборки
-            </Link>
-          </div>
           {user && (
             <p className="text-sm text-blue-100 mt-1">
               Вы вошли как: <span className="font-semibold">{user.full_name}</span>
@@ -126,16 +121,26 @@ export default function Home() {
             >
               <HomeIcon className="w-5 h-5 inline-block mr-2" />Главная
             </button>
-              <button
-                onClick={() => handleTabChange('history')}
-                className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
-                  activeTab === 'history'
-                    ? 'border-blue-600 text-blue-600 bg-blue-50'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <HistoryIcon className="w-5 h-5 inline-block mr-2" />История
-              </button>
+            <button
+              onClick={() => handleTabChange('history')}
+              className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
+                activeTab === 'history'
+                  ? 'border-blue-600 text-blue-600 bg-blue-50'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <HistoryIcon className="w-5 h-5 inline-block mr-2" />История
+            </button>
+            <button
+              onClick={() => handleTabChange('cleanup')}
+              className={`flex-1 py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
+                activeTab === 'cleanup'
+                  ? 'border-blue-600 text-blue-600 bg-blue-50'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <ListIcon className="w-5 h-5 inline-block mr-2" />Уборка
+            </button>
             {/* Вкладка Студенты доступна админам и пользователям с флагом can_view_students */}
             {canViewStudentsTab && (
               <button
@@ -319,6 +324,13 @@ export default function Home() {
         {activeTab === 'history' && (
           <div className="w-full space-y-4">
             <HistoryList />
+          </div>
+        )}
+
+        {/* Уборка */}
+        {activeTab === 'cleanup' && (
+          <div className="w-full space-y-4">
+            <CleanupResults embedded />
           </div>
         )}
 
