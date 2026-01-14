@@ -244,6 +244,7 @@ export default function QueueList() {
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><CalendarIcon className="w-6 h-6" />Очередь</h2>
         </div>
+        <p className="mt-2 text-sm text-gray-600">Никого нет в очереди.</p>
       </div>
     );
   }

@@ -1,8 +1,12 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { NextRequest, NextResponse } from "next/server";
+import { canModifyStudent, getCaller, supabaseAdmin } from "../../_utils/adminAuth";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    // Проверяем JWT и права инициатора
+    const { caller, error: authError } = await getCaller(req);
+    if (authError) return authError;
+
     const { studentId } = await req.json();
     console.log("🔄 RESET REQUEST: studentId =", studentId);
 
@@ -10,40 +14,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "studentId is required" }, { status: 400 });
     }
 
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { persistSession: false } }
-    );
-
-    // 1) Проверяем, что запрос делает супер-админ (по JWT)
-    const authHeader = req.headers.get("authorization") || "";
-    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
-    if (!token) {
-      return NextResponse.json({ error: "Missing Authorization Bearer token" }, { status: 401 });
+    // Проверяем доступ к целевому студенту
+    const { allowed, target, error: targetError } = await canModifyStudent(caller, studentId);
+    if (targetError) return targetError;
+    if (!allowed) {
+      return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
     }
-
-    const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token);
-    if (userErr || !userData?.user) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
-
-    const requesterId = userData.user.id;
-
-    const { data: requester, error: reqErr } = await supabaseAdmin
-      .from("students")
-      .select("is_super_admin, is_banned")
-      .eq("user_id", requesterId)
-      .single();
-
-    if (reqErr || !requester) {
-      return NextResponse.json({ error: "Requester not found in students" }, { status: 403 });
-    }
-    if (requester.is_banned) {
-      return NextResponse.json({ error: "Requester is banned" }, { status: 403 });
-    }
-    if (!requester.is_super_admin) {
-      return NextResponse.json({ error: "Super admin only" }, { status: 403 });
+    if (!caller.is_super_admin && target.is_admin) {
+      return NextResponse.json({ error: "Only super admin can reset admins" }, { status: 403 });
     }
 
     // 2) Берём old_user_id и last_user_id у сбрасываемого студента

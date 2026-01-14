@@ -143,7 +143,7 @@ export default function StudentsList() {
                 {isAdminUser && (
                   <span className="mt-1 flex flex-wrap gap-1 text-[11px] font-semibold text-gray-600">
                     <span className={`rounded-full px-2 py-0.5 ${student.key_issued ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}>
-                      {student.key_issued ? "Ключ выдан" : "Ключ не выдавался"}
+                      {student.key_issued ? "Ключ выдан" : "Ключа нет"}
                     </span>
                     {student.key_lost && (
                       <span className="rounded-full bg-red-100 px-2 py-0.5 text-red-700">
@@ -234,7 +234,7 @@ export default function StudentsList() {
                 {isAdminUser && (
                   <span className="mt-1 flex flex-wrap gap-1 text-[10px] font-semibold text-gray-600">
                     <span className={`rounded-full px-1.5 py-0.5 ${student.key_issued ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}>
-                      {student.key_issued ? "Ключ выдан" : "Ключ нет"}
+                      {student.key_issued ? "Ключ выдан" : "Ключа нет"}
                     </span>
                     {student.key_lost && (
                       <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-red-700">

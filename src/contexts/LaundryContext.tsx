@@ -910,10 +910,12 @@ const loginStudent = async (
 
 // Admin: Reset student registration
 const resetStudentRegistration = async (studentId: string) => {
-  if (!isSuperAdmin) throw new Error("Недостаточно прав - только суперадмин может сбрасывать регистрацию");
+  if (!isAdmin && !isSuperAdmin) {
+    throw new Error("Недостаточно прав для сброса регистрации");
+  }
   if (!isSupabaseConfigured || !supabase) throw new Error("Supabase не настроен");
 
-  // берём JWT текущей сессии, чтобы сервер мог проверить super_admin
+  // берём JWT текущей сессии, чтобы сервер мог проверить права
   const token = await getFreshToken();
 
   const res = await fetch("/api/admin/reset-registration", {
