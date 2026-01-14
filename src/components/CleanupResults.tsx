@@ -4,7 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLaundry } from "@/contexts/LaundryContext";
 import { supabase } from "@/lib/supabase";
-import type { Apartment, CleanupResult, Coupon, CouponTransfer, Student } from "@/types";
+import type {
+  Apartment,
+  CleanupResult,
+  CleanupSchedule,
+  Coupon,
+  CouponTransfer,
+  Student,
+} from "@/types";
 import {
   CalendarIcon,
   CheckIcon,
@@ -147,6 +154,23 @@ const mapPublishError = (message?: string) => {
   }
 };
 
+const mapScheduleError = (message?: string) => {
+  if (!message) return "Ошибка расписания";
+  if (hasCyrillic(message)) return message;
+  switch (message) {
+    case "Missing required fields":
+      return "Заполните дату проверки";
+    case "Invalid block":
+      return "Некорректный блок";
+    case "Not allowed to schedule for this block":
+      return "Нельзя менять расписание этого блока";
+    case "Insert failed":
+      return "Не удалось сохранить расписание";
+    default:
+      return "Ошибка расписания";
+  }
+};
+
 const mapTransferError = (message?: string) => {
   if (!message) return "Ошибка передачи";
   if (hasCyrillic(message)) return message;
@@ -201,6 +225,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const { user, isAdmin, isSuperAdmin } = useLaundry();
   const [results, setResults] = useState<CleanupResult[]>([]);
   const [apartments, setApartments] = useState<Apartment[]>([]);
+  const [schedules, setSchedules] = useState<CleanupSchedule[]>([]);
   const [announcers, setAnnouncers] = useState<Record<string, string>>({});
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [transfers, setTransfers] = useState<CouponTransfer[]>([]);
@@ -214,7 +239,6 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [announcementMode, setAnnouncementMode] = useState("manual");
   const [publishNotice, setPublishNotice] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [checkTime, setCheckTime] = useState("");
   const [transferCouponId, setTransferCouponId] = useState("");
   const [transferRecipientId, setTransferRecipientId] = useState("");
   const [transferNotice, setTransferNotice] = useState<string | null>(null);
@@ -230,6 +254,12 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [scoreCaptionKey, setScoreCaptionKey] = useState(
     SCORE_CAPTIONS[0]?.key || ""
   );
+  const [scheduleDrafts, setScheduleDrafts] = useState(() => ({
+    A: { date: getNextWednesdayISO(), time: "" },
+    B: { date: getNextWednesdayISO(), time: "" },
+  }));
+  const [scheduleNotice, setScheduleNotice] = useState<Record<string, string | null>>({});
+  const [scheduleSaving, setScheduleSaving] = useState<Record<string, boolean>>({});
 
   const apartmentMap = useMemo(() => {
     const map: Record<string, Apartment> = {};
@@ -245,6 +275,13 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       B: results.filter((item) => item.block === "B"),
     };
   }, [results]);
+
+  const schedulesByBlock = useMemo(() => {
+    return schedules.reduce<Record<string, CleanupSchedule>>((acc, schedule) => {
+      acc[schedule.block] = schedule;
+      return acc;
+    }, {});
+  }, [schedules]);
 
   const apartmentsForBlock = useMemo(() => {
     return apartments.filter((apt) => !apt.block || apt.block === selectedBlock);
@@ -267,7 +304,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const { data } = await supabase
       .from("cleanup_results")
       .select(
-        "id, week_start, block, announcement_text, announcement_mode, template_key, check_time, announced_by, published_at, winning_apartment_id, created_at"
+        "id, week_start, block, announcement_text, announcement_mode, template_key, announced_by, published_at, winning_apartment_id, created_at"
       )
       .order("week_start", { ascending: false })
       .order("created_at", { ascending: false });
@@ -291,6 +328,15 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       });
       setAnnouncers(announcerMap);
     }
+  };
+
+  const loadSchedules = async () => {
+    if (!supabase) return;
+    const { data } = await supabase
+      .from("cleanup_schedules")
+      .select("block, check_date, check_time, reminder_time, set_by, updated_at, reminder_sent_at");
+
+    setSchedules((data as CleanupSchedule[]) || []);
   };
 
   const loadAdminBlock = async () => {
@@ -427,6 +473,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   useEffect(() => {
     loadApartments();
     loadResults();
+    loadSchedules();
   }, []);
 
   useEffect(() => {
@@ -459,6 +506,20 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     });
   }, [apartments]);
 
+  useEffect(() => {
+    if (schedules.length === 0) return;
+    setScheduleDrafts((prev) => {
+      const next = { ...prev };
+      schedules.forEach((schedule) => {
+        next[schedule.block] = {
+          date: schedule.check_date || prev[schedule.block]?.date || getNextWednesdayISO(),
+          time: schedule.check_time ? formatTime(schedule.check_time) : "",
+        };
+      });
+      return next;
+    });
+  }, [schedules]);
+
   const refreshResults = async () => {
     await loadResults();
   };
@@ -466,6 +527,52 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const refreshCoupons = async () => {
     await loadCoupons();
     await loadTransfers();
+  };
+
+  const handleScheduleSave = async (block: "A" | "B") => {
+    if (!supabase) return;
+    const draft = scheduleDrafts[block];
+    if (!draft?.date) {
+      setScheduleNotice((prev) => ({ ...prev, [block]: "Укажите дату проверки." }));
+      return;
+    }
+
+    try {
+      setScheduleSaving((prev) => ({ ...prev, [block]: true }));
+      setScheduleNotice((prev) => ({ ...prev, [block]: null }));
+      const { data: session } = await supabase.auth.getSession();
+      const token = session.session?.access_token;
+
+      if (!token) {
+        setScheduleNotice((prev) => ({ ...prev, [block]: "Не удалось получить токен." }));
+        return;
+      }
+
+      const response = await fetch("/api/admin/cleanup/schedule", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          block,
+          check_date: draft.date,
+          check_time: draft.time || null,
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(mapScheduleError(result.error));
+      }
+
+      setScheduleNotice((prev) => ({ ...prev, [block]: "Расписание обновлено." }));
+      await loadSchedules();
+    } catch (error: any) {
+      setScheduleNotice((prev) => ({ ...prev, [block]: mapScheduleError(error?.message) }));
+    } finally {
+      setScheduleSaving((prev) => ({ ...prev, [block]: false }));
+    }
   };
 
   const handlePublish = async () => {
@@ -500,7 +607,6 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
           announcement_text: announcementText,
           announcement_mode: announcementMode,
           template_key: null,
-          check_time: checkTime || null,
         }),
       });
 
@@ -562,6 +668,66 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     setAnnouncementText(lines.join("\n"));
     setAnnouncementMode("scores");
     setPublishNotice(null);
+  };
+
+  const renderScheduleEditor = (block: "A" | "B") => {
+    const draft = scheduleDrafts[block];
+    const current = schedulesByBlock[block];
+    const currentLabel = current
+      ? `${formatWeekLabel(current.check_date)}${current.check_time ? `, ${formatTime(current.check_time)}` : ""}`
+      : "не назначено";
+
+    return (
+      <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h4 className="text-sm font-semibold text-gray-900">Блок {block}</h4>
+          <span className="text-xs text-gray-500">Сейчас: {currentLabel}</span>
+        </div>
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Дата проверки</label>
+            <input
+              type="date"
+              value={draft?.date || ""}
+              onChange={(e) =>
+                setScheduleDrafts((prev) => ({
+                  ...prev,
+                  [block]: { ...prev[block], date: e.target.value },
+                }))
+              }
+              className="w-full rounded-lg border-2 border-gray-200 p-2 text-sm text-gray-900"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Время проверки</label>
+            <input
+              type="time"
+              value={draft?.time || ""}
+              onChange={(e) =>
+                setScheduleDrafts((prev) => ({
+                  ...prev,
+                  [block]: { ...prev[block], time: e.target.value },
+                }))
+              }
+              className="w-full rounded-lg border-2 border-gray-200 p-2 text-sm text-gray-900"
+            />
+          </div>
+          <div className="flex items-end">
+            <button
+              type="button"
+              onClick={() => handleScheduleSave(block)}
+              disabled={!!scheduleSaving[block]}
+              className="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:bg-gray-400"
+            >
+              {scheduleSaving[block] ? "Сохранение..." : "Сохранить"}
+            </button>
+          </div>
+        </div>
+        {scheduleNotice[block] && (
+          <p className="text-xs text-blue-600">{scheduleNotice[block]}</p>
+        )}
+      </div>
+    );
   };
 
   const handleTransfer = async () => {
@@ -645,7 +811,6 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const renderResultCard = (item: CleanupResult) => {
     const apartment = apartmentMap[item.winning_apartment_id];
     const announcer = item.announced_by ? announcers[item.announced_by] : null;
-    const checkTimeLabel = formatTime(item.check_time);
 
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -653,7 +818,6 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
           <div>
             <h4 className="text-lg font-bold text-gray-900">
               Проверка от {formatWeekLabel(item.week_start)}
-              {checkTimeLabel ? `, ${checkTimeLabel}` : ""}
             </h4>
             <p className="text-xs text-gray-500">
               Опубликовано: {formatDateTime(item.published_at)}
@@ -674,6 +838,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const renderBlockSection = (block: "A" | "B") => {
     const blockResults = resultsByBlock[block];
     const latest = blockResults[0];
+    const schedule = schedulesByBlock[block];
+    const scheduleLabel = schedule
+      ? `Следующая проверка: ${formatWeekLabel(schedule.check_date)}${schedule.check_time ? `, ${formatTime(schedule.check_time)}` : ""}`
+      : "Дата проверки не назначена.";
 
     return (
       <div className="space-y-4">
@@ -686,6 +854,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               Блок {block}
             </h3>
             <p className="text-xs text-gray-500">Результаты уборки</p>
+            <p className="text-xs text-gray-500">{scheduleLabel}</p>
           </div>
         </div>
 
@@ -715,6 +884,12 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const isExpired = new Date(coupon.expires_at).getTime() <= Date.now();
     return !coupon.used_in_queue_id && !coupon.reserved_queue_id && !isExpired;
   });
+
+  const scheduleBlocks = (isSuperAdmin
+    ? ["A", "B"]
+    : adminBlock
+      ? [adminBlock]
+      : []) as ("A" | "B")[];
 
   return (
     <div className={embedded ? "w-full" : "min-h-screen bg-gray-50"}>
@@ -757,9 +932,23 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               </p>
             )}
 
+            {scheduleBlocks.length > 0 && (
+              <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="w-4 h-4 text-blue-600" />
+                  <h4 className="text-sm font-semibold text-gray-900">Расписание проверки</h4>
+                </div>
+                <div className="space-y-3">
+                  {scheduleBlocks.map((block) => (
+                    <div key={block}>{renderScheduleEditor(block)}</div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Дата проверки (среда)</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Дата итогов</label>
                 <input
                   type="date"
                   value={weekStart}
