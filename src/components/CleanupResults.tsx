@@ -879,8 +879,11 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const blockResults = resultsByBlock[block];
     const latest = blockResults[0];
     const schedule = schedulesByBlock[block];
+    const reminderText = schedule?.reminder_time
+      ? ` • напоминание в ${formatTime(schedule.reminder_time)}`
+      : "";
     const scheduleLabel = schedule
-      ? `Следующая проверка: ${formatWeekLabel(schedule.check_date)}${schedule.check_time ? `, ${formatTime(schedule.check_time)}` : ""}`
+      ? `Следующая проверка: ${formatWeekLabel(schedule.check_date)}${schedule.check_time ? `, ${formatTime(schedule.check_time)}` : ""}${reminderText}`
       : "Дата проверки не назначена.";
 
     return (
