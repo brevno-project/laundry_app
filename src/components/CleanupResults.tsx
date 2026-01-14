@@ -1000,15 +1000,6 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Время проверки</label>
-                <input
-                  type="time"
-                  value={checkTime}
-                  onChange={(e) => setCheckTime(e.target.value)}
-                  className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
-                />
-              </div>
-              <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Блок</label>
                 <select
                   value={selectedBlock}
