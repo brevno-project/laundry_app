@@ -41,6 +41,69 @@ const CLEANUP_TEMPLATES = [
   },
 ];
 
+const SCORE_CAPTIONS = [
+  {
+    key: "thanks-team",
+    label: "Спасибо всем за старание — вы большие молодцы!",
+  },
+  {
+    key: "keep-going",
+    label: "Так держать! На следующей неделе ждём ещё лучше.",
+  },
+  {
+    key: "clean-and-cozy",
+    label: "Было чисто и приятно — благодарим всех.",
+  },
+  {
+    key: "great-teamwork",
+    label: "Отличная работа команды, продолжайте в том же духе.",
+  },
+  {
+    key: "super-result",
+    label: "Супер-результат, спасибо за порядок.",
+  },
+  {
+    key: "everyone-contributed",
+    label: "Каждая квартира внесла вклад — это заметно.",
+  },
+  {
+    key: "top-clean",
+    label: "Сегодня чистота на высоте, гордимся вами.",
+  },
+  {
+    key: "excellent",
+    label: "Уборка прошла на отлично, спасибо!",
+  },
+  {
+    key: "thanks-participation",
+    label: "Всем спасибо за участие и аккуратность.",
+  },
+  {
+    key: "clean-is-ours",
+    label: "Чистота — наше всё. Хороший результат!",
+  },
+  {
+    key: "together-strong",
+    label: "Дружно поработали — молодцы!",
+  },
+  {
+    key: "responsibility",
+    label: "Спасибо за ответственность и дисциплину.",
+  },
+  {
+    key: "keep-bar",
+    label: "Продолжайте держать планку.",
+  },
+  {
+    key: "order-pleases",
+    label: "Порядок радует глаз — благодарим!",
+  },
+  {
+    key: "week-results",
+    label: "Отличные итоги недели, так держать!",
+  },
+];
+
 const getWeekStartISO = () => {
   const now = new Date();
   const day = now.getDay();
@@ -68,6 +131,19 @@ const formatDateTime = (dateStr?: string | null) => {
 
 const formatTemplate = (text: string, apartmentCode: string) =>
   text.replace("{{apartment}}", apartmentCode);
+
+const formatPoints = (value: number) => {
+  const abs = Math.abs(value);
+  const mod10 = abs % 10;
+  const mod100 = abs % 100;
+  if (mod10 === 1 && mod100 !== 11) {
+    return `${value} балл`;
+  }
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+    return `${value} балла`;
+  }
+  return `${value} баллов`;
+};
 
 const hasCyrillic = (value: string) => /[А-Яа-яЁё]/.test(value);
 
@@ -167,6 +243,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [grantNotice, setGrantNotice] = useState<string | null>(null);
   const [grantStudents, setGrantStudents] = useState<Student[]>([]);
   const [couponTtlSeconds, setCouponTtlSeconds] = useState<number | null>(null);
+  const [scoreInputs, setScoreInputs] = useState<Record<string, string>>({});
+  const [scoreCaptionKey, setScoreCaptionKey] = useState(
+    SCORE_CAPTIONS[0]?.key || ""
+  );
 
   const apartmentMap = useMemo(() => {
     const map: Record<string, Apartment> = {};
@@ -183,7 +263,13 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     };
   }, [results]);
 
+  const apartmentsForBlock = useMemo(() => {
+    return apartments.filter((apt) => !apt.block || apt.block === selectedBlock);
+  }, [apartments, selectedBlock]);
+
   const selectedTemplate = CLEANUP_TEMPLATES.find((tpl) => tpl.key === templateKey);
+  const selectedScoreCaption =
+    SCORE_CAPTIONS.find((caption) => caption.key === scoreCaptionKey)?.label || "";
 
   const loadApartments = async () => {
     if (!supabase) return;
@@ -307,22 +393,44 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     if (!supabase || !user?.student_id) return;
     const { data: currentStudent } = await supabase
       .from("students")
-      .select("apartment_id")
+      .select("apartment_id, room")
       .eq("id", user.student_id)
       .maybeSingle();
 
-    if (!currentStudent?.apartment_id) {
+    if (!currentStudent) {
       setRecipients([]);
       return;
     }
 
-    const { data: studentRows } = await supabase
-      .from("students")
-      .select("id, full_name, room")
-      .eq("apartment_id", currentStudent.apartment_id)
-      .neq("id", user.student_id);
+    const residentsMap = new Map<string, Student>();
 
-    setRecipients((studentRows as Student[]) || []);
+    if (currentStudent.apartment_id) {
+      const { data: rowsByApartment } = await supabase
+        .from("students")
+        .select("id, full_name, room, apartment_id")
+        .eq("apartment_id", currentStudent.apartment_id)
+        .neq("id", user.student_id);
+
+      (rowsByApartment as Student[] || []).forEach((student) => {
+        residentsMap.set(student.id, student);
+      });
+    }
+
+    if (currentStudent.room) {
+      const { data: rowsByRoom } = await supabase
+        .from("students")
+        .select("id, full_name, room, apartment_id")
+        .eq("room", currentStudent.room)
+        .neq("id", user.student_id);
+
+      (rowsByRoom as Student[] || []).forEach((student) => {
+        if (!residentsMap.has(student.id)) {
+          residentsMap.set(student.id, student);
+        }
+      });
+    }
+
+    setRecipients(Array.from(residentsMap.values()));
   };
 
   const loadGrantStudents = async () => {
@@ -357,13 +465,27 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   }, [isSuperAdmin]);
 
   useEffect(() => {
+    if (announcementMode !== "template") return;
     if (selectedTemplate && selectedApartment) {
       const aptCode = apartmentMap[selectedApartment]?.code || "";
       const templateText = formatTemplate(selectedTemplate.text, aptCode);
       setAnnouncementText(templateText);
       setAnnouncementMode("template");
     }
-  }, [templateKey, selectedApartment]);
+  }, [templateKey, selectedApartment, announcementMode]);
+
+  useEffect(() => {
+    if (apartments.length === 0) return;
+    setScoreInputs((prev) => {
+      const next = { ...prev };
+      apartments.forEach((apt) => {
+        if (!(apt.id in next)) {
+          next[apt.id] = "";
+        }
+      });
+      return next;
+    });
+  }, [apartments]);
 
   const refreshResults = async () => {
     await loadResults();
@@ -431,6 +553,50 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     setTemplateKey(random.key);
     setAnnouncementText(formatTemplate(random.text, apartmentMap[selectedApartment]?.code || ""));
     setAnnouncementMode("template");
+  };
+
+  const handleRandomScoreCaption = () => {
+    const random = SCORE_CAPTIONS[Math.floor(Math.random() * SCORE_CAPTIONS.length)];
+    setScoreCaptionKey(random.key);
+  };
+
+  const handleBuildScoreAnnouncement = () => {
+    if (!selectedApartment) {
+      setPublishNotice("Выберите квартиру-победителя.");
+      return;
+    }
+
+    const scoreLines = apartmentsForBlock
+      .map((apt) => {
+        const rawValue = scoreInputs[apt.id];
+        if (rawValue === undefined || rawValue === "") return null;
+        const parsed = Number(rawValue);
+        if (Number.isNaN(parsed)) return null;
+        return `${apt.code} — ${formatPoints(parsed)}`;
+      })
+      .filter(Boolean) as string[];
+
+    if (scoreLines.length === 0) {
+      setPublishNotice("Введите баллы хотя бы для одной квартиры.");
+      return;
+    }
+
+    const winnerCode = apartmentMap[selectedApartment]?.code || "—";
+    const lines = [
+      "Итоги проверки:",
+      "",
+      ...scoreLines,
+      "",
+      `🏆 Победитель: ${winnerCode} 💪`,
+    ];
+
+    if (selectedScoreCaption) {
+      lines.push(selectedScoreCaption);
+    }
+
+    setAnnouncementText(lines.join("\n"));
+    setAnnouncementMode("scores");
+    setPublishNotice(null);
   };
 
   const handleTransfer = async () => {
@@ -652,6 +818,63 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                     ))}
                 </select>
               </div>
+            </div>
+
+            <div className="rounded-xl border border-dashed border-gray-200 p-4 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h4 className="text-sm font-semibold text-gray-700">Баллы по квартирам</h4>
+                <button
+                  type="button"
+                  onClick={handleBuildScoreAnnouncement}
+                  className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                >
+                  Сформировать сообщение
+                </button>
+              </div>
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                {apartmentsForBlock.map((apt) => (
+                  <div key={apt.id} className="flex items-center gap-2">
+                    <span className="w-16 text-sm font-semibold text-gray-700">{apt.code}</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={scoreInputs[apt.id] ?? ""}
+                      onChange={(e) =>
+                        setScoreInputs((prev) => ({
+                          ...prev,
+                          [apt.id]: e.target.value,
+                        }))
+                      }
+                      className="w-full rounded-lg border-2 border-gray-200 p-2 text-sm text-gray-900"
+                      placeholder="Баллы"
+                    />
+                    <span className="text-xs text-gray-400">баллов</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <select
+                  value={scoreCaptionKey}
+                  onChange={(e) => setScoreCaptionKey(e.target.value)}
+                  className="w-full rounded-lg border-2 border-gray-200 p-2 text-sm text-gray-900 md:w-auto"
+                >
+                  {SCORE_CAPTIONS.map((caption) => (
+                    <option key={caption.key} value={caption.key}>
+                      {caption.label}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={handleRandomScoreCaption}
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  Случайная подпись
+                </button>
+              </div>
+              <p className="text-xs text-gray-500">
+                Победителя выбирайте в поле «Квартира-победитель» выше.
+              </p>
             </div>
 
             <div className="flex flex-wrap gap-2">

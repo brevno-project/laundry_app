@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
 
     const { data: winningApartment } = await supabaseAdmin
       .from("apartments")
-      .select("id, block")
+      .select("id, block, code")
       .eq("id", apartment_id)
       .maybeSingle();
 
@@ -125,12 +125,45 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { data: residents } = await supabaseAdmin
+    const { data: residentsByApartment, error: residentsByApartmentError } = await supabaseAdmin
       .from("students")
       .select("id, is_banned")
       .eq("apartment_id", apartment_id);
 
-    const eligibleResidents = (residents || []).filter(
+    if (residentsByApartmentError) {
+      return NextResponse.json(
+        { error: "Не удалось получить жителей квартиры" },
+        { status: 500 }
+      );
+    }
+
+    let residentsByRoom: { id: string; is_banned?: boolean | null }[] = [];
+    if (winningApartment.code) {
+      const { data: residentsByRoomData, error: residentsByRoomError } = await supabaseAdmin
+        .from("students")
+        .select("id, is_banned")
+        .eq("room", winningApartment.code);
+
+      if (residentsByRoomError) {
+        return NextResponse.json(
+          { error: "Не удалось получить жителей по комнате" },
+          { status: 500 }
+        );
+      }
+      residentsByRoom = residentsByRoomData || [];
+    }
+
+    const residentsMap = new Map<string, { id: string; is_banned?: boolean | null }>();
+    (residentsByApartment || []).forEach((student) => {
+      residentsMap.set(student.id, student);
+    });
+    residentsByRoom.forEach((student) => {
+      if (!residentsMap.has(student.id)) {
+        residentsMap.set(student.id, student);
+      }
+    });
+
+    const eligibleResidents = Array.from(residentsMap.values()).filter(
       (student) => !student.is_banned
     );
 
