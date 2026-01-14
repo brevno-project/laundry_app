@@ -213,6 +213,14 @@ type CleanupResultsProps = {
   embedded?: boolean;
 };
 
+type Block = "A" | "B";
+
+type ScheduleDraft = {
+  date: string;
+  time: string;
+  reminderTime: string;
+};
+
 const formatTtlLabel = (seconds: number) => {
   if (seconds % 60 === 0) {
     const minutes = seconds / 60;
@@ -231,9 +239,9 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [transfers, setTransfers] = useState<CouponTransfer[]>([]);
   const [transferNames, setTransferNames] = useState<Record<string, string>>({});
   const [recipients, setRecipients] = useState<Student[]>([]);
-  const [adminBlock, setAdminBlock] = useState<string | null>(null);
+  const [adminBlock, setAdminBlock] = useState<Block | null>(null);
   const [weekStart, setWeekStart] = useState(getNextWednesdayISO());
-  const [selectedBlock, setSelectedBlock] = useState("A");
+  const [selectedBlock, setSelectedBlock] = useState<Block>("A");
   const [selectedApartment, setSelectedApartment] = useState<string>("");
   const [announcementText, setAnnouncementText] = useState("");
   const [announcementMode, setAnnouncementMode] = useState("manual");
@@ -254,12 +262,18 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [scoreCaptionKey, setScoreCaptionKey] = useState(
     SCORE_CAPTIONS[0]?.key || ""
   );
-  const [scheduleDrafts, setScheduleDrafts] = useState(() => ({
-    A: { date: getNextWednesdayISO(), time: "" },
-    B: { date: getNextWednesdayISO(), time: "" },
+  const [scheduleDrafts, setScheduleDrafts] = useState<Record<Block, ScheduleDraft>>(() => ({
+    A: { date: getNextWednesdayISO(), time: "", reminderTime: "10:00" },
+    B: { date: getNextWednesdayISO(), time: "", reminderTime: "10:00" },
   }));
-  const [scheduleNotice, setScheduleNotice] = useState<Record<string, string | null>>({});
-  const [scheduleSaving, setScheduleSaving] = useState<Record<string, boolean>>({});
+  const [scheduleNotice, setScheduleNotice] = useState<Record<Block, string | null>>({
+    A: null,
+    B: null,
+  });
+  const [scheduleSaving, setScheduleSaving] = useState<Record<Block, boolean>>({
+    A: false,
+    B: false,
+  });
 
   const apartmentMap = useMemo(() => {
     const map: Record<string, Apartment> = {};
@@ -277,10 +291,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   }, [results]);
 
   const schedulesByBlock = useMemo(() => {
-    return schedules.reduce<Record<string, CleanupSchedule>>((acc, schedule) => {
+    return schedules.reduce<Record<Block, CleanupSchedule>>((acc, schedule) => {
       acc[schedule.block] = schedule;
       return acc;
-    }, {});
+    }, {} as Record<Block, CleanupSchedule>);
   }, [schedules]);
 
   const apartmentsForBlock = useMemo(() => {
@@ -359,7 +373,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       .eq("id", adminStudent.apartment_id)
       .maybeSingle();
 
-    const block = adminApartment?.block || null;
+    const block =
+      adminApartment?.block === "A" || adminApartment?.block === "B"
+        ? adminApartment.block
+        : null;
     setAdminBlock(block);
     if (block) setSelectedBlock(block);
   };
@@ -514,6 +531,9 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         next[schedule.block] = {
           date: schedule.check_date || prev[schedule.block]?.date || getNextWednesdayISO(),
           time: schedule.check_time ? formatTime(schedule.check_time) : "",
+          reminderTime: schedule.reminder_time
+            ? formatTime(schedule.reminder_time)
+            : prev[schedule.block]?.reminderTime || "10:00",
         };
       });
       return next;
@@ -529,7 +549,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     await loadTransfers();
   };
 
-  const handleScheduleSave = async (block: "A" | "B") => {
+  const handleScheduleSave = async (block: Block) => {
     if (!supabase) return;
     const draft = scheduleDrafts[block];
     if (!draft?.date) {
@@ -558,6 +578,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
           block,
           check_date: draft.date,
           check_time: draft.time || null,
+          reminder_time: draft.reminderTime || "10:00",
         }),
       });
 
@@ -670,18 +691,23 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     setPublishNotice(null);
   };
 
-  const renderScheduleEditor = (block: "A" | "B") => {
+  const renderScheduleEditor = (block: Block) => {
     const draft = scheduleDrafts[block];
     const current = schedulesByBlock[block];
     const currentLabel = current
       ? `${formatWeekLabel(current.check_date)}${current.check_time ? `, ${formatTime(current.check_time)}` : ""}`
       : "не назначено";
+    const currentReminder = current?.reminder_time
+      ? formatTime(current.reminder_time)
+      : "10:00";
 
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h4 className="text-sm font-semibold text-gray-900">Блок {block}</h4>
-          <span className="text-xs text-gray-500">Сейчас: {currentLabel}</span>
+          <span className="text-xs text-gray-500">
+            Сейчас: {currentLabel}. Напоминание: {currentReminder}
+          </span>
         </div>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
           <div>
@@ -712,7 +738,21 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               className="w-full rounded-lg border-2 border-gray-200 p-2 text-sm text-gray-900"
             />
           </div>
-          <div className="flex items-end">
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Напоминание в</label>
+            <input
+              type="time"
+              value={draft?.reminderTime || ""}
+              onChange={(e) =>
+                setScheduleDrafts((prev) => ({
+                  ...prev,
+                  [block]: { ...prev[block], reminderTime: e.target.value },
+                }))
+              }
+              className="w-full rounded-lg border-2 border-gray-200 p-2 text-sm text-gray-900"
+            />
+          </div>
+          <div className="flex items-end md:col-span-3">
             <button
               type="button"
               onClick={() => handleScheduleSave(block)}
@@ -835,7 +875,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     );
   };
 
-  const renderBlockSection = (block: "A" | "B") => {
+  const renderBlockSection = (block: Block) => {
     const blockResults = resultsByBlock[block];
     const latest = blockResults[0];
     const schedule = schedulesByBlock[block];
@@ -889,7 +929,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     ? ["A", "B"]
     : adminBlock
       ? [adminBlock]
-      : []) as ("A" | "B")[];
+      : []) as Block[];
 
   return (
     <div className={embedded ? "w-full" : "min-h-screen bg-gray-50"}>
@@ -969,7 +1009,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Блок</label>
                 <select
                   value={selectedBlock}
-                  onChange={(e) => setSelectedBlock(e.target.value)}
+                  onChange={(e) => setSelectedBlock(e.target.value as Block)}
                   disabled={!isSuperAdmin && !!adminBlock}
                   className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900 disabled:bg-gray-100"
                 >

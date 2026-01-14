@@ -185,7 +185,7 @@ export type CleanupResult = {
 };
 
 export type CleanupSchedule = {
-  block: string;
+  block: "A" | "B";
   check_date: string;
   check_time?: string | null;
   reminder_time?: string | null;

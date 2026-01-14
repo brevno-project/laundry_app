@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { formatInTimeZone } from "date-fns-tz";
 import { admin } from "@/lib/supabase-admin";
 
@@ -100,12 +100,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Telegram bot token missing" }, { status: 500 });
   }
 
-  const today = formatInTimeZone(new Date(), TIMEZONE, "yyyy-MM-dd");
+  const now = new Date();
+  const today = formatInTimeZone(now, TIMEZONE, "yyyy-MM-dd");
+  const nowTime = formatInTimeZone(now, TIMEZONE, "HH:mm");
 
   const { data: schedules, error } = await admin
     .from("cleanup_schedules")
-    .select("block, check_date, check_time")
+    .select("block, check_date, check_time, reminder_time")
     .eq("check_date", today)
+    .eq("reminder_time", nowTime)
     .is("reminder_sent_at", null);
 
   if (error) {
@@ -119,7 +122,7 @@ export async function GET(req: NextRequest) {
     const dateLabel = formatDateLabel(schedule.check_date);
     const timeLabel = formatTimeLabel(schedule.check_time);
     const timeText = timeLabel ? `, ${timeLabel}` : "";
-    const message = `🧽 Сегодня проверка блока ${schedule.block} — ${dateLabel}${timeText}.`;
+    const message = `Напоминание: сегодня проверка блока ${schedule.block} — ${dateLabel}${timeText}.`;
 
     const recipients = await getBlockRecipients(schedule.block);
     for (const chatId of recipients) {
@@ -140,3 +143,4 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({ success: true, schedules: list.length, sent: totalSent });
 }
+

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getCaller, supabaseAdmin } from "../../../_utils/adminAuth";
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     const { caller, error: authError } = await getCaller(req);
     if (authError) return authError;
 
-    const { block, check_date, check_time } = await req.json();
+    const { block, check_date, check_time, reminder_time } = await req.json();
 
     if (!block || !check_date) {
       return NextResponse.json(
@@ -131,6 +131,7 @@ export async function POST(req: NextRequest) {
     }
 
     const nowIso = new Date().toISOString();
+    const reminderTime = reminder_time || "10:00";
     const { error: upsertError } = await supabaseAdmin
       .from("cleanup_schedules")
       .upsert(
@@ -138,7 +139,7 @@ export async function POST(req: NextRequest) {
           block,
           check_date,
           check_time: check_time || null,
-          reminder_time: "10:00",
+          reminder_time: reminderTime,
           set_by: caller.student_id,
           updated_at: nowIso,
           reminder_sent_at: null,
@@ -155,9 +156,9 @@ export async function POST(req: NextRequest) {
 
     const dateLabel = formatDateLabel(check_date);
     const timeLabel = formatTimeLabel(check_time);
+    const reminderLabel = formatTimeLabel(reminderTime);
     const timeText = timeLabel ? `, ${timeLabel}` : "";
-    const message = `🧹 Проверка блока ${block} назначена на ${dateLabel}${timeText}.\nНапоминание придет в день проверки в 10:00.`;
-
+    const message = `Проверка блока ${block} состоится ${dateLabel}${timeText}. Напоминание придет в ${reminderLabel}.`;
     const recipients = await getBlockRecipients(block);
     let sent = 0;
 
@@ -180,3 +181,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+
