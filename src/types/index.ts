@@ -20,6 +20,7 @@ export type Student = {
   can_view_students?: boolean; // Может ли студент видеть список студентов
   key_issued?: boolean; // ключ выдан
   key_lost?: boolean; // ключ потерян
+  apartment_id?: string | null;
   avatar?: string; // SVG аватар (default, male1, male2, female1, female2, etc.)
   avatar_type?: string; // Тип аватара
 };
@@ -54,6 +55,7 @@ export type User = {
   can_view_students?: boolean; // Может ли студент видеть список студентов
   avatar?: string; // SVG аватар
   avatar_type?: string; // Тип аватара
+  apartment_id?: string | null;
   
 };
 
@@ -76,6 +78,7 @@ export type QueueItem = {
   full_name: string;
   room?: string;
   wash_count: number;
+  coupons_used?: number;
   payment_type?: string;
   joined_at: string;
   planned_start_at?: string;
@@ -119,6 +122,7 @@ export type HistoryItem = {
   started_at: string;
   finished_at: string;
   wash_count?: number;
+  coupons_used?: number;
   payment_type?: string;
   avatar_type?: string;
   // ✅ Таймеры
@@ -157,4 +161,51 @@ export type TelegramNotification = {
   admin_student_id?: string;
   queue_item_id?: string;
   message?: string;
+};
+
+export type Apartment = {
+  id: string;
+  code: string;
+  block?: string | null;
+};
+
+export type CleanupResult = {
+  id: string;
+  week_start: string;
+  block: string;
+  winning_apartment_id: string;
+  announcement_text: string;
+  announcement_mode?: string;
+  template_key?: string | null;
+  announced_by?: string | null;
+  created_by?: string | null;
+  published_at?: string | null;
+  coupons_issued_at?: string | null;
+  created_at?: string;
+};
+
+export type Coupon = {
+  id: string;
+  owner_student_id: string;
+  source_type: string;
+  source_id?: string | null;
+  issued_by?: string | null;
+  issued_at: string;
+  valid_from: string;
+  expires_at: string;
+  reserved_queue_id?: string | null;
+  reserved_at?: string | null;
+  used_in_queue_id?: string | null;
+  used_at?: string | null;
+  note?: string | null;
+};
+
+export type CouponTransfer = {
+  id: string;
+  coupon_id: string;
+  from_student_id: string;
+  to_student_id: string;
+  performed_by?: string | null;
+  created_at: string;
+  note?: string | null;
 };

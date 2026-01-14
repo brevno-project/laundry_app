@@ -2,12 +2,16 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
+import { supabase } from '@/lib/supabase';
 import { CalendarIcon, MoneyIcon, TicketIcon } from '@/components/Icons';
 
 export default function UserForm() {
   const { user, joinQueue, logoutStudent, getUserQueueItem, queue } = useLaundry();
   const [washCount, setWashCount] = useState<number>(1);
-  const [paymentType, setPaymentType] = useState<string>('money');
+  const [couponsToUse, setCouponsToUse] = useState<number>(0);
+  const [availableCoupons, setAvailableCoupons] = useState<number>(0);
+  const [activeCoupons, setActiveCoupons] = useState<number>(0);
+  const [couponNotice, setCouponNotice] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>(''); // 
   
@@ -15,6 +19,7 @@ export default function UserForm() {
   const isInQueue = !!existingQueueItem;
   
   const queuePosition = existingQueueItem ? queue.findIndex(item => item.id === existingQueueItem.id) + 1 : 0;
+  const maxCoupons = Math.min(availableCoupons, washCount);
 
   // ✅ Устанавливаем сегодняшнюю дату по умолчанию
   useEffect(() => {
@@ -48,6 +53,67 @@ export default function UserForm() {
     return dates;
   };
 
+  const isCouponValidForDate = (coupon: { issued_at: string; expires_at: string }, queueDate: string, now: Date) => {
+    const issuedAt = new Date(coupon.issued_at).getTime();
+    const expiresAt = new Date(coupon.expires_at).getTime();
+    const ttlMs = expiresAt - issuedAt;
+    const expiresDateStr = new Date(coupon.expires_at).toISOString().slice(0, 10);
+    const todayStr = now.toISOString().slice(0, 10);
+
+    if (ttlMs >= 24 * 60 * 60 * 1000) {
+      return queueDate < expiresDateStr;
+    }
+
+    return queueDate === todayStr && expiresAt > now.getTime();
+  };
+
+  const loadCoupons = async () => {
+    if (!supabase || !user?.student_id || !selectedDate) {
+      setAvailableCoupons(0);
+      setActiveCoupons(0);
+      setCouponNotice(null);
+      return;
+    }
+
+    const now = new Date();
+    const { data, error } = await supabase
+      .from('coupons')
+      .select('id, issued_at, expires_at')
+      .eq('owner_student_id', user.student_id)
+      .is('reserved_queue_id', null)
+      .is('used_in_queue_id', null)
+      .gt('expires_at', now.toISOString());
+
+    if (error) {
+      setAvailableCoupons(0);
+      setActiveCoupons(0);
+      setCouponNotice(null);
+      return;
+    }
+
+    const active = (data || []);
+    const eligible = active.filter((coupon) => isCouponValidForDate(coupon, selectedDate, now));
+
+    setActiveCoupons(active.length);
+    setAvailableCoupons(eligible.length);
+    setCouponNotice(
+      active.length > 0 && eligible.length === 0
+        ? 'Купоны недоступны на выбранную дату.'
+        : null
+    );
+  };
+
+  useEffect(() => {
+    loadCoupons();
+  }, [user?.student_id, selectedDate]);
+
+  useEffect(() => {
+    const maxCoupons = Math.min(availableCoupons, washCount);
+    if (couponsToUse > maxCoupons) {
+      setCouponsToUse(maxCoupons);
+    }
+  }, [availableCoupons, washCount, couponsToUse]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
@@ -55,7 +121,11 @@ export default function UserForm() {
       setIsSubmitting(true);
       
       // ✅ Передаем выбранную дату в joinQueue (без expectedFinishAt)
-      await joinQueue(user.full_name, user.room, washCount, paymentType, undefined, selectedDate);
+      try {
+        await joinQueue(user.full_name, user.room, washCount, couponsToUse, undefined, selectedDate);
+      } catch (error: any) {
+        alert(error?.message || 'Не удалось встать в очередь');
+      }
       
       setTimeout(() => {
         setIsSubmitting(false);
@@ -134,19 +204,41 @@ export default function UserForm() {
               </div>
 
               <div className="mb-4">
-                <label htmlFor="paymentType" className="block text-sm font-bold mb-2 text-gray-700">
-                  Способ оплаты
+                <label htmlFor="couponsToUse" className="block text-sm font-bold mb-2 text-gray-700">
+                  Купоны
                 </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Доступно на выбранную дату: {availableCoupons} (активных: {activeCoupons})
+                </p>
+                {couponNotice && (
+                  <p className="text-xs text-red-500 mb-2">{couponNotice}</p>
+                )}
                 <select
-                  id="paymentType"
-                  value={paymentType}
-                  onChange={(e) => setPaymentType(e.target.value)}
-                  className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  id="couponsToUse"
+                  value={couponsToUse}
+                  onChange={(e) => setCouponsToUse(Number(e.target.value))}
+                  disabled={maxCoupons === 0}
+                  className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 disabled:bg-gray-100"
                 >
-                  <option value="money">Деньги</option>
-                  <option value="coupon">Купон</option>
-                  <option value="both">Купон + Деньги</option>
+                  {Array.from({ length: maxCoupons + 1 }, (_, i) => i).map((num) => (
+                    <option key={num} value={num}>
+                      {num}
+                    </option>
+                  ))}
                 </select>
+                <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
+                  {couponsToUse > 0 ? (
+                    <>
+                      <TicketIcon className="w-4 h-4 text-purple-600" />
+                      {couponsToUse >= washCount ? 'Оплата купонами' : 'Купоны + деньги'}
+                    </>
+                  ) : (
+                    <>
+                      <MoneyIcon className="w-4 h-4 text-green-600" />
+                      Оплата деньгами
+                    </>
+                  )}
+                </div>
               </div>
 
               <button

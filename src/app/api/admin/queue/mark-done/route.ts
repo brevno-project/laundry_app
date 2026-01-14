@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
       return_requested_at: queueItem.return_requested_at,
       wash_count: queueItem.wash_count,
       payment_type: queueItem.payment_type,
+      coupons_used: queueItem.coupons_used || 0,
     };
 
     const { error: historyError } = await supabaseAdmin
@@ -72,6 +73,19 @@ export async function POST(req: NextRequest) {
     }
 
     // ✅ Удаляем из очереди
+    if ((queueItem.coupons_used || 0) > 0) {
+      await supabaseAdmin
+        .from("coupons")
+        .update({
+          used_in_queue_id: queue_item_id,
+          used_at: now,
+          reserved_queue_id: null,
+          reserved_at: null,
+        })
+        .eq("reserved_queue_id", queue_item_id)
+        .is("used_in_queue_id", null);
+    }
+
     const { error: deleteError } = await supabaseAdmin
       .from("queue")
       .delete()

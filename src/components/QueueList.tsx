@@ -44,11 +44,22 @@ export default function QueueList() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [editWashCount, setEditWashCount] = useState(1);
-  const [editPaymentType, setEditPaymentType] = useState('money');
+  const [editCouponsUsed, setEditCouponsUsed] = useState(0);
   const [editDate, setEditDate] = useState('');
   const [openActionFor, setOpenActionFor] = useState<string | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const actionMenuRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  useEffect(() => {
+    if (!editingItem) return;
+    setEditWashCount(editingItem.wash_count || 1);
+    setEditCouponsUsed(editingItem.coupons_used || 0);
+    setEditDate(editingItem.queue_date || '');
+  }, [editingItem]);
+
+  useEffect(() => {
+    setEditCouponsUsed((prev) => Math.min(prev, editWashCount));
+  }, [editWashCount]);
 
   const toggleSelect = (id: string) => {
     setSelectedItems(prev => 
@@ -69,7 +80,7 @@ export default function QueueList() {
   
     await updateQueueItemDetails(editingItem.id, {
       wash_count: editWashCount,
-      payment_type: editPaymentType,
+      coupons_used: editCouponsUsed,
       chosen_date: editDate,
     });
   
@@ -347,6 +358,7 @@ export default function QueueList() {
                 const targetIsSuperAdmin = targetStudent?.is_super_admin === true;
                 const displayName = item.full_name || targetStudent?.full_name || "-";
                 const displayRoom = item.room || targetStudent?.room;
+                const couponsUsed = item.coupons_used || 0;
 
                 
                 return (
@@ -419,12 +431,23 @@ export default function QueueList() {
                       <div className="flex flex-col">
                         <span className="text-xs text-gray-600">Оплата</span>
                         <span className="text-sm font-bold text-gray-900 flex items-center gap-1">
-                          {item.payment_type === 'coupon' ? (
-                            <><TicketIcon className="w-4 h-4 text-purple-600" />Купон</>
-                          ) : item.payment_type === 'both' ? (
-                            <><MoneyIcon className="w-4 h-4 text-green-600" /><TicketIcon className="w-4 h-4 text-purple-600" /></>
+                          {couponsUsed > 0 || item.payment_type === 'coupon' || item.payment_type === 'both' ? (
+                            <>
+                              <TicketIcon className="w-4 h-4 text-purple-600" />
+                              <span>{couponsUsed > 0 ? `Купоны: ${couponsUsed}` : 'Купон'}</span>
+                              {item.payment_type === 'both' && (
+                                <>
+                                  <span>+</span>
+                                  <MoneyIcon className="w-4 h-4 text-green-600" />
+                                  <span>деньги</span>
+                                </>
+                              )}
+                            </>
                           ) : (
-                            <><MoneyIcon className="w-4 h-4 text-green-600" />Деньги</>
+                            <>
+                              <MoneyIcon className="w-4 h-4 text-green-600" />
+                              <span>Деньги</span>
+                            </>
                           )}
                         </span>
                       </div>
@@ -722,17 +745,17 @@ export default function QueueList() {
           </select>
         </div>
         
-        {/* Способ оплаты */}
+        {/* Купоны */}
         <div>
-          <label className="block text-sm font-bold mb-2 text-gray-900">Способ оплаты</label>
+          <label className="block text-sm font-bold mb-2 text-gray-900">Купоны</label>
           <select
-            value={editPaymentType}
-            onChange={(e) => setEditPaymentType(e.target.value)}
+            value={editCouponsUsed}
+            onChange={(e) => setEditCouponsUsed(Number(e.target.value))}
             className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
           >
-            <option value="money">Деньги</option>
-            <option value="coupon">Купон</option>
-            <option value="both">Купон+Деньги</option>
+            {Array.from({ length: editWashCount + 1 }, (_, i) => i).map((num) => (
+              <option key={num} value={num}>{num}</option>
+            ))}
           </select>
         </div>
       </div>

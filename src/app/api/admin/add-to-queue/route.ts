@@ -12,17 +12,14 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       student_id,
-      full_name,
-      room,
       wash_count,
-      payment_type,
+      coupons_used,
       expected_finish_at,
       scheduled_for_date,
-      avatar_type,
       admin_student_id,
     } = body;
 
-    if (!student_id || !admin_student_id) {
+    if (!student_id || !admin_student_id || !scheduled_for_date) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -71,6 +68,47 @@ export async function POST(req: NextRequest) {
         : 1;
 
     // 4) Вставка ПОЛНОЙ записи
+    const safeWashCount = typeof wash_count === "number" && wash_count > 0 ? wash_count : 1;
+    const safeCouponsUsed =
+      typeof coupons_used === "number" && coupons_used > 0
+        ? Math.min(coupons_used, safeWashCount)
+        : 0;
+    const derivedPaymentType =
+      safeCouponsUsed === 0 ? "money" : safeCouponsUsed >= safeWashCount ? "coupon" : "both";
+
+    // Проверяем доступные купоны перед вставкой
+    if (safeCouponsUsed > 0) {
+      const now = new Date();
+      const todayStr = now.toISOString().slice(0, 10);
+      const { data: couponRows } = await admin
+        .from("coupons")
+        .select("id, issued_at, expires_at")
+        .eq("owner_student_id", student.id)
+        .is("reserved_queue_id", null)
+        .is("used_in_queue_id", null)
+        .gt("expires_at", now.toISOString());
+
+      const eligible = (couponRows || []).filter((coupon) => {
+        const issuedAt = new Date(coupon.issued_at).getTime();
+        const expiresAt = new Date(coupon.expires_at).getTime();
+        const ttlMs = expiresAt - issuedAt;
+        const expiresDateStr = new Date(coupon.expires_at).toISOString().slice(0, 10);
+
+        if (ttlMs >= 24 * 60 * 60 * 1000) {
+          return scheduled_for_date < expiresDateStr;
+        }
+
+        return scheduled_for_date === todayStr && expiresAt > now.getTime();
+      });
+
+      if (eligible.length < safeCouponsUsed) {
+        return NextResponse.json(
+          { error: "Недостаточно купонов для выбранной даты" },
+          { status: 400 }
+        );
+      }
+    }
+
     const row = {
       id: crypto.randomUUID(),
     
@@ -80,8 +118,9 @@ export async function POST(req: NextRequest) {
       full_name: student.full_name,
       room: student.room,
     
-      wash_count,
-      payment_type,
+      wash_count: safeWashCount,
+      coupons_used: safeCouponsUsed,
+      payment_type: derivedPaymentType,
       expected_finish_at,
     
       scheduled_for_date,
@@ -106,6 +145,51 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    if (safeCouponsUsed > 0) {
+      const now = new Date().toISOString();
+      const { data: couponRows } = await admin
+        .from("coupons")
+        .select("id, issued_at, expires_at")
+        .eq("owner_student_id", student.id)
+        .is("reserved_queue_id", null)
+        .is("used_in_queue_id", null)
+        .gt("expires_at", now);
+
+      const eligible = (couponRows || [])
+        .filter((coupon) => {
+          const issuedAt = new Date(coupon.issued_at).getTime();
+          const expiresAt = new Date(coupon.expires_at).getTime();
+          const ttlMs = expiresAt - issuedAt;
+          const expiresDateStr = new Date(coupon.expires_at).toISOString().slice(0, 10);
+          const todayStr = new Date().toISOString().slice(0, 10);
+
+          if (ttlMs >= 24 * 60 * 60 * 1000) {
+            return scheduled_for_date < expiresDateStr;
+          }
+
+          return scheduled_for_date === todayStr && expiresAt > Date.now();
+        })
+        .sort(
+          (a, b) =>
+            new Date(a.expires_at).getTime() - new Date(b.expires_at).getTime() ||
+            new Date(a.issued_at).getTime() - new Date(b.issued_at).getTime()
+        )
+        .slice(0, safeCouponsUsed);
+
+      if (eligible.length < safeCouponsUsed) {
+        await admin.from("queue").delete().eq("id", row.id);
+        return NextResponse.json(
+          { error: "Недостаточно купонов для брони" },
+          { status: 400 }
+        );
+      }
+
+      await admin
+        .from("coupons")
+        .update({ reserved_queue_id: row.id, reserved_at: now })
+        .in("id", eligible.map((coupon) => coupon.id));
     }
 
     return NextResponse.json({ success: true });

@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import { useLaundry } from '@/contexts/LaundryContext';
 import TimeBanner from '@/components/TimeBanner';
 import StudentAuth from '@/components/StudentAuth';
@@ -97,6 +98,11 @@ export default function Home() {
       <header className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 shadow-lg sticky top-0 z-10">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white flex items-center justify-center gap-2"><LaundryIcon className="w-7 h-7" />Очередь на стирку</h1>
+          <div className="mt-1">
+            <Link href="/cleanup" className="text-sm text-blue-100 underline">
+              Результаты уборки
+            </Link>
+          </div>
           {user && (
             <p className="text-sm text-blue-100 mt-1">
               Вы вошли как: <span className="font-semibold">{user.full_name}</span>

@@ -33,6 +33,12 @@ export async function POST(req: NextRequest) {
     }
 
     // ✅ Удаляем из очереди
+    await supabaseAdmin
+      .from("coupons")
+      .update({ reserved_queue_id: null, reserved_at: null })
+      .eq("reserved_queue_id", queue_item_id)
+      .is("used_in_queue_id", null);
+
     const { error: deleteError } = await supabaseAdmin
       .from("queue")
       .delete()

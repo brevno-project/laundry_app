@@ -75,7 +75,7 @@ type LaundryContextType = {
   logoutStudent: () => void;
   resetStudentRegistration: (studentId: string) => Promise<void>;
   linkTelegram: (telegramCode: string) => Promise<{ success: boolean; error?: string }>;
-  joinQueue: (name: string, room?: string, washCount?: number, paymentType?: string, expectedFinishAt?: string, chosenDate?: string) => Promise<void>;
+  joinQueue: (name: string, room?: string, washCount?: number, couponsUsed?: number, expectedFinishAt?: string, chosenDate?: string) => Promise<void>;
   leaveQueue: (queueItemId: string) => void;
   updateQueueItem: (queueItemId: string, updates: Partial<QueueItem>) => void;
   sendAdminMessage: (queueItemId: string, message: string) => Promise<void>;
@@ -117,8 +117,8 @@ type LaundryContextType = {
     }
   ) => Promise<void>;
   deleteStudent: (studentId: string) => Promise<void>;
-  adminAddToQueue: (studentRoom?: string, washCount?: number, paymentType?: string, expectedFinishAt?: string, chosenDate?: string, studentId?: string) => Promise<void>;
-  updateQueueItemDetails: (queueId: string, updates: { wash_count?: number; payment_type?: string; expected_finish_at?: string; chosen_date?: string }) => Promise<void>;
+  adminAddToQueue: (studentRoom?: string, washCount?: number, couponsUsed?: number, expectedFinishAt?: string, chosenDate?: string, studentId?: string) => Promise<void>;
+  updateQueueItemDetails: (queueId: string, updates: { wash_count?: number; coupons_used?: number; payment_type?: string; expected_finish_at?: string; chosen_date?: string }) => Promise<void>;
   updateQueueEndTime: (queueId: string, endTime: string) => Promise<void>;
   toggleAdminStatus: (studentId: string, makeAdmin: boolean) => Promise<void>;
   toggleSuperAdminStatus: (studentId: string, makeSuperAdmin: boolean) => Promise<void>;
@@ -1004,6 +1004,7 @@ const resetStudentRegistration = async (studentId: string) => {
       
       try {
         // ✅ Используем RPC для получения активной очереди на все даты
+        await supabase.rpc('cleanup_coupon_queue_for_today');
         const { data, error } = await supabase.rpc('get_queue_active');
         
         if (error) throw error;
@@ -1052,7 +1053,7 @@ const resetStudentRegistration = async (studentId: string) => {
         try {
           const { data, error } = await supabase
             .from('history')
-            .select('id, user_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, washing_finished_at, return_requested_at, wash_count, payment_type')
+            .select('id, user_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, washing_finished_at, return_requested_at, wash_count, coupons_used, payment_type')
             .order('finished_at', { ascending: false })
             .limit(100);
           
@@ -1106,7 +1107,7 @@ const joinQueue = async (
   name: string,
   room?: string,
   washCount: number = 1,
-  paymentType: string = 'money',
+  couponsUsed: number = 0,
   expectedFinishAt?: string,
   chosenDate?: string
 ) => {
@@ -1203,6 +1204,9 @@ const joinQueue = async (
   // Определяем целевую дату
   const todayISO = new Date().toISOString().slice(0, 10);
   const targetDate = chosenDate || todayISO;
+  const safeCouponsUsed = Math.max(0, Math.min(couponsUsed, washCount));
+  const derivedPaymentType =
+    safeCouponsUsed === 0 ? 'money' : safeCouponsUsed >= washCount ? 'coupon' : 'both';
 
   // Проверяем по student_id на эту дату через RPC
   try {
@@ -1254,7 +1258,8 @@ const joinQueue = async (
       full_name: name,
       room: room || null,
       wash_count: washCount,
-      payment_type: paymentType,
+      coupons_used: safeCouponsUsed,
+      payment_type: derivedPaymentType,
       joined_at: new Date().toISOString(),
       expected_finish_at: expectedFinishAt || null,
       status: QueueStatus.WAITING,
@@ -1273,6 +1278,18 @@ const joinQueue = async (
       return;
     }
 
+    if (safeCouponsUsed > 0) {
+      const { error: reserveError } = await supabase.rpc('reserve_coupons_for_queue', {
+        p_queue_id: newItem.id,
+        p_count: safeCouponsUsed,
+      });
+
+      if (reserveError) {
+        await supabase.from('queue').delete().eq('id', newItem.id);
+        throw new Error(reserveError.message || 'Не удалось забронировать купоны');
+      }
+    }
+
     // СБРОС ФЛАГА: После первого успешного действия новый пользователь становится обычным
     if (isNewUser) {
       setIsNewUser(false);
@@ -1285,7 +1302,7 @@ const joinQueue = async (
       full_name: name,
       room,
       wash_count: washCount,
-      payment_type: paymentType,
+      payment_type: derivedPaymentType,
       queue_length: queue.length + 1,
       expected_finish_at: expectedFinishAt,
     });
@@ -1357,7 +1374,7 @@ const joinQueue = async (
   const adminAddToQueue = async (
     studentRoom?: string,
     washCount: number = 1,
-    paymentType: string = 'money',
+    couponsUsed: number = 0,
     expectedFinishAt?: string,
     chosenDate?: string,
     studentId?: string
@@ -1383,7 +1400,7 @@ const joinQueue = async (
         full_name: student.full_name,
         room: studentRoom || student.room,
         wash_count: washCount,
-        payment_type: paymentType,
+        coupons_used: couponsUsed,
         expected_finish_at: expectedFinishAt,
         scheduled_for_date: targetDate,
         avatar_type: student.avatar_type,
@@ -2035,6 +2052,7 @@ const deleteStudent = async (studentId: string) => {
     
     try {
       // ✅ RLS сам проверит через is_queue_owner()
+      await supabase.rpc('release_coupons_for_queue', { p_queue_id: queueItemId });
       const { error } = await supabase
         .from('queue')
         .delete()
@@ -2397,61 +2415,56 @@ const updateQueueItemDetails = async (
   queueId: string, 
   updates: {
     wash_count?: number;
+    coupons_used?: number;
     payment_type?: string;
     expected_finish_at?: string;
     chosen_date?: string;
   }
 ) => {
+  if (!isAdmin && !isSuperAdmin) return;
   if (!supabase) return;
 
+  const item = queue.find(q => q.id === queueId);
+  if (!item) {
+    return;
+  }
+
+  if (item.status !== QueueStatus.WAITING) {
+    return;
+  }
+
   try {
-    const item = queue.find(q => q.id === queueId);
-    if (!item) {
-      return;
+    const token = await getFreshToken();
+
+    const response = await fetch('/api/admin/queue/update-details', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ queue_item_id: queueId, updates }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to update queue');
     }
 
-    // 
-    if (item.status !== QueueStatus.WAITING) {
-      return;
-    }
+    await fetchQueue();
 
-    const updateData: any = {};
-    if (updates.wash_count !== undefined) updateData.wash_count = updates.wash_count;  
-    if (updates.payment_type !== undefined) updateData.payment_type = updates.payment_type;  
-    if (updates.expected_finish_at !== undefined) updateData.expected_finish_at = updates.expected_finish_at;  
-    if (updates.chosen_date !== undefined) {
-      updateData.scheduled_for_date = updates.chosen_date;  
-      updateData.queue_date = updates.chosen_date;  
-    }
-
-    const { error } = await supabase
-      .from('queue')
-      .update(updateData)
-      .eq('id', queueId);
-
-    if (error) {
-      return;
-    }
-    await fetchQueue();  
-    
-    // 
     if (updates.expected_finish_at && user) {
       await sendTelegramNotification({
         type: 'updated',
         student_id: user.student_id,
         full_name: item.full_name,
-        room: item.room || undefined,
-        wash_count: updates.wash_count || item.wash_count,
-        payment_type: updates.payment_type || item.payment_type,
         expected_finish_at: updates.expected_finish_at,
       });
     }
-
-  } catch (error: any) {
-    return;
+  } catch (error) {
+    throw error;
   }
 };
-
 const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') => {
   if (!supabase) return;
   

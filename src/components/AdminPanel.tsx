@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useLaundry } from "@/contexts/LaundryContext";
 import { Student } from "@/types";
@@ -42,8 +42,12 @@ export default function AdminPanel() {
 
   // Queue params
   const [queueWashCount, setQueueWashCount] = useState(1);
-  const [queuePaymentType, setQueuePaymentType] = useState("money");
+  const [queueCouponsUsed, setQueueCouponsUsed] = useState(0);
   const [queueDate, setQueueDate] = useState("");
+
+  useEffect(() => {
+    setQueueCouponsUsed((prev) => Math.min(prev, queueWashCount));
+  }, [queueWashCount]);
 
   // Edit student form
   const [editFirstname, setEditFirstname] = useState("");
@@ -189,7 +193,7 @@ export default function AdminPanel() {
       await adminAddToQueue(
         selectedStudent.room || undefined,
         queueWashCount,
-        queuePaymentType,
+        queueCouponsUsed,
         undefined,
         queueDate,
         selectedStudent.id
@@ -214,7 +218,7 @@ export default function AdminPanel() {
   const openAddToQueueModal = (student: Student) => {
     setSelectedStudent(student);
     setQueueWashCount(1);
-    setQueuePaymentType("money");
+    setQueueCouponsUsed(0);
     const today = new Date().toISOString().slice(0, 10);
     setQueueDate(today);
     setShowAddToQueue(true);
@@ -629,16 +633,21 @@ export default function AdminPanel() {
             </div>
 
             <div>
-              <label className="mb-1 block font-semibold text-gray-900">Способ оплаты</label>
+              <label className="mb-1 block font-semibold text-gray-900">Купоны</label>
               <select
-                value={queuePaymentType}
-                onChange={(e) => setQueuePaymentType(e.target.value)}
+                value={queueCouponsUsed}
+                onChange={(e) => setQueueCouponsUsed(Number(e.target.value))}
                 className="w-full rounded-lg border-2 border-gray-300 p-2 text-gray-900"
               >
-                <option value="money">Деньги</option>
-                <option value="coupon">Купон</option>
-                <option value="both">Деньги + купон</option>
+                {Array.from({ length: queueWashCount + 1 }, (_, i) => i).map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
               </select>
+              <p className="mt-1 text-xs text-gray-500">
+                Проверка доступных купонов выполнится при добавлении.
+              </p>
             </div>
           </div>
 

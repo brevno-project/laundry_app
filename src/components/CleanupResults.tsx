@@ -1,0 +1,880 @@
+﻿"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useLaundry } from "@/contexts/LaundryContext";
+import { supabase } from "@/lib/supabase";
+import type { Apartment, CleanupResult, Coupon, CouponTransfer, Student } from "@/types";
+import {
+  CalendarIcon,
+  CheckIcon,
+  MoneyIcon,
+  PeopleIcon,
+  TicketIcon,
+} from "@/components/Icons";
+
+const CLEANUP_TEMPLATES = [
+  {
+    key: "shine",
+    label: "Лучший порядок",
+    text: "Поздравляем квартиру {{apartment}}! На этой неделе у вас самый лучший порядок. Купоны уже начислены.",
+  },
+  {
+    key: "fresh",
+    label: "Свежесть недели",
+    text: "Квартира {{apartment}} сегодня задает стандарт чистоты! Спасибо за отличный результат.",
+  },
+  {
+    key: "team",
+    label: "Командная работа",
+    text: "Супер-работа, квартира {{apartment}}! Купоны ваши, так держать!",
+  },
+  {
+    key: "gold",
+    label: "Золото уборки",
+    text: "Золото недели у квартиры {{apartment}}. Купоны зачислены, продолжайте в том же духе!",
+  },
+  {
+    key: "respect",
+    label: "Респект",
+    text: "Респект квартире {{apartment}} за порядок. Купоны доступны для вашей стирки!",
+  },
+];
+
+const getWeekStartISO = () => {
+  const now = new Date();
+  const day = now.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  now.setDate(now.getDate() + diff);
+  now.setHours(0, 0, 0, 0);
+  return now.toISOString().slice(0, 10);
+};
+
+const formatWeekLabel = (dateStr?: string) => {
+  if (!dateStr) return "-";
+  const date = new Date(`${dateStr}T00:00:00`);
+  return date.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
+};
+
+const formatDateTime = (dateStr?: string | null) => {
+  if (!dateStr) return "-";
+  return new Date(dateStr).toLocaleString("ru-RU", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const formatTemplate = (text: string, apartmentCode: string) =>
+  text.replace("{{apartment}}", apartmentCode);
+
+const hasCyrillic = (value: string) => /[А-Яа-яЁё]/.test(value);
+
+const mapPublishError = (message?: string) => {
+  if (!message) return "Ошибка публикации";
+  if (hasCyrillic(message)) return message;
+  switch (message) {
+    case "Missing required fields":
+      return "Заполните все обязательные поля";
+    case "Invalid block":
+      return "Некорректный блок";
+    case "Admin apartment not set":
+      return "У администратора не указана квартира";
+    case "Not allowed to publish for this block":
+      return "Нельзя публиковать результаты для этого блока";
+    case "Apartment not found":
+      return "Квартира не найдена";
+    case "Apartment block mismatch":
+      return "Квартира не относится к выбранному блоку";
+    case "Insert failed":
+      return "Не удалось сохранить результаты";
+    default:
+      return "Ошибка публикации";
+  }
+};
+
+const mapTransferError = (message?: string) => {
+  if (!message) return "Ошибка передачи";
+  if (hasCyrillic(message)) return message;
+  switch (message) {
+    case "Coupon not found":
+      return "Купон не найден";
+    case "Coupon expired":
+      return "Купон уже сгорел";
+    case "Not allowed":
+      return "Недостаточно прав для передачи";
+    case "Coupon is reserved or used":
+      return "Купон уже в очереди или использован";
+    case "Different apartment":
+      return "Передавать можно только внутри одной квартиры";
+    default:
+      return "Ошибка передачи";
+  }
+};
+
+const mapGrantError = (message?: string) => {
+  if (!message) return "Ошибка выдачи";
+  if (hasCyrillic(message)) return message;
+  switch (message) {
+    case "Only super admin can grant coupons":
+      return "Только суперадмин может выдавать купоны";
+    case "Missing student_id or invalid count":
+      return "Выберите студента и количество";
+    case "Internal server error":
+      return "Внутренняя ошибка сервера";
+    default:
+      return "Ошибка выдачи";
+  }
+};
+
+export default function CleanupResults() {
+  const { user, isAdmin, isSuperAdmin } = useLaundry();
+  const [results, setResults] = useState<CleanupResult[]>([]);
+  const [apartments, setApartments] = useState<Apartment[]>([]);
+  const [announcers, setAnnouncers] = useState<Record<string, string>>({});
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [transfers, setTransfers] = useState<CouponTransfer[]>([]);
+  const [transferNames, setTransferNames] = useState<Record<string, string>>({});
+  const [recipients, setRecipients] = useState<Student[]>([]);
+  const [adminBlock, setAdminBlock] = useState<string | null>(null);
+  const [weekStart, setWeekStart] = useState(getWeekStartISO());
+  const [selectedBlock, setSelectedBlock] = useState("A");
+  const [selectedApartment, setSelectedApartment] = useState<string>("");
+  const [announcementText, setAnnouncementText] = useState("");
+  const [announcementMode, setAnnouncementMode] = useState("template");
+  const [templateKey, setTemplateKey] = useState(CLEANUP_TEMPLATES[0]?.key || "");
+  const [publishNotice, setPublishNotice] = useState<string | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [transferCouponId, setTransferCouponId] = useState("");
+  const [transferRecipientId, setTransferRecipientId] = useState("");
+  const [transferNotice, setTransferNotice] = useState<string | null>(null);
+  const [grantStudentId, setGrantStudentId] = useState("");
+  const [grantCount, setGrantCount] = useState(1);
+  const [grantNote, setGrantNote] = useState("");
+  const [grantNotice, setGrantNotice] = useState<string | null>(null);
+  const [grantStudents, setGrantStudents] = useState<Student[]>([]);
+  const [couponTtlSeconds, setCouponTtlSeconds] = useState<number | null>(null);
+
+  const apartmentMap = useMemo(() => {
+    const map: Record<string, Apartment> = {};
+    apartments.forEach((apt) => {
+      map[apt.id] = apt;
+    });
+    return map;
+  }, [apartments]);
+
+  const resultsByBlock = useMemo(() => {
+    return {
+      A: results.filter((item) => item.block === "A"),
+      B: results.filter((item) => item.block === "B"),
+    };
+  }, [results]);
+
+  const selectedTemplate = CLEANUP_TEMPLATES.find((tpl) => tpl.key === templateKey);
+
+  const loadApartments = async () => {
+    if (!supabase) return;
+    const { data } = await supabase
+      .from("apartments")
+      .select("id, code, block")
+      .order("code", { ascending: true });
+    setApartments((data as Apartment[]) || []);
+  };
+
+  const loadResults = async () => {
+    if (!supabase) return;
+    const { data } = await supabase
+      .from("cleanup_results")
+      .select(
+        "id, week_start, block, announcement_text, announcement_mode, template_key, announced_by, published_at, winning_apartment_id, created_at"
+      )
+      .order("week_start", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    const rows = (data as CleanupResult[]) || [];
+    setResults(rows);
+
+    const announcerIds = Array.from(
+      new Set(rows.map((row) => row.announced_by).filter(Boolean))
+    ) as string[];
+
+    if (announcerIds.length > 0) {
+      const { data: announcerRows } = await supabase
+        .from("students")
+        .select("id, full_name")
+        .in("id", announcerIds);
+
+      const announcerMap: Record<string, string> = {};
+      (announcerRows || []).forEach((student: any) => {
+        announcerMap[student.id] = student.full_name;
+      });
+      setAnnouncers(announcerMap);
+    }
+  };
+
+  const loadAdminBlock = async () => {
+    if (!supabase || !user?.student_id || !isAdmin) return;
+
+    const { data: adminStudent } = await supabase
+      .from("students")
+      .select("apartment_id")
+      .eq("id", user.student_id)
+      .maybeSingle();
+
+    if (!adminStudent?.apartment_id) {
+      setAdminBlock(null);
+      return;
+    }
+
+    const { data: adminApartment } = await supabase
+      .from("apartments")
+      .select("block")
+      .eq("id", adminStudent.apartment_id)
+      .maybeSingle();
+
+    const block = adminApartment?.block || null;
+    setAdminBlock(block);
+    if (block) setSelectedBlock(block);
+  };
+
+  const loadCouponTtl = async () => {
+    if (!supabase || (!isAdmin && !isSuperAdmin)) return;
+    const { data } = await supabase
+      .from("app_settings")
+      .select("value_int")
+      .eq("key", "cleanup_coupon_ttl_seconds")
+      .maybeSingle();
+    if (typeof data?.value_int === "number") {
+      setCouponTtlSeconds(data.value_int);
+    }
+  };
+
+  const loadCoupons = async () => {
+    if (!supabase || !user?.student_id) return;
+    const { data } = await supabase
+      .from("coupons")
+      .select(
+        "id, owner_student_id, source_type, source_id, issued_by, issued_at, valid_from, expires_at, reserved_queue_id, reserved_at, used_in_queue_id, used_at, note"
+      )
+      .eq("owner_student_id", user.student_id)
+      .order("issued_at", { ascending: false });
+
+    setCoupons((data as Coupon[]) || []);
+  };
+
+  const loadTransfers = async () => {
+    if (!supabase || !user?.student_id) return;
+    const { data } = await supabase
+      .from("coupon_transfers")
+      .select("id, coupon_id, from_student_id, to_student_id, performed_by, created_at, note")
+      .or(`from_student_id.eq.${user.student_id},to_student_id.eq.${user.student_id}`)
+      .order("created_at", { ascending: false });
+
+    const rows = (data as CouponTransfer[]) || [];
+    setTransfers(rows);
+
+    const studentIds = Array.from(
+      new Set(rows.flatMap((row) => [row.from_student_id, row.to_student_id]))
+    );
+    if (studentIds.length > 0) {
+      const { data: studentRows } = await supabase
+        .from("students")
+        .select("id, full_name")
+        .in("id", studentIds);
+
+      const nameMap: Record<string, string> = {};
+      (studentRows || []).forEach((student: any) => {
+        nameMap[student.id] = student.full_name;
+      });
+      setTransferNames(nameMap);
+    }
+  };
+
+  const loadRecipients = async () => {
+    if (!supabase || !user?.student_id) return;
+    const { data: currentStudent } = await supabase
+      .from("students")
+      .select("apartment_id")
+      .eq("id", user.student_id)
+      .maybeSingle();
+
+    if (!currentStudent?.apartment_id) {
+      setRecipients([]);
+      return;
+    }
+
+    const { data: studentRows } = await supabase
+      .from("students")
+      .select("id, full_name, room")
+      .eq("apartment_id", currentStudent.apartment_id)
+      .neq("id", user.student_id);
+
+    setRecipients((studentRows as Student[]) || []);
+  };
+
+  const loadGrantStudents = async () => {
+    if (!supabase || !isSuperAdmin) return;
+    const { data } = await supabase
+      .from("students")
+      .select("id, full_name, room")
+      .order("room", { ascending: true });
+    setGrantStudents((data as Student[]) || []);
+  };
+
+  useEffect(() => {
+    loadApartments();
+    loadResults();
+  }, []);
+
+  useEffect(() => {
+    loadAdminBlock();
+    loadCouponTtl();
+  }, [user?.student_id, isAdmin, isSuperAdmin]);
+
+  useEffect(() => {
+    if (!user?.student_id) return;
+    loadCoupons();
+    loadTransfers();
+    loadRecipients();
+  }, [user?.student_id]);
+
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    loadGrantStudents();
+  }, [isSuperAdmin]);
+
+  useEffect(() => {
+    if (selectedTemplate && selectedApartment) {
+      const aptCode = apartmentMap[selectedApartment]?.code || "";
+      const templateText = formatTemplate(selectedTemplate.text, aptCode);
+      setAnnouncementText(templateText);
+      setAnnouncementMode("template");
+    }
+  }, [templateKey, selectedApartment]);
+
+  const refreshResults = async () => {
+    await loadResults();
+  };
+
+  const refreshCoupons = async () => {
+    await loadCoupons();
+    await loadTransfers();
+  };
+
+  const handlePublish = async () => {
+    if (!supabase || !announcementText || !selectedApartment || !weekStart) {
+      setPublishNotice("Заполните все поля.");
+      return;
+    }
+
+    if (!isAdmin && !isSuperAdmin) return;
+
+    try {
+      setIsPublishing(true);
+      setPublishNotice(null);
+      const { data: session } = await supabase.auth.getSession();
+      const token = session.session?.access_token;
+
+      if (!token) {
+        setPublishNotice("Не удалось получить токен.");
+        return;
+      }
+
+      const response = await fetch("/api/admin/cleanup/publish", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          week_start: weekStart,
+          block: selectedBlock,
+          apartment_id: selectedApartment,
+          announcement_text: announcementText,
+          announcement_mode: announcementMode,
+          template_key: templateKey,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(mapPublishError(result.error));
+      }
+
+      setPublishNotice("Результаты опубликованы.");
+      await refreshResults();
+      await refreshCoupons();
+    } catch (error: any) {
+      setPublishNotice(mapPublishError(error?.message));
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const handleRandomTemplate = () => {
+    if (!selectedApartment) return;
+    const random = CLEANUP_TEMPLATES[Math.floor(Math.random() * CLEANUP_TEMPLATES.length)];
+    setTemplateKey(random.key);
+    setAnnouncementText(formatTemplate(random.text, apartmentMap[selectedApartment]?.code || ""));
+    setAnnouncementMode("template");
+  };
+
+  const handleTransfer = async () => {
+    if (!supabase || !transferCouponId || !transferRecipientId) {
+      setTransferNotice("Выберите купон и получателя.");
+      return;
+    }
+
+    try {
+      setTransferNotice(null);
+      const { error } = await supabase.rpc("transfer_coupon", {
+        p_coupon_id: transferCouponId,
+        p_to_student_id: transferRecipientId,
+      });
+
+      if (error) {
+        throw new Error(mapTransferError(error.message));
+      }
+
+      setTransferCouponId("");
+      setTransferRecipientId("");
+      setTransferNotice("Купон передан.");
+      await refreshCoupons();
+    } catch (error: any) {
+      setTransferNotice(mapTransferError(error?.message));
+    }
+  };
+
+  const handleGrant = async () => {
+    if (!supabase || !grantStudentId) {
+      setGrantNotice("Выберите студента.");
+      return;
+    }
+
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session.session?.access_token;
+      if (!token) {
+        setGrantNotice("Не удалось получить токен.");
+        return;
+      }
+
+      const response = await fetch("/api/admin/coupons/grant", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          student_id: grantStudentId,
+          count: grantCount,
+          note: grantNote,
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(mapGrantError(result.error));
+      }
+
+      setGrantNotice("Купоны выданы.");
+      setGrantCount(1);
+      setGrantNote("");
+      await refreshCoupons();
+    } catch (error: any) {
+      setGrantNotice(mapGrantError(error?.message));
+    }
+  };
+
+  const renderResultCard = (item: CleanupResult) => {
+    const apartment = apartmentMap[item.winning_apartment_id];
+    const announcer = item.announced_by ? announcers[item.announced_by] : null;
+
+    return (
+      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h4 className="text-lg font-bold text-gray-900">
+              Неделя с {formatWeekLabel(item.week_start)}
+            </h4>
+            <p className="text-xs text-gray-500">
+              Опубликовано: {formatDateTime(item.published_at)}
+            </p>
+          </div>
+          <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+            {apartment?.code || "Квартира"}
+          </span>
+        </div>
+        <p className="text-sm text-gray-700 whitespace-pre-line">{item.announcement_text}</p>
+        {announcer && (
+          <p className="mt-3 text-xs text-gray-500">Объявил: {announcer}</p>
+        )}
+      </div>
+    );
+  };
+
+  const renderBlockSection = (block: "A" | "B") => {
+    const blockResults = resultsByBlock[block];
+    const latest = blockResults[0];
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="h-9 w-9 rounded-full bg-slate-900 text-white flex items-center justify-center">
+            <PeopleIcon className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-gray-900">
+              Блок {block}
+            </h3>
+            <p className="text-xs text-gray-500">Результаты уборки</p>
+          </div>
+        </div>
+
+        {latest ? (
+          renderResultCard(latest)
+        ) : (
+          <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-500">
+            Результатов пока нет.
+          </div>
+        )}
+
+        {blockResults.length > 1 && (
+          <details className="rounded-xl border border-gray-200 bg-white p-4">
+            <summary className="cursor-pointer text-sm font-semibold text-gray-700">
+              Архив результатов ({blockResults.length - 1})
+            </summary>
+            <div className="mt-3 space-y-3">
+              {blockResults.slice(1).map(renderResultCard)}
+            </div>
+          </details>
+        )}
+      </div>
+    );
+  };
+
+  const transferableCoupons = coupons.filter((coupon) => {
+    const isExpired = new Date(coupon.expires_at).getTime() <= Date.now();
+    return !coupon.used_in_queue_id && !coupon.reserved_queue_id && !isExpired;
+  });
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 shadow-lg">
+        <div className="mx-auto max-w-5xl flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Результаты уборки</h1>
+            <p className="text-sm text-blue-100">Объявления по блокам и архив</p>
+          </div>
+          <Link href="/" className="text-sm text-blue-100 underline">
+            На главную
+          </Link>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-5xl space-y-6 p-4">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {renderBlockSection("A")}
+          {renderBlockSection("B")}
+        </div>
+
+        {(isAdmin || isSuperAdmin) && (
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
+            <div className="flex items-center gap-2">
+              <CalendarIcon className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-bold text-gray-900">Публикация результатов</h3>
+            </div>
+
+            {couponTtlSeconds !== null && (
+              <p className="text-xs text-gray-500">
+                Купоны действуют {couponTtlSeconds} сек.
+              </p>
+            )}
+
+            {!isSuperAdmin && !adminBlock && (
+              <p className="text-sm text-red-600">
+                Для публикации нужен назначенный блок.
+              </p>
+            )}
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Неделя (понедельник)</label>
+                <input
+                  type="date"
+                  value={weekStart}
+                  onChange={(e) => setWeekStart(e.target.value)}
+                  className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Блок</label>
+                <select
+                  value={selectedBlock}
+                  onChange={(e) => setSelectedBlock(e.target.value)}
+                  disabled={!isSuperAdmin && !!adminBlock}
+                  className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900 disabled:bg-gray-100"
+                >
+                  <option value="A">Блок A</option>
+                  <option value="B">Блок B</option>
+                </select>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Квартира-победитель</label>
+                <select
+                  value={selectedApartment}
+                  onChange={(e) => setSelectedApartment(e.target.value)}
+                  className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
+                >
+                  <option value="">Выберите квартиру</option>
+                  {apartments
+                    .filter((apt) => !apt.block || apt.block === selectedBlock)
+                    .map((apt) => (
+                      <option key={apt.id} value={apt.id}>
+                        {apt.code}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <select
+                value={templateKey}
+                onChange={(e) => {
+                  setTemplateKey(e.target.value);
+                  setAnnouncementMode("template");
+                }}
+                className="rounded-lg border-2 border-gray-200 p-2 text-sm text-gray-900"
+              >
+                {CLEANUP_TEMPLATES.map((tpl) => (
+                  <option key={tpl.key} value={tpl.key}>
+                    {tpl.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={handleRandomTemplate}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              >
+                Случайный текст
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Сообщение</label>
+              <textarea
+                value={announcementText}
+                onChange={(e) => {
+                  setAnnouncementText(e.target.value);
+                  setAnnouncementMode("manual");
+                }}
+                rows={4}
+                className="w-full rounded-lg border-2 border-gray-200 p-3 text-gray-900"
+                placeholder="Напишите сообщение для блока"
+              />
+            </div>
+
+            {publishNotice && (
+              <div className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                {publishNotice}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handlePublish}
+              disabled={isPublishing || (!isSuperAdmin && !adminBlock)}
+              className="w-full rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:bg-gray-400"
+            >
+              {isPublishing ? "Публикация..." : "Опубликовать результаты"}
+            </button>
+          </div>
+        )}
+
+        {user && (
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-3">
+              <div className="flex items-center gap-2">
+                <TicketIcon className="w-5 h-5 text-purple-600" />
+                <h3 className="text-lg font-bold text-gray-900">Мои купоны</h3>
+              </div>
+
+              {coupons.length === 0 ? (
+                <p className="text-sm text-gray-500">Пока нет купонов.</p>
+              ) : (
+                <div className="space-y-2">
+                  {coupons.map((coupon) => {
+                    const isExpired = new Date(coupon.expires_at).getTime() <= Date.now();
+                    const status = coupon.used_in_queue_id
+                      ? "Использован"
+                      : coupon.reserved_queue_id
+                        ? "В очереди"
+                        : isExpired
+                          ? "Сгорел"
+                          : "Активен";
+
+                    return (
+                      <div
+                        key={coupon.id}
+                        className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm text-gray-700"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold">{status}</span>
+                          <span className="text-xs text-gray-500">
+                            До: {formatDateTime(coupon.expires_at)}
+                          </span>
+                        </div>
+                        {coupon.note && (
+                          <p className="text-xs text-gray-500 mt-1">{coupon.note}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
+              <div className="flex items-center gap-2">
+                <MoneyIcon className="w-5 h-5 text-green-600" />
+                <h3 className="text-lg font-bold text-gray-900">Передать купон</h3>
+              </div>
+
+              {recipients.length === 0 ? (
+                <p className="text-sm text-gray-500">Нет получателей в вашей квартире.</p>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Купон</label>
+                    <select
+                      value={transferCouponId}
+                      onChange={(e) => setTransferCouponId(e.target.value)}
+                      className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
+                    >
+                      <option value="">Выберите купон</option>
+                      {transferableCoupons.map((coupon) => (
+                        <option key={coupon.id} value={coupon.id}>
+                          Купон до {formatDateTime(coupon.expires_at)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Кому передать</label>
+                    <select
+                      value={transferRecipientId}
+                      onChange={(e) => setTransferRecipientId(e.target.value)}
+                      className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
+                    >
+                      <option value="">Выберите студента</option>
+                      {recipients.map((student) => (
+                        <option key={student.id} value={student.id}>
+                          {student.full_name} {student.room ? `(${student.room})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {transferNotice && (
+                    <p className="text-sm text-blue-600">{transferNotice}</p>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleTransfer}
+                    className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                  >
+                    Передать
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {user && transfers.length > 0 && (
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-3">
+            <div className="flex items-center gap-2">
+              <CheckIcon className="w-5 h-5 text-emerald-600" />
+              <h3 className="text-lg font-bold text-gray-900">История передач</h3>
+            </div>
+            <div className="space-y-2 text-sm text-gray-700">
+              {transfers.map((transfer) => (
+                <div key={transfer.id} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
+                  <span>
+                    {transferNames[transfer.from_student_id] || "Кто-то"} ->
+                    {" "}
+                    {transferNames[transfer.to_student_id] || "Кто-то"}
+                  </span>
+                  <span className="text-xs text-gray-500">{formatDateTime(transfer.created_at)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {isSuperAdmin && (
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
+            <div className="flex items-center gap-2">
+              <TicketIcon className="w-5 h-5 text-purple-600" />
+              <h3 className="text-lg font-bold text-gray-900">Выдать купоны вручную</h3>
+            </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Студент</label>
+                <select
+                  value={grantStudentId}
+                  onChange={(e) => setGrantStudentId(e.target.value)}
+                  className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
+                >
+                  <option value="">Выберите студента</option>
+                  {grantStudents.map((student) => (
+                    <option key={student.id} value={student.id}>
+                      {student.full_name} {student.room ? `(${student.room})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Количество</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={grantCount}
+                  onChange={(e) => setGrantCount(Number(e.target.value))}
+                  className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Комментарий</label>
+              <input
+                type="text"
+                value={grantNote}
+                onChange={(e) => setGrantNote(e.target.value)}
+                className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
+                placeholder="Причина или примечание"
+              />
+            </div>
+            {grantNotice && (
+              <p className="text-sm text-blue-600">{grantNotice}</p>
+            )}
+            <button
+              type="button"
+              onClick={handleGrant}
+              className="w-full rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700"
+            >
+              Выдать купоны
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+

@@ -30,7 +30,26 @@ export async function POST(req: NextRequest) {
           expected_finish_at: null,
         });
 
+      await supabaseAdmin
+        .from("coupons")
+        .update({ reserved_queue_id: null, reserved_at: null })
+        .is("used_in_queue_id", null)
+        .not("reserved_queue_id", "is", null);
+
       // Удаляем все записи
+      const { data: doneItems } = await supabaseAdmin
+        .from("queue")
+        .select("id")
+        .eq("status", "done");
+
+      if (doneItems && doneItems.length > 0) {
+        await supabaseAdmin
+          .from("coupons")
+          .update({ reserved_queue_id: null, reserved_at: null })
+          .is("used_in_queue_id", null)
+          .in("reserved_queue_id", doneItems.map((item) => item.id));
+      }
+
       const { error: deleteError } = await supabaseAdmin
         .from("queue")
         .delete()
@@ -58,6 +77,19 @@ export async function POST(req: NextRequest) {
     } else if (mode === "old") {
       // ✅ Очистить старую очередь (за предыдущие дни)
       const today = new Date().toISOString().split("T")[0];
+      const { data: oldItems } = await supabaseAdmin
+        .from("queue")
+        .select("id")
+        .lt("scheduled_for_date", today);
+
+      if (oldItems && oldItems.length > 0) {
+        await supabaseAdmin
+          .from("coupons")
+          .update({ reserved_queue_id: null, reserved_at: null })
+          .is("used_in_queue_id", null)
+          .in("reserved_queue_id", oldItems.map((item) => item.id));
+      }
+
       const { error: deleteError } = await supabaseAdmin
         .from("queue")
         .delete()
@@ -81,6 +113,20 @@ export async function POST(req: NextRequest) {
       const twoDaysAgo = new Date();
       twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
       const cutoffDate = twoDaysAgo.toISOString().split("T")[0];
+
+      const { data: stuckItems } = await supabaseAdmin
+        .from("queue")
+        .select("id")
+        .lt("scheduled_for_date", cutoffDate)
+        .neq("status", "done");
+
+      if (stuckItems && stuckItems.length > 0) {
+        await supabaseAdmin
+          .from("coupons")
+          .update({ reserved_queue_id: null, reserved_at: null })
+          .is("used_in_queue_id", null)
+          .in("reserved_queue_id", stuckItems.map((item) => item.id));
+      }
 
       const { error: deleteError } = await supabaseAdmin
         .from("queue")

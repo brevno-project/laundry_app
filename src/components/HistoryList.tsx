@@ -84,10 +84,16 @@ const getEarliestDate = (dates: Array<string | null | undefined>) => {
   return parsed[0].value;
 };
 
-const getPaymentLabel = (paymentType?: string | null) => {
+const getPaymentLabel = (paymentType?: string | null, couponsUsed?: number | null) => {
+  const couponCount = couponsUsed || 0;
+  if (couponCount > 0) {
+    return paymentType === 'both'
+      ? `Купоны: ${couponCount} + деньги`
+      : `Купоны: ${couponCount}`;
+  }
   if (!paymentType) return '-';
   if (paymentType === 'coupon') return 'Купон';
-  if (paymentType === 'both') return 'Деньги + Купон';
+  if (paymentType === 'both') return 'Купон + деньги';
   if (paymentType === 'money' || paymentType === 'cash') return 'Деньги';
   return paymentType;
 };
@@ -155,20 +161,21 @@ export default function HistoryList() {
             : null;
 
           const washCount = item.wash_count ?? '-';
+          const couponsUsed = item.coupons_used ?? 0;
           const paymentType = item.payment_type ?? null;
-          const paymentLabel = getPaymentLabel(paymentType);
-          const paymentIcons = paymentType === 'coupon'
-            ? <TicketIcon className="w-4 h-4 text-blue-600" />
-            : paymentType === 'both'
+          const paymentLabel = getPaymentLabel(paymentType, couponsUsed);
+          const paymentIcons = couponsUsed > 0
+            ? paymentType === 'both'
               ? (
                 <>
-                  <MoneyIcon className="w-4 h-4 text-blue-600" />
                   <TicketIcon className="w-4 h-4 text-blue-600" />
+                  <MoneyIcon className="w-4 h-4 text-blue-600" />
                 </>
               )
-              : paymentType === 'money' || paymentType === 'cash'
-                ? <MoneyIcon className="w-4 h-4 text-blue-600" />
-                : null;
+              : <TicketIcon className="w-4 h-4 text-blue-600" />
+            : paymentType === 'money' || paymentType === 'cash'
+              ? <MoneyIcon className="w-4 h-4 text-blue-600" />
+              : null;
 
           const keyIssuedColors = keyIssuedMinutes === null
             ? neutralColors
