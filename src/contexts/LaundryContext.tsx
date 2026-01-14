@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/lib/supabase';
 import { User, Student, StudentLoginList, QueueItem, MachineStatus, QueueStatus, MachineState, HistoryItem } from '@/types';
@@ -153,6 +153,13 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   });
   const [isJoining, setIsJoining] = useState(false);
   const [needsClaim, setNeedsClaim] = useState<boolean>(false);
+  const queueFetchStateRef = useRef({ inFlight: false, lastRunAt: 0 });
+  const cleanupStateRef = useRef({
+    lastRunDate: null as string | null,
+    inFlight: false,
+    disableUntil: 0,
+    lastErrorAt: 0,
+  });
 
   // ✅ ПРИ СТАРТЕ: Синхронизация прав с Supabase Auth
   useEffect(() => {
@@ -1001,18 +1008,58 @@ const resetStudentRegistration = async (studentId: string) => {
         setQueue(get_local_queue());
         return;
       }
-      
+
+      const nowMs = Date.now();
+      if (queueFetchStateRef.current.inFlight) return;
+      if (nowMs - queueFetchStateRef.current.lastRunAt < 300) return;
+
+      queueFetchStateRef.current.inFlight = true;
+      queueFetchStateRef.current.lastRunAt = nowMs;
+
       try {
-        // ✅ Используем RPC для получения активной очереди на все даты
-        await supabase.rpc('cleanup_coupon_queue_for_today');
+        const todayStr = new Date().toISOString().slice(0, 10);
+        if (user?.student_id && !cleanupStateRef.current.inFlight) {
+          const cleanupDisabledUntil = cleanupStateRef.current.disableUntil;
+          const shouldCleanup =
+            cleanupDisabledUntil <= nowMs &&
+            cleanupStateRef.current.lastRunDate !== todayStr;
+
+          if (shouldCleanup) {
+            cleanupStateRef.current.inFlight = true;
+            let cleanupError: any = null;
+            try {
+              const result = await supabase.rpc('cleanup_coupon_queue_for_today');
+              cleanupError = result.error;
+            } catch (err) {
+              cleanupError = err;
+            } finally {
+              cleanupStateRef.current.inFlight = false;
+            }
+
+            if (cleanupError) {
+              if (nowMs - cleanupStateRef.current.lastErrorAt > 60000) {
+                console.error('cleanup_coupon_queue_for_today error:', cleanupError);
+                cleanupStateRef.current.lastErrorAt = nowMs;
+              }
+              cleanupStateRef.current.disableUntil = nowMs + 10 * 60 * 1000;
+            } else {
+              cleanupStateRef.current.lastRunDate = todayStr;
+            }
+          }
+        }
+
         const { data, error } = await supabase.rpc('get_queue_active');
-        
-        if (error) throw error;
+        if (error) {
+          console.error('get_queue_active error:', error);
+          return;
+        }
         setQueue(data || []);
         // Also update local storage as backup
         save_local_queue(data || []);
       } catch (error: any) {
-        throw error;
+        console.error('fetchQueue error:', error);
+      } finally {
+        queueFetchStateRef.current.inFlight = false;
       }
     };
   
@@ -1036,7 +1083,7 @@ const resetStudentRegistration = async (studentId: string) => {
         // Also update local storage as backup
         save_local_machine_state(data || { status: MachineStatus.IDLE });
       } catch (error: any) {
-        throw error;
+        console.error('fetchMachineState error:', error);
       }
     };
   
@@ -2610,3 +2657,4 @@ export function useLaundry() {
   }
   return context;
 }
+

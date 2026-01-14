@@ -534,6 +534,10 @@ $$;
 grant execute on function public.get_queue_active() to anon, authenticated;
 grant execute on function public.get_queue_public(date) to anon, authenticated;
 grant execute on function public.get_sorted_queue() to anon, authenticated;
+grant execute on function public.cleanup_coupon_queue_for_today() to authenticated;
+grant execute on function public.reserve_coupons_for_queue(uuid, integer) to authenticated;
+grant execute on function public.release_coupons_for_queue(uuid) to authenticated;
+grant execute on function public.transfer_coupon(uuid, uuid) to authenticated;
 
 -- RLS
 alter table public.apartments enable row level security;
