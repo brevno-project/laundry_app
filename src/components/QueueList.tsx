@@ -531,13 +531,9 @@ export default function QueueList() {
 
                           {/* Позвать */}
                           <button
-                            className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-orange-500 text-white font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-orange-500 text-white font-semibold"
                             onClick={async () => {
                               try {
-                                if (isSelfQueueItem) {
-                                  alert('Нельзя вызвать себя за ключом.');
-                                  return;
-                                }
                                 await updateQueueItem(item.id, { 
                                   admin_room: user?.room,
                                   ready_at: new Date().toISOString()
@@ -555,7 +551,6 @@ export default function QueueList() {
                                 console.error('❌ Error in Позвать:', error);
                               }
                             }}
-                            disabled={isSelfQueueItem}
                           >
                             <BellIcon className="w-4 h-4" /> Позвать
                           </button>
@@ -615,31 +610,26 @@ export default function QueueList() {
                           </button>
 
                           {/* Вернуть ключ */}
-                          <button
-                            className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-orange-600 text-white font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
-                            onClick={async () => {
-                              try {
-                                if (isSelfQueueItem) {
-                                  alert('Нельзя вызвать себя на возврат ключа.');
-                                  return;
-                                }
-                                await updateQueueItem(item.id, { 
-                                  return_key_alert: true,
-                                  admin_room: user?.room,
-                                  return_requested_at: new Date().toISOString()
-                                });
-                                await setQueueStatus(item.id, QueueStatus.RETURNING_KEY);
-                                await sendTelegramNotification({
-                                  type: "admin_return_key",
-                                  full_name: item.full_name,
-                                  student_id: item.student_id,
+                            <button
+                              className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-orange-600 text-white font-semibold"
+                              onClick={async () => {
+                                try {
+                                  await updateQueueItem(item.id, { 
+                                    return_key_alert: true,
+                                    admin_room: user?.room,
+                                    return_requested_at: new Date().toISOString()
+                                  });
+                                  await setQueueStatus(item.id, QueueStatus.RETURNING_KEY);
+                                  await sendTelegramNotification({
+                                    type: "admin_return_key",
+                                    full_name: item.full_name,
+                                    student_id: item.student_id,
                                   admin_student_id: user?.student_id
                                 });
                               } catch (error) {
-                                console.error('? Error in Вернуть ключ:', error);
+                                console.error('❌ Error in Вернуть ключ:', error);
                               }
                             }}
-                            disabled={isSelfQueueItem}
                           >
                             <BellIcon className="w-4 h-4" /> Вернуть ключ
                           </button>
@@ -826,4 +816,3 @@ export default function QueueList() {
     </div>
   );
 }
-

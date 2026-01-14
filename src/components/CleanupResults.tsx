@@ -13,34 +13,6 @@ import {
   TicketIcon,
 } from "@/components/Icons";
 
-const CLEANUP_TEMPLATES = [
-  {
-    key: "shine",
-    label: "Лучший порядок",
-    text: "Поздравляем квартиру {{apartment}}! На этой неделе у вас самый лучший порядок. Купоны уже начислены.",
-  },
-  {
-    key: "fresh",
-    label: "Свежесть недели",
-    text: "Квартира {{apartment}} сегодня задает стандарт чистоты! Спасибо за отличный результат.",
-  },
-  {
-    key: "team",
-    label: "Командная работа",
-    text: "Супер-работа, квартира {{apartment}}! Купоны ваши, так держать!",
-  },
-  {
-    key: "gold",
-    label: "Золото уборки",
-    text: "Золото недели у квартиры {{apartment}}. Купоны зачислены, продолжайте в том же духе!",
-  },
-  {
-    key: "respect",
-    label: "Респект",
-    text: "Респект квартире {{apartment}} за порядок. Купоны доступны для вашей стирки!",
-  },
-];
-
 const SCORE_CAPTIONS = [
   {
     key: "thanks-team",
@@ -104,13 +76,16 @@ const SCORE_CAPTIONS = [
   },
 ];
 
-const getWeekStartISO = () => {
+const getNextWednesdayISO = () => {
   const now = new Date();
-  const day = now.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  now.setDate(now.getDate() + diff);
-  now.setHours(0, 0, 0, 0);
-  return now.toISOString().slice(0, 10);
+  const currentDay = now.getDay();
+  const targetDay = 3;
+  let diff = targetDay - currentDay;
+  if (diff < 0) diff += 7;
+  const next = new Date(now);
+  next.setDate(now.getDate() + diff);
+  next.setHours(0, 0, 0, 0);
+  return next.toISOString().slice(0, 10);
 };
 
 const formatWeekLabel = (dateStr?: string) => {
@@ -128,9 +103,6 @@ const formatDateTime = (dateStr?: string | null) => {
     minute: "2-digit",
   });
 };
-
-const formatTemplate = (text: string, apartmentCode: string) =>
-  text.replace("{{apartment}}", apartmentCode);
 
 const formatPoints = (value: number) => {
   const abs = Math.abs(value);
@@ -226,12 +198,11 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [transferNames, setTransferNames] = useState<Record<string, string>>({});
   const [recipients, setRecipients] = useState<Student[]>([]);
   const [adminBlock, setAdminBlock] = useState<string | null>(null);
-  const [weekStart, setWeekStart] = useState(getWeekStartISO());
+  const [weekStart, setWeekStart] = useState(getNextWednesdayISO());
   const [selectedBlock, setSelectedBlock] = useState("A");
   const [selectedApartment, setSelectedApartment] = useState<string>("");
   const [announcementText, setAnnouncementText] = useState("");
-  const [announcementMode, setAnnouncementMode] = useState("template");
-  const [templateKey, setTemplateKey] = useState(CLEANUP_TEMPLATES[0]?.key || "");
+  const [announcementMode, setAnnouncementMode] = useState("manual");
   const [publishNotice, setPublishNotice] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [transferCouponId, setTransferCouponId] = useState("");
@@ -267,7 +238,6 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     return apartments.filter((apt) => !apt.block || apt.block === selectedBlock);
   }, [apartments, selectedBlock]);
 
-  const selectedTemplate = CLEANUP_TEMPLATES.find((tpl) => tpl.key === templateKey);
   const selectedScoreCaption =
     SCORE_CAPTIONS.find((caption) => caption.key === scoreCaptionKey)?.label || "";
 
@@ -465,16 +435,6 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   }, [isSuperAdmin]);
 
   useEffect(() => {
-    if (announcementMode !== "template") return;
-    if (selectedTemplate && selectedApartment) {
-      const aptCode = apartmentMap[selectedApartment]?.code || "";
-      const templateText = formatTemplate(selectedTemplate.text, aptCode);
-      setAnnouncementText(templateText);
-      setAnnouncementMode("template");
-    }
-  }, [templateKey, selectedApartment, announcementMode]);
-
-  useEffect(() => {
     if (apartments.length === 0) return;
     setScoreInputs((prev) => {
       const next = { ...prev };
@@ -527,7 +487,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
           apartment_id: selectedApartment,
           announcement_text: announcementText,
           announcement_mode: announcementMode,
-          template_key: templateKey,
+          template_key: null,
         }),
       });
 
@@ -545,14 +505,6 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     } finally {
       setIsPublishing(false);
     }
-  };
-
-  const handleRandomTemplate = () => {
-    if (!selectedApartment) return;
-    const random = CLEANUP_TEMPLATES[Math.floor(Math.random() * CLEANUP_TEMPLATES.length)];
-    setTemplateKey(random.key);
-    setAnnouncementText(formatTemplate(random.text, apartmentMap[selectedApartment]?.code || ""));
-    setAnnouncementMode("template");
   };
 
   const handleRandomScoreCaption = () => {
@@ -587,7 +539,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       "",
       ...scoreLines,
       "",
-      `🏆 Победитель: ${winnerCode} 💪`,
+      `?? Победитель: ${winnerCode} ??`,
     ];
 
     if (selectedScoreCaption) {
@@ -675,7 +627,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         <div className="flex items-center justify-between mb-3">
           <div>
             <h4 className="text-lg font-bold text-gray-900">
-              Неделя с {formatWeekLabel(item.week_start)}
+              Проверка от {formatWeekLabel(item.week_start)}
             </h4>
             <p className="text-xs text-gray-500">
               Опубликовано: {formatDateTime(item.published_at)}
@@ -781,7 +733,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Неделя (понедельник)</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Дата проверки (среда)</label>
                 <input
                   type="date"
                   value={weekStart}
@@ -873,32 +825,8 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 </button>
               </div>
               <p className="text-xs text-gray-500">
-                Победителя выбирайте в поле «Квартира-победитель» выше.
+                Победителя выбирайте в поле "Квартира-победитель" выше.
               </p>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <select
-                value={templateKey}
-                onChange={(e) => {
-                  setTemplateKey(e.target.value);
-                  setAnnouncementMode("template");
-                }}
-                className="rounded-lg border-2 border-gray-200 p-2 text-sm text-gray-900"
-              >
-                {CLEANUP_TEMPLATES.map((tpl) => (
-                  <option key={tpl.key} value={tpl.key}>
-                    {tpl.label}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={handleRandomTemplate}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-              >
-                Случайный текст
-              </button>
             </div>
 
             <div>
@@ -1113,5 +1041,8 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     </div>
   );
 }
+
+
+
 
 
