@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getCaller, supabaseAdmin, getQueueItemOr404, isTargetSuperAdmin } from "../../../_utils/adminAuth";
 
 export async function POST(req: NextRequest) {
@@ -43,6 +43,17 @@ export async function POST(req: NextRequest) {
     }
 
     // ✅ Сохраняем старый статус для проверки machine_state
+    if (
+      caller.student_id &&
+      queueItem.student_id === caller.student_id &&
+      (status === "ready" || status === "returning_key")
+    ) {
+      return NextResponse.json(
+        { error: "Нельзя вызвать себя за ключом или возвратом ключа" },
+        { status: 400 }
+      );
+    }
+
     const oldStatus = queueItem.status;
 
     // ✅ Обновляем статус
@@ -102,3 +113,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+

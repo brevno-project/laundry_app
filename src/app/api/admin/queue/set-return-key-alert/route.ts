@@ -32,6 +32,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (alert && caller.student_id && queueItem.student_id === caller.student_id) {
+      return NextResponse.json(
+        { error: "Нельзя вызвать себя на возврат ключа" },
+        { status: 400 }
+      );
+    }
+
     // ✅ Обновляем алерт
     const { error: updateError } = await supabaseAdmin
       .from("queue")

@@ -298,6 +298,13 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   const claimMyQueueItems = async () => {
     if (!supabase) return;
 
+    const targetItem = queue.find(item => item.id === queueItemId);
+    if (targetItem && user?.student_id && targetItem.student_id === user.student_id) {
+      if (status === QueueStatus.READY || status === QueueStatus.RETURNING_KEY) {
+        throw new Error('Нельзя вызвать себя за ключом или возвратом ключа.');
+      }
+    }
+
     try {
       const { error } = await supabase.rpc('claim_my_queue_items');
 
@@ -2143,6 +2150,13 @@ const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>)
     return;
   }
   
+  if (updates.return_key_alert === true && user?.student_id) {
+    const targetItem = queue.find(item => item.id === queueItemId);
+    if (targetItem && targetItem.student_id === user.student_id) {
+      throw new Error('Нельзя вызвать себя на возврат ключа.');
+    }
+  }
+
   try {
     console.log('updateQueueItem: Updating database...');
     // ✅ Напрямую обновляем БД (для timestamps и других полей)
