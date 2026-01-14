@@ -298,13 +298,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   const claimMyQueueItems = async () => {
     if (!supabase) return;
 
-    const targetItem = queue.find(item => item.id === queueItemId);
-    if (targetItem && user?.student_id && targetItem.student_id === user.student_id) {
-      if (status === QueueStatus.READY || status === QueueStatus.RETURNING_KEY) {
-        throw new Error('Нельзя вызвать себя за ключом или возвратом ключа.');
-      }
-    }
-
     try {
       const { error } = await supabase.rpc('claim_my_queue_items');
 
@@ -1396,6 +1389,13 @@ const joinQueue = async (
     
     if (!isSupabaseConfigured || !supabase) {
       return;
+    }
+
+    const targetItem = queue.find(item => item.id === queueItemId);
+    if (targetItem && user?.student_id && targetItem.student_id === user.student_id) {
+      if (status === QueueStatus.READY || status === QueueStatus.RETURNING_KEY) {
+        throw new Error('Нельзя вызвать себя за ключом или возвратом ключа.');
+      }
     }
 
     try {
