@@ -806,8 +806,8 @@ export default function CleanupResults() {
               {transfers.map((transfer) => (
                 <div key={transfer.id} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
                   <span>
-                    {transferNames[transfer.from_student_id] || "Кто-то"} ->
-                    {" "}
+                    {transferNames[transfer.from_student_id] || "Кто-то"}
+                    {" -> "}
                     {transferNames[transfer.to_student_id] || "Кто-то"}
                   </span>
                   <span className="text-xs text-gray-500">{formatDateTime(transfer.created_at)}</span>

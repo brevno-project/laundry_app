@@ -160,6 +160,11 @@ alter table public.history
   add column if not exists coupons_used integer;
 
 -- RPC helpers
+-- IMPORTANT: changing RETURNS TABLE requires drop + recreate
+drop function if exists public.get_queue_active();
+drop function if exists public.get_queue_public(date);
+drop function if exists public.get_sorted_queue();
+
 create or replace function public.cleanup_coupon_queue_for_today()
 returns void
 language plpgsql
@@ -525,6 +530,10 @@ begin
     q.joined_at asc;
 end;
 $$;
+
+grant execute on function public.get_queue_active() to anon, authenticated;
+grant execute on function public.get_queue_public(date) to anon, authenticated;
+grant execute on function public.get_sorted_queue() to anon, authenticated;
 
 -- RLS
 alter table public.apartments enable row level security;

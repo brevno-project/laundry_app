@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCaller, supabaseAdmin } from "../../_utils/adminAuth";
+import { getCaller, supabaseAdmin } from "../../../_utils/adminAuth";
 
 const DEFAULT_COUPON_TTL_SECONDS = 604800;
 
