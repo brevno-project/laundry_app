@@ -156,6 +156,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   const queueFetchStateRef = useRef({ inFlight: false, lastRunAt: 0 });
   const cleanupStateRef = useRef({
     lastRunDate: null as string | null,
+    lastExpiredRunAt: 0,
     inFlight: false,
     disableUntil: 0,
     lastErrorAt: 0,
@@ -1023,13 +1024,24 @@ const resetStudentRegistration = async (studentId: string) => {
           const shouldCleanup =
             cleanupDisabledUntil <= nowMs &&
             cleanupStateRef.current.lastRunDate !== todayStr;
+          const shouldExpiredCleanup =
+            cleanupDisabledUntil <= nowMs &&
+            nowMs - cleanupStateRef.current.lastExpiredRunAt >= 5 * 60 * 1000;
 
-          if (shouldCleanup) {
+          if (shouldCleanup || shouldExpiredCleanup) {
             cleanupStateRef.current.inFlight = true;
             let cleanupError: any = null;
             try {
-              const result = await supabase.rpc('cleanup_coupon_queue_for_today');
-              cleanupError = result.error;
+              if (shouldCleanup) {
+                const result = await supabase.rpc('cleanup_coupon_queue_for_today');
+                cleanupError = result.error;
+              }
+              if (!cleanupError && shouldExpiredCleanup) {
+                const result = await supabase.rpc('cleanup_expired_coupon_queue', {
+                  p_grace_minutes: 5,
+                });
+                cleanupError = result.error;
+              }
             } catch (err) {
               cleanupError = err;
             } finally {
@@ -1043,7 +1055,12 @@ const resetStudentRegistration = async (studentId: string) => {
               }
               cleanupStateRef.current.disableUntil = nowMs + 10 * 60 * 1000;
             } else {
-              cleanupStateRef.current.lastRunDate = todayStr;
+              if (shouldCleanup) {
+                cleanupStateRef.current.lastRunDate = todayStr;
+              }
+              if (shouldExpiredCleanup) {
+                cleanupStateRef.current.lastExpiredRunAt = nowMs;
+              }
             }
           }
         }

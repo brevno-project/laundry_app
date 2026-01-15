@@ -181,6 +181,8 @@ const mapScheduleError = (message?: string) => {
       return "Некорректный блок";
     case "Not allowed to schedule for this block":
       return "Нельзя менять расписание этого блока";
+    case "Delete failed":
+      return "Не удалось удалить расписание";
     case "Insert failed":
       return "Не удалось сохранить расписание";
     default:
@@ -296,6 +298,8 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [transferCouponId, setTransferCouponId] = useState("");
   const [transferRecipientId, setTransferRecipientId] = useState("");
   const [transferNotice, setTransferNotice] = useState<string | null>(null);
+  const [transferHistoryNotice, setTransferHistoryNotice] = useState<string | null>(null);
+  const [transferClearing, setTransferClearing] = useState(false);
   const [grantStudentId, setGrantStudentId] = useState("");
   const [grantCount, setGrantCount] = useState(1);
   const [grantNote, setGrantNote] = useState("");
@@ -317,6 +321,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     B: null,
   });
   const [scheduleSaving, setScheduleSaving] = useState<Record<Block, boolean>>({
+    A: false,
+    B: false,
+  });
+  const [scheduleClearing, setScheduleClearing] = useState<Record<Block, boolean>>({
     A: false,
     B: false,
   });
@@ -414,7 +422,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     if (!supabase) return;
     const { data } = await supabase
       .from("cleanup_schedules")
-      .select("block, check_date, check_time, reminder_time, set_by, updated_at, reminder_sent_at");
+      .select("block, check_date, check_time, set_by, updated_at, reminder_sent_at");
 
     setSchedules((data as CleanupSchedule[]) || []);
   };
@@ -662,19 +670,14 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
       const result = await response.json();
       if (!response.ok) {
-        setReminderNotice((prev) => ({ ...prev, [block]: mapReminderError(result.error) }));
+        setScheduleNotice((prev) => ({ ...prev, [block]: mapScheduleError(result.error) }));
         return;
       }
 
-      const sentCount = typeof result?.sent === "number" ? result.sent : 0;
-      const sentList = Array.isArray(result?.sent_to) ? result.sent_to : [];
-      const failedList = Array.isArray(result?.failed_to) ? result.failed_to : [];
-      setReminderRecipients((prev) => ({ ...prev, [block]: sentList }));
-      setReminderFailures((prev) => ({ ...prev, [block]: failedList }));
-      setReminderNotice((prev) => ({
-        ...prev,
-        [block]: `Напоминания отправлены: ${sentCount} ✓`,
-      }));
+      setScheduleNotice((prev) => ({ ...prev, [block]: "Сохранено." }));
+      setReminderNotice((prev) => ({ ...prev, [block]: null }));
+      setReminderRecipients((prev) => ({ ...prev, [block]: [] }));
+      setReminderFailures((prev) => ({ ...prev, [block]: [] }));
       await loadSchedules();
     } catch (error: any) {
       setScheduleNotice((prev) => ({ ...prev, [block]: mapScheduleError(error?.message) }));
@@ -741,16 +744,79 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         return;
       }
 
-      const sentCount = typeof result?.sent === "number" ? result.sent : 0;
-      setReminderNotice((prev) => ({
-        ...prev,
-                [block]: `Напоминания отправлены: ${sentCount} ✓`,
-      }));
+      const sentList = Array.isArray(result?.sent_to) ? result.sent_to : [];
+      const failedList = Array.isArray(result?.failed_to) ? result.failed_to : [];
+      setReminderRecipients((prev) => ({ ...prev, [block]: sentList }));
+      setReminderFailures((prev) => ({ ...prev, [block]: failedList }));
+
+      if (sentList.length > 0) {
+        setReminderNotice((prev) => ({
+          ...prev,
+          [block]: `Отправлено: ${sentList.length}`,
+        }));
+      } else if (failedList.length > 0) {
+        setReminderNotice((prev) => ({
+          ...prev,
+          [block]: "Не удалось отправить уведомления.",
+        }));
+      } else {
+        setReminderNotice((prev) => ({
+          ...prev,
+          [block]: "Нет получателей с Telegram.",
+        }));
+      }
+
       await loadSchedules();
     } catch (error: any) {
       setReminderNotice((prev) => ({ ...prev, [block]: mapReminderError(error?.message) }));
     } finally {
       setReminderSending((prev) => ({ ...prev, [block]: false }));
+    }
+  };
+
+  const handleClearSchedule = async (block: Block) => {
+    if (!supabase) return;
+    if (!window.confirm(`Удалить расписание для блока ${block}?`)) return;
+
+    try {
+      setScheduleClearing((prev) => ({ ...prev, [block]: true }));
+      setScheduleNotice((prev) => ({ ...prev, [block]: null }));
+      setReminderNotice((prev) => ({ ...prev, [block]: null }));
+      const { data: session } = await supabase.auth.getSession();
+      const token = session.session?.access_token;
+
+      if (!token) {
+        setScheduleNotice((prev) => ({ ...prev, [block]: "Не удалось получить токен." }));
+        return;
+      }
+
+      const response = await fetch("/api/admin/cleanup/schedule", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ block }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        setScheduleNotice((prev) => ({ ...prev, [block]: mapScheduleError(result.error) }));
+        return;
+      }
+
+      setScheduleNotice((prev) => ({ ...prev, [block]: "Расписание удалено." }));
+      setReminderRecipients((prev) => ({ ...prev, [block]: [] }));
+      setReminderFailures((prev) => ({ ...prev, [block]: [] }));
+      setScheduleDrafts((prev) => ({
+        ...prev,
+        [block]: { date: getNextWednesdayISO(), time: "19:00" },
+      }));
+      await loadSchedules();
+    } catch (error: any) {
+      setScheduleNotice((prev) => ({ ...prev, [block]: mapScheduleError(error?.message) }));
+    } finally {
+      setScheduleClearing((prev) => ({ ...prev, [block]: false }));
     }
   };
 
@@ -855,6 +921,9 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const currentLabel = current
       ? `${formatScheduleLabel(current.check_date)}${current.check_time ? `, ${formatTime(current.check_time)}` : ""}`
       : "не назначено";
+    const statusClass = current
+      ? "border border-amber-200 bg-amber-50 text-amber-800"
+      : "border border-gray-200 bg-gray-100 text-gray-500";
     const lastSentLabel = current?.reminder_sent_at
       ? formatDateTime(current.reminder_sent_at)
       : "не отправлялось";
@@ -863,7 +932,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h4 className="text-sm font-semibold text-gray-900">Блок {block}</h4>
-          <span className="text-xs text-gray-500">
+          <span className={`rounded-lg px-2 py-1 text-xs font-semibold ${statusClass}`}>
             Сейчас: {currentLabel}. Последняя рассылка: {lastSentLabel}
           </span>
         </div>
@@ -913,6 +982,14 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
             >
               {reminderSending[block] ? "Отправка..." : "Разослать напоминание"}
             </button>
+            <button
+              type="button"
+              onClick={() => handleClearSchedule(block)}
+              disabled={!!scheduleClearing[block]}
+              className="w-full rounded-lg border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:border-gray-200 disabled:text-gray-400 md:w-auto"
+            >
+              {scheduleClearing[block] ? "Удаление..." : "Удалить расписание"}
+            </button>
           </div>
         </div>
         {scheduleNotice[block] && (
@@ -958,6 +1035,45 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       await refreshCoupons();
     } catch (error: any) {
       setTransferNotice(mapTransferError(error?.message));
+    }
+  };
+
+  const handleClearTransfers = async () => {
+    if (!supabase) return;
+    if (!window.confirm("Очистить историю передач купонов?")) return;
+
+    try {
+      setTransferClearing(true);
+      setTransferHistoryNotice(null);
+      const { data: session } = await supabase.auth.getSession();
+      const token = session.session?.access_token;
+
+      if (!token) {
+        setTransferHistoryNotice("Не удалось получить токен.");
+        return;
+      }
+
+      const response = await fetch("/api/admin/coupons/transfers/clear", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        setTransferHistoryNotice(result.error || "Ошибка очистки.");
+        return;
+      }
+
+      setTransfers([]);
+      setTransferNames({});
+      setTransferHistoryNotice("История передач очищена.");
+    } catch (error: any) {
+      setTransferHistoryNotice(error?.message || "Ошибка очистки.");
+    } finally {
+      setTransferClearing(false);
     }
   };
 
@@ -1044,9 +1160,13 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const blockResults = resultsByBlock[block];
     const latest = blockResults[0];
     const schedule = schedulesByBlock[block];
-    const scheduleLabel = schedule
-      ? `Следующая проверка: ${formatScheduleLabel(schedule.check_date)}${schedule.check_time ? `, ${formatTime(schedule.check_time)}` : ""}`
+    const scheduleText = schedule
+      ? `${formatScheduleLabel(schedule.check_date)}${schedule.check_time ? `, ${formatTime(schedule.check_time)}` : ""}`
       : "Дата проверки не назначена.";
+    const scheduleClass = schedule
+      ? "border-amber-200 bg-amber-50 text-amber-900"
+      : "border-gray-200 bg-gray-100 text-gray-500";
+    const scheduleIconClass = schedule ? "text-amber-600" : "text-gray-400";
 
     return (
       <div className="space-y-4">
@@ -1059,7 +1179,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               Блок {block}
             </h3>
             <p className="text-xs text-gray-500">Результаты уборки</p>
-            <p className="text-xs text-gray-500">{scheduleLabel}</p>
+            <div className={`mt-2 inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-base font-semibold ${scheduleClass}`}>
+              <CalendarIcon className={`h-4 w-4 ${scheduleIconClass}`} />
+              <span>Проверка: {scheduleText}</span>
+            </div>
           </div>
         </div>
 
@@ -1385,10 +1508,25 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
         {showTransfers && (
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-3">
-            <div className="flex items-center gap-2">
-              <CheckIcon className="w-5 h-5 text-emerald-600" />
-              <h3 className="text-lg font-bold text-gray-900">Передачи купонов</h3>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <CheckIcon className="w-5 h-5 text-emerald-600" />
+                <h3 className="text-lg font-bold text-gray-900">Передачи купонов</h3>
+              </div>
+              {(isAdmin || isSuperAdmin) && (
+                <button
+                  type="button"
+                  onClick={handleClearTransfers}
+                  disabled={transferClearing}
+                  className="rounded-lg border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:border-gray-200 disabled:text-gray-400"
+                >
+                  {transferClearing ? "Очистка..." : "Очистить историю"}
+                </button>
+              )}
             </div>
+            {transferHistoryNotice && (
+              <p className="text-xs text-slate-600">{transferHistoryNotice}</p>
+            )}
             {transfers.length === 0 ? (
               <p className="text-sm text-gray-500">Пока нет передач.</p>
             ) : (

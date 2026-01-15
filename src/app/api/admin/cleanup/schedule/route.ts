@@ -80,3 +80,71 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { caller, error: authError } = await getCaller(req);
+    if (authError) return authError;
+
+    const { block } = await req.json();
+
+    if (!block) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    if (block !== "A" && block !== "B") {
+      return NextResponse.json({ error: "Invalid block" }, { status: 400 });
+    }
+
+    if (!caller.is_super_admin) {
+      const { data: adminStudent } = await supabaseAdmin
+        .from("students")
+        .select("apartment_id")
+        .eq("id", caller.student_id)
+        .maybeSingle();
+
+      if (!adminStudent?.apartment_id) {
+        return NextResponse.json(
+          { error: "Admin apartment not set" },
+          { status: 403 }
+        );
+      }
+
+      const { data: adminApartment } = await supabaseAdmin
+        .from("apartments")
+        .select("block")
+        .eq("id", adminStudent.apartment_id)
+        .maybeSingle();
+
+      if (!adminApartment?.block || adminApartment.block !== block) {
+        return NextResponse.json(
+          { error: "Not allowed to schedule for this block" },
+          { status: 403 }
+        );
+      }
+    }
+
+    const { error: deleteError } = await supabaseAdmin
+      .from("cleanup_schedules")
+      .delete()
+      .eq("block", block);
+
+    if (deleteError) {
+      return NextResponse.json(
+        { error: "Delete failed" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    console.error("Error in cleanup schedule delete:", err);
+    return NextResponse.json(
+      { error: err.message || "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
