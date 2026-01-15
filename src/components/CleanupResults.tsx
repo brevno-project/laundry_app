@@ -284,8 +284,8 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     SCORE_CAPTIONS[0]?.key || ""
   );
   const [scheduleDrafts, setScheduleDrafts] = useState<Record<Block, ScheduleDraft>>(() => ({
-    A: { date: getNextWednesdayISO(), time: "", reminderTime: "10:00" },
-    B: { date: getNextWednesdayISO(), time: "", reminderTime: "10:00" },
+    A: { date: getNextWednesdayISO(), time: "19:00", reminderTime: "10:00" },
+    B: { date: getNextWednesdayISO(), time: "19:00", reminderTime: "10:00" },
   }));
   const [scheduleNotice, setScheduleNotice] = useState<Record<Block, string | null>>({
     A: null,
@@ -436,12 +436,23 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   };
 
   const loadTransfers = async () => {
-    if (!supabase || !user?.student_id) return;
-    const { data } = await supabase
+    if (!supabase) return;
+    let query = supabase
       .from("coupon_transfers")
-      .select("id, coupon_id, from_student_id, to_student_id, performed_by, created_at, note")
-      .or(`from_student_id.eq.${user.student_id},to_student_id.eq.${user.student_id}`)
-      .order("created_at", { ascending: false });
+      .select("id, coupon_id, from_student_id, to_student_id, performed_by, created_at, note");
+
+    if (isAdmin || isSuperAdmin) {
+      query = query.order("created_at", { ascending: false });
+    } else if (user?.student_id) {
+      query = query
+        .or(`from_student_id.eq.${user.student_id},to_student_id.eq.${user.student_id}`)
+        .order("created_at", { ascending: false });
+    } else {
+      setTransfers([]);
+      return;
+    }
+
+    const { data } = await query;
 
     const rows = (data as CouponTransfer[]) || [];
     setTransfers(rows);
@@ -530,9 +541,12 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   useEffect(() => {
     if (!user?.student_id) return;
     loadCoupons();
-    loadTransfers();
     loadRecipients();
   }, [user?.student_id]);
+
+  useEffect(() => {
+    loadTransfers();
+  }, [user?.student_id, isAdmin, isSuperAdmin]);
 
   useEffect(() => {
     if (!isSuperAdmin) return;
@@ -559,7 +573,9 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       schedules.forEach((schedule) => {
         next[schedule.block] = {
           date: schedule.check_date || prev[schedule.block]?.date || getNextWednesdayISO(),
-          time: schedule.check_time ? formatTime(schedule.check_time) : "",
+          time: schedule.check_time
+            ? formatTime(schedule.check_time)
+            : prev[schedule.block]?.time || "19:00",
           reminderTime: schedule.reminder_time
             ? formatTime(schedule.reminder_time)
             : prev[schedule.block]?.reminderTime || "10:00",
@@ -627,9 +643,9 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
   const handleSendReminder = async (block: Block) => {
     if (!supabase) return;
-    const current = schedulesByBlock[block];
-    if (!current?.check_date) {
-      setReminderNotice((prev) => ({ ...prev, [block]: "Сначала сохраните расписание." }));
+    const draft = scheduleDrafts[block];
+    if (!draft?.date) {
+      setReminderNotice((prev) => ({ ...prev, [block]: "Укажите дату проверки." }));
       return;
     }
 
@@ -644,6 +660,29 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         return;
       }
 
+      const scheduleResponse = await fetch("/api/admin/cleanup/schedule", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          block,
+          check_date: draft.date,
+          check_time: draft.time || null,
+          reminder_time: draft.reminderTime || "10:00",
+        }),
+      });
+
+      const scheduleResult = await scheduleResponse.json();
+      if (!scheduleResponse.ok) {
+        setReminderNotice((prev) => ({
+          ...prev,
+          [block]: mapScheduleError(scheduleResult.error),
+        }));
+        return;
+      }
+
       const response = await fetch("/api/admin/cleanup/reminders", {
         method: "POST",
         headers: {
@@ -655,13 +694,14 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(mapReminderError(result.error));
+        setReminderNotice((prev) => ({ ...prev, [block]: mapReminderError(result.error) }));
+        return;
       }
 
       const sentCount = typeof result?.sent === "number" ? result.sent : 0;
       setReminderNotice((prev) => ({
         ...prev,
-        [block]: `Напоминания отправлены: ${sentCount} ✅`,
+                [block]: `Напоминания отправлены: ${sentCount} ✓`,
       }));
       await loadSchedules();
     } catch (error: any) {
@@ -1023,6 +1063,8 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       ? [adminBlock]
       : []) as Block[];
 
+  const showTransfers = !!user && (isAdmin || isSuperAdmin || transfers.length > 0);
+
   return (
     <div className={embedded ? "w-full" : "min-h-screen bg-gray-50"}>
       {!embedded && (
@@ -1308,24 +1350,28 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
           </div>
         )}
 
-        {user && transfers.length > 0 && (
+        {showTransfers && (
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-3">
             <div className="flex items-center gap-2">
               <CheckIcon className="w-5 h-5 text-emerald-600" />
-              <h3 className="text-lg font-bold text-gray-900">История передач</h3>
+              <h3 className="text-lg font-bold text-gray-900">Передачи купонов</h3>
             </div>
-            <div className="space-y-2 text-sm text-gray-700">
-              {transfers.map((transfer) => (
-                <div key={transfer.id} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
-                  <span>
-                    {transferNames[transfer.from_student_id] || "Кто-то"}
-                    {" -> "}
-                    {transferNames[transfer.to_student_id] || "Кто-то"}
-                  </span>
-                  <span className="text-xs text-gray-500">{formatDateTime(transfer.created_at)}</span>
-                </div>
-              ))}
-            </div>
+            {transfers.length === 0 ? (
+              <p className="text-sm text-gray-500">Пока нет передач.</p>
+            ) : (
+              <div className="space-y-2 text-sm text-gray-700">
+                {transfers.map((transfer) => (
+                  <div key={transfer.id} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
+                    <span>
+                      {transferNames[transfer.from_student_id] || "Кто-то"}
+                      {" -> "}
+                      {transferNames[transfer.to_student_id] || "Кто-то"}
+                    </span>
+                    <span className="text-xs text-gray-500">{formatDateTime(transfer.created_at)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
