@@ -6,7 +6,7 @@ import { useLaundry } from "@/contexts/LaundryContext";
 import { Student } from "@/types";
 import { CloseIcon, EditIcon, PeopleIcon, EyeIcon } from "@/components/Icons";
 import ActionMenu from "@/components/ActionMenu";
-import Avatar, { AvatarType } from "@/components/Avatar";
+import Avatar from "@/components/Avatar";
 import AddStudentModal from "@/components/AddStudentModal";
 
 type Notice = { type: "success" | "error"; message: string } | null;
