@@ -152,6 +152,9 @@ const mapPublishError = (message?: string) => {
   if (!message) return "Ошибка публикации";
   if (hasCyrillic(message)) return message;
   switch (message) {
+    case "Invalid token":
+    case "Missing or invalid Authorization header":
+      return "Сессия устарела. Выйдите и войдите снова.";
     case "Missing required fields":
       return "Заполните все обязательные поля";
     case "Invalid block":
@@ -175,6 +178,9 @@ const mapScheduleError = (message?: string) => {
   if (!message) return "Ошибка расписания";
   if (hasCyrillic(message)) return message;
   switch (message) {
+    case "Invalid token":
+    case "Missing or invalid Authorization header":
+      return "Сессия устарела. Выйдите и войдите снова.";
     case "Missing required fields":
       return "Заполните дату проверки";
     case "Invalid block":
@@ -192,6 +198,9 @@ const mapReminderError = (message?: string) => {
   if (!message) return "Ошибка отправки напоминаний";
   if (hasCyrillic(message)) return message;
   switch (message) {
+    case "Invalid token":
+    case "Missing or invalid Authorization header":
+      return "Сессия устарела. Выйдите и войдите снова.";
     case "Missing block":
       return "Не указан блок";
     case "Invalid block":
@@ -206,6 +215,26 @@ const mapReminderError = (message?: string) => {
       return "Внутренняя ошибка сервера";
     default:
       return "Ошибка отправки напоминаний";
+  }
+};
+
+const mapResultsError = (message?: string) => {
+  if (!message) return "Ошибка удаления публикаций";
+  if (hasCyrillic(message)) return message;
+  switch (message) {
+    case "Invalid token":
+    case "Missing or invalid Authorization header":
+      return "Сессия устарела. Выйдите и войдите снова.";
+    case "Missing block":
+      return "Не указан блок";
+    case "Invalid block":
+      return "Некорректный блок";
+    case "Admin apartment not set":
+      return "У администратора не указана квартира";
+    case "Not allowed to clear results for this block":
+      return "Нельзя очищать публикации этого блока";
+    default:
+      return "Ошибка удаления публикаций";
   }
 };
 
@@ -350,6 +379,47 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     A: [],
     B: [],
   });
+
+  const getAuthToken = async (forceRefresh = false) => {
+    if (!supabase) return null;
+    const { data: sessionData } = await supabase.auth.getSession();
+    let session = sessionData.session;
+    const expiresAt = session?.expires_at ? session.expires_at * 1000 : 0;
+    if (!session?.access_token) return null;
+    const shouldRefresh =
+      forceRefresh || !expiresAt || expiresAt - Date.now() < 60 * 1000;
+    if (shouldRefresh) {
+      const { data: refreshed } = await supabase.auth.refreshSession();
+      if (refreshed.session?.access_token) {
+        session = refreshed.session;
+      }
+    }
+    return session?.access_token ?? null;
+  };
+
+  const authedFetch = async (url: string, options: RequestInit = {}) => {
+    const token = await getAuthToken();
+    if (!token) {
+      throw new Error("Не удалось получить токен.");
+    }
+
+    const buildOptions = (authToken: string): RequestInit => {
+      const headers = new Headers(options.headers ?? {});
+      headers.set("Authorization", `Bearer ${authToken}`);
+      return { ...options, headers };
+    };
+
+    let response = await fetch(url, buildOptions(token));
+
+    if (response.status === 401) {
+      const refreshedToken = await getAuthToken(true);
+      if (refreshedToken && refreshedToken !== token) {
+        response = await fetch(url, buildOptions(refreshedToken));
+      }
+    }
+
+    return response;
+  };
 
   const apartmentMap = useMemo(() => {
     const map: Record<string, Apartment> = {};
@@ -649,19 +719,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     try {
       setScheduleSaving((prev) => ({ ...prev, [block]: true }));
       setScheduleNotice((prev) => ({ ...prev, [block]: null }));
-      const { data: session } = await supabase.auth.getSession();
-      const token = session.session?.access_token;
-
-      if (!token) {
-        setScheduleNotice((prev) => ({ ...prev, [block]: "Не удалось получить токен." }));
-        return;
-      }
-
-      const response = await fetch("/api/admin/cleanup/schedule", {
+      const response = await authedFetch("/api/admin/cleanup/schedule", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           block,
@@ -701,19 +762,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       setReminderNotice((prev) => ({ ...prev, [block]: null }));
       setReminderRecipients((prev) => ({ ...prev, [block]: [] }));
       setReminderFailures((prev) => ({ ...prev, [block]: [] }));
-      const { data: session } = await supabase.auth.getSession();
-      const token = session.session?.access_token;
-
-      if (!token) {
-        setReminderNotice((prev) => ({ ...prev, [block]: "Не удалось получить токен." }));
-        return;
-      }
-
-      const scheduleResponse = await fetch("/api/admin/cleanup/schedule", {
+      const scheduleResponse = await authedFetch("/api/admin/cleanup/schedule", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           block,
@@ -731,11 +783,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         return;
       }
 
-      const response = await fetch("/api/admin/cleanup/reminders", {
+      const response = await authedFetch("/api/admin/cleanup/reminders", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ block }),
       });
@@ -783,26 +834,20 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     try {
       setResultsClearing((prev) => ({ ...prev, [block]: true }));
       setResultsNotice((prev) => ({ ...prev, [block]: null }));
-      const { data: session } = await supabase.auth.getSession();
-      const token = session.session?.access_token;
-
-      if (!token) {
-        setResultsNotice((prev) => ({ ...prev, [block]: "Не удалось получить токен." }));
-        return;
-      }
-
-      const response = await fetch("/api/admin/cleanup/results/clear", {
+      const response = await authedFetch("/api/admin/cleanup/results/clear", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ block }),
       });
 
       const result = await response.json();
       if (!response.ok) {
-        setResultsNotice((prev) => ({ ...prev, [block]: result.error || "Ошибка удаления." }));
+        setResultsNotice((prev) => ({
+          ...prev,
+          [block]: mapResultsError(result.error),
+        }));
         return;
       }
 
@@ -812,7 +857,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       }));
       await loadResults();
     } catch (error: any) {
-      setResultsNotice((prev) => ({ ...prev, [block]: error?.message || "Ошибка удаления." }));
+      setResultsNotice((prev) => ({
+        ...prev,
+        [block]: mapResultsError(error?.message),
+      }));
     } finally {
       setResultsClearing((prev) => ({ ...prev, [block]: false }));
     }
@@ -829,19 +877,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     try {
       setIsPublishing(true);
       setPublishNotice(null);
-      const { data: session } = await supabase.auth.getSession();
-      const token = session.session?.access_token;
-
-      if (!token) {
-        setPublishNotice("Не удалось получить токен.");
-        return;
-      }
-
-      const response = await fetch("/api/admin/cleanup/publish", {
+      const response = await authedFetch("/api/admin/cleanup/publish", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           week_start: weekStart,
@@ -1035,19 +1074,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     try {
       setTransferClearing(true);
       setTransferHistoryNotice(null);
-      const { data: session } = await supabase.auth.getSession();
-      const token = session.session?.access_token;
-
-      if (!token) {
-        setTransferHistoryNotice("Не удалось получить токен.");
-        return;
-      }
-
-      const response = await fetch("/api/admin/coupons/transfers/clear", {
+      const response = await authedFetch("/api/admin/coupons/transfers/clear", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -1078,21 +1108,13 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     }
 
     try {
-      const { data: session } = await supabase.auth.getSession();
-      const token = session.session?.access_token;
-      if (!token) {
-        setGrantNotice("Не удалось получить токен.");
-        return;
-      }
-
       const expiresAtPayload =
         grantExpiryMode === "custom" ? new Date(grantExpiresAt).toISOString() : null;
 
-      const response = await fetch("/api/admin/coupons/grant", {
+      const response = await authedFetch("/api/admin/coupons/grant", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           student_id: grantStudentId,
