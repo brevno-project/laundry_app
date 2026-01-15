@@ -21,15 +21,12 @@ const AVATAR_STYLES = [
   { id: 'thumbs', name: 'Thumbs', description: 'Большие пальцы' },
   { id: 'fun-emoji', name: 'Fun Emoji', description: 'Забавные эмодзи' },
   { id: 'glass', name: 'Glass', description: 'Стеклянный стиль' },
-  { id: 'gridy', name: 'Gridy', description: 'Сеточный паттерн' },
   { id: 'identicon', name: 'Identicon', description: 'Геометрические паттерны' },
   { id: 'jdenticon', name: 'Jdenticon', description: 'Красивые геометрические' },
-  { id: 'rings', name: 'Rings', description: 'Концентрические кольца' },
   { id: 'shapes', name: 'Shapes', description: 'Абстрактные фигуры' },
   { id: 'squircles', name: 'Squircles', description: 'Скругленные квадраты' },
   { id: 'initials', name: 'Initials', description: 'Инициалы в кругах' },
   { id: 'bauhaus', name: 'Bauhaus', description: 'Стиль Баухаус' },
-  { id: 'abstract', name: 'Abstract', description: 'Абстрактные узоры' },
 ];
 
 interface AvatarCustomizerProps {
