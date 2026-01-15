@@ -41,7 +41,7 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
 
     setIsSaving(true);
     try {
-      await updateStudent(user.student_id, { avatar_style: selectedStyle });
+      await updateStudent(user.student_id, { avatar_style: selectedStyle } as any);
       setNotice({ type: 'success', message: 'Стиль аватара сохранён!' });
       onSave?.(selectedStyle);
       setTimeout(() => setNotice(null), 3000);
