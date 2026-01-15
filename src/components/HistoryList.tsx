@@ -195,6 +195,7 @@ export default function HistoryList() {
                     <Avatar
                       name={item.full_name}
                       style={item.avatar_style}
+                      seed={item.avatar_seed}
                       className="w-12 h-12 ring-4 ring-white shadow-md"
                     />
                     <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center shadow-md">

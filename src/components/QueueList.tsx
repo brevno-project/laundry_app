@@ -366,7 +366,7 @@ export default function QueueList() {
                   <div key={item.id} className={`${statusDisplay.bg} border-l-4 ${isCurrentUser ? 'border-blue-600' : 'border-gray-300'} rounded-lg p-3 shadow-sm`}>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
-                        <Avatar name={item.full_name} style={item.avatar_style} className="w-12 h-12" />
+                        <Avatar name={item.full_name} style={item.avatar_style} seed={item.avatar_seed} className="w-12 h-12" />
                         <div>
                           <div className="font-bold text-lg text-gray-900">{displayName}</div>
                           {displayRoom && <div className="text-xs text-gray-600">Комната {displayRoom}</div>}

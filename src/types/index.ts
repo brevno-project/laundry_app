@@ -122,6 +122,7 @@ export type HistoryItem = {
   coupons_used?: number;
   payment_type?: string;
   avatar_style?: string;
+  avatar_seed?: string | null;
   // ✅ Таймеры
   ready_at?: string;
   key_issued_at?: string;

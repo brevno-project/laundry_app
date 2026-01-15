@@ -362,6 +362,7 @@ export default function AdminPanel() {
                     <Avatar
                       name={student.full_name}
                       style={student.avatar_style}
+                      seed={student.avatar_seed}
                       className="w-12 h-12 flex-shrink-0"
                     />
 
