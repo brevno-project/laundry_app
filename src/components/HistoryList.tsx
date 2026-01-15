@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
-import Avatar, { AvatarType } from '@/components/Avatar';
+import Avatar from '@/components/Avatar';
 import { HistoryIcon, ClockIcon, CheckIcon, MoneyIcon, TicketIcon, WashingIcon } from './Icons';
 
 type TimerColors = {
@@ -193,7 +193,7 @@ export default function HistoryList() {
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <Avatar
-                      type={(item.avatar_type as AvatarType) || 'default'}
+                      name={item.full_name}
                       className="w-12 h-12 ring-4 ring-white shadow-md"
                     />
                     <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center shadow-md">
