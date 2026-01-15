@@ -4,29 +4,32 @@ import React, { useState, useEffect } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import Avatar from '@/components/Avatar';
 import { CheckIcon, CloseIcon } from '@/components/Icons';
+import { supabase } from '@/lib/supabase';
 
 const AVATAR_STYLES = [
-  { id: 'avataaars', name: 'Avataaars', description: 'Классический с волосами и одеждой. Каждое имя = разный аватар' },
-  { id: 'lorelei', name: 'Lorelei', description: 'Женские аватары. Разнообразные прически и стили' },
-  { id: 'pixel-art', name: 'Pixel Art', description: 'Пиксельный стиль. Ретро-игровой вид' },
-  { id: 'adventurer', name: 'Adventurer', description: 'Приключенческий стиль. Персонажи в стиле фэнтези' },
-  { id: 'big-ears', name: 'Big Ears', description: 'С большими ушами. Милые и забавные' },
-  { id: 'bottts', name: 'Bottts', description: 'Роботы. Механические персонажи' },
-  { id: 'croodles', name: 'Croodles', description: 'Рисованные. Мультяшный стиль' },
-  { id: 'micah', name: 'Micah', description: 'Минималистичные. Простые и чистые' },
-  { id: 'miniavs', name: 'Mini Avatars', description: 'Мини аватары. Маленькие и компактные' },
-  { id: 'notionists', name: 'Notionists', description: 'Абстрактные. Геометрические формы' },
-  { id: 'personas', name: 'Personas', description: 'Персонажи. Разнообразные типажи' },
-  { id: 'thumbs', name: 'Thumbs', description: 'Большие пальцы. Забавный и уникальный стиль' },
+  { id: 'avataaars', name: 'Avataaars', description: 'Классический с волосами и одеждой' },
+  { id: 'lorelei', name: 'Lorelei', description: 'Женские аватары' },
+  { id: 'pixel-art', name: 'Pixel Art', description: 'Пиксельный стиль' },
+  { id: 'adventurer', name: 'Adventurer', description: 'Приключенческий стиль' },
+  { id: 'big-ears', name: 'Big Ears', description: 'С большими ушами' },
+  { id: 'bottts', name: 'Bottts', description: 'Роботы' },
+  { id: 'croodles', name: 'Croodles', description: 'Рисованные' },
+  { id: 'micah', name: 'Micah', description: 'Минималистичные' },
+  { id: 'miniavs', name: 'Mini Avatars', description: 'Мини аватары' },
+  { id: 'notionists', name: 'Notionists', description: 'Абстрактные' },
+  { id: 'personas', name: 'Personas', description: 'Персонажи' },
+  { id: 'thumbs', name: 'Thumbs', description: 'Большие пальцы' },
 ];
 
 interface AvatarCustomizerProps {
-  onSave?: (style: string) => void;
+  onSave?: (style: string, seed: string) => void;
 }
 
 export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
-  const { user, updateStudent } = useLaundry();
+  const { user } = useLaundry();
   const [selectedStyle, setSelectedStyle] = useState<string>(user?.avatar_style || 'avataaars');
+  const [avatarSeed, setAvatarSeed] = useState<string>(user?.avatar_seed || '');
+  const [previewSeed, setPreviewSeed] = useState<string>(user?.avatar_seed || '');
   const [isSaving, setIsSaving] = useState(false);
   const [notice, setNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -34,19 +37,52 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
     if (user?.avatar_style) {
       setSelectedStyle(user.avatar_style);
     }
-  }, [user?.avatar_style]);
+    if (user?.avatar_seed) {
+      setAvatarSeed(user.avatar_seed);
+      setPreviewSeed(user.avatar_seed);
+    }
+  }, [user?.avatar_style, user?.avatar_seed]);
+
+  const generateRandomSeed = () => {
+    const randomSeed = Math.random().toString(36).substring(2, 15);
+    setAvatarSeed(randomSeed);
+    setPreviewSeed(randomSeed);
+  };
 
   const handleSave = async () => {
-    if (!user?.student_id) return;
+    if (!user?.id || !supabase) return;
 
     setIsSaving(true);
     try {
-      await updateStudent(user.student_id, { avatar_style: selectedStyle } as any);
-      setNotice({ type: 'success', message: 'Стиль аватара сохранён!' });
-      onSave?.(selectedStyle);
+      // ✅ Получаем свежий JWT
+      const { data: { session } } = await supabase!.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No authentication token');
+      }
+
+      const response = await fetch('/api/student/update-avatar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          avatar_style: selectedStyle,
+          avatar_seed: avatarSeed || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to save avatar');
+      }
+
+      setNotice({ type: 'success', message: 'Аватар сохранён!' });
+      onSave?.(selectedStyle, avatarSeed);
       setTimeout(() => setNotice(null), 3000);
     } catch (error) {
-      setNotice({ type: 'error', message: 'Ошибка при сохранении стиля' });
+      console.error('Error saving avatar:', error);
+      setNotice({ type: 'error', message: 'Ошибка при сохранении аватара' });
       setTimeout(() => setNotice(null), 3000);
     } finally {
       setIsSaving(false);
@@ -74,59 +110,89 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
         </div>
       )}
 
-      {/* Превью текущего аватара */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg text-center">
-        <p className="text-sm text-gray-600 mb-3">Ваш аватар:</p>
-        <div className="flex justify-center">
+      {/* Превью аватара */}
+      <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg text-center border border-blue-200">
+        <p className="text-sm text-gray-700 font-semibold mb-3">Превью вашего аватара:</p>
+        <div className="flex justify-center mb-3">
           <Avatar
-            name={user?.full_name || 'default'}
+            name={previewSeed || user?.full_name || 'default'}
             style={selectedStyle}
-            className="w-24 h-24"
+            className="w-32 h-32"
           />
+        </div>
+        <p className="text-xs text-gray-600">Стиль: <span className="font-semibold">{AVATAR_STYLES.find(s => s.id === selectedStyle)?.name}</span></p>
+      </div>
+
+      {/* Выбор стиля */}
+      <div className="mb-6">
+        <label className="block text-sm font-semibold text-gray-900 mb-3">Выберите стиль:</label>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          {AVATAR_STYLES.map((style) => (
+            <button
+              key={style.id}
+              onClick={() => setSelectedStyle(style.id)}
+              className={`p-2 rounded-lg border-2 transition-all text-left text-xs ${
+                selectedStyle === style.id
+                  ? 'border-blue-600 bg-blue-50'
+                  : 'border-gray-200 bg-white hover:border-blue-300'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-semibold text-gray-900">{style.name}</span>
+                {selectedStyle === style.id && (
+                  <CheckIcon className="w-3 h-3 text-blue-600" />
+                )}
+              </div>
+              <p className="text-gray-600 text-xs">{style.description}</p>
+              <div className="mt-1 flex justify-center">
+                <Avatar
+                  name={previewSeed || user?.full_name || 'default'}
+                  style={style.id}
+                  className="w-8 h-8"
+                />
+              </div>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Сетка стилей */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-        {AVATAR_STYLES.map((style) => (
+      {/* Выбор аватара в стиле */}
+      <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <label className="block text-sm font-semibold text-gray-900 mb-3">Выберите аватар в этом стиле:</label>
+        <div className="flex gap-2 mb-3">
+          <input
+            type="text"
+            value={avatarSeed}
+            onChange={(e) => {
+              setAvatarSeed(e.target.value);
+              setPreviewSeed(e.target.value);
+            }}
+            placeholder="Введите текст или оставьте пусто для рандома"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
           <button
-            key={style.id}
-            onClick={() => setSelectedStyle(style.id)}
-            className={`p-3 rounded-lg border-2 transition-all text-left ${
-              selectedStyle === style.id
-                ? 'border-blue-600 bg-blue-50'
-                : 'border-gray-200 bg-white hover:border-gray-300'
-            }`}
+            onClick={generateRandomSeed}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-all text-sm"
           >
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold text-sm text-gray-900">{style.name}</span>
-              {selectedStyle === style.id && (
-                <CheckIcon className="w-4 h-4 text-blue-600" />
-              )}
-            </div>
-            <p className="text-xs text-gray-600">{style.description}</p>
-            <div className="mt-2 flex justify-center">
-              <Avatar
-                name={user?.full_name || 'default'}
-                style={style.id}
-                className="w-10 h-10"
-              />
-            </div>
+            🎲 Рандом
           </button>
-        ))}
+        </div>
+        <p className="text-xs text-gray-600">
+          Подсказка: введите любой текст (имя, слово, число) и аватар изменится. Нажмите "Рандом" для случайного выбора.
+        </p>
       </div>
 
       {/* Кнопка сохранения */}
       <button
         onClick={handleSave}
-        disabled={isSaving || selectedStyle === user?.avatar_style}
-        className={`w-full py-2 px-4 rounded-lg font-semibold transition-all ${
-          isSaving || selectedStyle === user?.avatar_style
+        disabled={isSaving || (selectedStyle === user?.avatar_style && avatarSeed === user?.avatar_seed)}
+        className={`w-full py-3 px-4 rounded-lg font-semibold transition-all ${
+          isSaving || (selectedStyle === user?.avatar_style && avatarSeed === user?.avatar_seed)
             ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
             : 'bg-blue-600 text-white hover:bg-blue-700'
         }`}
       >
-        {isSaving ? 'Сохранение...' : 'Сохранить стиль'}
+        {isSaving ? 'Сохранение...' : '✓ Сохранить аватар'}
       </button>
     </div>
   );

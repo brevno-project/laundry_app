@@ -22,6 +22,7 @@ export type Student = {
   key_lost?: boolean; // ключ потерян
   apartment_id?: string | null;
   avatar_style?: string; // DiceBear avatar style (avataaars, lorelei, pixel-art, etc.)
+  avatar_seed?: string | null; // Custom seed for avatar generation
 };
 
 // Тип для списка студентов на экране логина (только базовые поля)
@@ -53,6 +54,7 @@ export type User = {
   can_view_students?: boolean; // Может ли студент видеть список студентов
   apartment_id?: string | null;
   avatar_style?: string; // DiceBear avatar style
+  avatar_seed?: string | null; // Custom seed for avatar generation
 };
 
 export enum QueueStatus {
