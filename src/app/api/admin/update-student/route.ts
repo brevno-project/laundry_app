@@ -65,8 +65,8 @@ export async function POST(req: NextRequest) {
     if (updates.key_lost !== undefined) {
       updateData.key_lost = updates.key_lost;
     }
-    if (updates.avatar_type !== undefined) {
-      updateData.avatar_type = updates.avatar_type;
+    if (updates.avatar_style !== undefined) {
+      updateData.avatar_style = updates.avatar_style;
     }
 
     // ✅ Обновляем студента

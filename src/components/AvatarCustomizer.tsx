@@ -6,18 +6,18 @@ import Avatar from '@/components/Avatar';
 import { CheckIcon, CloseIcon } from '@/components/Icons';
 
 const AVATAR_STYLES = [
-  { id: 'avataaars', name: 'Avataaars', description: 'Классический с волосами и одеждой' },
-  { id: 'lorelei', name: 'Lorelei', description: 'Женские аватары' },
-  { id: 'pixel-art', name: 'Pixel Art', description: 'Пиксельный стиль' },
-  { id: 'adventurer', name: 'Adventurer', description: 'Приключенческий стиль' },
-  { id: 'big-ears', name: 'Big Ears', description: 'С большими ушами' },
-  { id: 'bottts', name: 'Bottts', description: 'Роботы' },
-  { id: 'croodles', name: 'Croodles', description: 'Рисованные' },
-  { id: 'micah', name: 'Micah', description: 'Минималистичные' },
-  { id: 'miniavs', name: 'Mini Avatars', description: 'Мини аватары' },
-  { id: 'notionists', name: 'Notionists', description: 'Абстрактные' },
-  { id: 'personas', name: 'Personas', description: 'Персонажи' },
-  { id: 'thumbs', name: 'Thumbs', description: 'Большие пальцы' },
+  { id: 'avataaars', name: 'Avataaars', description: 'Классический с волосами и одеждой. Каждое имя = разный аватар' },
+  { id: 'lorelei', name: 'Lorelei', description: 'Женские аватары. Разнообразные прически и стили' },
+  { id: 'pixel-art', name: 'Pixel Art', description: 'Пиксельный стиль. Ретро-игровой вид' },
+  { id: 'adventurer', name: 'Adventurer', description: 'Приключенческий стиль. Персонажи в стиле фэнтези' },
+  { id: 'big-ears', name: 'Big Ears', description: 'С большими ушами. Милые и забавные' },
+  { id: 'bottts', name: 'Bottts', description: 'Роботы. Механические персонажи' },
+  { id: 'croodles', name: 'Croodles', description: 'Рисованные. Мультяшный стиль' },
+  { id: 'micah', name: 'Micah', description: 'Минималистичные. Простые и чистые' },
+  { id: 'miniavs', name: 'Mini Avatars', description: 'Мини аватары. Маленькие и компактные' },
+  { id: 'notionists', name: 'Notionists', description: 'Абстрактные. Геометрические формы' },
+  { id: 'personas', name: 'Personas', description: 'Персонажи. Разнообразные типажи' },
+  { id: 'thumbs', name: 'Thumbs', description: 'Большие пальцы. Забавный и уникальный стиль' },
 ];
 
 interface AvatarCustomizerProps {
