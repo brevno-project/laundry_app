@@ -110,17 +110,30 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
         </div>
       )}
 
-      {/* Превью аватара */}
+      {/* Превью аватара + кнопка сохранения */}
       <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg text-center border border-blue-200">
         <p className="text-sm text-gray-700 font-semibold mb-3">Превью вашего аватара:</p>
-        <div className="flex justify-center mb-3">
+        <div className="flex justify-center mb-4">
           <Avatar
             name={previewSeed || user?.full_name || 'default'}
             style={selectedStyle}
             className="w-32 h-32"
           />
         </div>
-        <p className="text-xs text-gray-600">Стиль: <span className="font-semibold">{AVATAR_STYLES.find(s => s.id === selectedStyle)?.name}</span></p>
+        <p className="text-xs text-gray-600 mb-4">Стиль: <span className="font-semibold">{AVATAR_STYLES.find(s => s.id === selectedStyle)?.name}</span></p>
+        
+        {/* Кнопка сохранения */}
+        <button
+          onClick={handleSave}
+          disabled={isSaving || (selectedStyle === user?.avatar_style && avatarSeed === user?.avatar_seed)}
+          className={`w-full py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+            isSaving || (selectedStyle === user?.avatar_style && avatarSeed === user?.avatar_seed)
+              ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          {isSaving ? 'Сохранение...' : '✓ Сохранить'}
+        </button>
       </div>
 
       {/* Выбор стиля */}
@@ -156,44 +169,15 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
         </div>
       </div>
 
-      {/* Выбор аватара в стиле */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <label className="block text-sm font-semibold text-gray-900 mb-3">Выберите аватар в этом стиле:</label>
-        <div className="flex gap-2 mb-3">
-          <input
-            type="text"
-            value={avatarSeed}
-            onChange={(e) => {
-              setAvatarSeed(e.target.value);
-              setPreviewSeed(e.target.value);
-            }}
-            placeholder="Введите текст или оставьте пусто для рандома"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            onClick={generateRandomSeed}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-all text-sm"
-          >
-            🎲 Рандом
-          </button>
-        </div>
-        <p className="text-xs text-gray-600">
-          Подсказка: введите любой текст (имя, слово, число) и аватар изменится. Нажмите "Рандом" для случайного выбора.
-        </p>
+      {/* Кнопка рандома */}
+      <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <button
+          onClick={generateRandomSeed}
+          className="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+        >
+          🎲 Выбрать случайный аватар
+        </button>
       </div>
-
-      {/* Кнопка сохранения */}
-      <button
-        onClick={handleSave}
-        disabled={isSaving || (selectedStyle === user?.avatar_style && avatarSeed === user?.avatar_seed)}
-        className={`w-full py-3 px-4 rounded-lg font-semibold transition-all ${
-          isSaving || (selectedStyle === user?.avatar_style && avatarSeed === user?.avatar_seed)
-            ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-            : 'bg-blue-600 text-white hover:bg-blue-700'
-        }`}
-      >
-        {isSaving ? 'Сохранение...' : '✓ Сохранить аватар'}
-      </button>
     </div>
   );
 }
