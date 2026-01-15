@@ -1989,7 +1989,7 @@ const startWashing = async (queueItemId: string) => {
       middle_name?: string;
       room?: string;
       can_view_students?: boolean;
-      avatar_type?: string;
+      avatar_style?: string;
       key_issued?: boolean;
       key_lost?: boolean;
     }
