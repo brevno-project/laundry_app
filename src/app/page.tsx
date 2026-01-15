@@ -97,11 +97,11 @@ export default function Home() {
       {/* Заголовок */}
       <header className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 shadow-lg sticky top-0 z-10">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white flex items-center justify-center gap-2"><LaundryIcon className="w-7 h-7" />Очередь на стирку</h1>
+          <h1 className="text-2xl font-bold text-white flex items-center justify-center gap-2"><LaundryIcon className="w-7 h-7" /> Очередь на стирку</h1>
           {user && (
             <p className="text-sm text-blue-100 mt-1">
               Вы вошли как: <span className="font-semibold">{user.full_name}</span>
-              {user.room && <span className="ml-2">• Комната {user.room}</span>}
+              {user.room && <span className="ml-2">Комната {user.room}</span>}
             </p>
           )}
         </div>
@@ -110,7 +110,8 @@ export default function Home() {
       {/* Табы */}
       {user && (
         <nav className="bg-white border-b shadow-sm sticky top-14 z-10">
-          <div className="flex gap-1 overflow-x-auto px-2">
+          <div className="mx-auto max-w-5xl">
+            <div className="flex gap-1 overflow-x-auto px-2 md:justify-center md:gap-3 md:overflow-visible md:px-4">
             <button
               onClick={() => handleTabChange('main')}
               className={`flex-none shrink-0 min-w-[96px] py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
@@ -119,8 +120,7 @@ export default function Home() {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              <HomeIcon className="w-5 h-5 inline-block mr-2" />Главная
-            </button>
+              <HomeIcon className="w-5 h-5 inline-block mr-2" />Главная</button>
             <button
               onClick={() => handleTabChange('history')}
               className={`flex-none shrink-0 min-w-[96px] py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
@@ -129,8 +129,7 @@ export default function Home() {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              <HistoryIcon className="w-5 h-5 inline-block mr-2" />История
-            </button>
+              <HistoryIcon className="w-5 h-5 inline-block mr-2" />История</button>
             <button
               onClick={() => handleTabChange('cleanup')}
               className={`flex-none shrink-0 min-w-[96px] py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
@@ -139,8 +138,7 @@ export default function Home() {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              <ListIcon className="w-5 h-5 inline-block mr-2" />Уборка
-            </button>
+              <ListIcon className="w-5 h-5 inline-block mr-2" />Уборка</button>
             {/* Вкладка Студенты доступна админам и пользователям с флагом can_view_students */}
             {canViewStudentsTab && (
               <button
@@ -151,8 +149,7 @@ export default function Home() {
                     : 'border-transparent text-gray-600 hover:text-gray-900'
                 }`}
               >
-                <PeopleIcon className="w-5 h-5 inline-block mr-2" />Студенты
-              </button>
+                <PeopleIcon className="w-5 h-5 inline-block mr-2" />Студенты</button>
             )}
             <button
               onClick={() => handleTabChange('settings')}
@@ -162,8 +159,8 @@ export default function Home() {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              <SettingsIcon className="w-5 h-5 inline-block mr-2" />Настройки
-            </button>
+              <SettingsIcon className="w-5 h-5 inline-block mr-2" />Настройки</button>
+          </div>
           </div>
         </nav>
       )}
