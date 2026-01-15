@@ -394,6 +394,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         can_view_students: me.can_view_students || false,
       };
 
+      console.log('📝 Setting user with avatar:', { avatar_style: newUser.avatar_style, avatar_seed: newUser.avatar_seed });
       setUser(newUser);
       setIsAdmin(!!me.is_admin);
       setIsSuperAdmin(!!me.is_super_admin);
