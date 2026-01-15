@@ -30,7 +30,7 @@ interface AvatarCustomizerProps {
 }
 
 export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
-  const { user, refreshMyRole } = useLaundry();
+  const { user, refreshMyRole, fetchQueue } = useLaundry();
   const [selectedStyle, setSelectedStyle] = useState<string>(user?.avatar_style || 'avataaars');
   const [avatarSeed, setAvatarSeed] = useState<string>(user?.avatar_seed || '');
   const [previewSeed, setPreviewSeed] = useState<string>(user?.avatar_seed || '');
@@ -92,6 +92,13 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
         console.log('✅ User data refreshed');
       }
 
+      // ✅ Перезагружаем очередь чтобы обновить аватар везде
+      console.log('🔄 Refreshing queue...');
+      if (fetchQueue) {
+        await fetchQueue();
+        console.log('✅ Queue refreshed');
+      }
+
       setNotice({ type: 'success', message: 'Аватар сохранён!' });
       onSave?.(selectedStyle, avatarSeed);
       setTimeout(() => setNotice(null), 3000);
@@ -125,16 +132,6 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
         </div>
       )}
 
-      {/* Кнопка рандома сверху */}
-      <div className="mb-6 p-3 bg-indigo-50 rounded-lg border border-indigo-200">
-        <button
-          onClick={generateRandomSeed}
-          className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-all text-sm"
-        >
-          🎲 Выбрать случайный аватар
-        </button>
-      </div>
-
       {/* Превью аватара + кнопка сохранения */}
       <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg text-center border border-blue-200">
         <p className="text-sm text-gray-700 font-semibold mb-3">Превью вашего аватара:</p>
@@ -151,13 +148,21 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
         <button
           onClick={handleSave}
           disabled={isSaving || (selectedStyle === user?.avatar_style && avatarSeed === user?.avatar_seed)}
-          className={`w-full py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+          className={`w-full py-2 px-4 rounded-lg font-semibold transition-all text-sm mb-3 ${
             isSaving || (selectedStyle === user?.avatar_style && avatarSeed === user?.avatar_seed)
               ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
               : 'bg-blue-600 text-white hover:bg-blue-700'
           }`}
         >
           {isSaving ? 'Сохранение...' : '✓ Сохранить'}
+        </button>
+
+        {/* Кнопка рандома под сохранить */}
+        <button
+          onClick={generateRandomSeed}
+          className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-all text-sm"
+        >
+          🎲 Выбрать случайный аватар
         </button>
       </div>
 
