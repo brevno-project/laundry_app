@@ -83,10 +83,18 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
 
       const result = await response.json();
 
+      console.log('✅ Avatar saved successfully:', result);
+
       // ✅ Перезагружаем данные пользователя из БД
+      console.log('🔄 Refreshing user data...');
       if (refreshMyRole) {
         await refreshMyRole();
+        console.log('✅ User data refreshed');
       }
+
+      // ✅ Обновляем локальное состояние
+      setSelectedStyle(selectedStyle);
+      setAvatarSeed(avatarSeed);
 
       setNotice({ type: 'success', message: 'Аватар сохранён!' });
       onSave?.(selectedStyle, avatarSeed);
