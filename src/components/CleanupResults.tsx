@@ -83,6 +83,13 @@ const SCORE_CAPTIONS = [
   },
 ];
 
+const formatLocalDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const getNextWednesdayISO = () => {
   const now = new Date();
   const currentDay = now.getDay();
@@ -92,13 +99,23 @@ const getNextWednesdayISO = () => {
   const next = new Date(now);
   next.setDate(now.getDate() + diff);
   next.setHours(0, 0, 0, 0);
-  return next.toISOString().slice(0, 10);
+  return formatLocalDate(next);
 };
 
 const formatWeekLabel = (dateStr?: string) => {
   if (!dateStr) return "-";
   const date = new Date(`${dateStr}T00:00:00`);
   return date.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
+};
+
+const formatScheduleLabel = (dateStr?: string) => {
+  if (!dateStr) return "-";
+  const date = new Date(`${dateStr}T00:00:00`);
+  return date.toLocaleDateString("ru-RU", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
 };
 
 const formatDateTime = (dateStr?: string | null) => {
@@ -239,7 +256,12 @@ type Block = "A" | "B";
 type ScheduleDraft = {
   date: string;
   time: string;
-  reminderTime: string;
+};
+
+type ReminderRecipient = {
+  id: string;
+  name: string;
+  room?: string | null;
 };
 
 const formatTtlLabel = (seconds: number) => {
@@ -249,6 +271,9 @@ const formatTtlLabel = (seconds: number) => {
   }
   return `${seconds} сек.`;
 };
+
+const formatRecipientLabel = (recipient: ReminderRecipient) =>
+  recipient.room ? `${recipient.name} (${recipient.room})` : recipient.name;
 
 export default function CleanupResults({ embedded = false }: CleanupResultsProps) {
   const { user, isAdmin, isSuperAdmin } = useLaundry();
@@ -284,8 +309,8 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     SCORE_CAPTIONS[0]?.key || ""
   );
   const [scheduleDrafts, setScheduleDrafts] = useState<Record<Block, ScheduleDraft>>(() => ({
-    A: { date: getNextWednesdayISO(), time: "19:00", reminderTime: "10:00" },
-    B: { date: getNextWednesdayISO(), time: "19:00", reminderTime: "10:00" },
+    A: { date: getNextWednesdayISO(), time: "19:00" },
+    B: { date: getNextWednesdayISO(), time: "19:00" },
   }));
   const [scheduleNotice, setScheduleNotice] = useState<Record<Block, string | null>>({
     A: null,
@@ -302,6 +327,18 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [reminderSending, setReminderSending] = useState<Record<Block, boolean>>({
     A: false,
     B: false,
+  });
+  const [reminderRecipients, setReminderRecipients] = useState<
+    Record<Block, ReminderRecipient[]>
+  >({
+    A: [],
+    B: [],
+  });
+  const [reminderFailures, setReminderFailures] = useState<
+    Record<Block, ReminderRecipient[]>
+  >({
+    A: [],
+    B: [],
   });
 
   const apartmentMap = useMemo(() => {
@@ -576,9 +613,6 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
           time: schedule.check_time
             ? formatTime(schedule.check_time)
             : prev[schedule.block]?.time || "19:00",
-          reminderTime: schedule.reminder_time
-            ? formatTime(schedule.reminder_time)
-            : prev[schedule.block]?.reminderTime || "10:00",
         };
       });
       return next;
@@ -623,16 +657,24 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
           block,
           check_date: draft.date,
           check_time: draft.time || null,
-          reminder_time: draft.reminderTime || "10:00",
         }),
       });
 
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(mapScheduleError(result.error));
+        setReminderNotice((prev) => ({ ...prev, [block]: mapReminderError(result.error) }));
+        return;
       }
 
-      setScheduleNotice((prev) => ({ ...prev, [block]: "Расписание обновлено." }));
+      const sentCount = typeof result?.sent === "number" ? result.sent : 0;
+      const sentList = Array.isArray(result?.sent_to) ? result.sent_to : [];
+      const failedList = Array.isArray(result?.failed_to) ? result.failed_to : [];
+      setReminderRecipients((prev) => ({ ...prev, [block]: sentList }));
+      setReminderFailures((prev) => ({ ...prev, [block]: failedList }));
+      setReminderNotice((prev) => ({
+        ...prev,
+        [block]: `Напоминания отправлены: ${sentCount} ✓`,
+      }));
       await loadSchedules();
     } catch (error: any) {
       setScheduleNotice((prev) => ({ ...prev, [block]: mapScheduleError(error?.message) }));
@@ -652,6 +694,8 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     try {
       setReminderSending((prev) => ({ ...prev, [block]: true }));
       setReminderNotice((prev) => ({ ...prev, [block]: null }));
+      setReminderRecipients((prev) => ({ ...prev, [block]: [] }));
+      setReminderFailures((prev) => ({ ...prev, [block]: [] }));
       const { data: session } = await supabase.auth.getSession();
       const token = session.session?.access_token;
 
@@ -670,7 +714,6 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
           block,
           check_date: draft.date,
           check_time: draft.time || null,
-          reminder_time: draft.reminderTime || "10:00",
         }),
       });
 
@@ -810,11 +853,8 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const draft = scheduleDrafts[block];
     const current = schedulesByBlock[block];
     const currentLabel = current
-      ? `${formatWeekLabel(current.check_date)}${current.check_time ? `, ${formatTime(current.check_time)}` : ""}`
+      ? `${formatScheduleLabel(current.check_date)}${current.check_time ? `, ${formatTime(current.check_time)}` : ""}`
       : "не назначено";
-    const currentReminder = current?.reminder_time
-      ? formatTime(current.reminder_time)
-      : "10:00";
     const lastSentLabel = current?.reminder_sent_at
       ? formatDateTime(current.reminder_sent_at)
       : "не отправлялось";
@@ -824,10 +864,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h4 className="text-sm font-semibold text-gray-900">Блок {block}</h4>
           <span className="text-xs text-gray-500">
-            Сейчас: {currentLabel}. Напоминание: {currentReminder}. Последняя рассылка: {lastSentLabel}
+            Сейчас: {currentLabel}. Последняя рассылка: {lastSentLabel}
           </span>
         </div>
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1">Дата проверки</label>
             <input
@@ -856,21 +896,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               className="w-full rounded-lg border-2 border-gray-200 p-2 text-sm text-gray-900"
             />
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Напоминание в</label>
-            <input
-              type="time"
-              value={draft?.reminderTime || ""}
-              onChange={(e) =>
-                setScheduleDrafts((prev) => ({
-                  ...prev,
-                  [block]: { ...prev[block], reminderTime: e.target.value },
-                }))
-              }
-              className="w-full rounded-lg border-2 border-gray-200 p-2 text-sm text-gray-900"
-            />
-          </div>
-          <div className="flex flex-col gap-2 md:col-span-3 md:flex-row md:items-end">
+          <div className="flex flex-col gap-2 md:col-span-2 md:flex-row md:items-end">
             <button
               type="button"
               onClick={() => handleScheduleSave(block)}
@@ -894,6 +920,16 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         )}
         {reminderNotice[block] && (
           <p className="text-xs text-emerald-600">{reminderNotice[block]}</p>
+        )}
+        {reminderRecipients[block].length > 0 && (
+          <p className="text-xs text-emerald-700">
+            Получили: {reminderRecipients[block].map(formatRecipientLabel).join(", ")}
+          </p>
+        )}
+        {reminderFailures[block].length > 0 && (
+          <p className="text-xs text-rose-600">
+            Не доставлено: {reminderFailures[block].map(formatRecipientLabel).join(", ")}
+          </p>
         )}
       </div>
     );
@@ -1008,11 +1044,8 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const blockResults = resultsByBlock[block];
     const latest = blockResults[0];
     const schedule = schedulesByBlock[block];
-    const reminderText = schedule?.reminder_time
-      ? ` • напоминание в ${formatTime(schedule.reminder_time)}`
-      : "";
     const scheduleLabel = schedule
-      ? `Следующая проверка: ${formatWeekLabel(schedule.check_date)}${schedule.check_time ? `, ${formatTime(schedule.check_time)}` : ""}${reminderText}`
+      ? `Следующая проверка: ${formatScheduleLabel(schedule.check_date)}${schedule.check_time ? `, ${formatTime(schedule.check_time)}` : ""}`
       : "Дата проверки не назначена.";
 
     return (
