@@ -30,7 +30,7 @@ interface AvatarCustomizerProps {
 }
 
 export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
-  const { user, refreshMyRole, queue, updateQueueItem } = useLaundry();
+  const { user, refreshMyRole } = useLaundry();
   const [selectedStyle, setSelectedStyle] = useState<string>(user?.avatar_style || 'avataaars');
   const [avatarSeed, setAvatarSeed] = useState<string>(user?.avatar_seed || '');
   const [previewSeed, setPreviewSeed] = useState<string>(user?.avatar_seed || '');
@@ -92,23 +92,6 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
         console.log('✅ User data refreshed');
       }
 
-      // ✅ Обновляем элемент очереди текущего пользователя
-      if (queue && user?.student_id) {
-        const userQueueItem = queue.find(item => item.user_id === user.id);
-        if (userQueueItem && updateQueueItem) {
-          console.log('🔄 Updating queue item with new avatar...');
-          updateQueueItem(userQueueItem.id, {
-            avatar_style: selectedStyle,
-            avatar_seed: avatarSeed || null,
-          });
-          console.log('✅ Queue item updated');
-        }
-      }
-
-      // ✅ Обновляем локальное состояние
-      setSelectedStyle(selectedStyle);
-      setAvatarSeed(avatarSeed);
-
       setNotice({ type: 'success', message: 'Аватар сохранён!' });
       onSave?.(selectedStyle, avatarSeed);
       setTimeout(() => setNotice(null), 3000);
@@ -141,6 +124,16 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
           {notice.message}
         </div>
       )}
+
+      {/* Кнопка рандома сверху */}
+      <div className="mb-6 p-3 bg-indigo-50 rounded-lg border border-indigo-200">
+        <button
+          onClick={generateRandomSeed}
+          className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-all text-sm"
+        >
+          🎲 Выбрать случайный аватар
+        </button>
+      </div>
 
       {/* Превью аватара + кнопка сохранения */}
       <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg text-center border border-blue-200">
@@ -199,16 +192,6 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
             </button>
           ))}
         </div>
-      </div>
-
-      {/* Кнопка рандома */}
-      <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <button
-          onClick={generateRandomSeed}
-          className="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
-        >
-          🎲 Выбрать случайный аватар
-        </button>
       </div>
     </div>
   );
