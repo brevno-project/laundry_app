@@ -30,7 +30,7 @@ interface AvatarCustomizerProps {
 }
 
 export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
-  const { user, refreshMyRole } = useLaundry();
+  const { user, refreshMyRole, queue, updateQueueItem } = useLaundry();
   const [selectedStyle, setSelectedStyle] = useState<string>(user?.avatar_style || 'avataaars');
   const [avatarSeed, setAvatarSeed] = useState<string>(user?.avatar_seed || '');
   const [previewSeed, setPreviewSeed] = useState<string>(user?.avatar_seed || '');
@@ -90,6 +90,19 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
       if (refreshMyRole) {
         await refreshMyRole();
         console.log('✅ User data refreshed');
+      }
+
+      // ✅ Обновляем элемент очереди текущего пользователя
+      if (queue && user?.student_id) {
+        const userQueueItem = queue.find(item => item.user_id === user.id);
+        if (userQueueItem && updateQueueItem) {
+          console.log('🔄 Updating queue item with new avatar...');
+          updateQueueItem(userQueueItem.id, {
+            avatar_style: selectedStyle,
+            avatar_seed: avatarSeed || null,
+          });
+          console.log('✅ Queue item updated');
+        }
       }
 
       // ✅ Обновляем локальное состояние
