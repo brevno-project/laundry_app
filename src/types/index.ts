@@ -86,6 +86,8 @@ export type QueueItem = {
   admin_message?: string;
   return_key_alert?: boolean;
   admin_room?: string | null; // ✅ Комната админа который позвал
+  avatar_style?: string; // DiceBear avatar style
+  avatar_seed?: string | null; // Custom seed for avatar generation
   // ✅ Таймеры для каждого этапа
   ready_at?: string | null; // Когда позвали за ключом
   key_issued_at?: string | null; // Когда выдали ключ
