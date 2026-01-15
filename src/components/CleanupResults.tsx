@@ -181,8 +181,6 @@ const mapScheduleError = (message?: string) => {
       return "Некорректный блок";
     case "Not allowed to schedule for this block":
       return "Нельзя менять расписание этого блока";
-    case "Delete failed":
-      return "Не удалось удалить расписание";
     case "Insert failed":
       return "Не удалось сохранить расписание";
     default:
@@ -324,9 +322,13 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     A: false,
     B: false,
   });
-  const [scheduleClearing, setScheduleClearing] = useState<Record<Block, boolean>>({
+  const [resultsClearing, setResultsClearing] = useState<Record<Block, boolean>>({
     A: false,
     B: false,
+  });
+  const [resultsNotice, setResultsNotice] = useState<Record<Block, string | null>>({
+    A: null,
+    B: null,
   });
   const [reminderNotice, setReminderNotice] = useState<Record<Block, string | null>>({
     A: null,
@@ -774,24 +776,23 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     }
   };
 
-  const handleClearSchedule = async (block: Block) => {
+  const handleClearResults = async (block: Block) => {
     if (!supabase) return;
-    if (!window.confirm(`Удалить расписание для блока ${block}?`)) return;
+    if (!window.confirm(`Удалить все публикации блока ${block}?`)) return;
 
     try {
-      setScheduleClearing((prev) => ({ ...prev, [block]: true }));
-      setScheduleNotice((prev) => ({ ...prev, [block]: null }));
-      setReminderNotice((prev) => ({ ...prev, [block]: null }));
+      setResultsClearing((prev) => ({ ...prev, [block]: true }));
+      setResultsNotice((prev) => ({ ...prev, [block]: null }));
       const { data: session } = await supabase.auth.getSession();
       const token = session.session?.access_token;
 
       if (!token) {
-        setScheduleNotice((prev) => ({ ...prev, [block]: "Не удалось получить токен." }));
+        setResultsNotice((prev) => ({ ...prev, [block]: "Не удалось получить токен." }));
         return;
       }
 
-      const response = await fetch("/api/admin/cleanup/schedule", {
-        method: "DELETE",
+      const response = await fetch("/api/admin/cleanup/results/clear", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -801,22 +802,19 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
       const result = await response.json();
       if (!response.ok) {
-        setScheduleNotice((prev) => ({ ...prev, [block]: mapScheduleError(result.error) }));
+        setResultsNotice((prev) => ({ ...prev, [block]: result.error || "Ошибка удаления." }));
         return;
       }
 
-      setScheduleNotice((prev) => ({ ...prev, [block]: "Расписание удалено." }));
-      setReminderRecipients((prev) => ({ ...prev, [block]: [] }));
-      setReminderFailures((prev) => ({ ...prev, [block]: [] }));
-      setScheduleDrafts((prev) => ({
+      setResultsNotice((prev) => ({
         ...prev,
-        [block]: { date: getNextWednesdayISO(), time: "19:00" },
+        [block]: `Публикации удалены: ${result.deleted || 0}`,
       }));
-      await loadSchedules();
+      await loadResults();
     } catch (error: any) {
-      setScheduleNotice((prev) => ({ ...prev, [block]: mapScheduleError(error?.message) }));
+      setResultsNotice((prev) => ({ ...prev, [block]: error?.message || "Ошибка удаления." }));
     } finally {
-      setScheduleClearing((prev) => ({ ...prev, [block]: false }));
+      setResultsClearing((prev) => ({ ...prev, [block]: false }));
     }
   };
 
@@ -981,14 +979,6 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               className="w-full rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:bg-gray-400 md:w-auto"
             >
               {reminderSending[block] ? "Отправка..." : "Разослать напоминание"}
-            </button>
-            <button
-              type="button"
-              onClick={() => handleClearSchedule(block)}
-              disabled={!!scheduleClearing[block]}
-              className="w-full rounded-lg border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:border-gray-200 disabled:text-gray-400 md:w-auto"
-            >
-              {scheduleClearing[block] ? "Удаление..." : "Удалить расписание"}
             </button>
           </div>
         </div>
@@ -1170,20 +1160,37 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <div className="h-9 w-9 rounded-full bg-slate-900 text-white flex items-center justify-center">
-            <PeopleIcon className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-gray-900">
-              Блок {block}
-            </h3>
-            <p className="text-xs text-gray-500">Результаты уборки</p>
-            <div className={`mt-2 inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-base font-semibold ${scheduleClass}`}>
-              <CalendarIcon className={`h-4 w-4 ${scheduleIconClass}`} />
-              <span>Проверка: {scheduleText}</span>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="h-9 w-9 rounded-full bg-slate-900 text-white flex items-center justify-center">
+              <PeopleIcon className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">
+                Блок {block}
+              </h3>
+              <p className="text-xs text-gray-500">Результаты уборки</p>
+              <div className={`mt-2 inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-base font-semibold ${scheduleClass}`}>
+                <CalendarIcon className={`h-4 w-4 ${scheduleIconClass}`} />
+                <span>Проверка: {scheduleText}</span>
+              </div>
             </div>
           </div>
+          {(isAdmin || isSuperAdmin) && (
+            <div className="flex flex-col items-end gap-2">
+              <button
+                type="button"
+                onClick={() => handleClearResults(block)}
+                disabled={!!resultsClearing[block]}
+                className="rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:border-gray-200 disabled:text-gray-400"
+              >
+                {resultsClearing[block] ? "Удаление..." : "Очистить публикации"}
+              </button>
+              {resultsNotice[block] && (
+                <span className="text-xs text-slate-600">{resultsNotice[block]}</span>
+              )}
+            </div>
+          )}
         </div>
 
         {latest ? (
