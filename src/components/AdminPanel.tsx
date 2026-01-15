@@ -361,6 +361,7 @@ export default function AdminPanel() {
                   <div className="flex items-start gap-3">
                     <Avatar
                       name={student.full_name}
+                      style={student.avatar_style}
                       className="w-12 h-12 flex-shrink-0"
                     />
 

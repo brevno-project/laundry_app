@@ -338,7 +338,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       console.log('🔐 Active session found, fetching user data...');
       const { data: me, error } = await supabase
         .from("students")
-        .select("id, first_name, last_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason")
+        .select("id, first_name, last_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, avatar_style")
         .eq("user_id", uid)
         .maybeSingle();
 
@@ -384,6 +384,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         full_name: me.full_name,
         room: me.room,
         telegram_chat_id: me.telegram_chat_id,
+        avatar_style: me.avatar_style || 'avataaars',
 
         // 🔥 Добавляем эти поля в объект пользователя
         is_admin: me.is_admin || false,
@@ -636,6 +637,7 @@ const finalizeUserSession = (
     full_name: student.full_name,
     room: student.room || undefined,
     telegram_chat_id: student.telegram_chat_id || undefined,
+    avatar_style: student.avatar_style || 'avataaars',
 
     // 🔥 Добавляем эти поля в объект пользователя
     is_admin: isAdminUser,
@@ -783,7 +785,7 @@ const registerStudent = async (
     // 4) Загрузка обновлённого студента (теперь безопасно - сессия есть)
     const { data: updatedStudent } = await supabase
       .from("students")
-      .select("id, first_name, last_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at")
+      .select("id, first_name, last_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, avatar_style")
       .eq("id", studentId)
       .single();
 
@@ -851,7 +853,7 @@ const loginStudent = async (
     // 4) Только ПОСЛЕ логина и установки сессии читаем students по user_id (RLS безопасно)
     const { data: updatedStudent, error: studentError } = await supabase
       .from("students")
-      .select("id, first_name, last_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at")
+      .select("id, first_name, last_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, avatar_style")
       .eq("user_id", authUser.id)
       .maybeSingle();
     

@@ -5,12 +5,14 @@ import Image from 'next/image';
 
 interface AvatarProps {
   name?: string;
+  style?: string;
   className?: string;
 }
 
-export default function Avatar({ name = 'default', className = 'w-12 h-12' }: AvatarProps) {
+export default function Avatar({ name = 'default', style = 'avataaars', className = 'w-12 h-12' }: AvatarProps) {
   const seed = name || 'default';
-  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
+  const avatarStyle = style || 'avataaars';
+  const avatarUrl = `https://api.dicebear.com/7.x/${avatarStyle}/svg?seed=${encodeURIComponent(seed)}`;
   
   return (
     <img
