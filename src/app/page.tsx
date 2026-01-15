@@ -16,7 +16,6 @@ import GlobalAlert from '@/components/GlobalAlert';
 import { HomeIcon, HistoryIcon, PeopleIcon, SettingsIcon, DoorIcon, ListIcon, LaundryIcon } from '@/components/Icons';
 import TelegramBanner from '@/components/TelegramBanner';
 import StudentActions from '@/components/StudentActions';
-import AvatarSelector from '@/components/AvatarSelector';
 import PasswordChanger from '@/components/PasswordChanger';
 
 export default function Home() {
@@ -341,7 +340,6 @@ export default function Home() {
         {/* Настройки */}
         {activeTab === 'settings' && user && (
           <div className="w-full space-y-4 px-3">
-            <AvatarSelector />
             <PasswordChanger />
             {!user.can_view_students && <TelegramSetup />}
             

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useLaundry } from "@/contexts/LaundryContext";
 import { Student } from "@/types";
 import { DoorIcon, CheckIcon, CloseIcon, BackIcon } from "@/components/Icons";
-import Avatar, { AvatarType } from "@/components/Avatar";
+import Avatar from "@/components/Avatar";
 
 export default function StudentAuth() {
   const { students, registerStudent, loginStudent } = useLaundry();
@@ -123,7 +123,7 @@ export default function StudentAuth() {
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <Avatar
-                      type={(student.avatar_type as AvatarType) || "default"}
+                      name={student.full_name}
                       className="w-12 h-12"
                     />
                     <div className="flex-1 min-w-0">
@@ -177,7 +177,7 @@ export default function StudentAuth() {
 
       <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6 flex items-center gap-3">
         <Avatar
-          type={(selectedStudent?.avatar_type as AvatarType) || "default"}
+          name={selectedStudent?.full_name}
           className="w-14 h-14"
         />
         <div>

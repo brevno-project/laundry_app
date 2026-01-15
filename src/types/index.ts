@@ -21,8 +21,6 @@ export type Student = {
   key_issued?: boolean; // ключ выдан
   key_lost?: boolean; // ключ потерян
   apartment_id?: string | null;
-  avatar?: string; // SVG аватар (default, male1, male2, female1, female2, etc.)
-  avatar_type?: string; // Тип аватара
 };
 
 // Тип для списка студентов на экране логина (только базовые поля)
@@ -30,7 +28,6 @@ export type StudentLoginList = {
   id: string;
   full_name: string;
   room: string | null;
-  avatar_type?: string;
   is_registered: boolean;
 };
 
@@ -53,8 +50,6 @@ export type User = {
   telegram_chat_id?: string;
   is_super_admin?: boolean;
   can_view_students?: boolean; // Может ли студент видеть список студентов
-  avatar?: string; // SVG аватар
-  avatar_type?: string; // Тип аватара
   apartment_id?: string | null;
   
 };
@@ -98,7 +93,6 @@ export type QueueItem = {
   scheduled_for_date: string; // '2025-11-02'
   queue_date: string; // '2025-11-03'
   queue_position: number; // 1,2,3...
-  avatar_type?: string; // Тип аватара
 };
 
 export enum MachineStatus {

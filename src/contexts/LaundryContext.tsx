@@ -338,7 +338,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       console.log('🔐 Active session found, fetching user data...');
       const { data: me, error } = await supabase
         .from("students")
-        .select("id, first_name, last_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason")
+        .select("id, first_name, last_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason")
         .eq("user_id", uid)
         .maybeSingle();
 
@@ -384,7 +384,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         full_name: me.full_name,
         room: me.room,
         telegram_chat_id: me.telegram_chat_id,
-        avatar_type: me.avatar_type || 'default',
 
         // 🔥 Добавляем эти поля в объект пользователя
         is_admin: me.is_admin || false,
@@ -434,7 +433,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
           const { data, error } = await client
             .from("students")
             .select(
-              "id, first_name, last_name, middle_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, key_issued, key_lost"
+              "id, first_name, last_name, middle_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, key_issued, key_lost"
             )
             .order("full_name", { ascending: true });
 
@@ -463,8 +462,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
               telegram_chat_id: item.telegram_chat_id || undefined,
               key_issued: !!item.key_issued,
               key_lost: !!item.key_lost,
-              avatar: item.avatar_type || "default",
-              avatar_type: item.avatar_type || "default",
             };
           });
 
@@ -474,7 +471,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
           const { data, error: legacyError } = await client
             .from("students")
             .select(
-              "id, first_name, last_name, middle_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at"
+              "id, first_name, last_name, middle_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at"
             )
             .order("full_name", { ascending: true });
 
@@ -503,8 +500,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
               telegram_chat_id: item.telegram_chat_id || undefined,
               key_issued: false,
               key_lost: false,
-              avatar: item.avatar_type || "default",
-              avatar_type: item.avatar_type || "default",
             };
           });
 
@@ -545,8 +540,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
                 telegram_chat_id: item.telegram_chat_id || undefined,
                 key_issued: !!item.key_issued,
                 key_lost: !!item.key_lost,
-                avatar: item.avatar_type || "default",
-                avatar_type: item.avatar_type || "default",
               };
             });
 
@@ -559,7 +552,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       try {
         const { data, error } = await client
           .from("students_login_list")
-          .select("id, full_name, room, avatar_type, is_registered, is_banned, key_issued, key_lost")
+          .select("id, full_name, room, is_registered, is_banned, key_issued, key_lost")
           .order("full_name", { ascending: true });
 
         if (error) throw error;
@@ -579,7 +572,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
           telegram_chat_id: undefined,
           key_issued: !!item.key_issued,
           key_lost: !!item.key_lost,
-          avatar: item.avatar_type || "default",
         }));
 
         setStudents(students);
@@ -587,7 +579,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         const { data, error: legacyError } = await client
           .from("students_login_list")
-          .select("id, full_name, room, avatar_type, is_registered")
+          .select("id, full_name, room, is_registered")
           .order("full_name", { ascending: true });
 
         if (legacyError) throw legacyError;
@@ -607,7 +599,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
           telegram_chat_id: undefined,
           key_issued: false,
           key_lost: false,
-          avatar: item.avatar_type || "default",
         }));
 
         setStudents(students);
@@ -645,7 +636,6 @@ const finalizeUserSession = (
     full_name: student.full_name,
     room: student.room || undefined,
     telegram_chat_id: student.telegram_chat_id || undefined,
-    avatar_type: student.avatar_type || "default",
 
     // 🔥 Добавляем эти поля в объект пользователя
     is_admin: isAdminUser,
@@ -793,7 +783,7 @@ const registerStudent = async (
     // 4) Загрузка обновлённого студента (теперь безопасно - сессия есть)
     const { data: updatedStudent } = await supabase
       .from("students")
-      .select("id, first_name, last_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at")
+      .select("id, first_name, last_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at")
       .eq("id", studentId)
       .single();
 
@@ -861,7 +851,7 @@ const loginStudent = async (
     // 4) Только ПОСЛЕ логина и установки сессии читаем students по user_id (RLS безопасно)
     const { data: updatedStudent, error: studentError } = await supabase
       .from("students")
-      .select("id, first_name, last_name, full_name, room, avatar_type, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at")
+      .select("id, first_name, last_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at")
       .eq("user_id", authUser.id)
       .maybeSingle();
     
@@ -1134,28 +1124,8 @@ const resetStudentRegistration = async (studentId: string) => {
           historyData = data || [];
         }
         
-        // Получаем уникальные user_id
-        const userIds = [...new Set((historyData || []).map((item: any) => item.user_id))];
-        
-        // Получаем аватары для всех пользователей (по user_id, не по id!)
-        const { data: studentsData, error: studentsError } = await supabase
-          .from('students')
-          .select('user_id, avatar_type')
-          .in('user_id', userIds);
-        
-        // Создаем мапу user_id -> avatar_type
-        const avatarMap = new Map(
-          (studentsData || []).map((student: any) => [student.user_id, student.avatar_type])
-        );
-        
-        // Добавляем avatar_type к каждой записи истории
-        const historyWithAvatars = (historyData || []).map((item: any) => ({
-          ...item,
-          avatar_type: avatarMap.get(item.user_id) || 'default'
-        }));
-        
-        setHistory(historyWithAvatars);
-        save_local_history(historyWithAvatars);
+        setHistory(historyData || []);
+        save_local_history(historyData || []);
       } catch (error: any) {
         // Fall back to local storage
         setHistory(get_local_history());
@@ -1330,7 +1300,6 @@ const joinQueue = async (
       scheduled_for_date: targetDate,
       queue_date: targetDate,
       queue_position: nextPos,
-      avatar_type: user.avatar_type || 'default',
     };
 
     const { error } = await supabase.from('queue').insert(newItem);
@@ -1474,7 +1443,6 @@ const joinQueue = async (
         coupons_used: couponsUsed,
         expected_finish_at: expectedFinishAt,
         scheduled_for_date: targetDate,
-        avatar_type: student.avatar_type,
       }),
     });
   
@@ -2059,7 +2027,6 @@ const startWashing = async (queueItemId: string) => {
           ...user,
           full_name: updatedStudent.full_name,
           room: updatedStudent.room,
-          avatar_type: updatedStudent.avatar_type,
           can_view_students: updatedStudent.can_view_students ?? false,
         };
 

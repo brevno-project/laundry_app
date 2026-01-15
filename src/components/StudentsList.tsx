@@ -14,7 +14,7 @@ import {
   EyeIcon,
   DeleteIcon,
 } from "@/components/Icons";
-import Avatar, { AvatarType } from "@/components/Avatar";
+import Avatar from "@/components/Avatar";
 import AddStudentModal from "@/components/AddStudentModal";
 
 export default function StudentsList() {
@@ -137,7 +137,7 @@ export default function StudentsList() {
           <td className="p-3 text-gray-700">{index + 1}</td>
           <td className="p-3 text-gray-900">
             <div className="flex items-center gap-3">
-              <Avatar type={(student.avatar_type as AvatarType) || "default"} className="w-10 h-10" />
+              <Avatar name={student.full_name} className="w-10 h-10" />
               <div className="flex flex-col">
                 <span>{displayName}</span>
                 {isAdminUser && (
@@ -228,7 +228,7 @@ export default function StudentsList() {
           <td className="p-1 text-gray-900 font-semibold">{index + 1}</td>
           <td className="p-1 text-gray-900">
             <div className="flex items-center gap-2">
-              <Avatar type={(student.avatar_type as AvatarType) || "default"} className="w-8 h-8" />
+              <Avatar name={student.full_name} className="w-8 h-8" />
               <div className="flex flex-col">
                 <span className="text-xs">{displayName}</span>
                 {isAdminUser && (
