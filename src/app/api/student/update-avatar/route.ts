@@ -15,8 +15,8 @@ export async function POST(req: NextRequest) {
 
     const token = authHeader.slice(7);
 
-    // ✅ Создаем Supabase client с JWT
-    const supabase = createClient(
+    // ✅ Создаем Supabase client с JWT для проверки пользователя
+    const supabaseAuth = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     );
 
     // ✅ Получаем текущего пользователя
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
     if (authError || !user) {
       console.error("❌ Auth error:", authError);
       return NextResponse.json(
@@ -52,8 +52,14 @@ export async function POST(req: NextRequest) {
 
     console.log("📝 Updating avatar for user:", user.id, { avatar_style, avatar_seed });
 
+    // ✅ Используем service_role для обновления (обходит RLS)
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     // ✅ Обновляем студента (только свои данные)
-    const { data, error: updateError } = await supabase
+    const { data, error: updateError } = await supabaseAdmin
       .from("students")
       .update({
         avatar_style,
