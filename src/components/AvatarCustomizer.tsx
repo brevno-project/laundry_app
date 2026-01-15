@@ -20,13 +20,10 @@ const AVATAR_STYLES = [
   { id: 'personas', name: 'Personas', description: 'Персонажи' },
   { id: 'thumbs', name: 'Thumbs', description: 'Большие пальцы' },
   { id: 'fun-emoji', name: 'Fun Emoji', description: 'Забавные эмодзи' },
-  { id: 'glass', name: 'Glass', description: 'Стеклянный стиль' },
   { id: 'identicon', name: 'Identicon', description: 'Геометрические паттерны' },
-  { id: 'jdenticon', name: 'Jdenticon', description: 'Красивые геометрические' },
   { id: 'shapes', name: 'Shapes', description: 'Абстрактные фигуры' },
   { id: 'squircles', name: 'Squircles', description: 'Скругленные квадраты' },
   { id: 'initials', name: 'Initials', description: 'Инициалы в кругах' },
-  { id: 'bauhaus', name: 'Bauhaus', description: 'Стиль Баухаус' },
 ];
 
 interface AvatarCustomizerProps {
@@ -34,7 +31,7 @@ interface AvatarCustomizerProps {
 }
 
 export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
-  const { user } = useLaundry();
+  const { user, setUser } = useLaundry();
   const [selectedStyle, setSelectedStyle] = useState<string>(user?.avatar_style || 'avataaars');
   const [avatarSeed, setAvatarSeed] = useState<string>(user?.avatar_seed || '');
   const [previewSeed, setPreviewSeed] = useState<string>(user?.avatar_seed || '');
@@ -83,6 +80,17 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to save avatar');
+      }
+
+      const result = await response.json();
+
+      // ✅ Обновляем пользователя в контексте
+      if (user && setUser) {
+        setUser({
+          ...user,
+          avatar_style: selectedStyle,
+          avatar_seed: avatarSeed || null,
+        });
       }
 
       setNotice({ type: 'success', message: 'Аватар сохранён!' });
