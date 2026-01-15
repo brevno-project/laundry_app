@@ -66,6 +66,7 @@ type LaundryContextType = {
   queue: QueueItem[];
   machineState: MachineState;
   history: HistoryItem[];
+  refreshMyRole: () => Promise<void>;
   transferSelectedToToday: (selectedIds: string[]) => Promise<void>;
   transferSelectedToDate: (selectedIds: string[], targetDateStr: string) => Promise<void>;
   changeQueuePosition: (queueId: string, direction: 'up' | 'down') => Promise<void>;
@@ -2596,6 +2597,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     queue,
     machineState,
     history,
+    refreshMyRole,
     transferSelectedToToday,
     transferSelectedToDate,
     changeQueuePosition,
