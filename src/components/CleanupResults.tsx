@@ -171,6 +171,27 @@ const mapScheduleError = (message?: string) => {
   }
 };
 
+const mapReminderError = (message?: string) => {
+  if (!message) return "Ошибка отправки напоминаний";
+  if (hasCyrillic(message)) return message;
+  switch (message) {
+    case "Missing block":
+      return "Не указан блок";
+    case "Invalid block":
+      return "Некорректный блок";
+    case "Admin apartment not set":
+      return "У администратора не указана квартира";
+    case "Not allowed to send reminders for this block":
+      return "Нельзя отправлять напоминания для этого блока";
+    case "Schedule not found":
+      return "Расписание не найдено";
+    case "Internal server error":
+      return "Внутренняя ошибка сервера";
+    default:
+      return "Ошибка отправки напоминаний";
+  }
+};
+
 const mapTransferError = (message?: string) => {
   if (!message) return "Ошибка передачи";
   if (hasCyrillic(message)) return message;
@@ -271,6 +292,14 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     B: null,
   });
   const [scheduleSaving, setScheduleSaving] = useState<Record<Block, boolean>>({
+    A: false,
+    B: false,
+  });
+  const [reminderNotice, setReminderNotice] = useState<Record<Block, string | null>>({
+    A: null,
+    B: null,
+  });
+  const [reminderSending, setReminderSending] = useState<Record<Block, boolean>>({
     A: false,
     B: false,
   });
@@ -596,6 +625,52 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     }
   };
 
+  const handleSendReminder = async (block: Block) => {
+    if (!supabase) return;
+    const current = schedulesByBlock[block];
+    if (!current?.check_date) {
+      setReminderNotice((prev) => ({ ...prev, [block]: "Сначала сохраните расписание." }));
+      return;
+    }
+
+    try {
+      setReminderSending((prev) => ({ ...prev, [block]: true }));
+      setReminderNotice((prev) => ({ ...prev, [block]: null }));
+      const { data: session } = await supabase.auth.getSession();
+      const token = session.session?.access_token;
+
+      if (!token) {
+        setReminderNotice((prev) => ({ ...prev, [block]: "Не удалось получить токен." }));
+        return;
+      }
+
+      const response = await fetch("/api/admin/cleanup/reminders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ block }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(mapReminderError(result.error));
+      }
+
+      const sentCount = typeof result?.sent === "number" ? result.sent : 0;
+      setReminderNotice((prev) => ({
+        ...prev,
+        [block]: `Напоминания отправлены: ${sentCount} ✅`,
+      }));
+      await loadSchedules();
+    } catch (error: any) {
+      setReminderNotice((prev) => ({ ...prev, [block]: mapReminderError(error?.message) }));
+    } finally {
+      setReminderSending((prev) => ({ ...prev, [block]: false }));
+    }
+  };
+
   const handlePublish = async () => {
     if (!supabase || !announcementText || !selectedApartment || !weekStart) {
       setPublishNotice("Заполните все поля.");
@@ -700,13 +775,16 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const currentReminder = current?.reminder_time
       ? formatTime(current.reminder_time)
       : "10:00";
+    const lastSentLabel = current?.reminder_sent_at
+      ? formatDateTime(current.reminder_sent_at)
+      : "не отправлялось";
 
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h4 className="text-sm font-semibold text-gray-900">Блок {block}</h4>
           <span className="text-xs text-gray-500">
-            Сейчас: {currentLabel}. Напоминание: {currentReminder}
+            Сейчас: {currentLabel}. Напоминание: {currentReminder}. Последняя рассылка: {lastSentLabel}
           </span>
         </div>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
@@ -752,19 +830,30 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               className="w-full rounded-lg border-2 border-gray-200 p-2 text-sm text-gray-900"
             />
           </div>
-          <div className="flex items-end md:col-span-3">
+          <div className="flex flex-col gap-2 md:col-span-3 md:flex-row md:items-end">
             <button
               type="button"
               onClick={() => handleScheduleSave(block)}
               disabled={!!scheduleSaving[block]}
-              className="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:bg-gray-400"
+              className="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:bg-gray-400 md:w-auto"
             >
               {scheduleSaving[block] ? "Сохранение..." : "Сохранить"}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSendReminder(block)}
+              disabled={!!reminderSending[block]}
+              className="w-full rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:bg-gray-400 md:w-auto"
+            >
+              {reminderSending[block] ? "Отправка..." : "Разослать напоминание"}
             </button>
           </div>
         </div>
         {scheduleNotice[block] && (
           <p className="text-xs text-blue-600">{scheduleNotice[block]}</p>
+        )}
+        {reminderNotice[block] && (
+          <p className="text-xs text-emerald-600">{reminderNotice[block]}</p>
         )}
       </div>
     );
