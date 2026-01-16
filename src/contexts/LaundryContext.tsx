@@ -243,6 +243,25 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       .subscribe();
     subs.push(machineStateLiveSub);
 
+    // Students avatar updates - refresh queue when any student's avatar changes
+    const studentsAvatarSub = supabase
+      .channel("students-avatar-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "students",
+        },
+        (payload) => {
+          console.log('🎨 Student avatar update received:', payload.new.id);
+          // Refresh queue to get updated avatars
+          fetchQueue();
+        }
+      )
+      .subscribe();
+    subs.push(studentsAvatarSub);
+
     // --- TELEGRAM REAL-TIME (NEW & CORRECT) ---
     if (user?.student_id) {
       const telegramSub = supabase
