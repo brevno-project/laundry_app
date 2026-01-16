@@ -1423,7 +1423,8 @@ const joinQueue = async (
 
     const targetItem = queue.find(item => item.id === queueItemId);
     if (targetItem && user?.student_id && targetItem.student_id === user.student_id) {
-      if (status === QueueStatus.READY || status === QueueStatus.RETURNING_KEY) {
+      // Супер-админ может вызывать себя за ключом, обычные пользователи - нет
+      if (!isSuperAdmin && (status === QueueStatus.READY || status === QueueStatus.RETURNING_KEY)) {
         throw new Error('Нельзя вызвать себя за ключом или возвратом ключа.');
       }
     }

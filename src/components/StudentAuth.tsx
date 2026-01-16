@@ -7,7 +7,7 @@ import { DoorIcon, CheckIcon, CloseIcon, BackIcon } from "@/components/Icons";
 import Avatar from "@/components/Avatar";
 
 export default function StudentAuth() {
-  const { students, registerStudent, loginStudent } = useLaundry();
+  const { students, registerStudent, loginStudent, loadStudents } = useLaundry();
 
   const [step, setStep] = useState<"select" | "auth">("select");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -25,7 +25,9 @@ export default function StudentAuth() {
       setBanNotice(notice);
       localStorage.removeItem("banNotice");
     }
-  }, []);
+    // Refresh students list to get latest avatar updates
+    loadStudents();
+  }, [loadStudents]);
 
   const banNoticeBanner = banNotice ? (
     <div className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-red-700">

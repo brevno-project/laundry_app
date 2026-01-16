@@ -523,7 +523,7 @@ export default function QueueList() {
                             <EditIcon className="w-4 h-4" /> Действия
                           </button>
                         )}
-                        {isAdmin && !targetIsSuperAdmin && openActionFor === item.id && (
+                        {isAdmin && (targetIsSuperAdmin ? isSuperAdmin : true) && openActionFor === item.id && (
                           <div 
                             ref={(el) => { actionMenuRefs.current[item.id] = el; }}
                             className="mt-3 bg-gray-50 border rounded-lg shadow-inner p-3 space-y-2"
