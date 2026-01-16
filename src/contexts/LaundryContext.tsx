@@ -1183,6 +1183,9 @@ const resetStudentRegistration = async (studentId: string) => {
           .limit(100);
         
         if (!fullError && fullData) {
+          console.log('📜 fetchHistory: raw data (first 3):', fullData?.slice(0, 3).map((h: any) => ({
+            full_name: h.full_name, avatar_style: h.avatar_style, avatar_seed: h.avatar_seed
+          })));
           historyData = fullData;
         } else {
           // Попытка 2: без avatar полей (если колонки еще не созданы)
