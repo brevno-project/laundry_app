@@ -24,7 +24,7 @@ RETURNS TABLE (
   washing_started_at timestamp with time zone,
   washing_finished_at timestamp with time zone,
   return_requested_at timestamp with time zone,
-  status text,
+  status queue_status,
   scheduled_for_date date,
   queue_date date,
   queue_position integer,
@@ -65,7 +65,7 @@ BEGIN
     s.avatar_seed
   FROM queue q
   LEFT JOIN students s ON q.student_id = s.id
-  WHERE q.status = 'active'
+  WHERE q.status != 'done'::queue_status
   ORDER BY q.queue_position ASC;
 END;
 $$ LANGUAGE plpgsql;
