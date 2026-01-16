@@ -1,3 +1,6 @@
+-- Drop existing function if it exists
+DROP FUNCTION IF EXISTS get_queue_active_with_avatars();
+
 -- Create RPC function to get active queue with avatar data from students table
 CREATE OR REPLACE FUNCTION get_queue_active_with_avatars()
 RETURNS TABLE (
