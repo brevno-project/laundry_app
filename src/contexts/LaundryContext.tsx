@@ -476,11 +476,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
           if (error) throw error;
 
-          console.log('📋 loadStudents: raw data from DB (first 3):', data?.slice(0, 3).map((s: any) => ({ 
-            full_name: s.full_name, 
-            avatar_style: s.avatar_style, 
-            avatar_seed: s.avatar_seed 
-          })));
           
           const students: Student[] = (data || []).map((item: any): Student => {
             const fullName =
@@ -511,7 +506,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
           });
 
           setStudents(students);
-          console.log('✅ loadStudents: students set with avatars');
           return;
         } catch (error) {
           const { data, error: legacyError } = await client
@@ -606,9 +600,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
         if (error) throw error;
 
-        console.log('📋 loadStudents (anon): raw data (first 3):', data?.slice(0, 3).map((s: any) => ({ 
-          full_name: s.full_name, avatar_style: s.avatar_style, avatar_seed: s.avatar_seed 
-        })));
 
         const students: Student[] = (data || []).map((item: any): Student => ({
           ...item,
@@ -633,7 +624,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         return;
       } catch (error) {
         // Fallback без avatar полей (если view еще не обновлена)
-        console.log('📋 loadStudents (anon): fallback without avatar fields');
         const { data, error: legacyError } = await client
           .from("students_login_list")
           .select("id, full_name, room, is_registered, is_banned, key_issued, key_lost")
@@ -1183,9 +1173,6 @@ const resetStudentRegistration = async (studentId: string) => {
           .limit(100);
         
         if (!fullError && fullData) {
-          console.log('📜 fetchHistory: raw data (first 3):', fullData?.slice(0, 3).map((h: any) => ({
-            full_name: h.full_name, avatar_style: h.avatar_style, avatar_seed: h.avatar_seed
-          })));
           historyData = fullData;
         } else {
           // Попытка 2: без avatar полей (если колонки еще не созданы)
