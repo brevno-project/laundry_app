@@ -600,12 +600,7 @@ export default function QueueList() {
                                 });
                                 // Потом запускаем стирку (меняет статус)
                                 await startWashing(item.id);
-
-                                await sendTelegramNotification({
-                                  type: 'washing_started',
-                                  full_name: item.full_name,
-                                  student_id: item.student_id,
-                                });
+                                // ✅ Уведомление отправляет студент через "Начал стирать", не дублируем
                               } catch (error) {
                                 console.error('❌ Error in Стирать:', error);
                               }
@@ -650,12 +645,7 @@ export default function QueueList() {
                             onClick={async () => {
                               try {
                                 await markDone(item.id);
-
-                                await sendTelegramNotification({
-                                  type: 'washing_done',
-                                  full_name: item.full_name,
-                                  student_id: item.student_id,
-                                });
+                                // ✅ Уведомление уже отправлено через "Вернуть ключ", не дублируем
                               } catch (error) {
                                 console.error('❌ Error in Завершить:', error);
                               }

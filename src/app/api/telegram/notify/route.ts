@@ -382,7 +382,7 @@ export async function POST(request: NextRequest) {
     const isStudentOnly = studentOnlyNotifications.includes(notification.type);
     
     // ✅ Уведомления, которые идут ТОЛЬКО админу
-    const adminOnlyNotifications = ['washing_started_by_student', 'washing_finished', 'joined'];
+    const adminOnlyNotifications = ['washing_started_by_student', 'washing_finished', 'joined', 'left'];
     const isAdminOnly = adminOnlyNotifications.includes(notification.type);
     
     console.log('🎯 Notification routing:', { isStudentOnly, isAdminOnly });

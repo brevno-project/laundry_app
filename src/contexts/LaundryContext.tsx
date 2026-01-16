@@ -1557,10 +1557,7 @@ const joinQueue = async (
         throw new Error(result.error || 'Ошибка установки алерта');
       }
 
-      if (alert) {
-        // Trigger alert and Telegram notification
-        sendTelegramNotification({ type: 'admin_return_key' });
-      }
+      // ✅ Уведомление отправляется в QueueList.tsx с полными данными, не дублируем
     } catch (error) {
       throw error;
     }
