@@ -598,12 +598,17 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       }
 
       try {
+        // Запрашиваем с avatar полями (после миграции 20250116_add_avatar_to_login_view)
         const { data, error } = await client
           .from("students_login_list")
-          .select("id, full_name, room, is_registered, is_banned, key_issued, key_lost")
+          .select("id, full_name, room, is_registered, is_banned, key_issued, key_lost, avatar_style, avatar_seed")
           .order("full_name", { ascending: true });
 
         if (error) throw error;
+
+        console.log('📋 loadStudents (anon): raw data (first 3):', data?.slice(0, 3).map((s: any) => ({ 
+          full_name: s.full_name, avatar_style: s.avatar_style, avatar_seed: s.avatar_seed 
+        })));
 
         const students: Student[] = (data || []).map((item: any): Student => ({
           ...item,
@@ -620,14 +625,18 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
           telegram_chat_id: undefined,
           key_issued: !!item.key_issued,
           key_lost: !!item.key_lost,
+          avatar_style: item.avatar_style || "avataaars",
+          avatar_seed: item.avatar_seed || "",
         }));
 
         setStudents(students);
         return;
       } catch (error) {
+        // Fallback без avatar полей (если view еще не обновлена)
+        console.log('📋 loadStudents (anon): fallback without avatar fields');
         const { data, error: legacyError } = await client
           .from("students_login_list")
-          .select("id, full_name, room, is_registered")
+          .select("id, full_name, room, is_registered, is_banned, key_issued, key_lost")
           .order("full_name", { ascending: true });
 
         if (legacyError) throw legacyError;
@@ -639,14 +648,16 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
           middle_name: "",
           is_registered: item.is_registered || false,
           created_at: new Date().toISOString(),
-          is_banned: false,
+          is_banned: !!item.is_banned,
           user_id: undefined,
           is_admin: false,
           is_super_admin: false,
           can_view_students: false,
           telegram_chat_id: undefined,
-          key_issued: false,
-          key_lost: false,
+          key_issued: !!item.key_issued,
+          key_lost: !!item.key_lost,
+          avatar_style: "avataaars",
+          avatar_seed: "",
         }));
 
         setStudents(students);
