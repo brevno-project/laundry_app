@@ -1061,21 +1061,9 @@ const resetStudentRegistration = async (studentId: string) => {
           }
         }
 
-        const { data, error } = await supabase
-          .from('queue')
-          .select(`
-            id, user_id, student_id, first_name, last_name, full_name, room,
-            wash_count, coupons_used, payment_type, joined_at, planned_start_at,
-            expected_finish_at, finished_at, note, admin_message, return_key_alert,
-            admin_room, ready_at, key_issued_at, washing_started_at, washing_finished_at,
-            return_requested_at, status, scheduled_for_date, queue_date, queue_position,
-            avatar_style, avatar_seed
-          `)
-          .eq('status', 'active')
-          .order('queue_position', { ascending: true });
-        
+        const { data, error } = await supabase.rpc('get_queue_active_with_avatars');
         if (error) {
-          console.error('fetchQueue error:', error);
+          console.error('get_queue_active_with_avatars error:', error);
           return;
         }
         console.log('✅ Queue loaded with avatars:', data?.length);
