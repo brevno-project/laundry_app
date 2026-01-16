@@ -1146,31 +1146,43 @@ const resetStudentRegistration = async (studentId: string) => {
       }
       
       try {
-        // Получаем историю (с fallback для старой схемы)
+        // Получаем историю - сначала пробуем с avatar_style/avatar_seed
         let historyData: any[] = [];
-        try {
-          const { data, error } = await supabase
+        
+        // Попытка 1: полный запрос с avatar_style и avatar_seed
+        const { data: fullData, error: fullError } = await supabase
+          .from('history')
+          .select('id, user_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, washing_finished_at, return_requested_at, wash_count, coupons_used, payment_type, avatar_style, avatar_seed')
+          .order('finished_at', { ascending: false })
+          .limit(100);
+        
+        if (!fullError && fullData) {
+          historyData = fullData;
+        } else {
+          // Попытка 2: без avatar полей (если колонки еще не созданы)
+          console.log('📝 Fetching history without avatar fields (migration may be pending)');
+          const { data: basicData, error: basicError } = await supabase
             .from('history')
-            .select('id, user_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, washing_finished_at, return_requested_at, wash_count, coupons_used, payment_type, avatar_style, avatar_seed')
+            .select('id, user_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, washing_finished_at, return_requested_at, wash_count, coupons_used, payment_type')
             .order('finished_at', { ascending: false })
             .limit(100);
           
-          if (error) throw error;
-          historyData = data || [];
-        } catch (err) {
-          const { data, error } = await supabase
-            .from('history')
-            .select('id, user_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, return_requested_at, avatar_style, avatar_seed')
-            .order('finished_at', { ascending: false })
-            .limit(100);
-          
-          if (error) throw error;
-          historyData = data || [];
+          if (!basicError && basicData) {
+            // Добавляем дефолтные значения для аватара
+            historyData = basicData.map((item: any) => ({
+              ...item,
+              avatar_style: 'avataaars',
+              avatar_seed: item.full_name || 'default',
+            }));
+          } else {
+            throw basicError || new Error('Failed to fetch history');
+          }
         }
         
         setHistory(historyData || []);
         save_local_history(historyData || []);
       } catch (error: any) {
+        console.error('❌ Error fetching history:', error);
         // Fall back to local storage
         setHistory(get_local_history());
       }

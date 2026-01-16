@@ -43,6 +43,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // ✅ Получаем аватар студента из таблицы students
+    let avatarStyle = 'avataaars';
+    let avatarSeed: string | null = null;
+    
+    if (queueItem.student_id) {
+      const { data: studentData } = await supabaseAdmin
+        .from("students")
+        .select("avatar_style, avatar_seed")
+        .eq("id", queueItem.student_id)
+        .maybeSingle();
+      
+      if (studentData) {
+        avatarStyle = studentData.avatar_style || 'avataaars';
+        avatarSeed = studentData.avatar_seed || null;
+      }
+    }
+
     // ✅ Добавляем в историю
     const now = new Date().toISOString();
     const washingFinishedAt = queueItem.washing_finished_at || now;
@@ -61,6 +78,8 @@ export async function POST(req: NextRequest) {
       wash_count: queueItem.wash_count,
       payment_type: queueItem.payment_type,
       coupons_used: queueItem.coupons_used || 0,
+      avatar_style: avatarStyle,
+      avatar_seed: avatarSeed,
     };
 
     const { error: historyError } = await supabaseAdmin
