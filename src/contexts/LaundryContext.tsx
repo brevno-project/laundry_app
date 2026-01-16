@@ -243,7 +243,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       .subscribe();
     subs.push(machineStateLiveSub);
 
-    // Students avatar updates - refresh queue when any student's avatar changes
+    // Students avatar updates - refresh both queue and students list when any student's avatar changes
     const studentsAvatarSub = supabase
       .channel("students-avatar-updates")
       .on(
@@ -255,6 +255,20 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         },
         (payload) => {
           console.log('🎨 Student avatar update received:', payload.new.id);
+          // Update the student in the students array
+          setStudents((prevStudents) => {
+            if (!prevStudents) return prevStudents;
+            return prevStudents.map((student) => {
+              if (student.id === payload.new.id) {
+                return {
+                  ...student,
+                  avatar_style: payload.new.avatar_style || student.avatar_style,
+                  avatar_seed: payload.new.avatar_seed || student.avatar_seed,
+                };
+              }
+              return student;
+            });
+          });
           // Refresh queue to get updated avatars
           fetchQueue();
         }
@@ -456,7 +470,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
           const { data, error } = await client
             .from("students")
             .select(
-              "id, first_name, last_name, middle_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, key_issued, key_lost"
+              "id, first_name, last_name, middle_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, key_issued, key_lost, avatar_style, avatar_seed"
             )
             .order("full_name", { ascending: true });
 
@@ -485,6 +499,8 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
               telegram_chat_id: item.telegram_chat_id || undefined,
               key_issued: !!item.key_issued,
               key_lost: !!item.key_lost,
+              avatar_style: item.avatar_style || "avataaars",
+              avatar_seed: item.avatar_seed || "",
             };
           });
 
@@ -494,7 +510,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
           const { data, error: legacyError } = await client
             .from("students")
             .select(
-              "id, first_name, last_name, middle_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at"
+              "id, first_name, last_name, middle_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, avatar_style, avatar_seed"
             )
             .order("full_name", { ascending: true });
 
@@ -523,6 +539,8 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
               telegram_chat_id: item.telegram_chat_id || undefined,
               key_issued: false,
               key_lost: false,
+              avatar_style: item.avatar_style || "avataaars",
+              avatar_seed: item.avatar_seed || "",
             };
           });
 
