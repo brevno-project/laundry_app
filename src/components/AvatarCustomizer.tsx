@@ -20,9 +20,6 @@ const AVATAR_STYLES = [
   { id: 'personas', name: 'Personas', description: 'Персонажи' },
   { id: 'thumbs', name: 'Thumbs', description: 'Большие пальцы' },
   { id: 'fun-emoji', name: 'Fun Emoji', description: 'Забавные эмодзи' },
-  { id: 'identicon', name: 'Identicon', description: 'Геометрические паттерны' },
-  { id: 'shapes', name: 'Shapes', description: 'Абстрактные фигуры' },
-  { id: 'initials', name: 'Initials', description: 'Инициалы в кругах' },
 ];
 
 interface AvatarCustomizerProps {
