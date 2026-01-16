@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useLaundry } from "@/contexts/LaundryContext";
 import { Student } from "@/types";
 import { DoorIcon, CheckIcon, CloseIcon, BackIcon } from "@/components/Icons";
@@ -18,6 +18,8 @@ export default function StudentAuth() {
   const [loading, setLoading] = useState(false);
   const [banNotice, setBanNotice] = useState("");
 
+  const hasLoadedRef = useRef(false);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const notice = localStorage.getItem("banNotice");
@@ -25,10 +27,13 @@ export default function StudentAuth() {
       setBanNotice(notice);
       localStorage.removeItem("banNotice");
     }
-    // Refresh students list to get latest avatar updates
-    console.log('🔄 StudentAuth: loading fresh students list...');
-    loadStudents();
-  }, [loadStudents]);
+    // Refresh students list only once on mount
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      console.log('🔄 StudentAuth: loading fresh students list (once)...');
+      loadStudents();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Логируем данные студентов при их изменении
   useEffect(() => {
@@ -39,7 +44,7 @@ export default function StudentAuth() {
         avatar_seed: s.avatar_seed
       })));
     }
-  }, [students]);
+  }, [students.length]); // Only log when count changes
 
   const banNoticeBanner = banNotice ? (
     <div className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-red-700">
