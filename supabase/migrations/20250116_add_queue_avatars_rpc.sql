@@ -64,8 +64,8 @@ BEGIN
     q.scheduled_for_date,
     q.queue_date,
     q.queue_position,
-    s.avatar_style,
-    s.avatar_seed
+    s.avatar_style::text,
+    s.avatar_seed::text
   FROM queue q
   LEFT JOIN students s ON q.student_id = s.id
   WHERE q.status != 'done'::queue_status
