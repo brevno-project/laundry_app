@@ -392,7 +392,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      console.log('✅ User data loaded:', { full_name: me.full_name, is_admin: me.is_admin, is_super_admin: me.is_super_admin });
+      console.log('✅ User data loaded:', { full_name: me.full_name, is_admin: me.is_admin, is_super_admin: me.is_super_admin, avatar_style: me.avatar_style, avatar_seed: me.avatar_seed });
 
       if (me.is_banned) {
         const banReason = me.ban_reason || "Не указана";
@@ -476,6 +476,12 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
           if (error) throw error;
 
+          console.log('📋 loadStudents: raw data from DB (first 3):', data?.slice(0, 3).map((s: any) => ({ 
+            full_name: s.full_name, 
+            avatar_style: s.avatar_style, 
+            avatar_seed: s.avatar_seed 
+          })));
+          
           const students: Student[] = (data || []).map((item: any): Student => {
             const fullName =
               item.full_name ||
@@ -505,6 +511,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
           });
 
           setStudents(students);
+          console.log('✅ loadStudents: students set with avatars');
           return;
         } catch (error) {
           const { data, error: legacyError } = await client
@@ -665,6 +672,13 @@ const finalizeUserSession = (
   student: Student,
   isNew: boolean
 ): User => {
+  console.log('🎯 finalizeUserSession called with student:', { 
+    id: student.id, 
+    full_name: student.full_name, 
+    avatar_style: student.avatar_style, 
+    avatar_seed: student.avatar_seed 
+  });
+  
   const isAdminUser = student.is_admin || false;
   const isSuperAdminUser = student.is_super_admin || false;
   const canViewStudents = student.can_view_students || false;
@@ -697,6 +711,7 @@ const finalizeUserSession = (
     localStorage.setItem("laundryUser", JSON.stringify(newUser));
   }
 
+  console.log('✅ finalizeUserSession completed, newUser avatar:', { avatar_style: newUser.avatar_style, avatar_seed: newUser.avatar_seed });
   return newUser;
 };
 

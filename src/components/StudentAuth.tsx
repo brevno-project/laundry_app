@@ -26,8 +26,20 @@ export default function StudentAuth() {
       localStorage.removeItem("banNotice");
     }
     // Refresh students list to get latest avatar updates
+    console.log('🔄 StudentAuth: loading fresh students list...');
     loadStudents();
   }, [loadStudents]);
+
+  // Логируем данные студентов при их изменении
+  useEffect(() => {
+    if (students.length > 0) {
+      console.log('📋 StudentAuth: students loaded (first 3):', students.slice(0, 3).map(s => ({
+        full_name: s.full_name,
+        avatar_style: s.avatar_style,
+        avatar_seed: s.avatar_seed
+      })));
+    }
+  }, [students]);
 
   const banNoticeBanner = banNotice ? (
     <div className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-red-700">

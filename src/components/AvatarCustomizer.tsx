@@ -27,7 +27,7 @@ interface AvatarCustomizerProps {
 }
 
 export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
-  const { user, refreshMyRole, fetchQueue } = useLaundry();
+  const { user, refreshMyRole, fetchQueue, loadStudents } = useLaundry();
   const [selectedStyle, setSelectedStyle] = useState<string>(user?.avatar_style || 'avataaars');
   const [avatarSeed, setAvatarSeed] = useState<string>(user?.avatar_seed || '');
   const [previewSeed, setPreviewSeed] = useState<string>(user?.avatar_seed || '');
@@ -87,6 +87,13 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
       if (refreshMyRole) {
         await refreshMyRole();
         console.log('✅ User data refreshed');
+      }
+
+      // ✅ Перезагружаем список студентов чтобы обновить аватар при следующем входе
+      console.log('🔄 Refreshing students list...');
+      if (loadStudents) {
+        await loadStudents();
+        console.log('✅ Students list refreshed');
       }
 
       // ✅ Перезагружаем очередь чтобы обновить аватар везде
