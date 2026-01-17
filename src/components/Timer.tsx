@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PauseIcon, TimerIcon, WarningIcon } from '@/components/Icons';
+import { PauseIcon, TimerIcon } from '@/components/Icons';
 
 interface TimerProps {
   startTime: string;
@@ -63,33 +63,33 @@ export default function Timer({ startTime, endTime, label, color = 'blue' }: Tim
     orange: { bg: 'bg-orange-50', text: 'text-orange-900', border: 'border-orange-400' },
   };
 
+  const currentColor = baseColors[color];
+
   // ✅ Модификаторы для временных зон
   let zoneModifier = '';
-  let showWarning = false;
-  let bgOverride = '';
+  let bgColor = currentColor.bg;
+  let textColor = currentColor.text;
+  let borderColor = currentColor.border;
   
   if (timeZone === 'warning' && !endTime) {
     // Желтая зона: легкое мигание
     zoneModifier = 'animate-pulse';
-  } else if (timeZone === 'danger' && !endTime) {
-    // Красная зона: яркое мигание + большая иконка + красный фон
-    zoneModifier = 'animate-pulse';
-    bgOverride = 'bg-red-100';
-    showWarning = true;
-  } else if (timeZone === 'danger' && endTime) {
-    // Красная зона в истории: красный фон + иконка
-    bgOverride = 'bg-red-100';
-    showWarning = true;
+  } else if (timeZone === 'danger') {
+    // Красная зона: полностью красный цвет + сильная пульсация
+    bgColor = 'bg-red-100';
+    textColor = 'text-red-900';
+    borderColor = 'border-red-500';
+    if (!endTime) {
+      // Более сильная пульсация для активных таймеров
+      zoneModifier = 'animate-pulse [animation-duration:1s]';
+    }
   }
 
-  const currentColor = baseColors[color];
-
   return (
-    <div className={`flex items-center justify-between gap-3 px-4 py-2 rounded-lg border-2 shadow-md ${bgOverride || currentColor.bg} ${currentColor.text} ${currentColor.border} ${zoneModifier} ${endTime ? 'opacity-80' : ''} w-full`}>
+    <div className={`flex items-center justify-between gap-3 px-4 py-2 rounded-lg border-2 shadow-md ${bgColor} ${textColor} ${borderColor} ${zoneModifier} ${endTime ? 'opacity-80' : ''} w-full`}>
       <div className="flex items-center gap-2">
         {endTime ? <PauseIcon className="w-4 h-4" /> : <TimerIcon className="w-4 h-4" />}
         <span className="text-xs font-semibold">{label}</span>
-        {showWarning && <WarningIcon className="w-6 h-6 text-red-600 animate-bounce" />}
       </div>
       <span className="text-sm font-mono font-bold">{time}</span>
     </div>
