@@ -26,9 +26,35 @@ export default function Timer({ startTime, endTime, label, color = 'blue' }: Tim
       
       setTime(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
       
-      // Если таймер завершен, переключаем цвет на оранжевый для мигания
-      if (endTime && ms === 0) {
-        setDisplayColor('orange');
+      // ✅ Автоматическое изменение цвета в зависимости от времени
+      if (!endTime) {
+        // Для активных таймеров (без endTime)
+        const minutes = Math.floor(ms / 60000);
+        
+        if (minutes >= 15) {
+          // Красная зона: > 15 мин
+          setDisplayColor('orange');
+        } else if (minutes >= 5) {
+          // Желтая зона: 5-15 мин
+          setDisplayColor('yellow');
+        } else {
+          // Зеленая зона: < 5 мин
+          setDisplayColor('green');
+        }
+      } else {
+        // Для завершенных таймеров (с endTime)
+        const minutes = Math.floor(ms / 60000);
+        
+        if (minutes >= 15) {
+          // Красная зона: > 15 мин
+          setDisplayColor('orange');
+        } else if (minutes >= 5) {
+          // Желтая зона: 5-15 мин
+          setDisplayColor('yellow');
+        } else {
+          // Зеленая зона: < 5 мин
+          setDisplayColor('green');
+        }
       }
     };
 

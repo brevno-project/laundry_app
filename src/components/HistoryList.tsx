@@ -3,21 +3,8 @@
 import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import Avatar from '@/components/Avatar';
+import Timer from './Timer';
 import { HistoryIcon, ClockIcon, CheckIcon, MoneyIcon, TicketIcon, WashingIcon } from './Icons';
-
-type TimerColors = {
-  bg: string;
-  border: string;
-  text: string;
-  icon: string;
-};
-
-const neutralColors: TimerColors = {
-  bg: 'bg-white/80',
-  border: 'border-slate-200',
-  text: 'text-slate-700',
-  icon: 'bg-slate-500',
-};
 
 const formatTime = (dateStr?: string | null) => {
   if (!dateStr) return '-';
@@ -51,16 +38,6 @@ const formatDuration = (start?: string | null, end?: string | null) => {
   const mins = minutes % 60;
   if (hours > 0) return `${hours} ч ${mins} мин`;
   return `${mins} мин`;
-};
-
-const getTimerColor = (minutes: number, normalLimit: number, warningLimit: number): TimerColors => {
-  if (minutes > warningLimit) {
-    return { bg: 'bg-white/80', border: 'border-rose-200', text: 'text-rose-700', icon: 'bg-rose-500' };
-  }
-  if (minutes > normalLimit) {
-    return { bg: 'bg-white/80', border: 'border-amber-200', text: 'text-amber-700', icon: 'bg-amber-500' };
-  }
-  return { bg: 'bg-white/80', border: 'border-emerald-200', text: 'text-emerald-700', icon: 'bg-emerald-500' };
 };
 
 const getCardTone = (totalMinutes: number) => {
@@ -153,13 +130,6 @@ export default function HistoryList() {
           const hasWashTimes = Boolean(washStart && washEnd);
           const washingDuration = hasWashTimes ? formatDuration(washStart, washEnd) : '-';
 
-          const keyIssuedMinutes = item.ready_at && item.key_issued_at
-            ? getDurationMinutes(item.ready_at, item.key_issued_at)
-            : null;
-          const keyReturnMinutes = item.return_requested_at && item.finished_at
-            ? getDurationMinutes(item.return_requested_at, item.finished_at)
-            : null;
-
           const washCount = item.wash_count ?? '-';
           const couponsUsed = item.coupons_used ?? 0;
           const paymentType = item.payment_type ?? null;
@@ -176,13 +146,6 @@ export default function HistoryList() {
             : paymentType === 'money' || paymentType === 'cash'
               ? <MoneyIcon className="w-4 h-4 text-blue-600" />
               : null;
-
-          const keyIssuedColors = keyIssuedMinutes === null
-            ? neutralColors
-            : getTimerColor(keyIssuedMinutes, 3, 10);
-          const keyReturnColors = keyReturnMinutes === null
-            ? neutralColors
-            : getTimerColor(keyReturnMinutes, 5, 15);
 
           return (
             <div
@@ -261,33 +224,37 @@ export default function HistoryList() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div className={`${keyIssuedColors.bg} rounded-xl p-3 border ${keyIssuedColors.border}`}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-8 h-8 ${keyIssuedColors.icon} rounded-lg flex items-center justify-center`}>
-                          <CheckIcon className="w-4 h-4 text-white" />
-                        </div>
-                        <span className={`text-sm font-medium ${keyIssuedColors.text}`}>Ключ был выдан</span>
+                  {item.ready_at && item.key_issued_at ? (
+                    <Timer 
+                      startTime={item.ready_at} 
+                      endTime={item.key_issued_at}
+                      label="Ключ был выдан" 
+                      color="green"
+                    />
+                  ) : (
+                    <div className="bg-white/80 rounded-xl p-3 border border-slate-200">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-600">Ключ был выдан</span>
+                        <span className="text-lg font-bold text-slate-900">-</span>
                       </div>
-                      <span className={`text-lg font-bold ${keyIssuedColors.text}`}>
-                        {keyIssuedMinutes === null ? '-' : formatDuration(item.ready_at, item.key_issued_at)}
-                      </span>
                     </div>
-                  </div>
+                  )}
 
-                  <div className={`${keyReturnColors.bg} rounded-xl p-3 border ${keyReturnColors.border}`}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-8 h-8 ${keyReturnColors.icon} rounded-lg flex items-center justify-center`}>
-                          <CheckIcon className="w-4 h-4 text-white" />
-                        </div>
-                        <span className={`text-sm font-medium ${keyReturnColors.text}`}>Ключ возвращался</span>
+                  {item.return_requested_at && item.finished_at ? (
+                    <Timer 
+                      startTime={item.return_requested_at} 
+                      endTime={item.finished_at}
+                      label="Ключ возвращался" 
+                      color="green"
+                    />
+                  ) : (
+                    <div className="bg-white/80 rounded-xl p-3 border border-slate-200">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-600">Ключ возвращался</span>
+                        <span className="text-lg font-bold text-slate-900">-</span>
                       </div>
-                      <span className={`text-lg font-bold ${keyReturnColors.text}`}>
-                        {keyReturnMinutes === null ? '-' : formatDuration(item.return_requested_at, item.finished_at)}
-                      </span>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="rounded-xl border border-white/60 bg-white/70 p-3">
