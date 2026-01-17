@@ -12,10 +12,10 @@ interface TimerProps {
 
 // ✅ Временные зоны для разных типов таймеров (в минутах)
 const TIME_ZONES = {
-  yellow: { warning: 3, danger: 10 },   // Идет за ключом: 3-10 мин, >10 мин
-  blue: { warning: 5, danger: 15 },     // Ключ выдан: 5-15 мин, >15 мин
-  green: { warning: 45, danger: 90 },   // Стирает: 45-90 мин, >90 мин
-  orange: { warning: 3, danger: 10 },   // Возвращает ключ: 3-10 мин, >10 мин
+  yellow: { warning: 5, danger: 15 },   // Идет за ключом: 5-15 мин, >15 мин
+  blue: { warning: 5, danger: 10 },     // Ключ выдан: 5-10 мин, >10 мин
+  green: { warning: 80, danger: 120 },  // Стирает: 80-120 мин, >120 мин
+  orange: { warning: 5, danger: 10 },   // Возвращает ключ: 5-10 мин, >10 мин
 };
 
 export default function Timer({ startTime, endTime, label, color = 'blue' }: TimerProps) {
