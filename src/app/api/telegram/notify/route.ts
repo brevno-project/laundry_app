@@ -43,9 +43,9 @@ async function getAdminInfo(admin_student_id?: string): Promise<{ full_name: str
     .from('students')
     .select('full_name, room, telegram_chat_id')
     .eq('id', admin_student_id)
-    .single();
+    .maybeSingle();
   
-  if (error) {
+  if (error || !data) {
     return null;
   }
   
@@ -65,7 +65,7 @@ async function getStudentTelegramChatId(student_id?: string): Promise<string | n
     .from('students')
     .select('telegram_chat_id, full_name')
     .eq('id', student_id)
-    .single();
+    .maybeSingle();
   
   console.log('📊 Query result:', { data, error: error?.message });
   
@@ -313,7 +313,7 @@ export async function POST(request: NextRequest) {
       .from('students')
       .select('id, is_admin, is_super_admin, is_banned, full_name')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
     
     if (callerError || !caller || caller.is_banned) {
       console.log('❌ User not found or is banned:', { caller, error: callerError?.message });
@@ -354,7 +354,7 @@ export async function POST(request: NextRequest) {
         .from('queue')
         .select('id, student_id')
         .eq('id', notification.queue_item_id)
-        .single();
+        .maybeSingle();
 
       if (qiError || !queueItem) {
         console.log('❌ Queue item not found:', notification.queue_item_id);

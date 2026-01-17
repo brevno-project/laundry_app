@@ -67,13 +67,21 @@ export async function POST(req: NextRequest) {
       })
       .eq("user_id", user.id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (updateError) {
       console.error("❌ Update error:", updateError);
       return NextResponse.json(
         { error: updateError.message },
         { status: 500 }
+      );
+    }
+
+    if (!data) {
+      console.error("❌ No student found with user_id:", user.id);
+      return NextResponse.json(
+        { error: "Student not found" },
+        { status: 404 }
       );
     }
 
