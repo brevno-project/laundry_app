@@ -1441,7 +1441,7 @@ const joinQueue = async (
       scheduled_for_date: targetDate,
       queue_date: targetDate,
       queue_position: nextPos,
-      // ✅ Копируем аватар из user для синхронизации
+      // ✅ Копируем аватар из user для синхронизации (snapshot при добавлении в очередь)
       avatar_style: user.avatar_style || 'avataaars',
       avatar_seed: user.avatar_seed || null,
     };
