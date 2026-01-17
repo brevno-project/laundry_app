@@ -468,8 +468,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Отправить студенту (если есть telegram_chat_id И это НЕ admin-only уведомление)
-    if (notification.student_id && !isAdminOnly) {
+    // ✅ Отправить студенту (ТОЛЬКО для student-only уведомлений)
+    if (isStudentOnly && notification.student_id) {
       console.log('👤 Attempting to send notification to student:', notification.student_id);
       const studentChatId = await getStudentTelegramChatId(notification.student_id);
       if (studentChatId) {
@@ -479,17 +479,11 @@ export async function POST(request: NextRequest) {
         success = success || studentSuccess;
       } else {
         console.log('⚠️ Student has no telegram_chat_id');
-        // ✅ Для student-only уведомлений возвращаем false если у студента нет Telegram
-        if (isStudentOnly) {
-          console.log('❌ Returning failure for student-only notification');
-          return NextResponse.json({ success: false });
-        }
+        console.log('❌ Returning failure for student-only notification');
+        return NextResponse.json({ success: false });
       }
-    } else {
-      console.log('ℹ️ Skipping student notification:', { 
-        has_student_id: !!notification.student_id, 
-        isAdminOnly 
-      });
+    } else if (isStudentOnly) {
+      console.log('⚠️ Student-only notification but no student_id provided');
     }
 
     console.log('✅ Final notification result:', { success });
