@@ -378,7 +378,7 @@ export async function POST(request: NextRequest) {
     let success = false;
 
     // ✅ Уведомления, которые идут ТОЛЬКО студенту (от конкретного админа)
-    const studentOnlyNotifications = ['admin_call_for_key', 'admin_return_key', 'key_issued', 'return_key_reminder'];
+    const studentOnlyNotifications = ['admin_call_for_key', 'admin_return_key', 'key_issued', 'return_key_reminder', 'washing_started'];
     const isStudentOnly = studentOnlyNotifications.includes(notification.type);
     
     // ✅ Уведомления, которые идут ТОЛЬКО админу (от студента)

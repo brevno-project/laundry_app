@@ -12,7 +12,7 @@ interface TimerProps {
 
 export default function Timer({ startTime, endTime, label, color = 'blue' }: TimerProps) {
   const [time, setTime] = useState('00:00:00');
-  const [displayColor, setDisplayColor] = useState(color);
+  const [isOvertime, setIsOvertime] = useState(false);
 
   useEffect(() => {
     const update = () => {
@@ -26,36 +26,9 @@ export default function Timer({ startTime, endTime, label, color = 'blue' }: Tim
       
       setTime(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
       
-      // ✅ Автоматическое изменение цвета в зависимости от времени
-      if (!endTime) {
-        // Для активных таймеров (без endTime)
-        const minutes = Math.floor(ms / 60000);
-        
-        if (minutes >= 15) {
-          // Красная зона: > 15 мин
-          setDisplayColor('orange');
-        } else if (minutes >= 5) {
-          // Желтая зона: 5-15 мин
-          setDisplayColor('yellow');
-        } else {
-          // Зеленая зона: < 5 мин
-          setDisplayColor('green');
-        }
-      } else {
-        // Для завершенных таймеров (с endTime)
-        const minutes = Math.floor(ms / 60000);
-        
-        if (minutes >= 15) {
-          // Красная зона: > 15 мин
-          setDisplayColor('orange');
-        } else if (minutes >= 5) {
-          // Желтая зона: 5-15 мин
-          setDisplayColor('yellow');
-        } else {
-          // Зеленая зона: < 5 мин
-          setDisplayColor('green');
-        }
-      }
+      // ✅ Проверяем превышение времени (> 15 минут)
+      const minutes = Math.floor(ms / 60000);
+      setIsOvertime(minutes >= 15);
     };
 
     update();
@@ -67,14 +40,17 @@ export default function Timer({ startTime, endTime, label, color = 'blue' }: Tim
   }, [startTime, endTime]);
 
   const colors = {
-    yellow: 'bg-yellow-50 text-yellow-900 border-yellow-400 shadow-yellow-200 animate-pulse',
+    yellow: 'bg-yellow-50 text-yellow-900 border-yellow-400 shadow-yellow-200',
     blue: 'bg-blue-50 text-blue-900 border-blue-400 shadow-blue-200',
     green: 'bg-green-50 text-green-900 border-green-400 shadow-green-200',
-    orange: 'bg-orange-50 text-orange-900 border-orange-400 shadow-orange-200 animate-pulse',
+    orange: 'bg-orange-50 text-orange-900 border-orange-400 shadow-orange-200',
   };
 
+  // ✅ Если превышено время - красная рамка и мигание
+  const overtimeClass = isOvertime ? 'border-red-500 animate-pulse ring-2 ring-red-300' : '';
+
   return (
-    <div className={`flex items-center justify-between gap-3 px-4 py-2 rounded-lg border-2 shadow-md ${colors[displayColor]} ${endTime ? 'opacity-80' : ''} w-full`}>
+    <div className={`flex items-center justify-between gap-3 px-4 py-2 rounded-lg border-2 shadow-md ${colors[color]} ${overtimeClass} ${endTime ? 'opacity-80' : ''} w-full`}>
       <div className="flex items-center gap-2">
         {endTime ? <PauseIcon className="w-4 h-4" /> : <TimerIcon className="w-4 h-4" />}
         <span className="text-xs font-semibold">{label}</span>

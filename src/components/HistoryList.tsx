@@ -224,37 +224,46 @@ export default function HistoryList() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {item.ready_at && item.key_issued_at ? (
+                  {item.ready_at ? (
                     <Timer 
                       startTime={item.ready_at} 
-                      endTime={item.key_issued_at}
-                      label="Ключ был выдан" 
+                      endTime={item.key_issued_at || undefined}
+                      label="Идет за ключом" 
+                      color="yellow"
+                    />
+                  ) : null}
+
+                  {item.key_issued_at ? (
+                    <Timer 
+                      startTime={item.key_issued_at} 
+                      endTime={item.washing_started_at || undefined}
+                      label="Ключ выдан" 
+                      color="blue"
+                    />
+                  ) : null}
+
+                  {item.washing_started_at ? (
+                    <Timer 
+                      startTime={item.washing_started_at} 
+                      endTime={
+                        item.washing_finished_at ||
+                        item.return_requested_at ||
+                        item.finished_at ||
+                        undefined
+                      }
+                      label="Стирает" 
                       color="green"
                     />
-                  ) : (
-                    <div className="bg-white/80 rounded-xl p-3 border border-slate-200">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-600">Ключ был выдан</span>
-                        <span className="text-lg font-bold text-slate-900">-</span>
-                      </div>
-                    </div>
-                  )}
+                  ) : null}
 
-                  {item.return_requested_at && item.finished_at ? (
+                  {item.return_requested_at ? (
                     <Timer 
                       startTime={item.return_requested_at} 
-                      endTime={item.finished_at}
-                      label="Ключ возвращался" 
-                      color="green"
+                      endTime={item.finished_at || undefined}
+                      label="Возвращает ключ" 
+                      color="orange"
                     />
-                  ) : (
-                    <div className="bg-white/80 rounded-xl p-3 border border-slate-200">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-600">Ключ возвращался</span>
-                        <span className="text-lg font-bold text-slate-900">-</span>
-                      </div>
-                    </div>
-                  )}
+                  ) : null}
                 </div>
 
                 <div className="rounded-xl border border-white/60 bg-white/70 p-3">

@@ -600,7 +600,15 @@ export default function QueueList() {
                                 });
                                 // Потом запускаем стирку (меняет статус)
                                 await startWashing(item.id);
-                                // ✅ Уведомление отправляет студент через "Начал стирать", не дублируем
+                                
+                                // ✅ Отправляем уведомление студенту что админ запустил стирку
+                                await sendTelegramNotification({
+                                  type: 'washing_started',
+                                  full_name: item.full_name,
+                                  room: item.room,
+                                  student_id: item.student_id,
+                                  wash_count: item.wash_count,
+                                });
                               } catch (error) {
                                 console.error('❌ Error in Стирать:', error);
                               }
