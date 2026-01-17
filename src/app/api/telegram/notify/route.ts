@@ -17,6 +17,7 @@ type NotificationType =
   | 'key_issued'  // Ключ выдан студенту
   | 'washing_started_by_student'  // Студент нажал "Начал стирать"
   | 'washing_finished'  // Студент нажал "Закончил стирать"
+  | 'washing_finished_student'  // Уведомление студенту о завершении стирки
   | 'return_key_reminder';  // Напоминание вернуть ключ
 
 interface TelegramNotification {
@@ -220,7 +221,7 @@ async function formatMessage(notification: TelegramNotification): Promise<string
 
 🔑 Нажмите "Вернуть ключ" чтобы позвать его`;
     
-    case 'washing_finished_student':
+    case 'washing_finished':
       // Для студента: стирка завершена
       return `✅ *СТИРКА ЗАВЕРШЕНА!*
 
