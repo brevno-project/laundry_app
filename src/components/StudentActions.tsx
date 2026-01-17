@@ -133,7 +133,7 @@ export default function StudentActions() {
         }),
       });
 
-      // Отправляем напоминание студенту
+      // Отправляем уведомление студенту о завершении стирки
       if (response.ok) {
         await fetch("/api/telegram/notify", {
           method: "POST",
@@ -142,7 +142,7 @@ export default function StudentActions() {
             Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            type: "return_key_reminder",
+            type: "washing_finished_student",
             full_name: myQueueItem.full_name,
             room: myQueueItem.room,
             student_id: myQueueItem.student_id,

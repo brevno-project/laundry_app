@@ -149,6 +149,7 @@ export type TelegramNotification = {
     | 'key_found'
     | 'washing_started_by_student'
     | 'washing_finished'
+    | 'washing_finished_student'
     | 'return_key_reminder'
     | 'updated';
 

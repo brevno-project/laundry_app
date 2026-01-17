@@ -160,7 +160,7 @@ async function formatMessage(notification: TelegramNotification): Promise<string
 
 👤 ${full_name}${roomInfo}
 
-🔑 Ключ должен быть возвращен!`;
+✅ Запись перенесена в историю`;
     
     case 'admin_call_for_key':
       if (adminInfo && adminInfo.room) {
@@ -212,12 +212,21 @@ async function formatMessage(notification: TelegramNotification): Promise<string
 ⏱️ Таймер запущен`;
     
     case 'washing_finished':
+      // Для админа: студент закончил стирать
       return `✅ *СТУДЕНТ ЗАКОНЧИЛ СТИРАТЬ!*
 
 👤 ${full_name}${roomInfo}
 ✅ Нажал кнопку "Закончил стирать"
 
 🔑 Нажмите "Вернуть ключ" чтобы позвать его`;
+    
+    case 'washing_finished_student':
+      // Для студента: стирка завершена
+      return `✅ *СТИРКА ЗАВЕРШЕНА!*
+
+🎉 Отлично! Вы закончили стирать
+
+⏳ Ожидайте когда админ позовет вернуть ключ`;
     
     case 'return_key_reminder':
       return `⚠️ *НАПОМИНАНИЕ!*
@@ -378,7 +387,7 @@ export async function POST(request: NextRequest) {
     let success = false;
 
     // ✅ Уведомления, которые идут ТОЛЬКО студенту (от конкретного админа)
-    const studentOnlyNotifications = ['admin_call_for_key', 'admin_return_key', 'key_issued', 'return_key_reminder', 'washing_started'];
+    const studentOnlyNotifications = ['admin_call_for_key', 'admin_return_key', 'key_issued', 'return_key_reminder', 'washing_started', 'washing_finished_student'];
     const isStudentOnly = studentOnlyNotifications.includes(notification.type);
     
     // ✅ Уведомления, которые идут ТОЛЬКО админу (от студента)
