@@ -979,6 +979,9 @@ const loginStudent = async (
         if (error) {
           console.warn('⚠️ SignOut error:', error);
         }
+        
+        // ✅ Дополнительная очистка сессии
+        await supabase.auth.clearSession();
       }
     } catch (error) {
       console.warn('⚠️ SignOut error:', error);
@@ -993,11 +996,30 @@ const loginStudent = async (
       try {
         localStorage.removeItem('laundryUser');
         localStorage.removeItem('laundryIsNewUser');
+        
+        // ✅ Очистка всех Supabase данных
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('supabase.auth.')) {
+            localStorage.removeItem(key);
+          }
+        });
+        
+        // ✅ Очистка sessionStorage
+        Object.keys(sessionStorage).forEach(key => {
+          if (key.startsWith('supabase.auth.')) {
+            sessionStorage.removeItem(key);
+          }
+        });
       } catch (error) {
         console.warn('⚠️ localStorage cleanup error:', error);
       }
       
       console.log('✅ User logged out successfully');
+      
+      // ✅ Пересоздаем Supabase клиент для полной очистки
+      if (typeof window !== 'undefined') {
+        window.location.reload();
+      }
     }
   };
 
