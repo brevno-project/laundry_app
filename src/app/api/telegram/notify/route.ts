@@ -326,7 +326,7 @@ export async function POST(request: NextRequest) {
     const isAdmin = !!caller.is_admin || !!caller.is_super_admin;
     
     // ✅ Типы уведомлений, которые студенты могут отправлять админам
-    const STUDENT_TO_ADMIN_TYPES = ['washing_started_by_student', 'washing_finished_by_student'];
+    const STUDENT_TO_ADMIN_TYPES = ['joined', 'left', 'washing_started_by_student', 'washing_finished_by_student'];
     const isStudentToAdmin = STUDENT_TO_ADMIN_TYPES.includes(notification.type);
 
     // ✅ Админ может отправлять любые уведомления

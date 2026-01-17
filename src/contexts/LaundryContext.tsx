@@ -335,8 +335,12 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
   // Save user to localStorage when changed (только для UI, не права)
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('laundryUser', JSON.stringify(user));
+    if (user && typeof window !== "undefined" && window.localStorage) {
+      try {
+        localStorage.setItem('laundryUser', JSON.stringify(user));
+      } catch (error) {
+        console.warn('⚠️ Failed to save user to localStorage:', error);
+      }
     }
   }, [user]);
   
@@ -1157,7 +1161,7 @@ const resetStudentRegistration = async (studentId: string) => {
         const { data, error } = await supabase
           .from('machine_state')
           .select('*')
-          .single();
+          .maybeSingle();
         if (error) throw error;
         setMachineState(data);
         save_local_machine_state(data || { status: MachineStatus.IDLE });
