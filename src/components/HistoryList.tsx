@@ -224,46 +224,45 @@ export default function HistoryList() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {item.ready_at ? (
+                  {item.return_requested_at && item.finished_at && (
                     <Timer 
-                      startTime={item.ready_at} 
-                      endTime={item.key_issued_at || undefined}
-                      label="Идет за ключом" 
-                      color="yellow"
+                      startTime={item.return_requested_at} 
+                      endTime={item.finished_at}
+                      label="Возвращал ключ" 
+                      color="orange"
                     />
-                  ) : null}
+                  )}
 
-                  {item.key_issued_at ? (
-                    <Timer 
-                      startTime={item.key_issued_at} 
-                      endTime={item.washing_started_at || undefined}
-                      label="Ключ выдан" 
-                      color="blue"
-                    />
-                  ) : null}
-
-                  {item.washing_started_at ? (
+                  {item.washing_started_at && (item.washing_finished_at || item.return_requested_at || item.finished_at) && (
                     <Timer 
                       startTime={item.washing_started_at} 
                       endTime={
                         item.washing_finished_at ||
                         item.return_requested_at ||
-                        item.finished_at ||
-                        undefined
+                        item.finished_at
                       }
-                      label="Стирает" 
+                      label="Стирал" 
                       color="green"
                     />
-                  ) : null}
+                  )}
 
-                  {item.return_requested_at ? (
+                  {item.key_issued_at && item.washing_started_at && (
                     <Timer 
-                      startTime={item.return_requested_at} 
-                      endTime={item.finished_at || undefined}
-                      label="Возвращает ключ" 
-                      color="orange"
+                      startTime={item.key_issued_at} 
+                      endTime={item.washing_started_at}
+                      label="Ключ был выдан" 
+                      color="blue"
                     />
-                  ) : null}
+                  )}
+
+                  {item.ready_at && item.key_issued_at && (
+                    <Timer 
+                      startTime={item.ready_at} 
+                      endTime={item.key_issued_at}
+                      label="Шел за ключом" 
+                      color="yellow"
+                    />
+                  )}
                 </div>
 
                 <div className="rounded-xl border border-white/60 bg-white/70 p-3">

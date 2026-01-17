@@ -361,9 +361,22 @@ export default function QueueList() {
                 const displayRoom = item.room || targetStudent?.room;
                 const couponsUsed = item.coupons_used || 0;
 
+                // ✅ Определяем цвет рамки по активному таймеру
+                let borderColor = 'border-gray-300';
+                if (item.return_requested_at && !item.finished_at) {
+                  borderColor = 'border-orange-400';
+                } else if (item.washing_started_at && !item.washing_finished_at && !item.return_requested_at) {
+                  borderColor = 'border-green-400';
+                } else if (item.key_issued_at && !item.washing_started_at) {
+                  borderColor = 'border-blue-400';
+                } else if (item.ready_at && !item.key_issued_at) {
+                  borderColor = 'border-yellow-400';
+                }
+                
+                if (isCurrentUser) borderColor = 'border-blue-600';
                 
                 return (
-                  <div key={item.id} className={`${statusDisplay.bg} border-l-4 ${isCurrentUser ? 'border-blue-600' : 'border-gray-300'} rounded-lg p-3 shadow-sm`}>
+                  <div key={item.id} className={`${statusDisplay.bg} border-l-4 ${borderColor} rounded-lg p-3 shadow-sm`}>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
                         <Avatar name={item.full_name} style={item.avatar_style} seed={item.avatar_seed} className="w-12 h-12" />
@@ -380,23 +393,15 @@ export default function QueueList() {
                     {/* Заголовок с кнопками управления */}
                     {/* Чекбокс для выбора */}
                     
-                    {/* ✅ Таймеры - показываем всю историю */}
+                    {/* ✅ Таймеры - последний активный сверху */}
                     {(item.ready_at || item.key_issued_at || item.washing_started_at || item.return_requested_at) && (
-                      <div className="flex flex-wrap gap-2 mb-2">
-                          {item.ready_at && (
+                      <div className="flex flex-col gap-2 mb-2">
+                          {item.return_requested_at && (
                             <Timer 
-                              startTime={item.ready_at} 
-                              endTime={item.key_issued_at || undefined}
-                              label="Идет за ключом" 
-                              color="yellow" 
-                            />
-                          )}
-                          {item.key_issued_at && (
-                            <Timer 
-                              startTime={item.key_issued_at} 
-                              endTime={item.washing_started_at || undefined}
-                              label="Ключ выдан" 
-                              color="blue" 
+                              startTime={item.return_requested_at} 
+                              endTime={item.finished_at || undefined}
+                              label="Возвращает ключ" 
+                              color="orange" 
                             />
                           )}
                           {item.washing_started_at && (
@@ -412,12 +417,20 @@ export default function QueueList() {
                               color="green" 
                             />
                           )}
-                          {item.return_requested_at && (
+                          {item.key_issued_at && (
                             <Timer 
-                              startTime={item.return_requested_at} 
-                              endTime={item.finished_at || undefined}
-                              label="Возвращает ключ" 
-                              color="orange" 
+                              startTime={item.key_issued_at} 
+                              endTime={item.washing_started_at || undefined}
+                              label="Ключ выдан" 
+                              color="blue" 
+                            />
+                          )}
+                          {item.ready_at && (
+                            <Timer 
+                              startTime={item.ready_at} 
+                              endTime={item.key_issued_at || undefined}
+                              label="Идет за ключом" 
+                              color="yellow" 
                             />
                           )}
                       </div>

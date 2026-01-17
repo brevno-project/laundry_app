@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PauseIcon, TimerIcon } from '@/components/Icons';
+import { PauseIcon, TimerIcon, WarningIcon } from '@/components/Icons';
 
 interface TimerProps {
   startTime: string;
@@ -12,7 +12,7 @@ interface TimerProps {
 
 export default function Timer({ startTime, endTime, label, color = 'blue' }: TimerProps) {
   const [time, setTime] = useState('00:00:00');
-  const [isOvertime, setIsOvertime] = useState(false);
+  const [timeZone, setTimeZone] = useState<'normal' | 'warning' | 'danger'>('normal');
 
   useEffect(() => {
     const update = () => {
@@ -26,9 +26,15 @@ export default function Timer({ startTime, endTime, label, color = 'blue' }: Tim
       
       setTime(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
       
-      // ✅ Проверяем превышение времени (> 15 минут)
+      // ✅ Определяем временную зону
       const minutes = Math.floor(ms / 60000);
-      setIsOvertime(minutes >= 15);
+      if (minutes >= 15) {
+        setTimeZone('danger'); // Красная зона
+      } else if (minutes >= 5) {
+        setTimeZone('warning'); // Желтая зона
+      } else {
+        setTimeZone('normal'); // Нормально
+      }
     };
 
     update();
@@ -39,21 +45,35 @@ export default function Timer({ startTime, endTime, label, color = 'blue' }: Tim
     return () => clearInterval(timer);
   }, [startTime, endTime]);
 
-  const colors = {
-    yellow: 'bg-yellow-50 text-yellow-900 border-yellow-400 shadow-yellow-200',
-    blue: 'bg-blue-50 text-blue-900 border-blue-400 shadow-blue-200',
-    green: 'bg-green-50 text-green-900 border-green-400 shadow-green-200',
-    orange: 'bg-orange-50 text-orange-900 border-orange-400 shadow-orange-200',
+  // ✅ Базовые цвета таймеров
+  const baseColors = {
+    yellow: { bg: 'bg-yellow-50', text: 'text-yellow-900', border: 'border-yellow-400' },
+    blue: { bg: 'bg-blue-50', text: 'text-blue-900', border: 'border-blue-400' },
+    green: { bg: 'bg-green-50', text: 'text-green-900', border: 'border-green-400' },
+    orange: { bg: 'bg-orange-50', text: 'text-orange-900', border: 'border-orange-400' },
   };
 
-  // ✅ Если превышено время - красная рамка и мигание
-  const overtimeClass = isOvertime ? 'border-red-500 animate-pulse ring-2 ring-red-300' : '';
+  // ✅ Модификаторы для временных зон
+  let zoneModifier = '';
+  let showWarning = false;
+  
+  if (timeZone === 'warning' && !endTime) {
+    // Желтая зона: легкое мигание
+    zoneModifier = 'animate-pulse';
+  } else if (timeZone === 'danger' && !endTime) {
+    // Красная зона: яркое мигание + иконка
+    zoneModifier = 'animate-pulse bg-opacity-90';
+    showWarning = true;
+  }
+
+  const currentColor = baseColors[color];
 
   return (
-    <div className={`flex items-center justify-between gap-3 px-4 py-2 rounded-lg border-2 shadow-md ${colors[color]} ${overtimeClass} ${endTime ? 'opacity-80' : ''} w-full`}>
+    <div className={`flex items-center justify-between gap-3 px-4 py-2 rounded-lg border-2 shadow-md ${currentColor.bg} ${currentColor.text} ${currentColor.border} ${zoneModifier} ${endTime ? 'opacity-80' : ''} w-full`}>
       <div className="flex items-center gap-2">
         {endTime ? <PauseIcon className="w-4 h-4" /> : <TimerIcon className="w-4 h-4" />}
         <span className="text-xs font-semibold">{label}</span>
+        {showWarning && <WarningIcon className="w-4 h-4 text-red-600 animate-bounce" />}
       </div>
       <span className="text-sm font-mono font-bold">{time}</span>
     </div>
