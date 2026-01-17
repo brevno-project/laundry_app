@@ -390,16 +390,26 @@ export async function POST(request: NextRequest) {
     // ✅ Отправить ВСЕМ админам (только если это НЕ student-only уведомление)
     if (!isStudentOnly) {
       const adminChatIds = await getAllAdminChatIds();
+      console.log('📤 Sending to admins from DB:', adminChatIds.length);
       
       for (const chatId of adminChatIds) {
         const adminSuccess = await sendTelegramMessage(chatId, message);
+        if (adminSuccess) console.log('✅ Sent to admin:', chatId);
         success = success || adminSuccess;
       }
       
-      // Также отправить главному админу (если указан в .env)
-      if (TELEGRAM_ADMIN_CHAT_ID && !adminChatIds.includes(TELEGRAM_ADMIN_CHAT_ID)) {
-        const mainAdminSuccess = await sendTelegramMessage(TELEGRAM_ADMIN_CHAT_ID, message);
-        success = success || mainAdminSuccess;
+      // Также отправить главному админу (если указан в .env и не в списке админов БД)
+      if (TELEGRAM_ADMIN_CHAT_ID) {
+        if (!adminChatIds.includes(TELEGRAM_ADMIN_CHAT_ID)) {
+          console.log('📤 Sending to main admin from .env:', TELEGRAM_ADMIN_CHAT_ID);
+          const mainAdminSuccess = await sendTelegramMessage(TELEGRAM_ADMIN_CHAT_ID, message);
+          if (mainAdminSuccess) console.log('✅ Sent to main admin');
+          success = success || mainAdminSuccess;
+        } else {
+          console.log('ℹ️ Main admin already in DB admins list');
+        }
+      } else {
+        console.log('⚠️ TELEGRAM_ADMIN_CHAT_ID not set in .env');
       }
     }
 

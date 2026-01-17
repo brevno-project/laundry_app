@@ -1401,7 +1401,17 @@ const joinQueue = async (
       // localStorage будет обновлен в useEffect
     }
 
-    await sendTelegramNotification({
+    console.log('📤 Sending "joined" notification to admins:', {
+      type: 'joined',
+      student_id: user.student_id,
+      full_name: name,
+      room,
+      wash_count: washCount,
+      payment_type: derivedPaymentType,
+      queue_length: queue.length + 1
+    });
+    
+    const notificationResult = await sendTelegramNotification({
       type: 'joined',
       student_id: user.student_id,
       full_name: name,
@@ -1411,6 +1421,8 @@ const joinQueue = async (
       queue_length: queue.length + 1,
       expected_finish_at: expectedFinishAt,
     });
+    
+    console.log('📥 "joined" notification result:', notificationResult);
 
     await fetchQueue();
 
