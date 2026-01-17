@@ -979,9 +979,6 @@ const loginStudent = async (
         if (error) {
           console.warn('⚠️ SignOut error:', error);
         }
-        
-        // ✅ Дополнительная очистка сессии
-        await supabase.auth.clearSession();
       }
     } catch (error) {
       console.warn('⚠️ SignOut error:', error);
