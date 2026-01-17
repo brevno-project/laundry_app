@@ -171,6 +171,7 @@ export const add_to_local_history = (queueItemId: string): boolean => {
   const historyItem: HistoryItem = {
     id: uuidv4(),
     user_id: currentItem.user_id,
+    student_id: currentItem.student_id,
     full_name: currentItem.full_name,
     room: currentItem.room,
     started_at: machineState.started_at || new Date().toISOString(),
@@ -223,6 +224,7 @@ export const mark_local_done = (): HistoryItem | null => {
   const historyItem: HistoryItem = {
     id: uuidv4(),
     user_id: currentItem.user_id,
+    student_id: currentItem.student_id,
     full_name: currentItem.full_name,
     room: currentItem.room,
     started_at: machineState.started_at || new Date().toISOString(),
