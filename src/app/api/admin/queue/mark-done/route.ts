@@ -66,6 +66,7 @@ export async function POST(req: NextRequest) {
     const historyItem = {
       id: uuidv4(),
       user_id: queueItem.user_id,
+      student_id: queueItem.student_id,
       full_name: queueItem.full_name,
       room: queueItem.room,
       started_at: queueItem.created_at || now,
