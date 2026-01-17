@@ -378,11 +378,11 @@ export async function POST(request: NextRequest) {
     let success = false;
 
     // ✅ Уведомления, которые идут ТОЛЬКО студенту
-    const studentOnlyNotifications = ['admin_call_for_key', 'admin_return_key', 'key_issued'];
+    const studentOnlyNotifications = ['admin_call_for_key', 'admin_return_key', 'key_issued', 'return_key_reminder'];
     const isStudentOnly = studentOnlyNotifications.includes(notification.type);
     
     // ✅ Уведомления, которые идут ТОЛЬКО админу
-    const adminOnlyNotifications = ['washing_started_by_student', 'washing_finished', 'joined', 'left'];
+    const adminOnlyNotifications = ['washing_started_by_student', 'washing_finished', 'joined', 'left', 'washing_done'];
     const isAdminOnly = adminOnlyNotifications.includes(notification.type);
     
     console.log('🎯 Notification routing:', { isStudentOnly, isAdminOnly });

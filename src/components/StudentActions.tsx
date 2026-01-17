@@ -117,6 +117,7 @@ export default function StudentActions() {
         return;
       }
 
+      // Отправляем уведомление админам
       const response = await fetch("/api/telegram/notify", {
         method: "POST",
         headers: {
@@ -132,7 +133,23 @@ export default function StudentActions() {
         }),
       });
 
+      // Отправляем напоминание студенту
       if (response.ok) {
+        await fetch("/api/telegram/notify", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            type: "return_key_reminder",
+            full_name: myQueueItem.full_name,
+            room: myQueueItem.room,
+            student_id: myQueueItem.student_id,
+            queue_item_id: myQueueItem.id,
+          }),
+        });
+
         const key = buildNotifyKey("finish", myQueueItem.id);
         setFinishSent(true);
         setStoredFlag(key);
