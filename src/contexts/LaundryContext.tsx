@@ -2607,14 +2607,15 @@ const updateQueueItemDetails = async (
 
     await fetchQueue();
 
-    if (updates.expected_finish_at && user) {
-      await sendTelegramNotification({
-        type: 'updated',
-        student_id: user.student_id,
-        full_name: item.full_name,
-        expected_finish_at: updates.expected_finish_at,
-      });
-    }
+    // Временное уведомление отключено (нет подходящего типа в новой системе)
+    // if (updates.expected_finish_at && user) {
+    //   await sendTelegramNotification({
+    //     type: 'updated',
+    //     student_id: user.student_id,
+    //     full_name: item.full_name,
+    //     expected_finish_at: updates.expected_finish_at,
+    //   });
+    // }
   } catch (error) {
     throw error;
   }

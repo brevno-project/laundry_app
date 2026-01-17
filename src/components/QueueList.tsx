@@ -588,7 +588,7 @@ export default function QueueList() {
                                 
                                 // Отправляем уведомление студенту
                                 await sendTelegramNotification({
-                                  type: 'key_issued',
+                                  type: 'admin_key_issued',
                                   full_name: item.full_name,
                                   room: item.room,
                                   student_id: item.student_id,
