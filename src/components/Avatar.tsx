@@ -16,8 +16,6 @@ export default function Avatar({ name = 'default', style = 'avataaars', seed = n
   const avatarSeed = seed || name || 'default';
   const avatarUrl = `https://api.dicebear.com/7.x/${avatarStyle}/svg?seed=${encodeURIComponent(avatarSeed)}`;
   
-  console.log('🎨 Avatar render:', { name, style: avatarStyle, seed, finalSeed: avatarSeed, url: avatarUrl });
-  
   return (
     <img
       src={avatarUrl}
