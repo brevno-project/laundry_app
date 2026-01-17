@@ -974,13 +974,10 @@ const loginStudent = async (
   const logoutStudent = async () => {
     try {
       if (supabase) {
-        // ✅ Принудительный выход с очисткой сессии
-        await supabase.auth.signOut({ scope: 'global' });
-        
-        // ✅ Дополнительная очистка локально
+        // ✅ Простой выход без scope (избегаем 403 ошибку)
         const { error } = await supabase.auth.signOut();
         if (error) {
-          console.warn('⚠️ Secondary signOut error:', error);
+          console.warn('⚠️ SignOut error:', error);
         }
       }
     } catch (error) {
@@ -1181,6 +1178,8 @@ const resetStudentRegistration = async (studentId: string) => {
         const { data, error } = await supabase
           .from('machine_state')
           .select('*')
+          .order('created_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
         if (error) throw error;
         setMachineState(data);
