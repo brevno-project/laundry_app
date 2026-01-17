@@ -1399,6 +1399,9 @@ const joinQueue = async (
       scheduled_for_date: targetDate,
       queue_date: targetDate,
       queue_position: nextPos,
+      // ✅ Копируем аватар из user для синхронизации
+      avatar_style: user.avatar_style || 'avataaars',
+      avatar_seed: user.avatar_seed || null,
     };
 
     const { error } = await supabase.from('queue').insert(newItem);

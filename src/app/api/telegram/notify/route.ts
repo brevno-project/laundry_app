@@ -80,20 +80,26 @@ async function getStudentTelegramChatId(student_id?: string): Promise<string | n
 
 // ✅ Получить telegram_chat_id всех админов
 async function getAllAdminChatIds(): Promise<string[]> {
+  console.log('🔍 Getting all admin chat IDs...');
+  
   const { data, error } = await admin
     .from('students')
-    .select('telegram_chat_id')
+    .select('telegram_chat_id, full_name, is_admin')
     .eq('is_admin', true)
     .not('telegram_chat_id', 'is', null);
   
   if (error) {
+    console.error('❌ Error getting admin chat IDs:', error);
     return [];
   }
+  
+  console.log('📊 Admins with telegram:', data);
   
   const chatIds = data
     .map(student => student.telegram_chat_id)
     .filter((id): id is string => id !== null && id !== undefined);
   
+  console.log('📤 Admin chat IDs:', chatIds);
   return chatIds;
 }
 
