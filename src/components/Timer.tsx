@@ -71,18 +71,15 @@ export default function Timer({ startTime, endTime, label, color = 'blue' }: Tim
   let textColor = currentColor.text;
   let borderColor = currentColor.border;
   
-  if (timeZone === 'warning' && !endTime) {
-    // Желтая зона: легкое мигание
+  if (timeZone === 'warning') {
+    // Желтая зона: легкое мигание (и в истории тоже)
     zoneModifier = 'animate-pulse';
   } else if (timeZone === 'danger') {
-    // Красная зона: полностью красный цвет + сильная пульсация
+    // Красная зона: полностью красный цвет + пульсация (и в истории тоже)
     bgColor = 'bg-red-100';
     textColor = 'text-red-900';
     borderColor = 'border-red-500';
-    if (!endTime) {
-      // Более сильная пульсация для активных таймеров
-      zoneModifier = 'animate-pulse [animation-duration:1s]';
-    }
+    zoneModifier = 'animate-pulse';
   }
 
   return (

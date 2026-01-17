@@ -264,15 +264,6 @@ export default function HistoryList() {
                     />
                   )}
                 </div>
-
-                <div className="rounded-xl border border-white/60 bg-white/70 p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className={`flex items-center gap-2 ${labelTextClass}`}>
-                      <WashingIcon className={labelIconClass} />Время стирки
-                    </div>
-                    <span className={valueTextClass}>{washingDuration}</span>
-                  </div>
-                </div>
               </div>
             </div>
           );

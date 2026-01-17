@@ -1180,7 +1180,7 @@ const resetStudentRegistration = async (studentId: string) => {
         // Попытка 1: полный запрос с avatar_style и avatar_seed
         const { data: fullData, error: fullError } = await supabase
           .from('history')
-          .select('id, user_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, washing_finished_at, return_requested_at, wash_count, coupons_used, payment_type, avatar_style, avatar_seed')
+          .select('id, user_id, student_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, washing_finished_at, return_requested_at, wash_count, coupons_used, payment_type, avatar_style, avatar_seed')
           .order('finished_at', { ascending: false })
           .limit(100);
         
