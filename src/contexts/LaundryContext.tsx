@@ -1176,6 +1176,14 @@ const resetStudentRegistration = async (studentId: string) => {
           return;
         }
         console.log('✅ Queue loaded with avatars:', data?.length);
+        // 🔍 DEBUG: Проверяем данные аватаров
+        if (data && data.length > 0) {
+          console.log('🎨 Avatar data from queue:', data.map((item: any) => ({
+            full_name: item.full_name,
+            avatar_style: item.avatar_style,
+            avatar_seed: item.avatar_seed,
+          })));
+        }
         setQueue(data || []);
         // Also update local storage as backup
         save_local_queue(data || []);
