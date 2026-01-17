@@ -7,18 +7,17 @@ const TELEGRAM_ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID;
 
 // Типы уведомлений
 type NotificationType = 
-  | 'joined' 
-  | 'left' 
-  | 'washing_started' 
-  | 'washing_done'
-  | 'admin_call_for_key'
-  | 'admin_key_issued'
-  | 'admin_return_key'
-  | 'key_issued'  // Ключ выдан студенту
-  | 'washing_started_by_student'  // Студент нажал "Начал стирать"
-  | 'washing_finished'  // Студент нажал "Закончил стирать"
-  | 'washing_finished_student'  // Уведомление студенту о завершении стирки
-  | 'return_key_reminder';  // Напоминание вернуть ключ
+  | 'joined'                    // Студент встал в очередь → ВСЕМ админам
+  | 'left'                      // Студент покинул очередь → ВСЕМ админам
+  | 'washing_started_by_student' // Студент начал стирать → ВСЕМ админам
+  | 'washing_finished_by_student'// Студент закончил стирать → ВСЕМ админам
+  | 'washing_done'              // Запись завершена → ВСЕМ админам
+  | 'admin_call_for_key'        // Админ зовет за ключом → конкретному студенту
+  | 'admin_key_issued'          // Админ выдал ключ → конкретному студенту
+  | 'admin_return_key'          // Админ просит вернуть ключ → конкретному студенту
+  | 'washing_started'          // Стирка началась → конкретному студенту
+  | 'washing_finished'          // Стирка завершена → конкретному студенту
+  | 'return_key_reminder';      // Напоминание вернуть ключ → конкретному студенту
 
 interface TelegramNotification {
   type: NotificationType;
@@ -196,7 +195,7 @@ async function formatMessage(notification: TelegramNotification): Promise<string
       }
       return `⚠️ ОШИБКА: Не удалось получить комнату админа`;
     
-    case 'key_issued':
+    case 'admin_key_issued':
       return `🔑 *КЛЮЧ ВЫДАН!*
 
 👤 ${full_name}${roomInfo}
@@ -212,7 +211,7 @@ async function formatMessage(notification: TelegramNotification): Promise<string
 
 ⏱️ Таймер запущен`;
     
-    case 'washing_finished':
+    case 'washing_finished_by_student':
       // Для админа: студент закончил стирать
       return `✅ *СТУДЕНТ ЗАКОНЧИЛ СТИРАТЬ!*
 
@@ -321,7 +320,7 @@ export async function POST(request: NextRequest) {
     const isAdmin = !!caller.is_admin || !!caller.is_super_admin;
     
     // ✅ Типы уведомлений, которые студенты могут отправлять админам
-    const STUDENT_TO_ADMIN_TYPES = ['washing_started_by_student', 'washing_finished'];
+    const STUDENT_TO_ADMIN_TYPES = ['washing_started_by_student', 'washing_finished_by_student'];
     const isStudentToAdmin = STUDENT_TO_ADMIN_TYPES.includes(notification.type);
 
     // ✅ Админ может отправлять любые уведомления
@@ -387,28 +386,20 @@ export async function POST(request: NextRequest) {
     const message = await formatMessage(notification);
     let success = false;
 
-    // ✅ Уведомления, которые идут ТОЛЬКО студенту (от конкретного админа)
-    const studentOnlyNotifications = ['admin_call_for_key', 'admin_return_key', 'key_issued', 'return_key_reminder', 'washing_started', 'washing_finished_student'];
-    const isStudentOnly = studentOnlyNotifications.includes(notification.type);
-    
-    // ✅ Уведомления, которые идут ТОЛЬКО админу (от студента)
-    const adminOnlyNotifications = ['washing_started_by_student', 'washing_finished'];
-    const isAdminOnly = adminOnlyNotifications.includes(notification.type);
-    
-    // ✅ Уведомления, которые идут ВСЕМ админам (общие события очереди)
-    const allAdminsNotifications = ['joined', 'left', 'washing_done'];
+    // ✅ Четкая логика маршрутизации уведомлений
+    // 1. Уведомления для ВСЕХ админов (общие события очереди)
+    const allAdminsNotifications = ['joined', 'left', 'washing_started_by_student', 'washing_finished_by_student', 'washing_done'];
     const isAllAdmins = allAdminsNotifications.includes(notification.type);
     
-    // ✅ Уведомления, которые идут КОНКРЕТНОМУ админу (его личные действия)
-    const specificAdminNotifications = ['admin_call_for_key', 'admin_key_issued', 'admin_return_key'];
-    const isSpecificAdmin = specificAdminNotifications.includes(notification.type);
+    // 2. Уведомления для КОНКРЕТНОГО студента (админские действия)
+    const studentNotifications = ['admin_call_for_key', 'admin_key_issued', 'admin_return_key', 'washing_started', 'washing_finished', 'return_key_reminder'];
+    const isForStudent = studentNotifications.includes(notification.type);
     
     console.log('🎯 Notification routing:', { 
       type: notification.type,
-      isStudentOnly, 
-      isAdminOnly, 
       isAllAdmins,
-      isSpecificAdmin,
+      isForStudent,
+      student_id: notification.student_id,
       admin_student_id: notification.admin_student_id
     });
 
@@ -438,40 +429,9 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // ✅ Отправить КОНКРЕТНОМУ админу (который выполнил действие)
-    if (isSpecificAdmin && notification.admin_student_id) {
-      console.log('📤 Sending to specific admin:', notification.admin_student_id);
-      const adminInfo = await getAdminInfo(notification.admin_student_id);
-      if (adminInfo?.telegram_chat_id) {
-        const adminSuccess = await sendTelegramMessage(adminInfo.telegram_chat_id, message);
-        if (adminSuccess) console.log('✅ Sent to specific admin');
-        success = success || adminSuccess;
-      } else {
-        console.log('⚠️ Admin has no telegram_chat_id');
-      }
-    }
-    
-    // ✅ Отправить админу от студента (washing_started_by_student, washing_finished)
-    if (isAdminOnly) {
-      const adminChatIds = await getAllAdminChatIds();
-      console.log('📤 Sending student notification to ALL admins:', adminChatIds.length);
-      
-      for (const chatId of adminChatIds) {
-        const adminSuccess = await sendTelegramMessage(chatId, message);
-        if (adminSuccess) console.log('✅ Sent to admin:', chatId);
-        success = success || adminSuccess;
-      }
-      
-      if (TELEGRAM_ADMIN_CHAT_ID && !adminChatIds.includes(TELEGRAM_ADMIN_CHAT_ID)) {
-        const mainAdminSuccess = await sendTelegramMessage(TELEGRAM_ADMIN_CHAT_ID, message);
-        if (mainAdminSuccess) console.log('✅ Sent to main admin');
-        success = success || mainAdminSuccess;
-      }
-    }
-
-    // ✅ Отправить студенту (ТОЛЬКО для student-only уведомлений)
-    if (isStudentOnly && notification.student_id) {
-      console.log('👤 Attempting to send notification to student:', notification.student_id);
+    // ✅ Отправить студенту (админские действия и статусы)
+    if (isForStudent && notification.student_id) {
+      console.log('👤 Sending notification to student:', notification.student_id);
       const studentChatId = await getStudentTelegramChatId(notification.student_id);
       if (studentChatId) {
         console.log('📤 Sending message to student chat_id:', studentChatId);
@@ -480,11 +440,7 @@ export async function POST(request: NextRequest) {
         success = success || studentSuccess;
       } else {
         console.log('⚠️ Student has no telegram_chat_id');
-        console.log('❌ Returning failure for student-only notification');
-        return NextResponse.json({ success: false });
       }
-    } else if (isStudentOnly) {
-      console.log('⚠️ Student-only notification but no student_id provided');
     }
 
     console.log('✅ Final notification result:', { success });

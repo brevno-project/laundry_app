@@ -125,7 +125,7 @@ export default function StudentActions() {
           Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          type: "washing_finished",
+          type: "washing_finished_by_student",
           full_name: myQueueItem.full_name,
           room: myQueueItem.room,
           student_id: myQueueItem.student_id,
@@ -142,7 +142,7 @@ export default function StudentActions() {
             Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            type: "washing_finished_student",
+            type: "washing_finished",
             full_name: myQueueItem.full_name,
             room: myQueueItem.room,
             student_id: myQueueItem.student_id,

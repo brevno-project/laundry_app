@@ -136,22 +136,17 @@ export type HistoryItem = {
 
 export type TelegramNotification = {
   type:
-    | 'joined'
-    | 'left'
-    | 'washing_started'
-    | 'washing_done'
-    | 'done'
-    | 'admin_call_for_key'
-    | 'admin_key_issued'
-    | 'admin_return_key'
-    | 'key_issued'
-    | 'key_lost'
-    | 'key_found'
-    | 'washing_started_by_student'
-    | 'washing_finished'
-    | 'washing_finished_student'
-    | 'return_key_reminder'
-    | 'updated';
+    | 'joined'                    // Студент встал в очередь → ВСЕМ админам
+    | 'left'                      // Студент покинул очередь → ВСЕМ админам
+    | 'washing_started_by_student' // Студент начал стирать → ВСЕМ админам
+    | 'washing_finished_by_student'// Студент закончил стирать → ВСЕМ админам
+    | 'washing_done'              // Запись завершена → ВСЕМ админам
+    | 'admin_call_for_key'        // Админ зовет за ключом → конкретному студенту
+    | 'admin_key_issued'          // Админ выдал ключ → конкретному студенту
+    | 'admin_return_key'          // Админ просит вернуть ключ → конкретному студенту
+    | 'washing_started'          // Стирка началась → конкретному студенту
+    | 'washing_finished'          // Стирка завершена → конкретному студенту
+    | 'return_key_reminder';      // Напоминание вернуть ключ → конкретному студенту
 
   full_name?: string;
   room?: string;
