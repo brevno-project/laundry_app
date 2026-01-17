@@ -12,6 +12,7 @@ interface TimerProps {
 
 export default function Timer({ startTime, endTime, label, color = 'blue' }: TimerProps) {
   const [time, setTime] = useState('00:00:00');
+  const [displayColor, setDisplayColor] = useState(color);
 
   useEffect(() => {
     const update = () => {
@@ -24,6 +25,11 @@ export default function Timer({ startTime, endTime, label, color = 'blue' }: Tim
       const s = Math.floor((ms % 60000) / 1000);
       
       setTime(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
+      
+      // Если таймер завершен, переключаем цвет на оранжевый для мигания
+      if (endTime && ms === 0) {
+        setDisplayColor('orange');
+      }
     };
 
     update();
@@ -35,14 +41,14 @@ export default function Timer({ startTime, endTime, label, color = 'blue' }: Tim
   }, [startTime, endTime]);
 
   const colors = {
-    yellow: 'bg-yellow-50 text-yellow-900 border-yellow-400 shadow-yellow-200',
+    yellow: 'bg-yellow-50 text-yellow-900 border-yellow-400 shadow-yellow-200 animate-pulse',
     blue: 'bg-blue-50 text-blue-900 border-blue-400 shadow-blue-200',
     green: 'bg-green-50 text-green-900 border-green-400 shadow-green-200',
-    orange: 'bg-orange-50 text-orange-900 border-orange-400 shadow-orange-200',
+    orange: 'bg-orange-50 text-orange-900 border-orange-400 shadow-orange-200 animate-pulse',
   };
 
   return (
-    <div className={`flex items-center justify-between gap-3 px-4 py-2 rounded-lg border-2 shadow-md ${colors[color]} ${endTime ? 'opacity-80' : ''} w-full`}>
+    <div className={`flex items-center justify-between gap-3 px-4 py-2 rounded-lg border-2 shadow-md ${colors[displayColor]} ${endTime ? 'opacity-80' : ''} w-full`}>
       <div className="flex items-center gap-2">
         {endTime ? <PauseIcon className="w-4 h-4" /> : <TimerIcon className="w-4 h-4" />}
         <span className="text-xs font-semibold">{label}</span>

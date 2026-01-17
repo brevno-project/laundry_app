@@ -74,7 +74,7 @@ export default function QueueTimers({ item }: QueueTimersProps) {
 
   const colors = {
     green: 'bg-green-50 text-green-900 border-green-400 shadow-green-200',
-    yellow: 'bg-yellow-50 text-yellow-900 border-yellow-400 shadow-yellow-200',
+    yellow: 'bg-yellow-50 text-yellow-900 border-yellow-400 shadow-yellow-200 animate-pulse',
     red: 'bg-red-50 text-red-900 border-red-400 shadow-red-200 animate-pulse'
   };
 
