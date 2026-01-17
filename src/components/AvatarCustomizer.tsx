@@ -55,17 +55,24 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
 
     setIsSaving(true);
     try {
-      // ✅ Получаем свежий JWT
-      const { data: { session } } = await supabase!.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('No authentication token');
+      // ✅ Получаем свежий JWT с обновлением
+      const { data: { session }, error } = await supabase!.auth.refreshSession();
+      let accessToken = session?.access_token;
+      
+      if (error || !accessToken) {
+        // Если refresh не сработал, пробуем обычную сессию
+        const { data: { session: fallbackSession } } = await supabase!.auth.getSession();
+        accessToken = fallbackSession?.access_token;
+        if (!accessToken) {
+          throw new Error('No authentication token');
+        }
       }
 
       const response = await fetch('/api/student/update-avatar', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           avatar_style: selectedStyle,

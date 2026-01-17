@@ -972,16 +972,36 @@ const loginStudent = async (
 
   // Logout student
   const logoutStudent = async () => {
-    if (supabase) {
-      await supabase.auth.signOut(); // ✅ Это вызовет onAuthStateChange → refreshMyRole
+    try {
+      if (supabase) {
+        // ✅ Принудительный выход с очисткой сессии
+        await supabase.auth.signOut({ scope: 'global' });
+        
+        // ✅ Дополнительная очистка локально
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          console.warn('⚠️ Secondary signOut error:', error);
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ SignOut error:', error);
+    } finally {
+      // ✅ Всегда очищаем локальное состояние
+      setUser(null);
+      setIsAdmin(false);
+      setIsSuperAdmin(false);
+      setIsNewUser(false);
+      
+      // ✅ Безопасная очистка localStorage
+      try {
+        localStorage.removeItem('laundryUser');
+        localStorage.removeItem('laundryIsNewUser');
+      } catch (error) {
+        console.warn('⚠️ localStorage cleanup error:', error);
+      }
+      
+      console.log('✅ User logged out successfully');
     }
-    setUser(null);
-    setIsAdmin(false);
-    setIsSuperAdmin(false);
-    setIsNewUser(false);
-    localStorage.removeItem('laundryUser');
-    localStorage.removeItem('laundryIsNewUser');
-    // ✅ Права больше не хранятся в localStorage
   };
 
 
