@@ -10,6 +10,14 @@ interface TimerProps {
   color?: 'yellow' | 'blue' | 'green' | 'orange';
 }
 
+// ✅ Временные зоны для разных типов таймеров (в минутах)
+const TIME_ZONES = {
+  yellow: { warning: 3, danger: 10 },   // Идет за ключом: 3-10 мин, >10 мин
+  blue: { warning: 5, danger: 15 },     // Ключ выдан: 5-15 мин, >15 мин
+  green: { warning: 45, danger: 90 },   // Стирает: 45-90 мин, >90 мин
+  orange: { warning: 3, danger: 10 },   // Возвращает ключ: 3-10 мин, >10 мин
+};
+
 export default function Timer({ startTime, endTime, label, color = 'blue' }: TimerProps) {
   const [time, setTime] = useState('00:00:00');
   const [timeZone, setTimeZone] = useState<'normal' | 'warning' | 'danger'>('normal');
@@ -26,11 +34,13 @@ export default function Timer({ startTime, endTime, label, color = 'blue' }: Tim
       
       setTime(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
       
-      // ✅ Определяем временную зону
+      // ✅ Определяем временную зону в зависимости от типа таймера
       const minutes = Math.floor(ms / 60000);
-      if (minutes >= 15) {
+      const zones = TIME_ZONES[color];
+      
+      if (minutes >= zones.danger) {
         setTimeZone('danger'); // Красная зона
-      } else if (minutes >= 5) {
+      } else if (minutes >= zones.warning) {
         setTimeZone('warning'); // Желтая зона
       } else {
         setTimeZone('normal'); // Нормально
@@ -56,24 +66,30 @@ export default function Timer({ startTime, endTime, label, color = 'blue' }: Tim
   // ✅ Модификаторы для временных зон
   let zoneModifier = '';
   let showWarning = false;
+  let bgOverride = '';
   
   if (timeZone === 'warning' && !endTime) {
     // Желтая зона: легкое мигание
     zoneModifier = 'animate-pulse';
   } else if (timeZone === 'danger' && !endTime) {
-    // Красная зона: яркое мигание + иконка
-    zoneModifier = 'animate-pulse bg-opacity-90';
+    // Красная зона: яркое мигание + большая иконка + красный фон
+    zoneModifier = 'animate-pulse';
+    bgOverride = 'bg-red-100';
+    showWarning = true;
+  } else if (timeZone === 'danger' && endTime) {
+    // Красная зона в истории: красный фон + иконка
+    bgOverride = 'bg-red-100';
     showWarning = true;
   }
 
   const currentColor = baseColors[color];
 
   return (
-    <div className={`flex items-center justify-between gap-3 px-4 py-2 rounded-lg border-2 shadow-md ${currentColor.bg} ${currentColor.text} ${currentColor.border} ${zoneModifier} ${endTime ? 'opacity-80' : ''} w-full`}>
+    <div className={`flex items-center justify-between gap-3 px-4 py-2 rounded-lg border-2 shadow-md ${bgOverride || currentColor.bg} ${currentColor.text} ${currentColor.border} ${zoneModifier} ${endTime ? 'opacity-80' : ''} w-full`}>
       <div className="flex items-center gap-2">
         {endTime ? <PauseIcon className="w-4 h-4" /> : <TimerIcon className="w-4 h-4" />}
         <span className="text-xs font-semibold">{label}</span>
-        {showWarning && <WarningIcon className="w-4 h-4 text-red-600 animate-bounce" />}
+        {showWarning && <WarningIcon className="w-6 h-6 text-red-600 animate-bounce" />}
       </div>
       <span className="text-sm font-mono font-bold">{time}</span>
     </div>

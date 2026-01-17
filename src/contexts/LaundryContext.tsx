@@ -269,6 +269,22 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
               return student;
             });
           });
+          
+          // Update history to show current avatars
+          setHistory((prevHistory) => {
+            if (!prevHistory) return prevHistory;
+            return prevHistory.map((item) => {
+              if (item.student_id === payload.new.id) {
+                return {
+                  ...item,
+                  avatar_style: payload.new.avatar_style || item.avatar_style,
+                  avatar_seed: payload.new.avatar_seed || item.avatar_seed,
+                };
+              }
+              return item;
+            });
+          });
+          
           // Refresh queue to get updated avatars
           fetchQueue();
         }
@@ -1141,13 +1157,9 @@ const resetStudentRegistration = async (studentId: string) => {
         const { data, error } = await supabase
           .from('machine_state')
           .select('*')
-          .order('id', { ascending: false })  
-          .limit(1)  
           .single();
-        
-        if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
-        setMachineState(data || { status: MachineStatus.IDLE });
-        // Also update local storage as backup
+        if (error) throw error;
+        setMachineState(data);
         save_local_machine_state(data || { status: MachineStatus.IDLE });
       } catch (error: any) {
         console.error('fetchMachineState error:', error);
@@ -1179,7 +1191,7 @@ const resetStudentRegistration = async (studentId: string) => {
           console.log('📝 Fetching history without avatar fields (migration may be pending)');
           const { data: basicData, error: basicError } = await supabase
             .from('history')
-            .select('id, user_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, washing_finished_at, return_requested_at, wash_count, coupons_used, payment_type')
+            .select('id, user_id, student_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, washing_finished_at, return_requested_at, wash_count, coupons_used, payment_type')
             .order('finished_at', { ascending: false })
             .limit(100);
           
@@ -1193,6 +1205,21 @@ const resetStudentRegistration = async (studentId: string) => {
           } else {
             throw basicError || new Error('Failed to fetch history');
           }
+        }
+        
+        // ✅ Синхронизируем аватары из текущего списка студентов
+        if (historyData && students) {
+          historyData = historyData.map(item => {
+            const student = students.find(s => s.id === item.student_id);
+            if (student) {
+              return {
+                ...item,
+                avatar_style: student.avatar_style,
+                avatar_seed: student.avatar_seed,
+              };
+            }
+            return item;
+          });
         }
         
         setHistory(historyData || []);
