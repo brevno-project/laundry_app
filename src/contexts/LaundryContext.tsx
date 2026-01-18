@@ -1755,6 +1755,15 @@ const startWashing = async (queueItemId: string) => {
         throw new Error(result.error || 'Ошибка завершения стирки');
       }
 
+      // ✅ Отправляем уведомление студенту о завершении стирки админом
+      await sendTelegramNotification({
+        type: 'washing_done',
+        full_name: queueItem.full_name,
+        room: queueItem.room,
+        student_id: queueItem.student_id,
+        queue_item_id: queueItemId,
+      });
+
       await fetchQueue();
       await fetchMachineState();
       await fetchHistory();

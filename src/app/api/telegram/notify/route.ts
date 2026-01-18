@@ -214,9 +214,7 @@ async function formatMessage(notification: TelegramNotification): Promise<string
 📱 Не забудьте нажать "Начал стирать" в приложении`;
     
     case 'washing_started_by_student':
-      return `📢 *СТУДЕНТ ХОЧЕТ НАЧАТЬ СТИРАТЬ!*
-
-👤 ${full_name}${roomInfo}
+      return `👤 ${full_name}${roomInfo}
 ✅ Нажал кнопку "Начал стирать"
 
 👨‍💼 Админ, подтвердите начало стирки в приложении`;
