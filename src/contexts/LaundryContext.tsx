@@ -1000,21 +1000,34 @@ const loginStudent = async (
         localStorage.removeItem('laundryUser');
         localStorage.removeItem('laundryIsNewUser');
         
-        // ✅ Очистка всех Supabase данных
+        // ✅ Очистка ВСЕХ Supabase данных (более агрессивно)
         Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('supabase.auth.')) {
+          if (key.startsWith('supabase.') || key.includes('supabase')) {
             localStorage.removeItem(key);
+            console.log('🗑️ Removed localStorage key:', key);
           }
         });
         
         // ✅ Очистка sessionStorage
         Object.keys(sessionStorage).forEach(key => {
-          if (key.startsWith('supabase.auth.')) {
+          if (key.startsWith('supabase.') || key.includes('supabase')) {
             sessionStorage.removeItem(key);
+            console.log('🗑️ Removed sessionStorage key:', key);
           }
         });
+
+        // ✅ Очистка возможных IndexedDB кэшей
+        if (window.indexedDB) {
+          const databases = await indexedDB.databases();
+          for (const db of databases) {
+            if (db.name && db.name.includes('supabase')) {
+              await indexedDB.deleteDatabase(db.name);
+              console.log('🗑️ Deleted IndexedDB:', db.name);
+            }
+          }
+        }
       } catch (error) {
-        console.warn('⚠️ localStorage cleanup error:', error);
+        console.warn('⚠️ Storage cleanup error:', error);
       }
       
       console.log('✅ User logged out successfully');

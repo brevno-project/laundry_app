@@ -1,8 +1,9 @@
 ﻿"use client";
 
+import { useState, useEffect } from "react";
 import { useLaundry } from "@/contexts/LaundryContext";
+import { supabase } from "@/lib/supabase";
 import { QueueStatus } from "@/types";
-import { useEffect, useState } from "react";
 import { KeyIcon, WashingIcon, CheckIcon, InfoIcon } from "@/components/Icons";
 
 const getStoredFlag = (key: string) => {
@@ -59,11 +60,10 @@ export default function StudentActions() {
     setSending("start");
 
     try {
-      const { createClient } = await import("@supabase/supabase-js");
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
+      if (!supabase) {
+        alert("Supabase не настроен" + " ✅");
+        return;
+      }
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
@@ -105,11 +105,10 @@ export default function StudentActions() {
     setSending("finish");
 
     try {
-      const { createClient } = await import("@supabase/supabase-js");
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
+      if (!supabase) {
+        alert("Supabase не настроен" + " ✅");
+        return;
+      }
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
