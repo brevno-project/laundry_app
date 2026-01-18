@@ -398,7 +398,7 @@ export async function POST(request: NextRequest) {
 
     // ✅ Четкая логика маршрутизации уведомлений
     // 1. Уведомления для ВСЕХ админов (общие события очереди)
-    const allAdminsNotifications = ['joined', 'left', 'washing_started_by_student', 'washing_finished_by_student', 'washing_done'];
+    const allAdminsNotifications = ['joined', 'left', 'washing_started_by_student', 'washing_finished_by_student'];
     const isAllAdmins = allAdminsNotifications.includes(notification.type);
     
     // 2. Уведомления для КОНКРЕТНОГО студента (админские действия)
