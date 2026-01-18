@@ -393,14 +393,14 @@ export default function QueueList() {
                     {/* Заголовок с кнопками управления */}
                     {/* Чекбокс для выбора и кнопки перемещения */}
                     {isAdmin && (
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3 mb-2">
                         <input
                           type="checkbox"
                           checked={selectedItems.includes(item.id)}
                           onChange={() => toggleSelect(item.id)}
                           className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                         />
-                        <div className="flex gap-1">
+                        <div className="flex gap-1 ml-auto">
                           <button
                             onClick={() => changeQueuePosition(item.id, 'up')}
                             disabled={index === 0}
