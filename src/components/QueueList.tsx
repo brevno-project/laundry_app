@@ -695,13 +695,6 @@ export default function QueueList() {
                             onClick={async () => {
                               try {
                                 await markDone(item.id);
-                                
-                                // Отправляем уведомление админам о завершении
-                                await sendTelegramNotification({
-                                  type: 'washing_done',
-                                  full_name: item.full_name,
-                                  student_id: item.student_id,
-                                });
                               } catch (error) {
                                 console.error('❌ Error in Завершить:', error);
                               }
