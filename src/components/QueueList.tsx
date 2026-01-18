@@ -6,7 +6,7 @@ import { sendTelegramNotification } from '@/lib/telegram';
 import { useState, useEffect, useRef } from 'react';
 import Timer from './Timer';
 import QueueTimers from './QueueTimers';
-import { CalendarIcon, BellIcon, KeyIcon, WashingIcon, BellOffIcon, WaitIcon, CheckIcon, DeleteIcon, EditIcon, TicketIcon, MoneyIcon, HourglassIcon, CloseIcon, BackIcon, ForwardIcon } from '@/components/Icons';
+import { CalendarIcon, BellIcon, KeyIcon, WashingIcon, BellOffIcon, WaitIcon, CheckIcon, DeleteIcon, EditIcon, TicketIcon, MoneyIcon, HourglassIcon, CloseIcon, ChevronUpIcon, ChevronDownIcon } from '@/components/Icons';
 import Avatar from '@/components/Avatar';
 
 export default function QueueList() {
@@ -300,7 +300,7 @@ export default function QueueList() {
               }}
               className="bg-red-500 text-white font-semibold py-2 px-2 rounded-lg hover:bg-red-600 text-xs"
             >
-              <BackIcon className="w-4 h-4" /> Назад
+              Назад
             </button>
     
             {/* Сегодня */}
@@ -325,7 +325,7 @@ export default function QueueList() {
               }}
               className="bg-blue-500 text-white font-semibold py-2 px-2 rounded-lg hover:bg-blue-600 text-xs"
             >
-              Вперед <ForwardIcon className="w-4 h-4" />
+              Вперед
             </button>
           </div>
   
@@ -405,18 +405,18 @@ export default function QueueList() {
                           <button
                             onClick={() => changeQueuePosition(item.id, 'up')}
                             disabled={index === 0}
-                            className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            className="w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-600 rounded hover:bg-blue-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                             title="Переместить вверх"
                           >
-                            Вверх
+                            <ChevronUpIcon className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => changeQueuePosition(item.id, 'down')}
                             disabled={index === groupedQueue[dateKey].length - 1}
-                            className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            className="w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-600 rounded hover:bg-blue-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                             title="Переместить вниз"
                           >
-                            Вниз
+                            <ChevronDownIcon className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
