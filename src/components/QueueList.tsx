@@ -406,17 +406,17 @@ export default function QueueList() {
                             onClick={() => changeQueuePosition(item.id, 'up')}
                             disabled={index === 0}
                             className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                            title="Переместить назад"
+                            title="Переместить вверх"
                           >
-                            Назад
+                            Вверх
                           </button>
                           <button
                             onClick={() => changeQueuePosition(item.id, 'down')}
                             disabled={index === groupedQueue[dateKey].length - 1}
                             className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                            title="Переместить вперед"
+                            title="Переместить вниз"
                           >
-                            Вперед
+                            Вниз
                           </button>
                         </div>
                       </div>
