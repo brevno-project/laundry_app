@@ -166,17 +166,17 @@ async function formatMessage(notification: TelegramNotification, isForAdmin: boo
     
     case 'washing_done':
       if (isForAdmin) {
-        return `✅ *Вы завершили стирку!*
-
-👤 ${full_name}${roomInfo}
-
-📋 Запись перенесена в историю`;
-      } else {
         return `✅ *Стирка завершена!*
 
 👤 ${full_name}${roomInfo}
 
 ✅ Запись перенесена в историю`;
+      } else {
+        return `✅ *Вы завершили стирку!*
+
+👤 ${full_name}${roomInfo}
+
+📋 Запись перенесена в историю`;
       }
     
     case 'admin_call_for_key':
