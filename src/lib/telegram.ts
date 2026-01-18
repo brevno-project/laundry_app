@@ -2,6 +2,7 @@
 // ✅ Теперь все уведомления идут через безопасный API route
 // Все секретные данные (токен бота, chat_id) хранятся на сервере
 import { TelegramNotification } from '../types/index';
+import { supabase } from './supabase';
 
 /**
  * Отправка Telegram уведомления через безопасный API route
@@ -16,16 +17,14 @@ export async function sendTelegramNotification(notification: TelegramNotificatio
       admin_student_id: notification.admin_student_id
     });
     
-    // Получить JWT токен из Supabase
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    if (!supabase) {
+      console.error(' [CLIENT] Supabase client not available');
+      return false;
+    }
     
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) {
-      console.error('❌ [CLIENT] No session token available');
+      console.error(' [CLIENT] No session token available');
       return false;
     }
     

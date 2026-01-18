@@ -402,7 +402,7 @@ export async function POST(request: NextRequest) {
     const isAllAdmins = allAdminsNotifications.includes(notification.type);
     
     // 2. Уведомления для КОНКРЕТНОГО студента (админские действия)
-    const studentNotifications = ['admin_call_for_key', 'admin_key_issued', 'admin_return_key', 'washing_started', 'washing_finished', 'return_key_reminder'];
+    const studentNotifications = ['admin_call_for_key', 'admin_key_issued', 'admin_return_key', 'washing_started', 'washing_finished', 'washing_done', 'return_key_reminder'];
     const isForStudent = studentNotifications.includes(notification.type);
     
     console.log('🎯 Notification routing:', { 
