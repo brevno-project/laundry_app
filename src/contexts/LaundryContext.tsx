@@ -1506,6 +1506,7 @@ const joinQueue = async (
       payment_type: derivedPaymentType,
       queue_length: queue.length + 1,
       expected_finish_at: expectedFinishAt,
+      queue_item_id: newItem.id,
     });
     
     console.log('📥 "joined" notification result:', notificationResult);
