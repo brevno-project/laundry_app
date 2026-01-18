@@ -900,6 +900,12 @@ const loginStudent = async (
 
     const authEmail = studentData?.auth_email;
     if (!authEmail) throw new Error("Student auth_email is missing (check trigger)");
+    
+    // ✅ Валидация email перед отправкой
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(authEmail)) {
+      throw new Error("Неверный формат email адреса");
+    }
 
     // 2) Логин через Supabase Auth
     const { data: authData, error: authError } =
