@@ -118,7 +118,7 @@ async function getAllStudentChatIds(): Promise<string[]> {
 }
 
 // Форматирование сообщения
-async function formatMessage(notification: TelegramNotification): Promise<string> {
+async function formatMessage(notification: TelegramNotification, isForAdmin: boolean = false): Promise<string> {
   const { type, full_name, room, wash_count, payment_type, queue_length, expected_finish_at, admin_student_id } = notification;
   
   const roomInfo = room ? ` (${room})` : '';
@@ -165,11 +165,19 @@ async function formatMessage(notification: TelegramNotification): Promise<string
 📱 Когда закончите стирать, не забудьте нажать кнопку "Закончил стирать" в приложении`;
     
     case 'washing_done':
-      return `✅ *Стирка завершена!*
+      if (isForAdmin) {
+        return `✅ *Вы завершили стирку!*
+
+👤 ${full_name}${roomInfo}
+
+📋 Запись перенесена в историю`;
+      } else {
+        return `✅ *Стирка завершена!*
 
 👤 ${full_name}${roomInfo}
 
 ✅ Запись перенесена в историю`;
+      }
     
     case 'admin_call_for_key':
       if (adminInfo && adminInfo.room) {
@@ -405,7 +413,7 @@ export async function POST(request: NextRequest) {
 
     // ✅ Четкая логика маршрутизации уведомлений
     // 1. Уведомления для ВСЕХ админов (общие события очереди)
-    const allAdminsNotifications = ['joined', 'left', 'washing_started_by_student', 'washing_finished_by_student'];
+    const allAdminsNotifications = ['joined', 'left', 'washing_started_by_student', 'washing_finished_by_student', 'washing_done'];
     const isAllAdmins = allAdminsNotifications.includes(notification.type);
     
     // 2. Уведомления для КОНКРЕТНОГО студента (админские действия)
@@ -425,8 +433,10 @@ export async function POST(request: NextRequest) {
       const adminChatIds = await getAllAdminChatIds();
       console.log('📤 Sending to ALL admins from DB:', adminChatIds.length);
       
+      const adminMessage = await formatMessage(notification, true);
+      
       for (const chatId of adminChatIds) {
-        const adminSuccess = await sendTelegramMessage(chatId, message);
+        const adminSuccess = await sendTelegramMessage(chatId, adminMessage);
         if (adminSuccess) console.log('✅ Sent to admin:', chatId);
         success = success || adminSuccess;
       }
@@ -435,7 +445,7 @@ export async function POST(request: NextRequest) {
       if (TELEGRAM_ADMIN_CHAT_ID) {
         if (!adminChatIds.includes(TELEGRAM_ADMIN_CHAT_ID)) {
           console.log('📤 Sending to main admin from .env:', TELEGRAM_ADMIN_CHAT_ID);
-          const mainAdminSuccess = await sendTelegramMessage(TELEGRAM_ADMIN_CHAT_ID, message);
+          const mainAdminSuccess = await sendTelegramMessage(TELEGRAM_ADMIN_CHAT_ID, adminMessage);
           if (mainAdminSuccess) console.log('✅ Sent to main admin');
           success = success || mainAdminSuccess;
         } else {
@@ -450,11 +460,12 @@ export async function POST(request: NextRequest) {
     if (isForStudent && notification.student_id) {
       console.log('👤 Sending notification to student:', notification.student_id);
       
+      const studentMessage = await formatMessage(notification, false);
       const studentChatId = await getStudentTelegramChatId(notification.student_id);
       
       if (studentChatId) {
         console.log('📤 About to send to student chat_id:', studentChatId);
-        const studentSuccess = await sendTelegramMessage(studentChatId, message);
+        const studentSuccess = await sendTelegramMessage(studentChatId, studentMessage);
         console.log('📥 Send result to student:', { studentSuccess, chatId: studentChatId });
         if (studentSuccess) console.log('✅ Sent to student:', studentChatId);
         success = success || studentSuccess;
