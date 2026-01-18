@@ -391,7 +391,35 @@ export default function QueueList() {
                     </div>
 
                     {/* Заголовок с кнопками управления */}
-                    {/* Чекбокс для выбора */}
+                    {/* Чекбокс для выбора и кнопки перемещения */}
+                    {isAdmin && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedItems.includes(item.id)}
+                          onChange={() => toggleSelect(item.id)}
+                          className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                        />
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => changeQueuePosition(item.id, 'up')}
+                            disabled={index === 0}
+                            className="p-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Переместить вверх"
+                          >
+                            ↑
+                          </button>
+                          <button
+                            onClick={() => changeQueuePosition(item.id, 'down')}
+                            disabled={index === groupedQueue[dateKey].length - 1}
+                            className="p-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Переместить вниз"
+                          >
+                            ↓
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     
                     {/* ✅ Таймеры - последний активный сверху */}
                     {(item.ready_at || item.key_issued_at || item.washing_started_at || item.return_requested_at) && (
