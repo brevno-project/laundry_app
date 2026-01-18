@@ -253,11 +253,16 @@ async function formatMessage(notification: TelegramNotification): Promise<string
 
 // Отправка сообщения в Telegram
 async function sendTelegramMessage(chatId: string, message: string): Promise<boolean> {
+  console.log('🚀 sendTelegramMessage called:', { chatId, messageLength: message.length });
+  
   if (!TELEGRAM_BOT_TOKEN) {
+    console.log('❌ No TELEGRAM_BOT_TOKEN');
     return false;
   }
 
   try {
+    console.log('📡 Sending to Telegram API:', { chatId, botToken: TELEGRAM_BOT_TOKEN?.substring(0, 10) + '...' });
+    
     const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -269,8 +274,10 @@ async function sendTelegramMessage(chatId: string, message: string): Promise<boo
     });
 
     const data = await response.json();
+    console.log('📩 Telegram API response:', { ok: data.ok, chat_id: chatId, message_id: data.result?.message_id });
     
     if (!data.ok) {
+      console.log('❌ Telegram API error:', data);
       return false;
     }
 
@@ -446,7 +453,9 @@ export async function POST(request: NextRequest) {
       const studentChatId = await getStudentTelegramChatId(notification.student_id);
       
       if (studentChatId) {
+        console.log('📤 About to send to student chat_id:', studentChatId);
         const studentSuccess = await sendTelegramMessage(studentChatId, message);
+        console.log('📥 Send result to student:', { studentSuccess, chatId: studentChatId });
         if (studentSuccess) console.log('✅ Sent to student:', studentChatId);
         success = success || studentSuccess;
       } else {
