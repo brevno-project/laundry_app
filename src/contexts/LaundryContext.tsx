@@ -430,7 +430,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
           );
         }
 
-        await supabase.auth.signOut();
+        await supabase.auth.signOut({ scope: 'local' });
         setUser(null);
         setIsAdmin(false);
         setIsSuperAdmin(false);
@@ -965,7 +965,7 @@ const loginStudent = async (
           `Вы забанены. Причина: ${banReason}. Обратитесь к администратору.`
         );
       }
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: 'local' });
       throw new Error(`Вы забанены. Причина: ${banReason}. Обратитесь к администратору.`);
     }
 
@@ -987,10 +987,12 @@ const loginStudent = async (
   const logoutStudent = async () => {
     try {
       if (supabase) {
-        // ✅ Простой выход без scope (избегаем 403 ошибку)
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-          console.warn('⚠️ SignOut error:', error);
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session?.access_token) {
+          const { error } = await supabase.auth.signOut({ scope: 'local' });
+          if (error) {
+            console.warn('⚠️ SignOut error:', error);
+          }
         }
       }
     } catch (error) {
