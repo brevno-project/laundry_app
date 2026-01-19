@@ -1158,7 +1158,49 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
       }
 
+      if (isCleanupAdmin && user?.student_id) {
+        const { data, error } = await client
+          .from("students")
+          .select(
+            "id, first_name, last_name, middle_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, is_cleanup_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, key_issued, key_lost, avatar_style, avatar_seed"
+          )
+          .or(`id.eq.${user.student_id},is_super_admin.eq.true`)
+          .order("full_name", { ascending: true });
 
+        if (error) throw error;
+
+        const students: Student[] = (data || []).map((item: any): Student => {
+          const fullName =
+            item.full_name ||
+            [item.first_name, item.last_name, item.middle_name].filter(Boolean).join(" ");
+
+          return {
+            id: item.id,
+            first_name: item.first_name || "",
+            last_name: item.last_name || "",
+            middle_name: item.middle_name || "",
+            full_name: fullName || "",
+            room: item.room ?? null,
+            is_registered: !!item.is_registered,
+            created_at: item.created_at || new Date().toISOString(),
+            is_banned: !!item.is_banned,
+            ban_reason: item.ban_reason || null,
+            user_id: item.user_id || undefined,
+            is_admin: !!item.is_admin,
+            is_super_admin: !!item.is_super_admin,
+            is_cleanup_admin: !!item.is_cleanup_admin,
+            can_view_students: !!item.can_view_students,
+            telegram_chat_id: item.telegram_chat_id || undefined,
+            key_issued: !!item.key_issued,
+            key_lost: !!item.key_lost,
+            avatar_style: item.avatar_style || "avataaars",
+            avatar_seed: item.avatar_seed || "",
+          };
+        });
+
+        setStudents(students);
+        return;
+      }
 
       if (canViewStudents) {
 
@@ -1224,6 +1266,10 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
                 key_issued: !!item.key_issued,
 
                 key_lost: !!item.key_lost,
+
+                avatar_style: item.avatar_style || item.avatar_type || "avataaars",
+
+                avatar_seed: item.avatar_seed || "",
 
               };
 
