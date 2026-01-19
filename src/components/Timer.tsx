@@ -49,7 +49,6 @@ export default function Timer({ startTime, endTime, label, color = 'blue', multi
       } else {
         setTimeZone('normal'); // 
       }
-      }
     };
 
     update();
