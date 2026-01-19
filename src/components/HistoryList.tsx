@@ -5,6 +5,7 @@ import { useLaundry } from '@/contexts/LaundryContext';
 import Avatar from '@/components/Avatar';
 import Timer from './Timer';
 import { HistoryIcon, ClockIcon, CheckIcon, MoneyIcon, TicketIcon, WashingIcon } from './Icons';
+import { supabase } from '@/lib/supabase';
 
 const formatTime = (dateStr?: string | null) => {
   if (!dateStr) return '-';
@@ -76,8 +77,82 @@ const getPaymentLabel = (paymentType?: string | null, couponsUsed?: number | nul
 };
 
 export default function HistoryList() {
-  const { history, historyTotalCount, historyHasMore, loadMoreHistory } = useLaundry();
+  const { history, historyTotalCount, historyHasMore, loadMoreHistory, isSuperAdmin, fetchHistory } = useLaundry();
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [showClearTools, setShowClearTools] = useState(false);
+  const [clearFrom, setClearFrom] = useState('');
+  const [clearTo, setClearTo] = useState('');
+  const [clearRoom, setClearRoom] = useState('');
+  const [clearNotice, setClearNotice] = useState<string | null>(null);
+  const [clearing, setClearing] = useState(false);
+
+  const authedFetch = async (url: string, options: RequestInit = {}) => {
+    if (!supabase) {
+      throw new Error('Supabase ?? ????????');
+    }
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) {
+      throw new Error('??? ???????? ??????');
+    }
+    return fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.headers || {}),
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  };
+
+  const clearHistory = async (mode: 'all' | 'range') => {
+    if (clearing) return;
+    setClearNotice(null);
+
+    const payload =
+      mode === 'all'
+        ? { mode }
+        : {
+            mode,
+            from: clearFrom || null,
+            to: clearTo || null,
+            room: clearRoom.trim() || null,
+          };
+
+    if (mode === 'range' && !payload.from && !payload.to && !payload.room) {
+      setClearNotice('??????? ?????? ??? ??????? ??? ?????????? ???????.');
+      return;
+    }
+
+    const confirmText =
+      mode === 'all'
+        ? '???????? ??? ??????? ???????'
+        : '???????? ????????? ?????? ????????';
+    if (!confirm(confirmText)) return;
+
+    setClearing(true);
+    try {
+      const response = await authedFetch('/api/admin/history/clear', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || '?????? ??????? ???????');
+      }
+      await fetchHistory();
+      setClearNotice(`??????? ???????: ${result.count ?? 0}`);
+      setClearFrom('');
+      setClearTo('');
+      setClearRoom('');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '?????? ??????? ???????';
+      setClearNotice(message);
+    } finally {
+      setClearing(false);
+    }
+  };
+
 
   if (history.length === 0) {
     return (
@@ -106,8 +181,70 @@ export default function HistoryList() {
               <p className="text-slate-300 text-sm">Всего стирок: {historyTotalCount}</p>
             </div>
           </div>
+          {isSuperAdmin && (
+            <button
+              onClick={() => {
+                setShowClearTools((prev) => !prev);
+                setClearNotice(null);
+              }}
+              className="rounded-xl border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition"
+            >
+              {showClearTools ? '?????? ???????' : '??????? ???????'}
+            </button>
+          )}
         </div>
       </div>
+      {isSuperAdmin && showClearTools && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex flex-col">
+              <label className="text-xs font-semibold text-slate-600">?</label>
+              <input
+                type="date"
+                value={clearFrom}
+                onChange={(event) => setClearFrom(event.target.value)}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-xs font-semibold text-slate-600">??</label>
+              <input
+                type="date"
+                value={clearTo}
+                onChange={(event) => setClearTo(event.target.value)}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-xs font-semibold text-slate-600">???????</label>
+              <input
+                type="text"
+                value={clearRoom}
+                onChange={(event) => setClearRoom(event.target.value)}
+                placeholder="???????? A301"
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              />
+            </div>
+            <button
+              onClick={() => clearHistory('range')}
+              disabled={clearing}
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-950 disabled:opacity-70"
+            >
+              ???????? ?????????
+            </button>
+            <button
+              onClick={() => clearHistory('all')}
+              disabled={clearing}
+              className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-70"
+            >
+              ???????? ???
+            </button>
+          </div>
+          {clearNotice && (
+            <p className="mt-3 text-sm text-slate-600">{clearNotice}</p>
+          )}
+        </div>
+      )}
 
       <div className="space-y-3">
         {history.map((item) => {
