@@ -891,7 +891,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
         telegram_chat_id: me.telegram_chat_id,
 
-        avatar_style: me.avatar_style || 'thumbs',
+        avatar_style: me.avatar_style || 'bottts',
 
         avatar_seed: me.avatar_seed || null,
 
@@ -1059,7 +1059,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
               key_lost: !!item.key_lost,
 
-              avatar_style: item.avatar_style || "thumbs",
+              avatar_style: item.avatar_style || "bottts",
 
               avatar_seed: item.avatar_seed || "",
 
@@ -1140,7 +1140,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
               key_lost: false,
 
-              avatar_style: item.avatar_style || "thumbs",
+              avatar_style: item.avatar_style || "bottts",
 
               avatar_seed: item.avatar_seed || "",
 
@@ -1223,7 +1223,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
                 key_lost: !!item.key_lost,
 
-                avatar_style: item.avatar_style || item.avatar_type || "thumbs",
+                avatar_style: item.avatar_style || item.avatar_type || "bottts",
 
                 avatar_seed: item.avatar_seed || "",
 
@@ -1296,7 +1296,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
           key_lost: !!item.key_lost,
 
-          avatar_style: item.avatar_style || "thumbs",
+          avatar_style: item.avatar_style || "bottts",
 
           avatar_seed: item.avatar_seed || "",
 
@@ -1357,7 +1357,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
           key_lost: !!item.key_lost,
 
-          avatar_style: "thumbs",
+          avatar_style: "bottts",
 
           avatar_seed: "",
 
@@ -1450,7 +1450,7 @@ const finalizeUserSession = (
 
     telegram_chat_id: student.telegram_chat_id || undefined,
 
-    avatar_style: student.avatar_style || 'thumbs',
+    avatar_style: student.avatar_style || 'bottts',
 
     avatar_seed: student.avatar_seed || null,
 
@@ -2479,7 +2479,7 @@ const resetStudentRegistration = async (studentId: string) => {
 
             historyData = basicData.map((item: any) => ({
               ...item,
-              avatar_style: 'thumbs',
+              avatar_style: 'bottts',
               avatar_seed: item.full_name || 'default',
             }));
             totalCount = typeof basicCount === 'number' ? basicCount : null;
@@ -2903,7 +2903,7 @@ const joinQueue = async (
 
       // ? Копируем аватар из user для синхронизации (snapshot при добавлении в очередь)
 
-      avatar_style: user.avatar_style || 'thumbs',
+      avatar_style: user.avatar_style || 'bottts',
 
       avatar_seed: user.avatar_seed || null,
 

@@ -10,8 +10,8 @@ interface AvatarProps {
   className?: string;
 }
 
-export default function Avatar({ name = 'default', style = 'thumbs', seed = null, className = 'w-12 h-12' }: AvatarProps) {
-  const avatarStyle = style || 'thumbs';
+export default function Avatar({ name = 'default', style = 'bottts', seed = null, className = 'w-12 h-12' }: AvatarProps) {
+  const avatarStyle = style || 'bottts';
   // ✅ Если есть кастомный seed - используем его, иначе используем name для генерации
   const avatarSeed = seed || name || 'default';
   const avatarUrl = `https://api.dicebear.com/7.x/${avatarStyle}/svg?seed=${encodeURIComponent(avatarSeed)}`;

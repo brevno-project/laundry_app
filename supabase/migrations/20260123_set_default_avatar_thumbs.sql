@@ -1,25 +1,25 @@
-﻿-- Set default avatar style to thumbs.
+-- Set default avatar style to bottts.
 
 alter table public.students
-  alter column avatar_style set default 'thumbs';
+  alter column avatar_style set default 'bottts';
 
 alter table public.queue
-  alter column avatar_style set default 'thumbs';
+  alter column avatar_style set default 'bottts';
 
 alter table public.history
-  alter column avatar_style set default 'thumbs';
+  alter column avatar_style set default 'bottts';
 
 update public.students
-  set avatar_style = 'thumbs'
-where avatar_style is null or avatar_style = 'avataaars';
+  set avatar_style = 'bottts'
+where avatar_style is null or avatar_style in ('avataaars', 'thumbs');
 
 update public.queue
-  set avatar_style = 'thumbs'
-where avatar_style is null or avatar_style = 'avataaars';
+  set avatar_style = 'bottts'
+where avatar_style is null or avatar_style in ('avataaars', 'thumbs');
 
 update public.history
-  set avatar_style = 'thumbs'
-where avatar_style is null or avatar_style = 'avataaars';
+  set avatar_style = 'bottts'
+where avatar_style is null or avatar_style in ('avataaars', 'thumbs');
 
 create or replace function public.get_queue_active_with_avatars()
 returns table(
@@ -87,7 +87,7 @@ begin
     q.scheduled_for_date,
     q.queue_date,
     q.queue_position,
-    coalesce(s.avatar_style, 'thumbs')::text,
+    coalesce(s.avatar_style, 'bottts')::text,
     s.avatar_seed::text
   from queue q
   left join students s on q.student_id = s.id

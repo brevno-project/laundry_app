@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
         is_super_admin: false,
         can_view_students: false,
         avatar_type: "default",
-        avatar_style: "thumbs",
+        avatar_style: "bottts",
         avatar_seed: fullName.toLowerCase().replace(/\s+/g, ''),
         created_at: new Date().toISOString(),
       });

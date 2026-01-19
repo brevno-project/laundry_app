@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ✅ Получаем аватар студента из таблицы students
-    let avatarStyle = 'thumbs';
+    let avatarStyle = 'bottts';
     let avatarSeed: string | null = null;
     
     if (queueItem.student_id) {
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
         .maybeSingle();
       
       if (studentData) {
-        avatarStyle = studentData.avatar_style || 'thumbs';
+        avatarStyle = studentData.avatar_style || 'bottts';
         avatarSeed = studentData.avatar_seed || null;
       }
     }
