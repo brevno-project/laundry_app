@@ -30,12 +30,20 @@ export default function Home() {
     }
     return 'main';
   });
+  const [mountedTabs, setMountedTabs] = React.useState<Record<string, boolean>>(() => {
+    if (typeof window !== 'undefined') {
+      const savedTab = localStorage.getItem('activeTab') || 'main';
+      return { main: true, [savedTab]: true };
+    }
+    return { main: true };
+  });
   
   const [showScrollButton, setShowScrollButton] = React.useState(false);
 
   // ✅ Сохраняем activeTab в localStorage при изменении
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+    setMountedTabs((prev) => (prev[tab] ? prev : { ...prev, [tab]: true }));
     if (typeof window !== 'undefined') {
       localStorage.setItem('activeTab', tab);
     }
@@ -43,13 +51,25 @@ export default function Home() {
 
   // ✅ ТЫ FIX: Сбрасываем activeTab на 'main' когда нет пользователя
   React.useEffect(() => {
+    if (isLoading) return;
     if (!user && activeTab !== 'main') {
       setActiveTab('main');
+      setMountedTabs({ main: true });
       if (typeof window !== 'undefined') {
         localStorage.setItem('activeTab', 'main');
       }
     }
-  }, [user, activeTab]);
+  }, [user, isLoading, activeTab]);
+
+  React.useEffect(() => {
+    if (activeTab === 'students' && !canViewStudentsTab) {
+      handleTabChange('main');
+      return;
+    }
+    if (activeTab === 'settings' && !user) {
+      handleTabChange('main');
+    }
+  }, [activeTab, canViewStudentsTab, user]);
 
 
 
@@ -166,7 +186,7 @@ export default function Home() {
       )}
 
       {/* Полноэкранный баннер для подключения Telegram */}
-      <TelegramBanner onGoToSettings={() => setActiveTab('settings')} />
+      <TelegramBanner onGoToSettings={() => handleTabChange('settings')} />
       
       {/* Глобальный баннер для всех студентов в очереди */}
       <GlobalAlert />
@@ -176,8 +196,8 @@ export default function Home() {
       
       {/* Основной контент */}
       <div className="w-full">
-        {activeTab === 'main' && (
-          <div className="w-full space-y-4">
+        {mountedTabs.main && (
+          <div className={`w-full space-y-4 ${activeTab === 'main' ? '' : 'hidden'}`}>
             <TimeBanner />
             
             {/* Статус машины */}
@@ -318,29 +338,29 @@ export default function Home() {
         )}
         
         {/* История */}
-        {activeTab === 'history' && (
-          <div className="w-full space-y-4">
+        {mountedTabs.history && (
+          <div className={`w-full space-y-4 ${activeTab === 'history' ? '' : 'hidden'}`}>
             <HistoryList />
           </div>
         )}
 
         {/* Уборка */}
-        {activeTab === 'cleanup' && (
-          <div className="w-full space-y-4">
+        {mountedTabs.cleanup && (
+          <div className={`w-full space-y-4 ${activeTab === 'cleanup' ? '' : 'hidden'}`}>
             <CleanupResults embedded />
           </div>
         )}
 
         {/* Студенты - доступно админам и пользователям с can_view_students */}
-        {activeTab === 'students' && canViewStudentsTab && (
-          <div className="w-full space-y-4">
+        {mountedTabs.students && canViewStudentsTab && (
+          <div className={`w-full space-y-4 ${activeTab === 'students' ? '' : 'hidden'}`}>
             <StudentsList />
           </div>
         )}
 
         {/* Настройки */}
-        {activeTab === 'settings' && user && (
-          <div className="w-full space-y-4 px-3">
+        {mountedTabs.settings && user && (
+          <div className={`w-full space-y-4 px-3 ${activeTab === 'settings' ? '' : 'hidden'}`}>
             <AvatarCustomizer />
             <PasswordChanger />
             {!user.can_view_students && <TelegramSetup />}
@@ -350,7 +370,8 @@ export default function Home() {
               <button
                 onClick={() => {
                   logoutStudent();
-                  setActiveTab('main');
+                  handleTabChange('main');
+                  setMountedTabs({ main: true });
                   setIsNewUser(false);
                   localStorage.removeItem('needsTelegramSetup');
                 }}
