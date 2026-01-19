@@ -25,13 +25,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { mode, from, to, room, student_id } = await req.json();
+    const { mode, from, to, room, student_id, id } = await req.json();
 
     // First, count the records that will be deleted
     let countQuery = supabaseAdmin.from("history").select("id", { count: "exact", head: true });
 
     if (mode === "all") {
       // no filters
+    } else if (mode === "single") {
+      if (!id) {
+        return NextResponse.json(
+          { error: "Missing history id" },
+          { status: 400 }
+        );
+      }
+      countQuery = countQuery.eq("id", id);
     } else {
       const fromIso = parseDateRange(from, false);
       const toIso = parseDateRange(to, true);
@@ -56,6 +64,14 @@ export async function POST(req: NextRequest) {
 
     if (mode === "all") {
       // no filters
+    } else if (mode === "single") {
+      if (!id) {
+        return NextResponse.json(
+          { error: "Missing history id" },
+          { status: 400 }
+        );
+      }
+      deleteQuery = deleteQuery.eq("id", id);
     } else {
       const fromIso = parseDateRange(from, false);
       const toIso = parseDateRange(to, true);

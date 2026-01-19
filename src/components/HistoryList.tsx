@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import Avatar from '@/components/Avatar';
 import Timer from './Timer';
-import { HistoryIcon, ClockIcon, CheckIcon, MoneyIcon, TicketIcon, WashingIcon } from './Icons';
+import { HistoryIcon, ClockIcon, CheckIcon, MoneyIcon, TicketIcon, WashingIcon, DeleteIcon } from './Icons';
 import { supabase } from '@/lib/supabase';
 
 const formatTime = (dateStr?: string | null) => {
@@ -148,6 +148,30 @@ export default function HistoryList() {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Ошибка очистки истории';
       setClearNotice(message);
+    } finally {
+      setClearing(false);
+    }
+  };
+
+  const clearHistoryItem = async (historyId: string) => {
+    if (clearing) return;
+    const confirmed = confirm('Удалить эту запись истории?');
+    if (!confirmed) return;
+    setClearing(true);
+    try {
+      const response = await authedFetch('/api/admin/history/clear', {
+        method: 'POST',
+        body: JSON.stringify({ mode: 'single', id: historyId }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка удаления записи');
+      }
+      await fetchHistory();
+      alert(`Удалено ✅`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Ошибка удаления записи';
+      alert(`Ошибка: ${message} ✅`);
     } finally {
       setClearing(false);
     }
@@ -307,6 +331,15 @@ export default function HistoryList() {
                     </p>
                   </div>
                 </div>
+                {isSuperAdmin && (
+                  <button
+                    onClick={() => clearHistoryItem(item.id)}
+                    className="flex items-center gap-2 rounded-lg border border-rose-200 bg-white/70 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50"
+                  >
+                    <DeleteIcon className="w-4 h-4" />
+                    Удалить
+                  </button>
+                )}
               </div>
 
               <div className="space-y-3">
