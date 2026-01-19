@@ -88,12 +88,12 @@ export default function HistoryList() {
 
   const authedFetch = async (url: string, options: RequestInit = {}) => {
     if (!supabase) {
-      throw new Error('Supabase ?? ????????');
+      throw new Error('Supabase не настроен');
     }
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     if (!token) {
-      throw new Error('??? ???????? ??????');
+      throw new Error('Нет активной сессии');
     }
     return fetch(url, {
       ...options,
@@ -120,14 +120,14 @@ export default function HistoryList() {
           };
 
     if (mode === 'range' && !payload.from && !payload.to && !payload.room) {
-      setClearNotice('??????? ?????? ??? ??????? ??? ?????????? ???????.');
+      setClearNotice('Укажите период или комнату для выборочной очистки.');
       return;
     }
 
     const confirmText =
       mode === 'all'
-        ? '???????? ??? ??????? ???????'
-        : '???????? ????????? ?????? ????????';
+        ? 'Очистить всю историю стирок?'
+        : 'Очистить выбранные записи истории?';
     if (!confirm(confirmText)) return;
 
     setClearing(true);
@@ -138,15 +138,15 @@ export default function HistoryList() {
       });
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || '?????? ??????? ???????');
+        throw new Error(result.error || 'Ошибка очистки истории');
       }
       await fetchHistory();
-      setClearNotice(`??????? ???????: ${result.count ?? 0}`);
+      setClearNotice(`Удалено записей: ${result.count ?? 0}`);
       setClearFrom('');
       setClearTo('');
       setClearRoom('');
     } catch (error) {
-      const message = error instanceof Error ? error.message : '?????? ??????? ???????';
+      const message = error instanceof Error ? error.message : 'Ошибка очистки истории';
       setClearNotice(message);
     } finally {
       setClearing(false);
@@ -189,7 +189,7 @@ export default function HistoryList() {
               }}
               className="rounded-xl border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition"
             >
-              {showClearTools ? '?????? ???????' : '??????? ???????'}
+              {showClearTools ? 'Скрыть очистку' : 'Очистка истории'}
             </button>
           )}
         </div>
@@ -198,7 +198,7 @@ export default function HistoryList() {
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-600">?</label>
+              <label className="text-xs font-semibold text-slate-600">С</label>
               <input
                 type="date"
                 value={clearFrom}
@@ -207,7 +207,7 @@ export default function HistoryList() {
               />
             </div>
             <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-600">??</label>
+              <label className="text-xs font-semibold text-slate-600">По</label>
               <input
                 type="date"
                 value={clearTo}
@@ -216,12 +216,12 @@ export default function HistoryList() {
               />
             </div>
             <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-600">???????</label>
+              <label className="text-xs font-semibold text-slate-600">Комната</label>
               <input
                 type="text"
                 value={clearRoom}
                 onChange={(event) => setClearRoom(event.target.value)}
-                placeholder="???????? A301"
+                placeholder="Например A301"
                 className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
               />
             </div>
@@ -230,14 +230,14 @@ export default function HistoryList() {
               disabled={clearing}
               className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-950 disabled:opacity-70"
             >
-              ???????? ?????????
+              Очистить выборочно
             </button>
             <button
               onClick={() => clearHistory('all')}
               disabled={clearing}
               className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-70"
             >
-              ???????? ???
+              Очистить всё
             </button>
           </div>
           {clearNotice && (
