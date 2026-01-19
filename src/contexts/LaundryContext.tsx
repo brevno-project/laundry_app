@@ -1983,12 +1983,9 @@ const loginStudent = async (
   const logoutStudent = async () => {
     try {
       if (supabase) {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData.session?.access_token) {
-          const { error } = await supabase.auth.signOut({ scope: 'local' });
-          if (error) {
-            console.warn('?? SignOut error:', error);
-          }
+        const { error } = await supabase.auth.signOut({ scope: 'local' });
+        if (error) {
+          console.warn('?? SignOut error:', error);
         }
       }
     } catch (error) {
@@ -2004,8 +2001,15 @@ const loginStudent = async (
       setIsCleanupAdmin(false);
 
       setIsNewUser(false);
+      setNeedsClaim(false);
+      setQueue([]);
+      setHistory([]);
+      setHistoryHasMore(false);
+      setStudents([]);
+      setMachineState(get_local_machine_state());
+      setIsLoading(false);
 
-      
+
 
       // ? Безопасная очистка localStorage
 
@@ -2014,60 +2018,6 @@ const loginStudent = async (
         localStorage.removeItem('laundryUser');
 
         localStorage.removeItem('laundryIsNewUser');
-
-        
-
-        // ? Очистка ВСЕХ Supabase данных (более агрессивно)
-
-        Object.keys(localStorage).forEach(key => {
-
-          if (key.startsWith('supabase.') || key.includes('supabase')) {
-
-            localStorage.removeItem(key);
-
-            console.log('??? Removed localStorage key:', key);
-
-          }
-
-        });
-
-        
-
-        // ? Очистка sessionStorage
-
-        Object.keys(sessionStorage).forEach(key => {
-
-          if (key.startsWith('supabase.') || key.includes('supabase')) {
-
-            sessionStorage.removeItem(key);
-
-            console.log('??? Removed sessionStorage key:', key);
-
-          }
-
-        });
-
-
-
-        // ? Очистка возможных IndexedDB кэшей
-
-        if (window.indexedDB) {
-
-          const databases = await indexedDB.databases();
-
-          for (const db of databases) {
-
-            if (db.name && db.name.includes('supabase')) {
-
-              await indexedDB.deleteDatabase(db.name);
-
-              console.log('??? Deleted IndexedDB:', db.name);
-
-            }
-
-          }
-
-        }
 
       } catch (error) {
 
@@ -2080,14 +2030,6 @@ const loginStudent = async (
       console.log('? User logged out successfully');
 
       
-
-      // ? Пересоздаем Supabase клиент для полной очистки
-
-      if (typeof window !== 'undefined') {
-
-        window.location.reload();
-
-      }
 
     }
 

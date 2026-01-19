@@ -11,15 +11,15 @@ alter table public.history
 
 update public.students
   set avatar_style = 'thumbs'
-where avatar_style is null;
+where avatar_style is null or avatar_style = 'avataaars';
 
 update public.queue
   set avatar_style = 'thumbs'
-where avatar_style is null;
+where avatar_style is null or avatar_style = 'avataaars';
 
 update public.history
   set avatar_style = 'thumbs'
-where avatar_style is null;
+where avatar_style is null or avatar_style = 'avataaars';
 
 create or replace function public.get_queue_active_with_avatars()
 returns table(

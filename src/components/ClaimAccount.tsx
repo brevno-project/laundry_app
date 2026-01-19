@@ -8,7 +8,7 @@ export default function ClaimAccount() {
   const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { user } = useLaundry();
+  const { user, refreshMyRole, fetchQueue, setNeedsClaim } = useLaundry();
 
   const handleClaim = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +61,9 @@ export default function ClaimAccount() {
       }
 
       // Успешно привязали - перезагружаем страницу для обновления данных
-      window.location.reload();
+      await refreshMyRole();
+      setNeedsClaim(false);
+      await fetchQueue();
 
     } catch (err: any) {
       setError(err.message || 'Ошибка сети');

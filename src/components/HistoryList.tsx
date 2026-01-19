@@ -320,9 +320,6 @@ export default function HistoryList() {
                       seed={item.avatar_seed}
                       className="w-12 h-12 ring-4 ring-white shadow-md"
                     />
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center shadow-md">
-                      <CheckIcon className="w-3.5 h-3.5 text-white" />
-                    </div>
                   </div>
                   <div>
                     <h3 className="font-bold text-gray-900 text-lg">{item.full_name}</h3>
