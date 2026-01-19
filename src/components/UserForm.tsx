@@ -109,6 +109,35 @@ export default function UserForm() {
   }, [user?.student_id, selectedDate]);
 
   useEffect(() => {
+    if (!supabase || !user?.student_id) return;
+    loadCoupons();
+  }, [existingQueueItem?.id, existingQueueItem?.status]);
+
+  useEffect(() => {
+    if (!supabase || !user?.student_id) return;
+
+    const channel = supabase
+      .channel(`coupons-updates-${user.student_id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'coupons',
+          filter: `owner_student_id=eq.${user.student_id}`,
+        },
+        () => {
+          loadCoupons();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.student_id, selectedDate]);
+
+  useEffect(() => {
     const maxCoupons = Math.min(availableCoupons, washCount);
     if (couponsToUse > maxCoupons) {
       setCouponsToUse(maxCoupons);
@@ -124,6 +153,7 @@ export default function UserForm() {
       // ✅ Передаем выбранную дату в joinQueue (без expectedFinishAt)
       try {
         await joinQueue(user.full_name, user.room, washCount, couponsToUse, undefined, selectedDate);
+        await loadCoupons();
       } catch (error: any) {
         alert(error?.message || 'Не удалось встать в очередь');
       }

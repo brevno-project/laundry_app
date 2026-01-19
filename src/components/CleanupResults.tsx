@@ -311,6 +311,8 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [schedules, setSchedules] = useState<CleanupSchedule[]>([]);
   const [announcers, setAnnouncers] = useState<Record<string, string>>({});
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [showAllCoupons, setShowAllCoupons] = useState(false);
+  const [showCouponList, setShowCouponList] = useState(false);
   const [transfers, setTransfers] = useState<CouponTransfer[]>([]);
   const [transferNames, setTransferNames] = useState<Record<string, string>>({});
   const [recipients, setRecipients] = useState<Student[]>([]);
@@ -1248,6 +1250,32 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     return !isUsed && !coupon.reserved_queue_id && !isExpired;
   });
 
+  const couponStats = coupons.reduce(
+    (acc, coupon) => {
+      const isExpired = new Date(coupon.expires_at).getTime() <= Date.now();
+      const isUsed = !!coupon.used_at || !!coupon.used_in_queue_id;
+      if (isUsed) {
+        acc.used += 1;
+      } else if (isExpired) {
+        acc.expired += 1;
+      } else if (coupon.reserved_queue_id) {
+        acc.reserved += 1;
+      } else {
+        acc.active += 1;
+      }
+      return acc;
+    },
+    { active: 0, reserved: 0, used: 0, expired: 0 }
+  );
+
+  const visibleCoupons = showAllCoupons
+    ? coupons
+    : coupons.filter((coupon) => {
+        const isExpired = new Date(coupon.expires_at).getTime() <= Date.now();
+        const isUsed = !!coupon.used_at || !!coupon.used_in_queue_id;
+        return !isExpired && !isUsed;
+      });
+
   const scheduleBlocks = (isSuperAdmin
     ? ["A", "B"]
     : adminBlock
@@ -1451,35 +1479,75 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               {coupons.length === 0 ? (
                 <p className="text-sm text-gray-500">Пока нет купонов.</p>
               ) : (
-                <div className="space-y-2">
-                  {coupons.map((coupon) => {
-                    const isExpired = new Date(coupon.expires_at).getTime() <= Date.now();
-                    const isUsed = !!coupon.used_at || !!coupon.used_in_queue_id;
-                    const status = isUsed
-                      ? "Использован"
-                      : coupon.reserved_queue_id
-                        ? "В очереди"
-                        : isExpired
-                          ? "Сгорел"
-                          : "Активен";
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-700">
+                    <span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
+                      Активные: {couponStats.active}
+                    </span>
+                    <span className="rounded-full bg-blue-50 px-2 py-1 text-blue-700">
+                      В очереди: {couponStats.reserved}
+                    </span>
+                    <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-700">
+                      Использованы: {couponStats.used}
+                    </span>
+                    <span className="rounded-full bg-amber-50 px-2 py-1 text-amber-700">
+                      Сгорели: {couponStats.expired}
+                    </span>
+                  </div>
 
-                    return (
-                      <div
-                        key={coupon.id}
-                        className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm text-gray-700"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold">{status}</span>
-                          <span className="text-xs text-gray-500">
-                            До: {formatDateTime(coupon.expires_at)}
-                          </span>
-                        </div>
-                        {coupon.note && (
-                          <p className="text-xs text-gray-500 mt-1">{coupon.note}</p>
-                        )}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAllCoupons((prev) => !prev)}
+                      className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                    >
+                      {showAllCoupons ? "Скрыть неактивные" : "Показать все"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowCouponList((prev) => !prev)}
+                      className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                    >
+                      {showCouponList ? "Свернуть список" : `Показать список (${visibleCoupons.length})`}
+                    </button>
+                  </div>
+
+                  {showCouponList && (
+                    visibleCoupons.length === 0 ? (
+                      <p className="text-sm text-gray-500">Нет купонов для показа.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {visibleCoupons.map((coupon) => {
+                          const isExpired = new Date(coupon.expires_at).getTime() <= Date.now();
+                          const isUsed = !!coupon.used_at || !!coupon.used_in_queue_id;
+                          const status = isUsed
+                            ? "Использован"
+                            : coupon.reserved_queue_id
+                              ? "В очереди"
+                              : isExpired
+                                ? "Сгорел"
+                                : "Активен";
+
+                          return (
+                            <div
+                              key={coupon.id}
+                              className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm text-gray-700"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-semibold">{status}</span>
+                                <span className="text-xs text-gray-500">
+                                  До: {formatDateTime(coupon.expires_at)}
+                                </span>
+                              </div>
+                              {coupon.note && (
+                                <p className="text-xs text-gray-500 mt-1">{coupon.note}</p>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
+                    )
+                  )}
                 </div>
               )}
             </div>

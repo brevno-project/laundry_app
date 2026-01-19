@@ -76,7 +76,7 @@ const getPaymentLabel = (paymentType?: string | null, couponsUsed?: number | nul
 };
 
 export default function HistoryList() {
-  const { history, historyHasMore, loadMoreHistory } = useLaundry();
+  const { history, historyTotalCount, historyHasMore, loadMoreHistory } = useLaundry();
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   if (history.length === 0) {
@@ -103,7 +103,7 @@ export default function HistoryList() {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-white">История</h2>
-              <p className="text-slate-300 text-sm">{history.length} записей о стирках</p>
+              <p className="text-slate-300 text-sm">Всего стирок: {historyTotalCount}</p>
             </div>
           </div>
         </div>
@@ -279,7 +279,7 @@ export default function HistoryList() {
           disabled={isLoadingMore}
         >
           <span className="text-lg">
-            {isLoadingMore ? 'Загрузка...' : 'Загрузить еще 100'}
+            {isLoadingMore ? 'Загрузка...' : 'Загрузить еще 50'}
           </span>
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
