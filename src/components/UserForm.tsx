@@ -133,7 +133,7 @@ export default function UserForm() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase?.removeChannel(channel);
     };
   }, [user?.student_id, selectedDate]);
 
