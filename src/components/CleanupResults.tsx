@@ -1244,7 +1244,8 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
   const transferableCoupons = coupons.filter((coupon) => {
     const isExpired = new Date(coupon.expires_at).getTime() <= Date.now();
-    return !coupon.used_in_queue_id && !coupon.reserved_queue_id && !isExpired;
+    const isUsed = !!coupon.used_at || !!coupon.used_in_queue_id;
+    return !isUsed && !coupon.reserved_queue_id && !isExpired;
   });
 
   const scheduleBlocks = (isSuperAdmin
@@ -1453,7 +1454,8 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 <div className="space-y-2">
                   {coupons.map((coupon) => {
                     const isExpired = new Date(coupon.expires_at).getTime() <= Date.now();
-                    const status = coupon.used_in_queue_id
+                    const isUsed = !!coupon.used_at || !!coupon.used_in_queue_id;
+                    const status = isUsed
                       ? "Использован"
                       : coupon.reserved_queue_id
                         ? "В очереди"

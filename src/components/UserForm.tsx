@@ -81,6 +81,7 @@ export default function UserForm() {
       .select('id, issued_at, expires_at')
       .eq('owner_student_id', user.student_id)
       .is('reserved_queue_id', null)
+      .is('used_at', null)
       .is('used_in_queue_id', null)
       .gt('expires_at', now.toISOString());
 

@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
       await supabaseAdmin
         .from("coupons")
         .update({ reserved_queue_id: null, reserved_at: null })
+        .is("used_at", null)
         .is("used_in_queue_id", null)
         .not("reserved_queue_id", "is", null);
 
@@ -46,6 +47,7 @@ export async function POST(req: NextRequest) {
         await supabaseAdmin
           .from("coupons")
           .update({ reserved_queue_id: null, reserved_at: null })
+          .is("used_at", null)
           .is("used_in_queue_id", null)
           .in("reserved_queue_id", doneItems.map((item) => item.id));
       }
@@ -86,6 +88,7 @@ export async function POST(req: NextRequest) {
         await supabaseAdmin
           .from("coupons")
           .update({ reserved_queue_id: null, reserved_at: null })
+          .is("used_at", null)
           .is("used_in_queue_id", null)
           .in("reserved_queue_id", oldItems.map((item) => item.id));
       }
@@ -124,6 +127,7 @@ export async function POST(req: NextRequest) {
         await supabaseAdmin
           .from("coupons")
           .update({ reserved_queue_id: null, reserved_at: null })
+          .is("used_at", null)
           .is("used_in_queue_id", null)
           .in("reserved_queue_id", stuckItems.map((item) => item.id));
       }

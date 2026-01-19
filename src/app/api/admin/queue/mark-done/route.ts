@@ -103,6 +103,7 @@ export async function POST(req: NextRequest) {
         .from("coupons")
         .select("id")
         .eq("reserved_queue_id", queue_item_id)
+        .is("used_at", null)
         .is("used_in_queue_id", null)
         .order("expires_at", { ascending: true })
         .order("issued_at", { ascending: true });
@@ -129,6 +130,7 @@ export async function POST(req: NextRequest) {
           .from("coupons")
           .update({ reserved_queue_id: null, reserved_at: null })
           .in("id", reservedToRelease)
+          .is("used_at", null)
           .is("used_in_queue_id", null);
       }
 
@@ -142,6 +144,7 @@ export async function POST(req: NextRequest) {
             reserved_at: null,
           })
           .in("id", reservedToUse)
+          .is("used_at", null)
           .is("used_in_queue_id", null);
       }
 
@@ -152,6 +155,7 @@ export async function POST(req: NextRequest) {
           .select("id")
           .eq("owner_student_id", queueItem.student_id)
           .is("reserved_queue_id", null)
+          .is("used_at", null)
           .is("used_in_queue_id", null)
           .gt("expires_at", now)
           .order("expires_at", { ascending: true })
@@ -169,6 +173,7 @@ export async function POST(req: NextRequest) {
               reserved_at: null,
             })
             .in("id", fallbackIds)
+            .is("used_at", null)
             .is("used_in_queue_id", null);
         }
       }
@@ -177,6 +182,7 @@ export async function POST(req: NextRequest) {
         .from("coupons")
         .update({ reserved_queue_id: null, reserved_at: null })
         .eq("reserved_queue_id", queue_item_id)
+        .is("used_at", null)
         .is("used_in_queue_id", null);
     }
 

@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
       .from("coupons")
       .update({ reserved_queue_id: null, reserved_at: null })
       .eq("reserved_queue_id", queue_item_id)
+      .is("used_at", null)
       .is("used_in_queue_id", null);
 
     const { error: deleteError } = await supabaseAdmin
