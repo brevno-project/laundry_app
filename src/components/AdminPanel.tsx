@@ -415,9 +415,9 @@ export default function AdminPanel() {
                         )}
 
                         {student.is_cleanup_admin && (
-                          <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700">
-                            Лидер уборки
-                          </span>
+                            <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700">
+                              Лидер
+                            </span>
                         )}
                       </div>
                     </div>
@@ -507,7 +507,7 @@ export default function AdminPanel() {
                   htmlFor="adminEditCleanupAdmin"
                   className="text-sm font-semibold text-gray-900"
                 >
-                  Лидер уборки
+                  Лидер
                 </label>
               </div>
             )}

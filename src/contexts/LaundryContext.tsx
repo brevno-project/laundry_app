@@ -158,7 +158,15 @@ type LaundryContextType = {
 
   linkTelegram: (telegramCode: string) => Promise<{ success: boolean; error?: string }>;
 
-  joinQueue: (name: string, room?: string, washCount?: number, couponsUsed?: number, expectedFinishAt?: string, chosenDate?: string) => Promise<void>;
+  joinQueue: (
+    name: string,
+    room?: string,
+    washCount?: number,
+    couponsUsed?: number,
+    expectedFinishAt?: string,
+    chosenDate?: string,
+    couponIds?: string[]
+  ) => Promise<void>;
 
   leaveQueue: (queueItemId: string) => void;
 
@@ -972,9 +980,9 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
     const client = supabase;
 
-    const isAdminUser = !!(isAdmin || isSuperAdmin || isCleanupAdmin);
+    const isAdminUser = !!(isAdmin || isSuperAdmin);
 
-    const canViewStudents = !!(isAdminUser || user?.can_view_students);
+    const canViewStudents = !!(isAdminUser || isCleanupAdmin || user?.can_view_students);
 
 
 
@@ -2626,7 +2634,9 @@ const joinQueue = async (
 
   expectedFinishAt?: string,
 
-  chosenDate?: string
+  chosenDate?: string,
+
+  couponIds: string[] = []
 
 ) => {
 
@@ -2816,7 +2826,14 @@ const joinQueue = async (
 
   const targetDate = chosenDate || todayISO;
 
-  const safeCouponsUsed = Math.max(0, Math.min(couponsUsed, washCount));
+  const normalizedCouponIds = Array.isArray(couponIds)
+    ? Array.from(new Set(couponIds.filter(Boolean)))
+    : [];
+  const selectedCouponIds = normalizedCouponIds.slice(0, washCount);
+  const safeCouponsUsed = Math.max(
+    0,
+    Math.min(selectedCouponIds.length > 0 ? selectedCouponIds.length : couponsUsed, washCount)
+  );
 
   const derivedPaymentType =
 
@@ -2970,13 +2987,15 @@ const joinQueue = async (
 
     if (safeCouponsUsed > 0) {
 
-      const { error: reserveError } = await supabase.rpc('reserve_coupons_for_queue', {
-
-        p_queue_id: newItem.id,
-
-        p_count: safeCouponsUsed,
-
-      });
+      const reserveFn =
+        selectedCouponIds.length > 0
+          ? 'reserve_specific_coupons_for_queue'
+          : 'reserve_coupons_for_queue';
+      const reservePayload =
+        selectedCouponIds.length > 0
+          ? { p_queue_id: newItem.id, p_coupon_ids: selectedCouponIds }
+          : { p_queue_id: newItem.id, p_count: safeCouponsUsed };
+      const { error: reserveError } = await supabase.rpc(reserveFn, reservePayload);
 
 
 

@@ -225,9 +225,9 @@ export default function ActionMenu({
                   {!student.is_super_admin && student.is_admin && (
                     <Badge color="indigo">Админ</Badge>
                   )}
-                  {student.is_cleanup_admin && (
-                    <Badge color="blue">Лидер уборки</Badge>
-                  )}
+                    {student.is_cleanup_admin && (
+                      <Badge color="blue">Лидер</Badge>
+                    )}
                   {student.is_registered && <Badge color="green">Зарегистрирован</Badge>}
                   {student.is_banned && <Badge color="red">Забанен</Badge>}
                   {hasTelegram && <Badge color="blue">Telegram</Badge>}

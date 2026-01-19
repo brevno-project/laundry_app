@@ -5,10 +5,40 @@ import { useLaundry } from '@/contexts/LaundryContext';
 import { supabase } from '@/lib/supabase';
 import { CalendarIcon, MoneyIcon, TicketIcon } from '@/components/Icons';
 
+type CouponOption = {
+  id: string;
+  issued_at: string;
+  expires_at: string;
+};
+
+const PERMANENT_COUPON_YEARS = 5;
+
+const formatCouponDateTime = (dateStr: string) =>
+  new Date(dateStr).toLocaleString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+const isPermanentCoupon = (coupon: CouponOption) => {
+  const expiresAt = new Date(coupon.expires_at).getTime();
+  if (Number.isNaN(expiresAt)) return false;
+  const issuedAt = new Date(coupon.issued_at).getTime();
+  const baseTime = Number.isNaN(issuedAt) ? Date.now() : issuedAt;
+  const thresholdMs = PERMANENT_COUPON_YEARS * 365 * 24 * 60 * 60 * 1000;
+  return expiresAt - baseTime >= thresholdMs;
+};
+
+const formatCouponLabel = (coupon: CouponOption) =>
+  isPermanentCoupon(coupon) ? 'Бессрочный' : `До ${formatCouponDateTime(coupon.expires_at)}`;
+
 export default function UserForm() {
-  const { user, joinQueue, logoutStudent, getUserQueueItem, queue } = useLaundry();
+  const { user, joinQueue, getUserQueueItem, queue } = useLaundry();
   const [washCount, setWashCount] = useState<number>(1);
-  const [couponsToUse, setCouponsToUse] = useState<number>(0);
+  const [eligibleCoupons, setEligibleCoupons] = useState<CouponOption[]>([]);
+  const [selectedCouponIds, setSelectedCouponIds] = useState<string[]>([]);
+  const [reservedCoupons, setReservedCoupons] = useState<CouponOption[]>([]);
   const [availableCoupons, setAvailableCoupons] = useState<number>(0);
   const [activeCoupons, setActiveCoupons] = useState<number>(0);
   const [couponNotice, setCouponNotice] = useState<string | null>(null);
@@ -20,6 +50,7 @@ export default function UserForm() {
   
   const queuePosition = existingQueueItem ? queue.findIndex(item => item.id === existingQueueItem.id) + 1 : 0;
   const maxCoupons = Math.min(availableCoupons, washCount);
+  const selectedCouponCount = selectedCouponIds.length;
 
   // ✅ Устанавливаем сегодняшнюю дату по умолчанию
   useEffect(() => {
@@ -69,6 +100,8 @@ export default function UserForm() {
 
   const loadCoupons = async () => {
     if (!supabase || !user?.student_id || !selectedDate) {
+      setEligibleCoupons([]);
+      setSelectedCouponIds([]);
       setAvailableCoupons(0);
       setActiveCoupons(0);
       setCouponNotice(null);
@@ -83,9 +116,12 @@ export default function UserForm() {
       .is('reserved_queue_id', null)
       .is('used_at', null)
       .is('used_in_queue_id', null)
-      .gt('expires_at', now.toISOString());
+      .gt('expires_at', now.toISOString())
+      .order('expires_at', { ascending: true });
 
     if (error) {
+      setEligibleCoupons([]);
+      setSelectedCouponIds([]);
       setAvailableCoupons(0);
       setActiveCoupons(0);
       setCouponNotice(null);
@@ -95,8 +131,11 @@ export default function UserForm() {
     const active = (data || []);
     const eligible = active.filter((coupon) => isCouponValidForDate(coupon, selectedDate, now));
 
+    setEligibleCoupons(eligible);
     setActiveCoupons(active.length);
     setAvailableCoupons(eligible.length);
+    const eligibleIds = new Set(eligible.map((coupon) => coupon.id));
+    setSelectedCouponIds((prev) => prev.filter((id) => eligibleIds.has(id)));
     setCouponNotice(
       active.length > 0 && eligible.length === 0
         ? 'Купоны недоступны на выбранную дату.'
@@ -104,13 +143,39 @@ export default function UserForm() {
     );
   };
 
+  const loadReservedCoupons = async () => {
+    if (!supabase || !user?.student_id || !existingQueueItem?.id) {
+      setReservedCoupons([]);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('coupons')
+      .select('id, issued_at, expires_at')
+      .eq('owner_student_id', user.student_id)
+      .eq('reserved_queue_id', existingQueueItem.id)
+      .order('expires_at', { ascending: true });
+
+    if (error) {
+      setReservedCoupons([]);
+      return;
+    }
+
+    setReservedCoupons(data || []);
+  };
+
   useEffect(() => {
     loadCoupons();
   }, [user?.student_id, selectedDate]);
 
   useEffect(() => {
+    loadReservedCoupons();
+  }, [existingQueueItem?.id, user?.student_id]);
+
+  useEffect(() => {
     if (!supabase || !user?.student_id) return;
     loadCoupons();
+    loadReservedCoupons();
   }, [existingQueueItem?.id, existingQueueItem?.status]);
 
   useEffect(() => {
@@ -128,6 +193,7 @@ export default function UserForm() {
         },
         () => {
           loadCoupons();
+          loadReservedCoupons();
         }
       )
       .subscribe();
@@ -138,11 +204,23 @@ export default function UserForm() {
   }, [user?.student_id, selectedDate]);
 
   useEffect(() => {
-    const maxCoupons = Math.min(availableCoupons, washCount);
-    if (couponsToUse > maxCoupons) {
-      setCouponsToUse(maxCoupons);
+    const maxAllowed = Math.min(availableCoupons, washCount);
+    if (selectedCouponIds.length > maxAllowed) {
+      setSelectedCouponIds((prev) => prev.slice(0, maxAllowed));
     }
-  }, [availableCoupons, washCount, couponsToUse]);
+  }, [availableCoupons, washCount, selectedCouponIds.length]);
+
+  const toggleCouponSelection = (couponId: string) => {
+    setSelectedCouponIds((prev) => {
+      if (prev.includes(couponId)) {
+        return prev.filter((id) => id !== couponId);
+      }
+      if (prev.length >= maxCoupons) {
+        return prev;
+      }
+      return [...prev, couponId];
+    });
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -152,7 +230,16 @@ export default function UserForm() {
       
       // ✅ Передаем выбранную дату в joinQueue (без expectedFinishAt)
       try {
-        await joinQueue(user.full_name, user.room, washCount, couponsToUse, undefined, selectedDate);
+        await joinQueue(
+          user.full_name,
+          user.room,
+          washCount,
+          selectedCouponCount,
+          undefined,
+          selectedDate,
+          selectedCouponIds
+        );
+        setSelectedCouponIds([]);
         await loadCoupons();
       } catch (error: any) {
         alert(error?.message || 'Не удалось встать в очередь');
@@ -235,7 +322,7 @@ export default function UserForm() {
               </div>
 
               <div className="mb-4">
-                <label htmlFor="couponsToUse" className="block text-sm font-bold mb-2 text-gray-700">
+                <label className="block text-sm font-bold mb-2 text-gray-700">
                   Купоны
                 </label>
                 <p className="text-xs text-gray-500 mb-2">
@@ -244,24 +331,44 @@ export default function UserForm() {
                 {couponNotice && (
                   <p className="text-xs text-red-500 mb-2">{couponNotice}</p>
                 )}
-                <select
-                  id="couponsToUse"
-                  value={couponsToUse}
-                  onChange={(e) => setCouponsToUse(Number(e.target.value))}
-                  disabled={maxCoupons === 0}
-                  className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 disabled:bg-gray-100"
-                >
-                  {Array.from({ length: maxCoupons + 1 }, (_, i) => i).map((num) => (
-                    <option key={num} value={num}>
-                      {num}
-                    </option>
-                  ))}
-                </select>
+                {eligibleCoupons.length === 0 ? (
+                  <p className="text-xs text-gray-500">Нет доступных купонов.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {eligibleCoupons.map((coupon) => {
+                      const isSelected = selectedCouponIds.includes(coupon.id);
+                      const isLimitReached =
+                        !isSelected && selectedCouponIds.length >= maxCoupons;
+                      return (
+                        <label
+                          key={coupon.id}
+                          className="flex items-center justify-between gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+                        >
+                          <span className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleCouponSelection(coupon.id)}
+                              disabled={isLimitReached}
+                              className="h-4 w-4"
+                            />
+                            <span className="font-medium">{formatCouponLabel(coupon)}</span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+                {maxCoupons > 0 && (
+                  <p className="mt-2 text-xs text-gray-500">
+                    Можно выбрать до {maxCoupons} купонов.
+                  </p>
+                )}
                 <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  {couponsToUse > 0 ? (
+                  {selectedCouponCount > 0 ? (
                     <>
                       <TicketIcon className="w-4 h-4 text-purple-600" />
-                      {couponsToUse >= washCount ? 'Оплата купонами' : 'Купоны + деньги'}
+                      {selectedCouponCount >= washCount ? 'Оплата купонами' : 'Купоны + деньги'}
                     </>
                   ) : (
                     <>
@@ -301,6 +408,14 @@ export default function UserForm() {
                     month: 'numeric'
                   })}
                 </p>
+              )}
+              {(existingQueueItem?.coupons_used ?? 0) > 0 && (
+                <div className="text-blue-600 text-center mt-2 text-sm">
+                  <span className="font-semibold">Купоны:</span>{' '}
+                  {reservedCoupons.length > 0
+                    ? reservedCoupons.map((coupon) => formatCouponLabel(coupon)).join(', ')
+                    : existingQueueItem?.coupons_used}
+                </div>
               )}
             </div>
           )}

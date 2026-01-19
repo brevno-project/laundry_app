@@ -42,10 +42,20 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Not allowed" }, { status: 403 });
   }
 
-  const { data, error } = await supabaseAdmin
+  const isCleanupOnly =
+    requester.is_cleanup_admin && !requester.is_admin && !requester.is_super_admin;
+
+  let query = supabaseAdmin
     .from("students")
-    .select("id, first_name, last_name, middle_name, full_name, room, avatar_type, telegram_chat_id, is_registered, is_banned, is_admin, is_super_admin, is_cleanup_admin, can_view_students, key_issued, key_lost")
-    .order("full_name", { ascending: true });
+    .select(
+      "id, first_name, last_name, middle_name, full_name, room, avatar_type, telegram_chat_id, is_registered, is_banned, is_admin, is_super_admin, is_cleanup_admin, can_view_students, key_issued, key_lost"
+    );
+
+  if (isCleanupOnly) {
+    query = query.or(`id.eq.${requester.id},is_super_admin.eq.true`);
+  }
+
+  const { data, error } = await query.order("full_name", { ascending: true });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

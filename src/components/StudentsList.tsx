@@ -155,9 +155,9 @@ export default function StudentsList() {
                       </span>
                     )}
                     {isSuperAdmin && student.is_cleanup_admin && (
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-700">
-                        Лидер уборки
-                      </span>
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-700">
+                          Лидер
+                        </span>
                     )}
                     {isSuperAdmin && (
                       <span className={`rounded-full px-2 py-0.5 ${student.can_view_students ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-500"}`}>
@@ -253,9 +253,9 @@ export default function StudentsList() {
                       </span>
                     )}
                     {isSuperAdmin && student.is_cleanup_admin && (
-                      <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-amber-700">
-                        Лидер уборки
-                      </span>
+                        <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-amber-700">
+                          Лидер
+                        </span>
                     )}
                     {isSuperAdmin && (
                       <span className={`rounded-full px-1.5 py-0.5 ${student.can_view_students ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-500"}`}>
@@ -540,7 +540,7 @@ export default function StudentsList() {
                     htmlFor="cleanupAdmin"
                     className="text-sm font-semibold text-gray-900 cursor-pointer"
                   >
-                    Лидер уборки
+                      Лидер
                   </label>
                 </div>
               )}
