@@ -3,7 +3,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import { supabase } from '@/lib/supabase';
-import { CalendarIcon, MoneyIcon, TicketIcon } from '@/components/Icons';
+import { CalendarIcon, MoneyIcon, TicketIcon, WashingSpinner } from '@/components/Icons';
 
 type CouponOption = {
   id: string;
@@ -385,9 +385,15 @@ export default function UserForm() {
                 className="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-blue-700 transition-colors shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (
-                  <>Добавление...</>
+                  <>
+                    <WashingSpinner className="w-4 h-4" />
+                    <span>Добавление...</span>
+                  </>
                 ) : (
-                  <><CalendarIcon className="w-5 h-5" />Встать в очередь</>
+                  <>
+                    <CalendarIcon className="w-5 h-5" />
+                    Встать в очередь
+                  </>
                 )}
               </button>
             </>

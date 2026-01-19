@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import Avatar from '@/components/Avatar';
 import Timer from './Timer';
-import { HistoryIcon, ClockIcon, CheckIcon, MoneyIcon, TicketIcon, WashingIcon, DeleteIcon } from './Icons';
+import { HistoryIcon, ClockIcon, CheckIcon, MoneyIcon, TicketIcon, WashingIcon, DeleteIcon, WashingSpinner } from './Icons';
 import { supabase } from '@/lib/supabase';
 
 const formatTime = (dateStr?: string | null) => {
@@ -445,7 +445,14 @@ export default function HistoryList() {
           disabled={isLoadingMore}
         >
           <span className="text-lg">
-            {isLoadingMore ? 'Загрузка...' : 'Загрузить еще 50'}
+            {isLoadingMore ? (
+              <>
+                <WashingSpinner className="w-5 h-5" />
+                <span>Загрузка...</span>
+              </>
+            ) : (
+              <>Загрузить еще 50</>
+            )}
           </span>
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import Avatar from '@/components/Avatar';
-import { CheckIcon, CloseIcon } from '@/components/Icons';
+import { CheckIcon, CloseIcon, WashingSpinner } from '@/components/Icons';
 import { supabase } from '@/lib/supabase';
 
 const AVATAR_STYLES = [
@@ -160,7 +160,14 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
               : 'bg-blue-600 text-white hover:bg-blue-700'
           }`}
         >
-          {isSaving ? 'Сохранение...' : '✓ Сохранить'}
+          {isSaving ? (
+              <>
+                <WashingSpinner className="w-4 h-4" />
+                <span>Сохранение...</span>
+              </>
+            ) : (
+              <>✓ Сохранить</>
+            )}
         </button>
 
         {/* Кнопка рандома под сохранить */}

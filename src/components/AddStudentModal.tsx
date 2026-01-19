@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
+import { WashingSpinner } from '@/components/Icons';
 
 interface AddStudentModalProps {
   onClose: () => void;
@@ -177,7 +178,14 @@ export default function AddStudentModal({ onClose }: AddStudentModalProps) {
             disabled={isSubmitting}
             className="flex-1 bg-green-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? '⏳ Добавление...' : '➕ Добавить'}
+            {isSubmitting ? (
+              <>
+                <WashingSpinner className="w-4 h-4" />
+                <span>⏳ Добавление...</span>
+              </>
+            ) : (
+              <>➕ Добавить</>
+            )}
           </button>
         </div>
       </div>

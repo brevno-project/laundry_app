@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useLaundry } from "@/contexts/LaundryContext";
 import { Student } from "@/types";
-import { DoorIcon, CheckIcon, CloseIcon, BackIcon } from "@/components/Icons";
+import { DoorIcon, CheckIcon, CloseIcon, BackIcon, WashingSpinner } from "@/components/Icons";
 import Avatar from "@/components/Avatar";
 
 export default function StudentAuth() {
@@ -277,11 +277,15 @@ export default function StudentAuth() {
           disabled={loading || !password}
           className="w-full bg-blue-600 text-white font-bold py-4 px-6 rounded-lg hover:bg-blue-700 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg"
         >
-          {loading
-            ? "Загрузка..."
-            : selectedStudent?.is_registered
-            ? "Войти"
-            : "Зарегистрироваться"}
+          {loading ? (
+            <>
+              <WashingSpinner className="w-4 h-4" />
+              <span>Загрузка...</span>
+            </>
+          ) : selectedStudent?.is_registered
+          ? "Войти"
+          : "Зарегистрироваться"
+        }
         </button>
       </div>
     </div>

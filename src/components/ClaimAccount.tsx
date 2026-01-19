@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
+import { WashingSpinner } from '@/components/Icons';
 import { supabase } from '@/lib/supabase';
 
 export default function ClaimAccount() {
@@ -118,7 +119,14 @@ export default function ClaimAccount() {
           disabled={loading}
           className="w-full rounded-md bg-yellow-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-yellow-700 disabled:bg-yellow-400 disabled:cursor-not-allowed"
         >
-          {loading ? 'Привязка...' : '🔓 Привязать аккаунт'}
+          {loading ? (
+            <>
+              <WashingSpinner className="w-4 h-4" />
+              <span>Привязка...</span>
+            </>
+          ) : (
+            <>🔓 Привязать аккаунт</>
+          )}
         </button>
       </form>
 

@@ -127,6 +127,13 @@ export const WashingIcon = ({ className = "w-5 h-5" }: IconProps) => (
   </svg>
 );
 
+export const WashingSpinner = ({ className = "w-4 h-4" }: IconProps) => (
+  <span className={`relative inline-flex ${className}`} aria-hidden="true">
+    <span className="absolute inset-0 rounded-full border-2 border-current/30 border-t-current animate-spin" />
+    <span className="absolute top-0 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-current" />
+  </span>
+);
+
 export const WaitIcon = ({ className = "w-5 h-5" }: IconProps) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24">
     <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"/>

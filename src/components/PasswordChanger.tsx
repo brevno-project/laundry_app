@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useLaundry } from "@/contexts/LaundryContext";
 import { supabase } from "@/lib/supabase";
+import { WashingSpinner } from "@/components/Icons";
 
 export default function PasswordChanger() {
   const { user } = useLaundry();
@@ -184,7 +185,14 @@ export default function PasswordChanger() {
               : "bg-blue-600 text-white hover:bg-blue-700"
           }`}
         >
-          {loading ? "Изменение..." : "Изменить пароль"}
+          {loading ? (
+            <>
+              <WashingSpinner className="w-4 h-4" />
+              <span>Изменение...</span>
+            </>
+          ) : (
+            <>Изменить пароль</>
+          )}
         </button>
       </div>
     </div>
