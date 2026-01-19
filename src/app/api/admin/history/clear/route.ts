@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
 
     const { data, error: deleteError, count } = await query.select("id", {
       count: "exact",
+      head: true,
     });
 
     if (deleteError) {
