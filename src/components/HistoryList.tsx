@@ -194,10 +194,11 @@ export default function HistoryList() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-md p-5">
+      <div className="relative overflow-hidden rounded-2xl shadow-md p-5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700">
+        <div className="pointer-events-none absolute inset-0 opacity-15" style={{ backgroundImage: 'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.45), transparent 35%), radial-gradient(circle at 80% 0%, rgba(255,255,255,0.35), transparent 40%)' }} />
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-white/15 rounded-xl flex items-center justify-center">
               <HistoryIcon className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -211,7 +212,7 @@ export default function HistoryList() {
                 setShowClearTools((prev) => !prev);
                 setClearNotice(null);
               }}
-              className="rounded-xl border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition"
+              className="rounded-xl border border-white/30 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/15 transition"
             >
               {showClearTools ? 'Скрыть очистку' : 'Очистка истории'}
             </button>
@@ -440,7 +441,7 @@ export default function HistoryList() {
             await loadMoreHistory();
             setIsLoadingMore(false);
           }}
-          className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3 disabled:opacity-70"
+          className="w-full py-4 rounded-2xl border border-blue-200 bg-white text-blue-700 font-bold shadow-sm hover:border-blue-300 hover:bg-blue-50 transition-all flex items-center justify-center gap-3 disabled:opacity-70"
           disabled={isLoadingMore}
         >
           <span className="text-lg">
