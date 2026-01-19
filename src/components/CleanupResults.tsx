@@ -1354,13 +1354,6 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
             <div className="rounded-xl border border-dashed border-gray-200 p-4 space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h4 className="text-sm font-semibold text-gray-700">Баллы по квартирам</h4>
-                <button
-                  type="button"
-                  onClick={handleBuildScoreAnnouncement}
-                  className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
-                >
-                  Сформировать сообщение
-                </button>
               </div>
               <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                 {apartmentsForBlock.map((apt) => (
@@ -1401,6 +1394,13 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
                 >
                   Случайная подпись
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBuildScoreAnnouncement}
+                  className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                >
+                  Сформировать сообщение
                 </button>
               </div>
               <p className="text-xs text-gray-500">

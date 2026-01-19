@@ -99,14 +99,83 @@ export async function POST(req: NextRequest) {
       queueItem.payment_type === "both";
 
     if (shouldFinalizeCoupons) {
+      const { data: reservedRows } = await supabaseAdmin
+        .from("coupons")
+        .select("id")
+        .eq("reserved_queue_id", queue_item_id)
+        .is("used_in_queue_id", null)
+        .order("expires_at", { ascending: true })
+        .order("issued_at", { ascending: true });
+
+      const reservedIds = (reservedRows || []).map((row: any) => row.id);
+      const baseCouponsUsed = Number(queueItem.coupons_used || 0);
+      let couponsToConsume = baseCouponsUsed;
+
+      if (couponsToConsume <= 0) {
+        if (reservedIds.length > 0) {
+          couponsToConsume = reservedIds.length;
+        } else if (queueItem.payment_type === "coupon") {
+          couponsToConsume = Math.max(1, queueItem.wash_count || 1);
+        } else if (queueItem.payment_type === "both") {
+          couponsToConsume = 1;
+        }
+      }
+
+      const reservedToUse = reservedIds.slice(0, couponsToConsume);
+      const reservedToRelease = reservedIds.slice(couponsToConsume);
+
+      if (reservedToRelease.length > 0) {
+        await supabaseAdmin
+          .from("coupons")
+          .update({ reserved_queue_id: null, reserved_at: null })
+          .in("id", reservedToRelease)
+          .is("used_in_queue_id", null);
+      }
+
+      if (reservedToUse.length > 0) {
+        await supabaseAdmin
+          .from("coupons")
+          .update({
+            used_in_queue_id: queue_item_id,
+            used_at: now,
+            reserved_queue_id: null,
+            reserved_at: null,
+          })
+          .in("id", reservedToUse)
+          .is("used_in_queue_id", null);
+      }
+
+      const remaining = couponsToConsume - reservedToUse.length;
+      if (remaining > 0 && queueItem.student_id) {
+        const { data: fallbackRows } = await supabaseAdmin
+          .from("coupons")
+          .select("id")
+          .eq("owner_student_id", queueItem.student_id)
+          .is("reserved_queue_id", null)
+          .is("used_in_queue_id", null)
+          .gt("expires_at", now)
+          .order("expires_at", { ascending: true })
+          .order("issued_at", { ascending: true })
+          .limit(remaining);
+
+        const fallbackIds = (fallbackRows || []).map((row: any) => row.id);
+        if (fallbackIds.length > 0) {
+          await supabaseAdmin
+            .from("coupons")
+            .update({
+              used_in_queue_id: queue_item_id,
+              used_at: now,
+              reserved_queue_id: null,
+              reserved_at: null,
+            })
+            .in("id", fallbackIds)
+            .is("used_in_queue_id", null);
+        }
+      }
+    } else {
       await supabaseAdmin
         .from("coupons")
-        .update({
-          used_in_queue_id: queue_item_id,
-          used_at: now,
-          reserved_queue_id: null,
-          reserved_at: null,
-        })
+        .update({ reserved_queue_id: null, reserved_at: null })
         .eq("reserved_queue_id", queue_item_id)
         .is("used_in_queue_id", null);
     }
