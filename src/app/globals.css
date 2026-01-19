@@ -64,6 +64,45 @@ body {
   }
 }
 
+.loading-spinner {
+  animation: spinnerRotate 1.1s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+.loading-spinner-track {
+  opacity: 0.2;
+}
+
+.loading-spinner-head {
+  stroke-dasharray: 90 150;
+  stroke-dashoffset: 0;
+  animation: spinnerDash 1.2s ease-in-out infinite;
+}
+
+@keyframes spinnerRotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spinnerDash {
+  0% {
+    stroke-dasharray: 1 150;
+    stroke-dashoffset: 0;
+    opacity: 0.35;
+  }
+  50% {
+    stroke-dasharray: 90 150;
+    stroke-dashoffset: -20;
+    opacity: 1;
+  }
+  100% {
+    stroke-dasharray: 1 150;
+    stroke-dashoffset: -120;
+    opacity: 0.35;
+  }
+}
+
 @layer components {
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 select-none;

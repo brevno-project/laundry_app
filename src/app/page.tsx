@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
@@ -23,7 +23,7 @@ export default function Home() {
   const { user, isLoading, authReady, logoutStudent, isAdmin, isSuperAdmin, isCleanupAdmin, machineState, queue, isNewUser, setIsNewUser, students, needsClaim } = useLaundry();
   const canViewStudentsTab = isAdmin || isSuperAdmin || isCleanupAdmin || !!user?.can_view_students;
   
-  // вњ… Р’РѕСЃСЃС‚Р°РЅР°РІР»РёРІР°РµРј activeTab РёР· localStorage
+  // ✅ Восстанавливаем activeTab из localStorage
   const [activeTab, setActiveTab] = React.useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('activeTab') || 'main';
@@ -33,7 +33,7 @@ export default function Home() {
   
   const [showScrollButton, setShowScrollButton] = React.useState(false);
 
-  // вњ… РЎРѕС…СЂР°РЅСЏРµРј activeTab РІ localStorage РїСЂРё РёР·РјРµРЅРµРЅРёРё
+  // ✅ Сохраняем activeTab в localStorage при изменении
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     if (typeof window !== 'undefined') {
@@ -41,7 +41,7 @@ export default function Home() {
     }
   };
 
-  // вњ… РўР« FIX: РЎР±СЂР°СЃС‹РІР°РµРј activeTab РЅР° 'main' РєРѕРіРґР° РЅРµС‚ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
+  // ✅ ТЫ FIX: Сбрасываем activeTab на 'main' когда нет пользователя
   React.useEffect(() => {
     if (!authReady) return;
     if (!user && activeTab !== 'main') {
@@ -65,9 +65,9 @@ export default function Home() {
 
 
 
-  // вњ… РћС‚СЃР»РµР¶РёРІР°РЅРёРµ СЃРєСЂРѕР»Р»Р° РґР»СЏ РєРЅРѕРїРєРё "Р’РІРµСЂС…" (С‚РѕР»СЊРєРѕ РґР»СЏ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РІ РѕС‡РµСЂРµРґРё)
+  // ✅ Отслеживание скролла для кнопки "Вверх" (только для пользователей в очереди)
   React.useEffect(() => {
-    // РџСЂРѕРІРµСЂСЏРµРј, РµСЃС‚СЊ Р»Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РІ РѕС‡РµСЂРµРґРё
+    // Проверяем, есть ли пользователь в очереди
     const userInQueue = user && queue.some(item => item.student_id === user.student_id);
     
     if (!userInQueue) {
@@ -76,7 +76,7 @@ export default function Home() {
     }
 
     const handleScroll = () => {
-      // РџРѕРєР°Р·С‹РІР°РµРј РєРЅРѕРїРєСѓ РїСЂРё СЃРєСЂРѕР»Р»Рµ РІРЅРёР· Р±РѕР»РµРµ 300px
+      // Показываем кнопку при скролле вниз более 300px
       if (window.scrollY > 300) {
         setShowScrollButton(true);
       } else {
@@ -88,7 +88,7 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [user, queue]);
 
-  // вњ… Р¤СѓРЅРєС†РёСЏ СЃРєСЂРѕР»Р»Р° РІРІРµСЂС…
+  // ✅ Функция скролла вверх
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setShowScrollButton(false);
@@ -106,20 +106,20 @@ export default function Home() {
     <div className="min-h-screen w-full bg-gray-50">
 
 
-      {/* Р—Р°РіРѕР»РѕРІРѕРє */}
+      {/* Заголовок */}
       <header className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 shadow-lg sticky top-0 z-10">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white flex items-center justify-center gap-2"><LaundryIcon className="w-7 h-7" /> РћС‡РµСЂРµРґСЊ РЅР° СЃС‚РёСЂРєСѓ</h1>
+          <h1 className="text-2xl font-bold text-white flex items-center justify-center gap-2"><LaundryIcon className="w-7 h-7" /> Очередь на стирку</h1>
           {user && (
             <p className="text-sm text-blue-100 mt-1">
-              Р’С‹ РІРѕС€Р»Рё РєР°Рє: <span className="font-semibold">{user.full_name}</span>
-              {user.room && <span className="ml-2">РљРѕРјРЅР°С‚Р° {user.room}</span>}
+              Вы вошли как: <span className="font-semibold">{user.full_name}</span>
+              {user.room && <span className="ml-2">Комната {user.room}</span>}
             </p>
           )}
         </div>
       </header>
 
-      {/* РўР°Р±С‹ */}
+      {/* Табы */}
       {user && (
         <nav className="bg-white border-b shadow-sm sticky top-14 z-10">
           <div className="mx-auto max-w-5xl">
@@ -132,7 +132,7 @@ export default function Home() {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              <HomeIcon className="w-5 h-5 inline-block mr-2" />Р“Р»Р°РІРЅР°СЏ</button>
+              <HomeIcon className="w-5 h-5 inline-block mr-2" />Главная</button>
             <button
               onClick={() => handleTabChange('history')}
               className={`flex-none shrink-0 min-w-[96px] py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
@@ -141,7 +141,7 @@ export default function Home() {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              <HistoryIcon className="w-5 h-5 inline-block mr-2" />РСЃС‚РѕСЂРёСЏ</button>
+              <HistoryIcon className="w-5 h-5 inline-block mr-2" />История</button>
             <button
               onClick={() => handleTabChange('cleanup')}
               className={`flex-none shrink-0 min-w-[96px] py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
@@ -150,8 +150,8 @@ export default function Home() {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              <ListIcon className="w-5 h-5 inline-block mr-2" />РЈР±РѕСЂРєР°</button>
-            {/* Р’РєР»Р°РґРєР° РЎС‚СѓРґРµРЅС‚С‹ РґРѕСЃС‚СѓРїРЅР° Р°РґРјРёРЅР°Рј Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏРј СЃ С„Р»Р°РіРѕРј can_view_students */}
+              <ListIcon className="w-5 h-5 inline-block mr-2" />Уборка</button>
+            {/* Вкладка Студенты доступна админам и пользователям с флагом can_view_students */}
             {canViewStudentsTab && (
               <button
                 onClick={() => handleTabChange('students')}
@@ -161,7 +161,7 @@ export default function Home() {
                     : 'border-transparent text-gray-600 hover:text-gray-900'
                 }`}
               >
-                <PeopleIcon className="w-5 h-5 inline-block mr-2" />РЎС‚СѓРґРµРЅС‚С‹</button>
+                <PeopleIcon className="w-5 h-5 inline-block mr-2" />Студенты</button>
             )}
             <button
               onClick={() => handleTabChange('settings')}
@@ -171,36 +171,36 @@ export default function Home() {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              <SettingsIcon className="w-5 h-5 inline-block mr-2" />РќР°СЃС‚СЂРѕР№РєРё</button>
+              <SettingsIcon className="w-5 h-5 inline-block mr-2" />Настройки</button>
           </div>
           </div>
         </nav>
       )}
 
-      {/* РџРѕР»РЅРѕСЌРєСЂР°РЅРЅС‹Р№ Р±Р°РЅРЅРµСЂ РґР»СЏ РїРѕРґРєР»СЋС‡РµРЅРёСЏ Telegram */}
+      {/* Полноэкранный баннер для подключения Telegram */}
       <TelegramBanner onGoToSettings={() => handleTabChange('settings')} />
       
-      {/* Р“Р»РѕР±Р°Р»СЊРЅС‹Р№ Р±Р°РЅРЅРµСЂ РґР»СЏ РІСЃРµС… СЃС‚СѓРґРµРЅС‚РѕРІ РІ РѕС‡РµСЂРµРґРё */}
+      {/* Глобальный баннер для всех студентов в очереди */}
       <GlobalAlert />
       
-      {/* РљРЅРѕРїРєРё РґРµР№СЃС‚РІРёР№ РґР»СЏ СЃС‚СѓРґРµРЅС‚Р° */}
+      {/* Кнопки действий для студента */}
       <StudentActions />
       
-      {/* РћСЃРЅРѕРІРЅРѕР№ РєРѕРЅС‚РµРЅС‚ */}
+      {/* Основной контент */}
       <div className="w-full">
         {activeTab === 'main' && (
           <div className="w-full space-y-4">
             <TimeBanner />
             
-            {/* РЎС‚Р°С‚СѓСЃ РјР°С€РёРЅС‹ */}
+            {/* Статус машины */}
             <div className="mb-6 max-w-3xl mx-auto px-3">
-              <h3 className="text-lg font-semibold mb-3 text-gray-700">РЎС‚Р°С‚СѓСЃ РјР°С€РёРЅС‹</h3>
+              <h3 className="text-lg font-semibold mb-3 text-gray-700">Статус машины</h3>
               {machineState.status === 'idle' ? (
                 <div className="relative overflow-hidden rounded-xl shadow-lg min-h-[120px]">
-                  {/* Р‘Р°Р·РѕРІС‹Р№ С„РѕРЅ */}
+                  {/* Базовый фон */}
                   <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-green-600"></div>
                   
-                  {/* РўРѕРЅРєР°СЏ СЃРµС‚РєР° (РїР°С‚С‚РµСЂРЅ) */}
+                  {/* Тонкая сетка (паттерн) */}
                   <div 
                     className="absolute inset-0 opacity-10"
                     style={{
@@ -209,7 +209,7 @@ export default function Home() {
                     }}
                   ></div>
                   
-                  {/* Р’РѕР»РЅР° СЃ Р±Р»РµСЃРєРѕРј */}
+                  {/* Волна с блеском */}
                   <div 
                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
                     style={{
@@ -225,20 +225,20 @@ export default function Home() {
                   `}</style>
                   
                   <div className="relative p-6 flex flex-col items-center justify-center">
-                    {/* РРєРѕРЅРєР° СЃС‚РёСЂР°Р»СЊРЅРѕР№ РјР°С€РёРЅС‹ */}
+                    {/* Иконка стиральной машины */}
                     <svg className="w-16 h-16 text-white mb-3" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M18 2.01L6 2c-1.11 0-2 .89-2 2v16c0 1.11.89 2 2 2h12c1.11 0 2-.89 2-2V4c0-1.11-.89-1.99-2-1.99zM18 20H6v-9.02h12V20zm0-11H6V4h12v5zM8 5h1.5v1.5H8V5zm3.5 0H13v1.5h-1.5V5z"/>
                       <circle cx="12" cy="15" r="3.5"/>
                     </svg>
-                    <div className="text-2xl font-bold text-white">РЎРІРѕР±РѕРґРЅР°</div>
+                    <div className="text-2xl font-bold text-white">Свободна</div>
                   </div>
                 </div>
               ) : (
                 <div className="relative overflow-hidden rounded-xl shadow-lg min-h-[120px]">
-                  {/* Р‘Р°Р·РѕРІС‹Р№ С„РѕРЅ */}
+                  {/* Базовый фон */}
                   <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-600"></div>
                   
-                  {/* РўРѕРЅРєР°СЏ СЃРµС‚РєР° (РїР°С‚С‚РµСЂРЅ) */}
+                  {/* Тонкая сетка (паттерн) */}
                   <div 
                     className="absolute inset-0 opacity-10"
                     style={{
@@ -247,7 +247,7 @@ export default function Home() {
                     }}
                   ></div>
                   
-                  {/* Р’РѕР»РЅР° СЃ Р±Р»РµСЃРєРѕРј */}
+                  {/* Волна с блеском */}
                   <div 
                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
                     style={{
@@ -264,15 +264,15 @@ export default function Home() {
                   
                   <div className="relative p-6">
                     <div className="flex items-center space-x-4 mb-4">
-                      {/* РРєРѕРЅРєР° СЃС‚РёСЂР°Р»СЊРЅРѕР№ РјР°С€РёРЅС‹ */}
+                      {/* Иконка стиральной машины */}
                       <svg className="w-12 h-12 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M18 2.01L6 2c-1.11 0-2 .89-2 2v16c0 1.11.89 2 2 2h12c1.11 0 2-.89 2-2V4c0-1.11-.89-1.99-2-1.99zM18 20H6v-9.02h12V20zm0-11H6V4h12v5zM8 5h1.5v1.5H8V5zm3.5 0H13v1.5h-1.5V5z"/>
                         <circle cx="12" cy="15" r="3.5"/>
                       </svg>
-                      <div className="text-2xl font-bold text-white">Р—Р°РЅСЏС‚Р°</div>
+                      <div className="text-2xl font-bold text-white">Занята</div>
                     </div>
                     
-                    {/* РџРѕР»СѓРїСЂРѕР·СЂР°С‡РЅР°СЏ РєР°СЂС‚РѕС‡РєР° СЃ РёРЅС„РѕСЂРјР°С†РёРµР№ */}
+                    {/* Полупрозрачная карточка с информацией */}
                     {(machineState.current_queue_item_id || machineState.expected_finish_at) && (
                       <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 space-y-3">
                         {machineState.current_queue_item_id && (() => {
@@ -280,7 +280,7 @@ export default function Home() {
                           if (currentItem) {
                             return (
                               <div>
-                                <div className="text-xs text-white/70 font-medium uppercase tracking-wider mb-1">РЎС‚РёСЂР°РµС‚</div>
+                                <div className="text-xs text-white/70 font-medium uppercase tracking-wider mb-1">Стирает</div>
                                 <div className="text-2xl font-bold text-white">
                                   {currentItem.full_name}
                                 </div>
@@ -291,7 +291,7 @@ export default function Home() {
                         })()}
                         {machineState.expected_finish_at && (
                           <div className="pt-3 border-t border-white/20">
-                            <div className="text-xs text-white/70 font-medium uppercase tracking-wider mb-1">РћРєРѕРЅС‡Р°РЅРёРµ</div>
+                            <div className="text-xs text-white/70 font-medium uppercase tracking-wider mb-1">Окончание</div>
                             <div className="text-xl font-bold text-white">
                               {new Date(machineState.expected_finish_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
                             </div>
@@ -304,23 +304,23 @@ export default function Home() {
               )}
             </div>
             
-            {/* Р›РѕРіРёРєР° РІС…РѕРґР° */}
+            {/* Логика входа */}
             {!user ? (
               <>
                 <StudentAuth />
               </>
             ) : (
               <>
-                {/* РџРѕРєР°Р·С‹РІР°РµРј ClaimAccount РµСЃР»Рё РЅСѓР¶РЅРѕ РїСЂРёРІСЏР·Р°С‚СЊ Р°РєРєР°СѓРЅС‚ */}
+                {/* Показываем ClaimAccount если нужно привязать аккаунт */}
                 {needsClaim && <ClaimAccount />}
                 
-                {/* Р’СЃРµРіРґР° РїРѕРєР°Р·С‹РІР°РµРј РѕСЃРЅРѕРІРЅС‹Рµ РєРѕРјРїРѕРЅРµРЅС‚С‹ */}
+                {/* Всегда показываем основные компоненты */}
                 {isAdmin && <AdminPanel />}
                 
-                {/* РџРѕРєР°Р·С‹РІР°РµРј РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РєРѕРјРїРѕРЅРµРЅС‚С‹ РµСЃР»Рё РµСЃС‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РР›Р Р°РґРјРёРЅ */}
+                {/* Показываем пользовательские компоненты если есть пользователь ИЛИ админ */}
                 {(user || isAdmin) && (
                   <>
-                    <div className="px-3"><UserForm /></div> {/* РђРґРјРёРЅС‹ С‚РѕР¶Рµ РјРѕРіСѓС‚ РІСЃС‚Р°РІР°С‚СЊ РІ РѕС‡РµСЂРµРґСЊ */}
+                    <div className="px-3"><UserForm /></div> {/* Админы тоже могут вставать в очередь */}
                     <QueueList />
                   </>
                 )}
@@ -329,28 +329,28 @@ export default function Home() {
           </div>
         )}
         
-        {/* РСЃС‚РѕСЂРёСЏ */}
+        {/* История */}
         {activeTab === 'history' && (
           <div className="w-full space-y-4">
             <HistoryList />
           </div>
         )}
 
-        {/* РЈР±РѕСЂРєР° */}
+        {/* Уборка */}
         {activeTab === 'cleanup' && (
           <div className="w-full space-y-4">
             <CleanupResults embedded />
           </div>
         )}
 
-        {/* РЎС‚СѓРґРµРЅС‚С‹ - РґРѕСЃС‚СѓРїРЅРѕ Р°РґРјРёРЅР°Рј Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏРј СЃ can_view_students */}
+        {/* Студенты - доступно админам и пользователям с can_view_students */}
         {activeTab === 'students' && canViewStudentsTab && (
           <div className="w-full space-y-4">
             <StudentsList />
           </div>
         )}
 
-        {/* РќР°СЃС‚СЂРѕР№РєРё */}
+        {/* Настройки */}
         {activeTab === 'settings' && user && (
           <div className="w-full space-y-4 px-3">
             <AvatarCustomizer />
@@ -358,7 +358,7 @@ export default function Home() {
             {!user.can_view_students && <TelegramSetup />}
             
             <div className="bg-white p-4 rounded-lg shadow-sm">
-              <h3 className="font-bold text-lg text-gray-800 mb-3">РђРєРєР°СѓРЅС‚</h3>
+              <h3 className="font-bold text-lg text-gray-800 mb-3">Аккаунт</h3>
               <button
                 onClick={() => {
                   logoutStudent();
@@ -368,19 +368,19 @@ export default function Home() {
                 }}
                 className="w-full btn btn-danger btn-lg"
               >
-                <DoorIcon className="w-5 h-5" />Р’С‹Р№С‚Рё РёР· Р°РєРєР°СѓРЅС‚Р°
+                <DoorIcon className="w-5 h-5" />Выйти из аккаунта
               </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* РљРЅРѕРїРєР° "Р’РІРµСЂС…" */}
+      {/* Кнопка "Вверх" */}
       {showScrollButton && (
         <button
           onClick={scrollToTop}
           className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all duration-300 z-50 animate-pulse-slow"
-          aria-label="РџСЂРѕРєСЂСѓС‚РёС‚СЊ РІРІРµСЂС…"
+          aria-label="Прокрутить вверх"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />

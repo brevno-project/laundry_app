@@ -128,22 +128,10 @@ export const WashingIcon = ({ className = "w-5 h-5" }: IconProps) => (
 );
 
 export const WashingSpinner = ({ className = "w-4 h-4" }: IconProps) => (
-  <span className={`relative inline-flex items-center justify-center ${className}`} aria-hidden="true">
-    <span className="absolute inset-0 rounded-full border border-current/20" />
-    <span
-      className="absolute inset-0 rounded-full border-2 border-transparent border-t-current/80 border-r-current/50 animate-spin"
-      style={{ animationDuration: "1s" }}
-    />
-    <span
-      className="absolute inset-0 animate-spin"
-      style={{ animationDuration: "1.6s", animationDirection: "reverse" }}
-    >
-      <span className="absolute top-0 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-current" />
-    </span>
-    <span className="absolute inset-0 animate-spin" style={{ animationDuration: "2.2s" }}>
-      <span className="absolute bottom-0 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-current/60" />
-    </span>
-  </span>
+  <svg className={`loading-spinner ${className}`} viewBox="0 0 50 50" aria-hidden="true">
+    <circle className="loading-spinner-track" cx="25" cy="25" r="20" fill="none" stroke="currentColor" strokeWidth="4" />
+    <circle className="loading-spinner-head" cx="25" cy="25" r="20" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+  </svg>
 );
 
 export const WaitIcon = ({ className = "w-5 h-5" }: IconProps) => (

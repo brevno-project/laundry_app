@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
@@ -37,8 +37,8 @@ const formatDuration = (start?: string | null, end?: string | null) => {
   const minutes = getDurationMinutes(start, end);
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  if (hours > 0) return `${hours} С‡ ${mins} РјРёРЅ`;
-  return `${mins} РјРёРЅ`;
+  if (hours > 0) return `${hours} ч ${mins} мин`;
+  return `${mins} мин`;
 };
 
 const getCardTone = (totalMinutes: number) => {
@@ -66,13 +66,13 @@ const getPaymentLabel = (paymentType?: string | null, couponsUsed?: number | nul
   const couponCount = couponsUsed || 0;
   if (couponCount > 0) {
     return paymentType === 'both'
-      ? `РљСѓРїРѕРЅС‹: ${couponCount} + РґРµРЅСЊРіРё`
-      : `РљСѓРїРѕРЅС‹: ${couponCount}`;
+      ? `Купоны: ${couponCount} + деньги`
+      : `Купоны: ${couponCount}`;
   }
   if (!paymentType) return '-';
-  if (paymentType === 'coupon') return 'РљСѓРїРѕРЅ';
-  if (paymentType === 'both') return 'РљСѓРїРѕРЅ + РґРµРЅСЊРіРё';
-  if (paymentType === 'money' || paymentType === 'cash') return 'Р”РµРЅСЊРіРё';
+  if (paymentType === 'coupon') return 'Купон';
+  if (paymentType === 'both') return 'Купон + деньги';
+  if (paymentType === 'money' || paymentType === 'cash') return 'Деньги';
   return paymentType;
 };
 
@@ -88,12 +88,12 @@ export default function HistoryList() {
 
   const authedFetch = async (url: string, options: RequestInit = {}) => {
     if (!supabase) {
-      throw new Error('Supabase РЅРµ РЅР°СЃС‚СЂРѕРµРЅ');
+      throw new Error('Supabase не настроен');
     }
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     if (!token) {
-      throw new Error('РќРµС‚ Р°РєС‚РёРІРЅРѕР№ СЃРµСЃСЃРёРё');
+      throw new Error('Нет активной сессии');
     }
     return fetch(url, {
       ...options,
@@ -120,14 +120,14 @@ export default function HistoryList() {
           };
 
     if (mode === 'range' && !payload.from && !payload.to && !payload.room) {
-      setClearNotice('РЈРєР°Р¶РёС‚Рµ РїРµСЂРёРѕРґ РёР»Рё РєРѕРјРЅР°С‚Сѓ РґР»СЏ РІС‹Р±РѕСЂРѕС‡РЅРѕР№ РѕС‡РёСЃС‚РєРё.');
+      setClearNotice('Укажите период или комнату для выборочной очистки.');
       return;
     }
 
     const confirmText =
       mode === 'all'
-        ? 'РћС‡РёСЃС‚РёС‚СЊ РІСЃСЋ РёСЃС‚РѕСЂРёСЋ СЃС‚РёСЂРѕРє?'
-        : 'РћС‡РёСЃС‚РёС‚СЊ РІС‹Р±СЂР°РЅРЅС‹Рµ Р·Р°РїРёСЃРё РёСЃС‚РѕСЂРёРё?';
+        ? 'Очистить всю историю стирок?'
+        : 'Очистить выбранные записи истории?';
     if (!confirm(confirmText)) return;
 
     setClearing(true);
@@ -138,15 +138,15 @@ export default function HistoryList() {
       });
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || 'РћС€РёР±РєР° РѕС‡РёСЃС‚РєРё РёСЃС‚РѕСЂРёРё');
+        throw new Error(result.error || 'Ошибка очистки истории');
       }
       await fetchHistory();
-      setClearNotice(`РЈРґР°Р»РµРЅРѕ Р·Р°РїРёСЃРµР№: ${result.count ?? 0}`);
+      setClearNotice(`Удалено записей: ${result.count ?? 0}`);
       setClearFrom('');
       setClearTo('');
       setClearRoom('');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'РћС€РёР±РєР° РѕС‡РёСЃС‚РєРё РёСЃС‚РѕСЂРёРё';
+      const message = error instanceof Error ? error.message : 'Ошибка очистки истории';
       setClearNotice(message);
     } finally {
       setClearing(false);
@@ -155,7 +155,7 @@ export default function HistoryList() {
 
   const clearHistoryItem = async (historyId: string) => {
     if (clearing) return;
-    const confirmed = confirm('РЈРґР°Р»РёС‚СЊ СЌС‚Сѓ Р·Р°РїРёСЃСЊ РёСЃС‚РѕСЂРёРё?');
+    const confirmed = confirm('Удалить эту запись истории?');
     if (!confirmed) return;
     setClearing(true);
     try {
@@ -165,13 +165,13 @@ export default function HistoryList() {
       });
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || 'РћС€РёР±РєР° СѓРґР°Р»РµРЅРёСЏ Р·Р°РїРёСЃРё');
+        throw new Error(result.error || 'Ошибка удаления записи');
       }
       await fetchHistory();
-      alert(`РЈРґР°Р»РµРЅРѕ вњ…`);
+      alert(`Удалено ✅`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'РћС€РёР±РєР° СѓРґР°Р»РµРЅРёСЏ Р·Р°РїРёСЃРё';
-      alert(`РћС€РёР±РєР°: ${message} вњ…`);
+      const message = error instanceof Error ? error.message : 'Ошибка удаления записи';
+      alert(`Ошибка: ${message} ✅`);
     } finally {
       setClearing(false);
     }
@@ -185,8 +185,8 @@ export default function HistoryList() {
           <div className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center shadow-md">
             <HistoryIcon className="w-10 h-10 text-white" />
           </div>
-          <h3 className="text-2xl font-bold text-gray-800">РСЃС‚РѕСЂРёСЏ РїСѓСЃС‚Р°</h3>
-          <p className="text-gray-600">Р—Р°РїРёСЃРµР№ Рѕ СЃС‚РёСЂРєР°С… РїРѕРєР° РЅРµС‚.</p>
+          <h3 className="text-2xl font-bold text-gray-800">История пуста</h3>
+          <p className="text-gray-600">Записей о стирках пока нет.</p>
         </div>
       </div>
     );
@@ -202,8 +202,8 @@ export default function HistoryList() {
               <HistoryIcon className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">РСЃС‚РѕСЂРёСЏ</h2>
-              <p className="text-blue-100 text-sm">Р’СЃРµРіРѕ СЃС‚РёСЂРѕРє: {historyTotalCount}</p>
+              <h2 className="text-2xl font-bold text-white">История</h2>
+              <p className="text-blue-100 text-sm">Всего стирок: {historyTotalCount}</p>
             </div>
           </div>
           {isSuperAdmin && (
@@ -214,7 +214,7 @@ export default function HistoryList() {
               }}
               className="btn btn-secondary"
             >
-              {showClearTools ? 'РЎРєСЂС‹С‚СЊ РѕС‡РёСЃС‚РєСѓ' : 'РћС‡РёСЃС‚РєР° РёСЃС‚РѕСЂРёРё'}
+              {showClearTools ? 'Скрыть очистку' : 'Очистка истории'}
             </button>
           )}
         </div>
@@ -223,7 +223,7 @@ export default function HistoryList() {
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-600">РЎ</label>
+              <label className="text-xs font-semibold text-slate-600">С</label>
               <input
                 type="date"
                 value={clearFrom}
@@ -232,7 +232,7 @@ export default function HistoryList() {
               />
             </div>
             <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-600">РџРѕ</label>
+              <label className="text-xs font-semibold text-slate-600">По</label>
               <input
                 type="date"
                 value={clearTo}
@@ -241,12 +241,12 @@ export default function HistoryList() {
               />
             </div>
             <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-600">РљРѕРјРЅР°С‚Р°</label>
+              <label className="text-xs font-semibold text-slate-600">Комната</label>
               <input
                 type="text"
                 value={clearRoom}
                 onChange={(event) => setClearRoom(event.target.value)}
-                placeholder="РќР°РїСЂРёРјРµСЂ A301"
+                placeholder="Например A301"
                 className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
               />
             </div>
@@ -255,14 +255,14 @@ export default function HistoryList() {
               disabled={clearing}
               className="btn btn-primary"
             >
-              РћС‡РёСЃС‚РёС‚СЊ РІС‹Р±РѕСЂРѕС‡РЅРѕ
+              Очистить выборочно
             </button>
             <button
               onClick={() => clearHistory('all')}
               disabled={clearing}
               className="btn btn-danger"
             >
-              РћС‡РёСЃС‚РёС‚СЊ РІСЃС‘
+              Очистить всё
             </button>
           </div>
           {clearNotice && (
@@ -325,7 +325,7 @@ export default function HistoryList() {
                   <div>
                     <h3 className="font-bold text-gray-900 text-lg">{item.full_name}</h3>
                     <p className="text-sm text-gray-600">
-                      {item.room ? `РљРѕРјРЅР°С‚Р° ${item.room} - ` : ''}{formatDate(item.finished_at)}
+                      {item.room ? `Комната ${item.room} - ` : ''}{formatDate(item.finished_at)}
                     </p>
                   </div>
                 </div>
@@ -335,7 +335,7 @@ export default function HistoryList() {
                     className="btn btn-danger px-3 py-1.5 text-xs"
                   >
                     <DeleteIcon className="w-4 h-4" />
-                    РЈРґР°Р»РёС‚СЊ
+                    Удалить
                   </button>
                 )}
               </div>
@@ -345,13 +345,13 @@ export default function HistoryList() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="flex items-center justify-between gap-2">
                       <div className={`flex items-center gap-2 ${labelTextClass}`}>
-                        <ClockIcon className={labelIconClass} />РќР°С‡Р°Р»Рѕ СЃС‚РёСЂРєРё
+                        <ClockIcon className={labelIconClass} />Начало стирки
                       </div>
                       <span className={valueTextClass}>{formatTime(cycleStart)}</span>
                     </div>
                     <div className="flex items-center justify-between gap-2">
                       <div className={`flex items-center gap-2 ${labelTextClass}`}>
-                        <CheckIcon className={labelIconClass} />РљРѕРЅРµС† СЃС‚РёСЂРєРё
+                        <CheckIcon className={labelIconClass} />Конец стирки
                       </div>
                       <span className={valueTextClass}>{formatTime(cycleEnd)}</span>
                     </div>
@@ -362,7 +362,7 @@ export default function HistoryList() {
                   <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-slate-600">РћР±С‰РµРµ РІСЂРµРјСЏ</span>
+                        <span className="text-sm font-medium text-slate-600">Общее время</span>
                       </div>
                       <span className="text-lg font-bold text-slate-900">{totalDuration}</span>
                     </div>
@@ -370,14 +370,14 @@ export default function HistoryList() {
 
                   <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-600">РљРѕР»РёС‡РµСЃС‚РІРѕ СЃС‚РёСЂРѕРє</span>
+                      <span className="text-sm font-medium text-slate-600">Количество стирок</span>
                       <span className="text-lg font-bold text-slate-900">{washCount}</span>
                     </div>
                   </div>
 
                   <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-600">РћРїР»Р°С‚Р°</span>
+                      <span className="text-sm font-medium text-slate-600">Оплата</span>
                       <span className="text-sm font-bold text-slate-900 flex items-center gap-1">
                         {paymentIcons}
                         {paymentLabel}
@@ -391,7 +391,7 @@ export default function HistoryList() {
                     <Timer 
                       startTime={item.return_requested_at} 
                       endTime={item.finished_at}
-                      label="Р’РѕР·РІСЂР°С‰Р°Р» РєР»СЋС‡" 
+                      label="Возвращал ключ" 
                       color="orange"
                     />
                   )}
@@ -404,7 +404,7 @@ export default function HistoryList() {
                         item.return_requested_at ||
                         item.finished_at
                       }
-                      label="РЎС‚РёСЂР°Р»" 
+                      label="Стирал" 
                       color="green"
                       multiplier={item.wash_count || 1}
                     />
@@ -414,7 +414,7 @@ export default function HistoryList() {
                     <Timer 
                       startTime={item.key_issued_at} 
                       endTime={item.washing_started_at}
-                      label="РљР»СЋС‡ Р±С‹Р» РІС‹РґР°РЅ" 
+                      label="Ключ был выдан" 
                       color="blue"
                     />
                   )}
@@ -423,7 +423,7 @@ export default function HistoryList() {
                     <Timer 
                       startTime={item.ready_at} 
                       endTime={item.key_issued_at}
-                      label="РЁРµР» Р·Р° РєР»СЋС‡РѕРј" 
+                      label="Шел за ключом" 
                       color="yellow"
                     />
                   )}
@@ -448,10 +448,10 @@ export default function HistoryList() {
             {isLoadingMore ? (
               <>
                 <WashingSpinner className="w-5 h-5" />
-                <span>Р—Р°РіСЂСѓР·РєР°...</span>
+                <span>Загрузка...</span>
               </>
             ) : (
-              <>Р—Р°РіСЂСѓР·РёС‚СЊ РµС‰Рµ 50</>
+              <>Загрузить еще 50</>
             )}
           </span>
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
