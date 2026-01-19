@@ -241,6 +241,7 @@ export default function HistoryList() {
                       }
                       label="Стирал" 
                       color="green"
+                      multiplier={item.wash_count || 1}
                     />
                   )}
 

@@ -67,6 +67,12 @@ export default function QueueList() {
     );
   };
 
+  const showActionError = (error: unknown, fallback: string) => {
+    const message =
+      error instanceof Error ? error.message : String(error ?? '').trim();
+    alert(`❌ ${message || fallback} ✅`);
+  };
+
   // Функция для переключения статуса потери ключа
 
   // Функция сохранения изменений:
@@ -444,6 +450,7 @@ export default function QueueList() {
                               }
                               label="Стирает" 
                               color="green" 
+                              multiplier={item.wash_count || 1}
                             />
                           )}
                           {item.key_issued_at && (
@@ -594,6 +601,7 @@ export default function QueueList() {
                                   admin_student_id: user?.student_id,
                                 });
                               } catch (error) {
+                                showActionError(error, 'Не удалось вызвать');
                                 console.error('❌ Error in Позвать:', error);
                               }
                             }}
@@ -623,6 +631,7 @@ export default function QueueList() {
                                   student_id: item.student_id,
                                 });
                               } catch (error) {
+                                showActionError(error, 'Не удалось выдать ключ');
                                 console.error('❌ Error in Выдать ключ:', error);
                               }
                             }}
@@ -652,6 +661,7 @@ export default function QueueList() {
                                   wash_count: item.wash_count,
                                 });
                               } catch (error) {
+                                showActionError(error, 'Не удалось начать стирку');
                                 console.error('❌ Error in Стирать:', error);
                               }
                             }}
@@ -681,6 +691,7 @@ export default function QueueList() {
                                   admin_student_id: user?.student_id
                                 });
                               } catch (error) {
+                                showActionError(error, 'Не удалось вызвать на возврат');
                                 console.error('? Error in Вернуть ключ:', error);
                               }
                             }}
@@ -696,6 +707,7 @@ export default function QueueList() {
                               try {
                                 await markDone(item.id);
                               } catch (error) {
+                                showActionError(error, 'Не удалось завершить');
                                 console.error('❌ Error in Завершить:', error);
                               }
                             }}

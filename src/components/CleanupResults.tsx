@@ -128,6 +128,23 @@ const formatDateTime = (dateStr?: string | null) => {
   });
 };
 
+const PERMANENT_COUPON_YEARS = 5;
+
+const isPermanentCoupon = (coupon: Coupon) => {
+  const expiresAt = new Date(coupon.expires_at).getTime();
+  if (Number.isNaN(expiresAt)) return false;
+  const issuedAt = coupon.issued_at ? new Date(coupon.issued_at).getTime() : null;
+  const baseTime = issuedAt && !Number.isNaN(issuedAt) ? issuedAt : Date.now();
+  const thresholdMs = PERMANENT_COUPON_YEARS * 365 * 24 * 60 * 60 * 1000;
+  return expiresAt - baseTime >= thresholdMs;
+};
+
+const formatCouponExpiry = (coupon: Coupon) =>
+  isPermanentCoupon(coupon) ? "Бессрочный" : `До: ${formatDateTime(coupon.expires_at)}`;
+
+const formatCouponOptionLabel = (coupon: Coupon) =>
+  isPermanentCoupon(coupon) ? "Купон бессрочный" : `Купон до ${formatDateTime(coupon.expires_at)}`;
+
 const formatTime = (timeStr?: string | null) => {
   if (!timeStr) return "";
   return timeStr.slice(0, 5);
@@ -1536,7 +1553,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                               <div className="flex items-center justify-between">
                                 <span className="font-semibold">{status}</span>
                                 <span className="text-xs text-gray-500">
-                                  До: {formatDateTime(coupon.expires_at)}
+                                  {formatCouponExpiry(coupon)}
                                 </span>
                               </div>
                               {coupon.note && (
@@ -1572,7 +1589,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                       <option value="">Выберите купон</option>
                       {transferableCoupons.map((coupon) => (
                         <option key={coupon.id} value={coupon.id}>
-                          Купон до {formatDateTime(coupon.expires_at)}
+                          {formatCouponOptionLabel(coupon)}
                         </option>
                       ))}
                     </select>

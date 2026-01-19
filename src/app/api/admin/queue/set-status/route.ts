@@ -34,6 +34,78 @@ export async function POST(req: NextRequest) {
     // ✅ Проверяем, супер-админ ли цель
     const targetIsSuperAdmin = await isTargetSuperAdmin(queueItem.student_id);
 
+    if (targetIsSuperAdmin && !caller.is_super_admin) {
+      return NextResponse.json(
+        { error: "Only super admin can modify super admin's queue items" },
+        { status: 403 }
+      );
+    }
+
+    const shouldCheckCoupons =
+      (queueItem.coupons_used ?? 0) > 0 ||
+      queueItem.payment_type === "coupon" ||
+      queueItem.payment_type === "both";
+    const canAutoRemove =
+      (queueItem.status === "waiting" || queueItem.status === "ready") &&
+      !queueItem.washing_started_at;
+
+    if (shouldCheckCoupons && canAutoRemove) {
+      const cutoff = new Date().toISOString();
+      const { data: expiredCoupon, error: expiredError } = await supabaseAdmin
+        .from("coupons")
+        .select("id")
+        .eq("reserved_queue_id", queue_item_id)
+        .is("used_at", null)
+        .is("used_in_queue_id", null)
+        .lte("expires_at", cutoff)
+        .limit(1)
+        .maybeSingle();
+
+      if (expiredError) {
+        return NextResponse.json(
+          { error: expiredError.message },
+          { status: 500 }
+        );
+      }
+
+      if (expiredCoupon) {
+        const { error: releaseError } = await supabaseAdmin
+          .from("coupons")
+          .update({ reserved_queue_id: null, reserved_at: null })
+          .eq("reserved_queue_id", queue_item_id)
+          .is("used_at", null)
+          .is("used_in_queue_id", null);
+
+        if (releaseError) {
+          return NextResponse.json(
+            { error: releaseError.message },
+            { status: 500 }
+          );
+        }
+
+        const { error: removeError } = await supabaseAdmin
+          .from("queue")
+          .delete()
+          .eq("id", queue_item_id);
+
+        if (removeError) {
+          return NextResponse.json(
+            { error: removeError.message },
+            { status: 500 }
+          );
+        }
+
+        return NextResponse.json(
+          {
+            error: "Купон сгорел. Запись удалена из очереди.",
+            code: "COUPON_EXPIRED",
+            removed: true,
+          },
+          { status: 409 }
+        );
+      }
+    }
+
     // ✅ Защита: обычный админ не может трогать очередь суперадмина
     if (targetIsSuperAdmin && !caller.is_super_admin) {
       return NextResponse.json(

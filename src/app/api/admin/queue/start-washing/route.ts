@@ -32,6 +32,84 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const { data: queueDetails, error: queueDetailsError } = await supabaseAdmin
+      .from("queue")
+      .select("status, coupons_used, payment_type, washing_started_at")
+      .eq("id", queue_item_id)
+      .maybeSingle();
+
+    if (queueDetailsError || !queueDetails) {
+      return NextResponse.json(
+        { error: "Queue item not found" },
+        { status: 404 }
+      );
+    }
+
+    const shouldCheckCoupons =
+      (queueDetails.coupons_used ?? 0) > 0 ||
+      queueDetails.payment_type === "coupon" ||
+      queueDetails.payment_type === "both";
+    const canAutoRemove =
+      (queueDetails.status === "waiting" || queueDetails.status === "ready") &&
+      !queueDetails.washing_started_at;
+
+    if (shouldCheckCoupons && canAutoRemove) {
+      const cutoff = new Date().toISOString();
+      const { data: expiredCoupon, error: expiredError } = await supabaseAdmin
+        .from("coupons")
+        .select("id")
+        .eq("reserved_queue_id", queue_item_id)
+        .is("used_at", null)
+        .is("used_in_queue_id", null)
+        .lte("expires_at", cutoff)
+        .limit(1)
+        .maybeSingle();
+
+      if (expiredError) {
+        return NextResponse.json(
+          { error: expiredError.message },
+          { status: 500 }
+        );
+      }
+
+      if (expiredCoupon) {
+        const { error: releaseError } = await supabaseAdmin
+          .from("coupons")
+          .update({ reserved_queue_id: null, reserved_at: null })
+          .eq("reserved_queue_id", queue_item_id)
+          .is("used_at", null)
+          .is("used_in_queue_id", null);
+
+        if (releaseError) {
+          return NextResponse.json(
+            { error: releaseError.message },
+            { status: 500 }
+          );
+        }
+
+        const { error: removeError } = await supabaseAdmin
+          .from("queue")
+          .delete()
+          .eq("id", queue_item_id);
+
+        if (removeError) {
+          return NextResponse.json(
+            { error: removeError.message },
+            { status: 500 }
+          );
+        }
+
+        return NextResponse.json(
+          {
+            error: "Купон сгорел. Запись удалена из очереди.",
+            code: "COUPON_EXPIRED",
+            removed: true,
+          },
+          { status: 409 }
+        );
+      }
+    }
+
     // ✅ Обновляем статус очереди на WASHING
     const { error: updateError } = await supabaseAdmin
       .from("queue")

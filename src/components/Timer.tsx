@@ -8,6 +8,7 @@ interface TimerProps {
   endTime?: string;
   label: string;
   color?: 'yellow' | 'blue' | 'green' | 'orange';
+  multiplier?: number;
 }
 
 // ✅ Временные зоны для разных типов таймеров (в минутах)
@@ -18,7 +19,7 @@ const TIME_ZONES = {
   orange: { warning: 5, danger: 10 },   // Возвращает ключ: 5-10 мин, >10 мин
 };
 
-export default function Timer({ startTime, endTime, label, color = 'blue' }: TimerProps) {
+export default function Timer({ startTime, endTime, label, color = 'blue', multiplier = 1 }: TimerProps) {
   const [time, setTime] = useState('00:00:00');
   const [timeZone, setTimeZone] = useState<'normal' | 'warning' | 'danger'>('normal');
 
@@ -37,13 +38,17 @@ export default function Timer({ startTime, endTime, label, color = 'blue' }: Tim
       // ✅ Определяем временную зону в зависимости от типа таймера
       const minutes = Math.floor(ms / 60000);
       const zones = TIME_ZONES[color];
-      
-      if (minutes >= zones.danger) {
-        setTimeZone('danger'); // Красная зона
-      } else if (minutes >= zones.warning) {
-        setTimeZone('warning'); // Желтая зона
+      const scale = color === 'green' ? Math.max(1, multiplier) : 1;
+      const warning = zones.warning * scale;
+      const danger = zones.danger * scale;
+
+      if (minutes >= danger) {
+        setTimeZone('danger'); // 
+      } else if (minutes >= warning) {
+        setTimeZone('warning'); // 
       } else {
-        setTimeZone('normal'); // Нормально
+        setTimeZone('normal'); // 
+      }
       }
     };
 
@@ -53,7 +58,7 @@ export default function Timer({ startTime, endTime, label, color = 'blue' }: Tim
     
     const timer = setInterval(update, 1000);
     return () => clearInterval(timer);
-  }, [startTime, endTime]);
+  }, [startTime, endTime, color, multiplier]);
 
   // ✅ Базовые цвета таймеров
   const baseColors = {
