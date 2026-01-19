@@ -182,7 +182,7 @@ export default function HistoryList() {
     return (
       <div className="bg-slate-50 rounded-2xl shadow-sm border border-slate-200 p-12">
         <div className="flex flex-col items-center justify-center text-center space-y-4">
-          <div className="w-20 h-20 rounded-full bg-slate-900 flex items-center justify-center shadow-md">
+          <div className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center shadow-md">
             <HistoryIcon className="w-10 h-10 text-white" />
           </div>
           <h3 className="text-2xl font-bold text-gray-800">История пуста</h3>
@@ -194,7 +194,7 @@ export default function HistoryList() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl shadow-md p-5">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-md p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
@@ -202,7 +202,7 @@ export default function HistoryList() {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-white">История</h2>
-              <p className="text-slate-300 text-sm">Всего стирок: {historyTotalCount}</p>
+              <p className="text-blue-100 text-sm">Всего стирок: {historyTotalCount}</p>
             </div>
           </div>
           {isSuperAdmin && (
@@ -252,7 +252,7 @@ export default function HistoryList() {
             <button
               onClick={() => clearHistory('range')}
               disabled={clearing}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-950 disabled:opacity-70"
+              className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-70"
             >
               Очистить выборочно
             </button>
@@ -340,7 +340,7 @@ export default function HistoryList() {
               </div>
 
               <div className="space-y-3">
-                <div className="rounded-xl border border-white/60 bg-white/70 p-3">
+                <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="flex items-center justify-between gap-2">
                       <div className={`flex items-center gap-2 ${labelTextClass}`}>
@@ -358,26 +358,23 @@ export default function HistoryList() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <div className="bg-white/80 rounded-xl p-3 border border-white/60">
+                  <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
-                          <ClockIcon className="w-4 h-4 text-white" />
-                        </div>
                         <span className="text-sm font-medium text-slate-600">Общее время</span>
                       </div>
                       <span className="text-lg font-bold text-slate-900">{totalDuration}</span>
                     </div>
                   </div>
 
-                  <div className="bg-white/80 rounded-xl p-3 border border-white/60">
+                  <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-slate-600">Количество стирок</span>
                       <span className="text-lg font-bold text-slate-900">{washCount}</span>
                     </div>
                   </div>
 
-                  <div className="bg-white/80 rounded-xl p-3 border border-white/60">
+                  <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-slate-600">Оплата</span>
                       <span className="text-sm font-bold text-slate-900 flex items-center gap-1">
@@ -443,7 +440,7 @@ export default function HistoryList() {
             await loadMoreHistory();
             setIsLoadingMore(false);
           }}
-          className="w-full py-4 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-900 hover:to-slate-950 text-white font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3 disabled:opacity-70"
+          className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3 disabled:opacity-70"
           disabled={isLoadingMore}
         >
           <span className="text-lg">
