@@ -219,6 +219,7 @@ type LaundryContextType = {
   getUserQueueItem: () => QueueItem | undefined;
 
   isLoading: boolean;
+  authReady: boolean;
 
   isNewUser: boolean; // 
 
@@ -311,6 +312,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   const [historyHasMore, setHistoryHasMore] = useState(true);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [authReady, setAuthReady] = useState(false);
 
   const [isNewUser, setIsNewUser] = useState<boolean>(() => {
 
@@ -759,6 +761,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
       setIsSuperAdmin(false);
       setIsCleanupAdmin(false);
+      setAuthReady(true);
 
       return;
 
@@ -960,6 +963,8 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       setIsSuperAdmin(false);
       setIsCleanupAdmin(false);
 
+    } finally {
+      setAuthReady(true);
     }
 
   };
@@ -5623,6 +5628,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     getUserQueueItem,
 
     isLoading,
+    authReady,
 
     isNewUser,
 

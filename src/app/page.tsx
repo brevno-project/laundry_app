@@ -20,7 +20,7 @@ import PasswordChanger from '@/components/PasswordChanger';
 import AvatarCustomizer from '@/components/AvatarCustomizer';
 
 export default function Home() {
-  const { user, isLoading, logoutStudent, isAdmin, isSuperAdmin, isCleanupAdmin, machineState, queue, isNewUser, setIsNewUser, students, needsClaim } = useLaundry();
+  const { user, isLoading, authReady, logoutStudent, isAdmin, isSuperAdmin, isCleanupAdmin, machineState, queue, isNewUser, setIsNewUser, students, needsClaim } = useLaundry();
   const canViewStudentsTab = isAdmin || isSuperAdmin || isCleanupAdmin || !!user?.can_view_students;
   
   // ✅ Восстанавливаем activeTab из localStorage
@@ -30,20 +30,12 @@ export default function Home() {
     }
     return 'main';
   });
-  const [mountedTabs, setMountedTabs] = React.useState<Record<string, boolean>>(() => {
-    if (typeof window !== 'undefined') {
-      const savedTab = localStorage.getItem('activeTab') || 'main';
-      return { main: true, [savedTab]: true };
-    }
-    return { main: true };
-  });
   
   const [showScrollButton, setShowScrollButton] = React.useState(false);
 
   // ✅ Сохраняем activeTab в localStorage при изменении
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    setMountedTabs((prev) => (prev[tab] ? prev : { ...prev, [tab]: true }));
     if (typeof window !== 'undefined') {
       localStorage.setItem('activeTab', tab);
     }
@@ -51,17 +43,17 @@ export default function Home() {
 
   // ✅ ТЫ FIX: Сбрасываем activeTab на 'main' когда нет пользователя
   React.useEffect(() => {
-    if (isLoading) return;
+    if (!authReady) return;
     if (!user && activeTab !== 'main') {
       setActiveTab('main');
-      setMountedTabs({ main: true });
       if (typeof window !== 'undefined') {
         localStorage.setItem('activeTab', 'main');
       }
     }
-  }, [user, isLoading, activeTab]);
+  }, [user, authReady, activeTab]);
 
   React.useEffect(() => {
+    if (!authReady) return;
     if (activeTab === 'students' && !canViewStudentsTab) {
       handleTabChange('main');
       return;
@@ -69,7 +61,7 @@ export default function Home() {
     if (activeTab === 'settings' && !user) {
       handleTabChange('main');
     }
-  }, [activeTab, canViewStudentsTab, user]);
+  }, [activeTab, canViewStudentsTab, user, authReady]);
 
 
 
@@ -102,7 +94,7 @@ export default function Home() {
     setShowScrollButton(false);
   };
 
-  if (isLoading) {
+  if (isLoading || !authReady) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-xl">Loading...</div>
@@ -196,8 +188,8 @@ export default function Home() {
       
       {/* Основной контент */}
       <div className="w-full">
-        {mountedTabs.main && (
-          <div className={`w-full space-y-4 ${activeTab === 'main' ? '' : 'hidden'}`}>
+        {activeTab === 'main' && (
+          <div className="w-full space-y-4">
             <TimeBanner />
             
             {/* Статус машины */}
@@ -338,29 +330,29 @@ export default function Home() {
         )}
         
         {/* История */}
-        {mountedTabs.history && (
-          <div className={`w-full space-y-4 ${activeTab === 'history' ? '' : 'hidden'}`}>
+        {activeTab === 'history' && (
+          <div className="w-full space-y-4">
             <HistoryList />
           </div>
         )}
 
         {/* Уборка */}
-        {mountedTabs.cleanup && (
-          <div className={`w-full space-y-4 ${activeTab === 'cleanup' ? '' : 'hidden'}`}>
+        {activeTab === 'cleanup' && (
+          <div className="w-full space-y-4">
             <CleanupResults embedded />
           </div>
         )}
 
         {/* Студенты - доступно админам и пользователям с can_view_students */}
-        {mountedTabs.students && canViewStudentsTab && (
-          <div className={`w-full space-y-4 ${activeTab === 'students' ? '' : 'hidden'}`}>
+        {activeTab === 'students' && canViewStudentsTab && (
+          <div className="w-full space-y-4">
             <StudentsList />
           </div>
         )}
 
         {/* Настройки */}
-        {mountedTabs.settings && user && (
-          <div className={`w-full space-y-4 px-3 ${activeTab === 'settings' ? '' : 'hidden'}`}>
+        {activeTab === 'settings' && user && (
+          <div className="w-full space-y-4 px-3">
             <AvatarCustomizer />
             <PasswordChanger />
             {!user.can_view_students && <TelegramSetup />}
@@ -371,7 +363,6 @@ export default function Home() {
                 onClick={() => {
                   logoutStudent();
                   handleTabChange('main');
-                  setMountedTabs({ main: true });
                   setIsNewUser(false);
                   localStorage.removeItem('needsTelegramSetup');
                 }}
