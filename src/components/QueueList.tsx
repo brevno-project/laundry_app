@@ -276,7 +276,7 @@ export default function QueueList() {
         {isSuperAdmin && queuedItems.length > 0 && (
           <button
             onClick={() => setShowClearConfirm(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-semibold shadow-md transition-all hover:shadow-lg active:scale-95"
+            className="btn btn-danger px-3 py-1.5 text-sm shadow-md hover:shadow-lg active:scale-95"
             title="Очистить всю очередь"
           >
             <DeleteIcon className="w-4 h-4" />
@@ -304,7 +304,7 @@ export default function QueueList() {
                 await transferSelectedToDate(selectedItems, dateStr);
                 setSelectedItems([]);
               }}
-              className="bg-red-500 text-white font-semibold py-2 px-2 rounded-lg hover:bg-red-600 text-xs"
+              className="btn bg-red-500 text-white hover:bg-red-600 px-2 py-2 text-xs"
             >
               Назад
             </button>
@@ -315,7 +315,7 @@ export default function QueueList() {
                 await transferSelectedToToday(selectedItems);
                 setSelectedItems([]);
               }}
-              className="bg-green-500 text-white font-semibold py-2 px-2 rounded-lg hover:bg-green-600 text-xs"
+              className="btn bg-green-500 text-white hover:bg-green-600 px-2 py-2 text-xs"
             >
               Сегодня
             </button>
@@ -329,7 +329,7 @@ export default function QueueList() {
                 await transferSelectedToDate(selectedItems, dateStr);
                 setSelectedItems([]);
               }}
-              className="bg-blue-500 text-white font-semibold py-2 px-2 rounded-lg hover:bg-blue-600 text-xs"
+              className="btn bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 text-xs"
             >
               Вперед
             </button>
@@ -338,7 +338,7 @@ export default function QueueList() {
           {/* Отмена выбора */}
           <button
             onClick={() => setSelectedItems([])}
-            className="w-full mt-2 bg-gray-400 text-white font-semibold py-2 px-3 rounded-lg hover:bg-gray-500 text-xs flex items-center justify-center gap-2"
+            className="w-full btn btn-neutral text-xs"
           >
             <CloseIcon className="w-4 h-4" />
             Отменить выбор
@@ -543,7 +543,7 @@ export default function QueueList() {
                         {isCurrentUser && item.status === QueueStatus.WAITING && (
                           <button
                             onClick={() => leaveQueue(item.id)}
-                            className="bg-red-500 text-white font-semibold py-2 px-3 rounded-lg hover:bg-red-600 shadow-sm text-sm w-full flex items-center justify-center gap-2"
+                            className="w-full btn btn-danger"
                           >
                             <CloseIcon className="w-4 h-4" />
                             Покинуть очередь
@@ -567,7 +567,7 @@ export default function QueueList() {
                                 }, 100);
                               }
                             }}
-                            className="w-full bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold py-2 px-3 rounded-lg shadow-sm flex items-center justify-center gap-2 mt-2"
+                            className="w-full btn btn-secondary mt-2"
                           >
                             <EditIcon className="w-4 h-4" /> Действия
                           </button>
@@ -580,7 +580,7 @@ export default function QueueList() {
 
                           {/* Позвать */}
                           <button
-                            className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-orange-500 text-white font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="w-full btn bg-orange-500 text-white"
                             onClick={async () => {
                               try {
                                 if (isSelfQueueItem) {
@@ -612,7 +612,7 @@ export default function QueueList() {
 
                           {/* Выдать ключ */}
                           <button
-                            className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-blue-600 text-white font-semibold"
+                            className="w-full btn btn-primary"
                             onClick={async () => {
                               try {
                                 const now = new Date().toISOString();
@@ -641,7 +641,7 @@ export default function QueueList() {
 
                           {/* Стирать */}
                           <button
-                            className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-green-600 text-white font-semibold"
+                            className="w-full btn bg-green-600 text-white"
                             onClick={async () => {
                               try {
                                 const now = new Date().toISOString();
@@ -671,7 +671,7 @@ export default function QueueList() {
 
                           {/* Вернуть ключ */}
                           <button
-                            className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-orange-600 text-white font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="w-full btn bg-orange-600 text-white"
                             onClick={async () => {
                               try {
                                 if (isSelfQueueItem) {
@@ -702,7 +702,7 @@ export default function QueueList() {
 
                           {/* Завершить */}
                           <button
-                            className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-emerald-600 text-white font-semibold"
+                            className="w-full btn bg-emerald-600 text-white"
                             onClick={async () => {
                               try {
                                 await markDone(item.id);
@@ -717,7 +717,7 @@ export default function QueueList() {
 
                           {/* В ожидание - сбрасывает все timestamps */}
                           <button
-                            className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-purple-500 text-white font-semibold"
+                            className="w-full btn bg-purple-500 text-white"
                             onClick={async () => {
                               // Сначала сбрасываем все timestamps
                               await updateQueueItem(item.id, { 
@@ -737,7 +737,7 @@ export default function QueueList() {
 
                           {/* Удалить */}
                           <button
-                            className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-red-600 text-white font-semibold"
+                            className="w-full btn btn-danger"
                             onClick={async () => {
                               if (confirm(`Удалить ${item.full_name}?`)) {
                                 await removeFromQueue(item.id);
@@ -825,13 +825,13 @@ export default function QueueList() {
       <div className="flex gap-2 mt-4">
         <button
           onClick={() => setShowEditModal(false)}
-          className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
+          className="flex-1 btn btn-neutral"
         >
           Отмена
         </button>
         <button
           onClick={handleSaveEdit}
-          className="flex-1 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700"
+          className="flex-1 btn btn-primary"
         >
           Сохранить
         </button>
@@ -852,7 +852,7 @@ export default function QueueList() {
       <div className="flex gap-3">
         <button
           onClick={() => setShowClearConfirm(false)}
-          className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+          className="flex-1 btn btn-neutral"
         >
           Отмена
         </button>
@@ -866,7 +866,7 @@ export default function QueueList() {
               alert('❌ Ошибка: ' + err.message + " \u2705");
             }
           }}
-          className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+          className="flex-1 btn btn-danger"
         >
           Очистить
         </button>

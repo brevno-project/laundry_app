@@ -179,11 +179,7 @@ export default function PasswordChanger() {
         <button
           onClick={handleChangePassword}
           disabled={loading || !currentPassword || !newPassword || !confirmPassword}
-          className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors ${
-            loading || !currentPassword || !newPassword || !confirmPassword
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : "bg-blue-600 text-white hover:bg-blue-700"
-          }`}
+          className="w-full btn btn-primary btn-lg btn-glow"
         >
           {loading ? (
             <>

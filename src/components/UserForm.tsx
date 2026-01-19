@@ -382,7 +382,7 @@ export default function UserForm() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-blue-700 transition-colors shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full btn btn-primary btn-lg btn-glow"
               >
                 {isSubmitting ? (
                   <>

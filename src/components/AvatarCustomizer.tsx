@@ -154,11 +154,7 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
         <button
           onClick={handleSave}
           disabled={isSaving || (selectedStyle === user?.avatar_style && avatarSeed === user?.avatar_seed)}
-          className={`w-full py-2 px-4 rounded-lg font-semibold transition-all text-sm mb-3 ${
-            isSaving || (selectedStyle === user?.avatar_style && avatarSeed === user?.avatar_seed)
-              ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
-          }`}
+          className="w-full btn btn-primary btn-glow mb-3"
         >
           {isSaving ? (
               <>
@@ -173,7 +169,7 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
         {/* Кнопка рандома под сохранить */}
         <button
           onClick={generateRandomSeed}
-          className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-all text-sm"
+          className="w-full btn btn-secondary"
         >
           🎲 Выбрать случайный аватар
         </button>

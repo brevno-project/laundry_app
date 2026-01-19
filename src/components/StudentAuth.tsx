@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useLaundry } from "@/contexts/LaundryContext";
@@ -30,15 +30,15 @@ export default function StudentAuth() {
     // Refresh students list only once on mount
     if (!hasLoadedRef.current) {
       hasLoadedRef.current = true;
-      console.log('🔄 StudentAuth: loading fresh students list (once)...');
+      console.log('рџ”„ StudentAuth: loading fresh students list (once)...');
       loadStudents();
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Логируем данные студентов при их изменении
+  // Р›РѕРіРёСЂСѓРµРј РґР°РЅРЅС‹Рµ СЃС‚СѓРґРµРЅС‚РѕРІ РїСЂРё РёС… РёР·РјРµРЅРµРЅРёРё
   useEffect(() => {
     if (students.length > 0) {
-      console.log('📋 StudentAuth: students loaded (first 3):', students.slice(0, 3).map(s => ({
+      console.log('рџ“‹ StudentAuth: students loaded (first 3):', students.slice(0, 3).map(s => ({
         full_name: s.full_name,
         avatar_style: s.avatar_style,
         avatar_seed: s.avatar_seed
@@ -74,30 +74,30 @@ export default function StudentAuth() {
     if (!selectedStudent) return;
 
     if (!password) {
-      setError("Введите пароль");
+      setError("Р’РІРµРґРёС‚Рµ РїР°СЂРѕР»СЊ");
       return;
     }
 
     if (!selectedStudent.is_registered && password.length < 6) {
-      setError("Пароль должен быть минимум 6 символов");
+      setError("РџР°СЂРѕР»СЊ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РјРёРЅРёРјСѓРј 6 СЃРёРјРІРѕР»РѕРІ");
       return;
     }
 
     setLoading(true);
     try {
       if (selectedStudent.is_registered) {
-        // Студент уже зарегистрирован - логиним
+        // РЎС‚СѓРґРµРЅС‚ СѓР¶Рµ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅ - Р»РѕРіРёРЅРёРј
         await loginStudent(selectedStudent.id, password);
       } else {
-        // Студент не зарегистрирован - сразу регистрируем
+        // РЎС‚СѓРґРµРЅС‚ РЅРµ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅ - СЃСЂР°Р·Сѓ СЂРµРіРёСЃС‚СЂРёСЂСѓРµРј
         await registerStudent(selectedStudent.id, password);
       }
     } catch (err: any) {
       setError(
         err.message ||
           (selectedStudent.is_registered
-            ? "Неправильный пароль"
-            : "Ошибка регистрации")
+            ? "РќРµРїСЂР°РІРёР»СЊРЅС‹Р№ РїР°СЂРѕР»СЊ"
+            : "РћС€РёР±РєР° СЂРµРіРёСЃС‚СЂР°С†РёРё")
       );
     } finally {
       setLoading(false);
@@ -113,24 +113,24 @@ export default function StudentAuth() {
         {banNoticeBanner}
 
         <h2 className="text-2xl font-bold mb-4 text-gray-900 text-center">
-          Очередь на стирку
+          РћС‡РµСЂРµРґСЊ РЅР° СЃС‚РёСЂРєСѓ
         </h2>
         <h3 className="text-lg font-bold mb-4 text-gray-900 text-center">
-          Выберите себя из списка
+          Р’С‹Р±РµСЂРёС‚Рµ СЃРµР±СЏ РёР· СЃРїРёСЃРєР°
         </h3>
 
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Поиск по имени или комнате..."
+          placeholder="РџРѕРёСЃРє РїРѕ РёРјРµРЅРё РёР»Рё РєРѕРјРЅР°С‚Рµ..."
           className="w-full p-4 rounded-lg border-2 border-blue-400 bg-white text-gray-900 text-xl font-semibold mb-4 focus:border-blue-600 focus:ring-2 focus:ring-blue-300 placeholder:text-gray-600"
         />
 
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {filteredStudents.length === 0 ? (
             <div className="text-center py-8 text-gray-900 font-bold text-xl">
-              Ничего не найдено
+              РќРёС‡РµРіРѕ РЅРµ РЅР°Р№РґРµРЅРѕ
             </div>
           ) : (
             filteredStudents.map((student) => (
@@ -153,7 +153,7 @@ export default function StudentAuth() {
                       </div>
                       {student.room && (
                         <div className="text-base text-gray-700 font-bold flex items-center gap-1">
-                          <DoorIcon className="w-4 h-4" /> Комната {student.room}
+                          <DoorIcon className="w-4 h-4" /> РљРѕРјРЅР°С‚Р° {student.room}
                         </div>
                       )}
                     </div>
@@ -193,7 +193,7 @@ export default function StudentAuth() {
         }}
         className="text-blue-600 hover:text-blue-800 font-bold mb-4 flex items-center gap-2"
       >
-        <BackIcon className="w-5 h-5" /> Назад
+        <BackIcon className="w-5 h-5" /> РќР°Р·Р°Рґ
       </button>
 
       <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6 flex items-center gap-3">
@@ -209,20 +209,20 @@ export default function StudentAuth() {
           </div>
           {selectedStudent?.room && (
             <div className="text-sm text-gray-900 font-medium flex items-center gap-1">
-              <DoorIcon className="w-4 h-4" /> Комната {selectedStudent.room}
+              <DoorIcon className="w-4 h-4" /> РљРѕРјРЅР°С‚Р° {selectedStudent.room}
             </div>
           )}
         </div>
       </div>
 
       <h2 className="text-2xl font-black mb-2 text-gray-900">
-        {selectedStudent?.is_registered ? "Вход" : "Первый раз?"}
+        {selectedStudent?.is_registered ? "Р’С…РѕРґ" : "РџРµСЂРІС‹Р№ СЂР°Р·?"}
       </h2>
 
       <p className="text-gray-900 mb-6 font-medium">
         {selectedStudent?.is_registered
-          ? "Введите ваш пароль"
-          : "Придумайте пароль для регистрации"}
+          ? "Р’РІРµРґРёС‚Рµ РІР°С€ РїР°СЂРѕР»СЊ"
+          : "РџСЂРёРґСѓРјР°Р№С‚Рµ РїР°СЂРѕР»СЊ РґР»СЏ СЂРµРіРёСЃС‚СЂР°С†РёРё"}
       </p>
 
       <div className="space-y-4">
@@ -231,7 +231,7 @@ export default function StudentAuth() {
             htmlFor="password"
             className="block text-sm font-bold mb-2 text-gray-900"
           >
-            Пароль
+            РџР°СЂРѕР»СЊ
           </label>
 
           <div className="relative">
@@ -245,7 +245,7 @@ export default function StudentAuth() {
               }}
               onKeyDown={(e) => e.key === "Enter" && handleAuth()}
               className="w-full rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-4 pr-20 text-lg font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-              placeholder="Введите пароль"
+              placeholder="Р’РІРµРґРёС‚Рµ РїР°СЂРѕР»СЊ"
               autoFocus
             />
 
@@ -254,13 +254,13 @@ export default function StudentAuth() {
               onClick={() => setShowPassword((v) => !v)}
               className="absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-gray-700 hover:text-gray-900"
             >
-              {showPassword ? "Скрыть" : "Показать"}
+              {showPassword ? "РЎРєСЂС‹С‚СЊ" : "РџРѕРєР°Р·Р°С‚СЊ"}
             </button>
           </div>
 
           {!selectedStudent?.is_registered && (
             <p className="text-xs text-gray-700 mt-1 font-medium">
-              От 6 символов
+              РћС‚ 6 СЃРёРјРІРѕР»РѕРІ
             </p>
           )}
         </div>
@@ -275,16 +275,16 @@ export default function StudentAuth() {
         <button
           onClick={handleAuth}
           disabled={loading || !password}
-          className="w-full bg-blue-600 text-white font-bold py-4 px-6 rounded-lg hover:bg-blue-700 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+          className="w-full btn btn-primary btn-lg btn-glow text-lg"
         >
           {loading ? (
             <>
               <WashingSpinner className="w-4 h-4" />
-              <span>Загрузка...</span>
+              <span>Р—Р°РіСЂСѓР·РєР°...</span>
             </>
           ) : selectedStudent?.is_registered
-          ? "Войти"
-          : "Зарегистрироваться"
+          ? "Р’РѕР№С‚Рё"
+          : "Р—Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊСЃСЏ"
         }
         </button>
       </div>

@@ -193,14 +193,14 @@ export default function StudentsList() {
               <div className="flex items-center justify-center gap-2">
                 <button
                   onClick={() => openEditModal(student)}
-                  className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+                  className="btn btn-primary px-3 py-1 text-sm"
                 >
                   <EditIcon className="w-4 h-4 inline-block mr-1" />Редактировать
                 </button>
                 {canDeleteStudents && (
                   <button
                     onClick={() => handleDeleteStudent(student)}
-                    className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
+                    className="btn btn-danger px-3 py-1 text-sm"
                   >
                     <DeleteIcon className="w-4 h-4 inline-block mr-1" />Удалить
                   </button>
@@ -282,14 +282,14 @@ export default function StudentsList() {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => openEditModal(student)}
-                    className={`${tone === "blue" ? "bg-blue-500 hover:bg-blue-600" : "bg-green-500 hover:bg-green-600"} text-white px-2 py-1 rounded text-xs`}
+                    className="btn btn-primary px-2 py-1 text-xs"
                   >
                     <EditIcon className="w-3 h-3" />
                   </button>
                   {canDeleteStudents && (
                     <button
                       onClick={() => handleDeleteStudent(student)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"
+                      className="btn btn-danger px-2 py-1 text-xs"
                     >
                       <DeleteIcon className="w-3 h-3" />
                     </button>
@@ -313,7 +313,7 @@ export default function StudentsList() {
           {canManageStudents && (
             <button
               onClick={() => setShowAddModal(true)}
-              className="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600"
+              className="btn btn-primary btn-glow"
             >
               + Добавить студента
             </button>

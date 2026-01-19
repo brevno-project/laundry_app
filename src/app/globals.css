@@ -54,3 +54,49 @@ body {
 .animate-slide-up {
   animation: slide-up 0.25s ease-out;
 }
+
+@keyframes btnGlow {
+  0%, 100% {
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
+  50% {
+    box-shadow: 0 10px 26px rgba(37, 99, 235, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.26);
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 select-none;
+  }
+  .btn-lg {
+    @apply px-5 py-3 text-base rounded-xl;
+  }
+  .btn-primary {
+    @apply text-white bg-blue-600 hover:bg-blue-700;
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
+  .btn-primary.btn-glow {
+    animation: btnGlow 2.4s ease-in-out infinite;
+  }
+  .btn-secondary {
+    @apply text-blue-700 bg-white border border-blue-200 hover:bg-blue-50;
+  }
+  .btn-neutral {
+    @apply text-white bg-slate-700 hover:bg-slate-800;
+  }
+  .btn-ghost {
+    @apply text-slate-700 bg-transparent hover:bg-slate-100;
+  }
+  .btn-danger {
+    @apply text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100;
+  }
+  .btn-warning {
+    @apply text-white bg-amber-500 hover:bg-amber-600;
+  }
+  .btn:disabled {
+    @apply opacity-60 cursor-not-allowed;
+  }
+  .btn:focus-visible {
+    @apply outline-none ring-2 ring-blue-200 ring-offset-2 ring-offset-white;
+  }
+}

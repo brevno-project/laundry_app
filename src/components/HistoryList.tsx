@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
@@ -37,8 +37,8 @@ const formatDuration = (start?: string | null, end?: string | null) => {
   const minutes = getDurationMinutes(start, end);
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  if (hours > 0) return `${hours} ч ${mins} мин`;
-  return `${mins} мин`;
+  if (hours > 0) return `${hours} С‡ ${mins} РјРёРЅ`;
+  return `${mins} РјРёРЅ`;
 };
 
 const getCardTone = (totalMinutes: number) => {
@@ -66,13 +66,13 @@ const getPaymentLabel = (paymentType?: string | null, couponsUsed?: number | nul
   const couponCount = couponsUsed || 0;
   if (couponCount > 0) {
     return paymentType === 'both'
-      ? `Купоны: ${couponCount} + деньги`
-      : `Купоны: ${couponCount}`;
+      ? `РљСѓРїРѕРЅС‹: ${couponCount} + РґРµРЅСЊРіРё`
+      : `РљСѓРїРѕРЅС‹: ${couponCount}`;
   }
   if (!paymentType) return '-';
-  if (paymentType === 'coupon') return 'Купон';
-  if (paymentType === 'both') return 'Купон + деньги';
-  if (paymentType === 'money' || paymentType === 'cash') return 'Деньги';
+  if (paymentType === 'coupon') return 'РљСѓРїРѕРЅ';
+  if (paymentType === 'both') return 'РљСѓРїРѕРЅ + РґРµРЅСЊРіРё';
+  if (paymentType === 'money' || paymentType === 'cash') return 'Р”РµРЅСЊРіРё';
   return paymentType;
 };
 
@@ -88,12 +88,12 @@ export default function HistoryList() {
 
   const authedFetch = async (url: string, options: RequestInit = {}) => {
     if (!supabase) {
-      throw new Error('Supabase не настроен');
+      throw new Error('Supabase РЅРµ РЅР°СЃС‚СЂРѕРµРЅ');
     }
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     if (!token) {
-      throw new Error('Нет активной сессии');
+      throw new Error('РќРµС‚ Р°РєС‚РёРІРЅРѕР№ СЃРµСЃСЃРёРё');
     }
     return fetch(url, {
       ...options,
@@ -120,14 +120,14 @@ export default function HistoryList() {
           };
 
     if (mode === 'range' && !payload.from && !payload.to && !payload.room) {
-      setClearNotice('Укажите период или комнату для выборочной очистки.');
+      setClearNotice('РЈРєР°Р¶РёС‚Рµ РїРµСЂРёРѕРґ РёР»Рё РєРѕРјРЅР°С‚Сѓ РґР»СЏ РІС‹Р±РѕСЂРѕС‡РЅРѕР№ РѕС‡РёСЃС‚РєРё.');
       return;
     }
 
     const confirmText =
       mode === 'all'
-        ? 'Очистить всю историю стирок?'
-        : 'Очистить выбранные записи истории?';
+        ? 'РћС‡РёСЃС‚РёС‚СЊ РІСЃСЋ РёСЃС‚РѕСЂРёСЋ СЃС‚РёСЂРѕРє?'
+        : 'РћС‡РёСЃС‚РёС‚СЊ РІС‹Р±СЂР°РЅРЅС‹Рµ Р·Р°РїРёСЃРё РёСЃС‚РѕСЂРёРё?';
     if (!confirm(confirmText)) return;
 
     setClearing(true);
@@ -138,15 +138,15 @@ export default function HistoryList() {
       });
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || 'Ошибка очистки истории');
+        throw new Error(result.error || 'РћС€РёР±РєР° РѕС‡РёСЃС‚РєРё РёСЃС‚РѕСЂРёРё');
       }
       await fetchHistory();
-      setClearNotice(`Удалено записей: ${result.count ?? 0}`);
+      setClearNotice(`РЈРґР°Р»РµРЅРѕ Р·Р°РїРёСЃРµР№: ${result.count ?? 0}`);
       setClearFrom('');
       setClearTo('');
       setClearRoom('');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Ошибка очистки истории';
+      const message = error instanceof Error ? error.message : 'РћС€РёР±РєР° РѕС‡РёСЃС‚РєРё РёСЃС‚РѕСЂРёРё';
       setClearNotice(message);
     } finally {
       setClearing(false);
@@ -155,7 +155,7 @@ export default function HistoryList() {
 
   const clearHistoryItem = async (historyId: string) => {
     if (clearing) return;
-    const confirmed = confirm('Удалить эту запись истории?');
+    const confirmed = confirm('РЈРґР°Р»РёС‚СЊ СЌС‚Сѓ Р·Р°РїРёСЃСЊ РёСЃС‚РѕСЂРёРё?');
     if (!confirmed) return;
     setClearing(true);
     try {
@@ -165,13 +165,13 @@ export default function HistoryList() {
       });
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || 'Ошибка удаления записи');
+        throw new Error(result.error || 'РћС€РёР±РєР° СѓРґР°Р»РµРЅРёСЏ Р·Р°РїРёСЃРё');
       }
       await fetchHistory();
-      alert(`Удалено ✅`);
+      alert(`РЈРґР°Р»РµРЅРѕ вњ…`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Ошибка удаления записи';
-      alert(`Ошибка: ${message} ✅`);
+      const message = error instanceof Error ? error.message : 'РћС€РёР±РєР° СѓРґР°Р»РµРЅРёСЏ Р·Р°РїРёСЃРё';
+      alert(`РћС€РёР±РєР°: ${message} вњ…`);
     } finally {
       setClearing(false);
     }
@@ -185,8 +185,8 @@ export default function HistoryList() {
           <div className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center shadow-md">
             <HistoryIcon className="w-10 h-10 text-white" />
           </div>
-          <h3 className="text-2xl font-bold text-gray-800">История пуста</h3>
-          <p className="text-gray-600">Записей о стирках пока нет.</p>
+          <h3 className="text-2xl font-bold text-gray-800">РСЃС‚РѕСЂРёСЏ РїСѓСЃС‚Р°</h3>
+          <p className="text-gray-600">Р—Р°РїРёСЃРµР№ Рѕ СЃС‚РёСЂРєР°С… РїРѕРєР° РЅРµС‚.</p>
         </div>
       </div>
     );
@@ -202,8 +202,8 @@ export default function HistoryList() {
               <HistoryIcon className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">История</h2>
-              <p className="text-blue-100 text-sm">Всего стирок: {historyTotalCount}</p>
+              <h2 className="text-2xl font-bold text-white">РСЃС‚РѕСЂРёСЏ</h2>
+              <p className="text-blue-100 text-sm">Р’СЃРµРіРѕ СЃС‚РёСЂРѕРє: {historyTotalCount}</p>
             </div>
           </div>
           {isSuperAdmin && (
@@ -212,9 +212,9 @@ export default function HistoryList() {
                 setShowClearTools((prev) => !prev);
                 setClearNotice(null);
               }}
-              className="rounded-xl border border-white/30 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/15 transition"
+              className="btn btn-secondary"
             >
-              {showClearTools ? 'Скрыть очистку' : 'Очистка истории'}
+              {showClearTools ? 'РЎРєСЂС‹С‚СЊ РѕС‡РёСЃС‚РєСѓ' : 'РћС‡РёСЃС‚РєР° РёСЃС‚РѕСЂРёРё'}
             </button>
           )}
         </div>
@@ -223,7 +223,7 @@ export default function HistoryList() {
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-600">С</label>
+              <label className="text-xs font-semibold text-slate-600">РЎ</label>
               <input
                 type="date"
                 value={clearFrom}
@@ -232,7 +232,7 @@ export default function HistoryList() {
               />
             </div>
             <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-600">По</label>
+              <label className="text-xs font-semibold text-slate-600">РџРѕ</label>
               <input
                 type="date"
                 value={clearTo}
@@ -241,28 +241,28 @@ export default function HistoryList() {
               />
             </div>
             <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-600">Комната</label>
+              <label className="text-xs font-semibold text-slate-600">РљРѕРјРЅР°С‚Р°</label>
               <input
                 type="text"
                 value={clearRoom}
                 onChange={(event) => setClearRoom(event.target.value)}
-                placeholder="Например A301"
+                placeholder="РќР°РїСЂРёРјРµСЂ A301"
                 className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
               />
             </div>
             <button
               onClick={() => clearHistory('range')}
               disabled={clearing}
-              className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-70"
+              className="btn btn-primary"
             >
-              Очистить выборочно
+              РћС‡РёСЃС‚РёС‚СЊ РІС‹Р±РѕСЂРѕС‡РЅРѕ
             </button>
             <button
               onClick={() => clearHistory('all')}
               disabled={clearing}
-              className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-70"
+              className="btn btn-danger"
             >
-              Очистить всё
+              РћС‡РёСЃС‚РёС‚СЊ РІСЃС‘
             </button>
           </div>
           {clearNotice && (
@@ -325,17 +325,17 @@ export default function HistoryList() {
                   <div>
                     <h3 className="font-bold text-gray-900 text-lg">{item.full_name}</h3>
                     <p className="text-sm text-gray-600">
-                      {item.room ? `Комната ${item.room} - ` : ''}{formatDate(item.finished_at)}
+                      {item.room ? `РљРѕРјРЅР°С‚Р° ${item.room} - ` : ''}{formatDate(item.finished_at)}
                     </p>
                   </div>
                 </div>
                 {isSuperAdmin && (
                   <button
                     onClick={() => clearHistoryItem(item.id)}
-                    className="flex items-center gap-2 rounded-lg border border-rose-200 bg-white/70 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50"
+                    className="btn btn-danger px-3 py-1.5 text-xs"
                   >
                     <DeleteIcon className="w-4 h-4" />
-                    Удалить
+                    РЈРґР°Р»РёС‚СЊ
                   </button>
                 )}
               </div>
@@ -345,13 +345,13 @@ export default function HistoryList() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="flex items-center justify-between gap-2">
                       <div className={`flex items-center gap-2 ${labelTextClass}`}>
-                        <ClockIcon className={labelIconClass} />Начало стирки
+                        <ClockIcon className={labelIconClass} />РќР°С‡Р°Р»Рѕ СЃС‚РёСЂРєРё
                       </div>
                       <span className={valueTextClass}>{formatTime(cycleStart)}</span>
                     </div>
                     <div className="flex items-center justify-between gap-2">
                       <div className={`flex items-center gap-2 ${labelTextClass}`}>
-                        <CheckIcon className={labelIconClass} />Конец стирки
+                        <CheckIcon className={labelIconClass} />РљРѕРЅРµС† СЃС‚РёСЂРєРё
                       </div>
                       <span className={valueTextClass}>{formatTime(cycleEnd)}</span>
                     </div>
@@ -362,7 +362,7 @@ export default function HistoryList() {
                   <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-slate-600">Общее время</span>
+                        <span className="text-sm font-medium text-slate-600">РћР±С‰РµРµ РІСЂРµРјСЏ</span>
                       </div>
                       <span className="text-lg font-bold text-slate-900">{totalDuration}</span>
                     </div>
@@ -370,14 +370,14 @@ export default function HistoryList() {
 
                   <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-600">Количество стирок</span>
+                      <span className="text-sm font-medium text-slate-600">РљРѕР»РёС‡РµСЃС‚РІРѕ СЃС‚РёСЂРѕРє</span>
                       <span className="text-lg font-bold text-slate-900">{washCount}</span>
                     </div>
                   </div>
 
                   <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-600">Оплата</span>
+                      <span className="text-sm font-medium text-slate-600">РћРїР»Р°С‚Р°</span>
                       <span className="text-sm font-bold text-slate-900 flex items-center gap-1">
                         {paymentIcons}
                         {paymentLabel}
@@ -391,7 +391,7 @@ export default function HistoryList() {
                     <Timer 
                       startTime={item.return_requested_at} 
                       endTime={item.finished_at}
-                      label="Возвращал ключ" 
+                      label="Р’РѕР·РІСЂР°С‰Р°Р» РєР»СЋС‡" 
                       color="orange"
                     />
                   )}
@@ -404,7 +404,7 @@ export default function HistoryList() {
                         item.return_requested_at ||
                         item.finished_at
                       }
-                      label="Стирал" 
+                      label="РЎС‚РёСЂР°Р»" 
                       color="green"
                       multiplier={item.wash_count || 1}
                     />
@@ -414,7 +414,7 @@ export default function HistoryList() {
                     <Timer 
                       startTime={item.key_issued_at} 
                       endTime={item.washing_started_at}
-                      label="Ключ был выдан" 
+                      label="РљР»СЋС‡ Р±С‹Р» РІС‹РґР°РЅ" 
                       color="blue"
                     />
                   )}
@@ -423,7 +423,7 @@ export default function HistoryList() {
                     <Timer 
                       startTime={item.ready_at} 
                       endTime={item.key_issued_at}
-                      label="Шел за ключом" 
+                      label="РЁРµР» Р·Р° РєР»СЋС‡РѕРј" 
                       color="yellow"
                     />
                   )}
@@ -441,17 +441,17 @@ export default function HistoryList() {
             await loadMoreHistory();
             setIsLoadingMore(false);
           }}
-          className="w-full py-4 rounded-2xl border border-blue-200 bg-white text-blue-700 font-bold shadow-sm hover:border-blue-300 hover:bg-blue-50 transition-all flex items-center justify-center gap-3 disabled:opacity-70"
+          className="w-full btn btn-secondary btn-lg"
           disabled={isLoadingMore}
         >
           <span className="text-lg">
             {isLoadingMore ? (
               <>
                 <WashingSpinner className="w-5 h-5" />
-                <span>Загрузка...</span>
+                <span>Р—Р°РіСЂСѓР·РєР°...</span>
               </>
             ) : (
-              <>Загрузить еще 50</>
+              <>Р—Р°РіСЂСѓР·РёС‚СЊ РµС‰Рµ 50</>
             )}
           </span>
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
@@ -15,12 +15,12 @@ export default function ClaimAccount() {
     e.preventDefault();
     
     if (!pin.trim()) {
-      setError('Введите PIN');
+      setError('Р’РІРµРґРёС‚Рµ PIN');
       return;
     }
 
     if (!user?.student_id) {
-      setError('Ошибка: нет student_id');
+      setError('РћС€РёР±РєР°: РЅРµС‚ student_id');
       return;
     }
 
@@ -28,20 +28,20 @@ export default function ClaimAccount() {
     setError('');
 
     try {
-      // Проверяем, что supabase доступен
+      // РџСЂРѕРІРµСЂСЏРµРј, С‡С‚Рѕ supabase РґРѕСЃС‚СѓРїРµРЅ
       if (!supabase) {
-        setError('Ошибка подключения к базе');
+        setError('РћС€РёР±РєР° РїРѕРґРєР»СЋС‡РµРЅРёСЏ Рє Р±Р°Р·Рµ');
         return;
       }
 
-      // Получаем JWT токен
+      // РџРѕР»СѓС‡Р°РµРј JWT С‚РѕРєРµРЅ
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        setError('Ошибка авторизации');
+        setError('РћС€РёР±РєР° Р°РІС‚РѕСЂРёР·Р°С†РёРё');
         return;
       }
 
-      // Вызываем API для привязки аккаунта
+      // Р’С‹Р·С‹РІР°РµРј API РґР»СЏ РїСЂРёРІСЏР·РєРё Р°РєРєР°СѓРЅС‚Р°
       const response = await fetch('/api/student/claim', {
         method: 'POST',
         headers: {
@@ -57,17 +57,17 @@ export default function ClaimAccount() {
       const result = await response.json();
 
       if (!response.ok) {
-        setError(result.error || 'Ошибка привязки');
+        setError(result.error || 'РћС€РёР±РєР° РїСЂРёРІСЏР·РєРё');
         return;
       }
 
-      // Успешно привязали - перезагружаем страницу для обновления данных
+      // РЈСЃРїРµС€РЅРѕ РїСЂРёРІСЏР·Р°Р»Рё - РїРµСЂРµР·Р°РіСЂСѓР¶Р°РµРј СЃС‚СЂР°РЅРёС†Сѓ РґР»СЏ РѕР±РЅРѕРІР»РµРЅРёСЏ РґР°РЅРЅС‹С…
       await refreshMyRole();
       setNeedsClaim(false);
       await fetchQueue();
 
     } catch (err: any) {
-      setError(err.message || 'Ошибка сети');
+      setError(err.message || 'РћС€РёР±РєР° СЃРµС‚Рё');
     } finally {
       setLoading(false);
     }
@@ -76,15 +76,15 @@ export default function ClaimAccount() {
   return (
     <div className="bg-yellow-50 border-2 border-yellow-200 p-6 rounded-lg shadow-lg max-w-md mx-auto">
       <h2 className="text-xl font-bold text-yellow-800 mb-4 text-center">
-        🎫 Привязка аккаунта
+        рџЋ« РџСЂРёРІСЏР·РєР° Р°РєРєР°СѓРЅС‚Р°
       </h2>
       
       <div className="mb-4 text-sm text-yellow-700">
         <p className="mb-2">
-          Администратор создал для вас запись в очереди и выдал PIN-код.
+          РђРґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ СЃРѕР·РґР°Р» РґР»СЏ РІР°СЃ Р·Р°РїРёСЃСЊ РІ РѕС‡РµСЂРµРґРё Рё РІС‹РґР°Р» PIN-РєРѕРґ.
         </p>
         <p>
-          Введите PIN, чтобы привязать свой аккаунт к этой записи.
+          Р’РІРµРґРёС‚Рµ PIN, С‡С‚РѕР±С‹ РїСЂРёРІСЏР·Р°С‚СЊ СЃРІРѕР№ Р°РєРєР°СѓРЅС‚ Рє СЌС‚РѕР№ Р·Р°РїРёСЃРё.
         </p>
       </div>
 
@@ -94,7 +94,7 @@ export default function ClaimAccount() {
             htmlFor="pin"
             className="block text-sm font-medium text-yellow-800 mb-1"
           >
-            PIN-код (6 цифр)
+            PIN-РєРѕРґ (6 С†РёС„СЂ)
           </label>
           <input
             id="pin"
@@ -117,21 +117,21 @@ export default function ClaimAccount() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md bg-yellow-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-yellow-700 disabled:bg-yellow-400 disabled:cursor-not-allowed"
+          className="w-full btn btn-warning"
         >
           {loading ? (
             <>
               <WashingSpinner className="w-4 h-4" />
-              <span>Привязка...</span>
+              <span>РџСЂРёРІСЏР·РєР°...</span>
             </>
           ) : (
-            <>🔓 Привязать аккаунт</>
+            <>рџ”“ РџСЂРёРІСЏР·Р°С‚СЊ Р°РєРєР°СѓРЅС‚</>
           )}
         </button>
       </form>
 
       <div className="mt-4 text-xs text-yellow-600 text-center">
-        PIN действителен 24 часа
+        PIN РґРµР№СЃС‚РІРёС‚РµР»РµРЅ 24 С‡Р°СЃР°
       </div>
     </div>
   );

@@ -1392,7 +1392,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               type="button"
               onClick={() => handleScheduleSave(block)}
               disabled={!!scheduleSaving[block]}
-              className="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:bg-gray-400 md:w-auto"
+              className="w-full btn btn-primary btn-glow md:w-auto"
             >
               {scheduleSaving[block] ? "Сохранение..." : "Сохранить"}
             </button>
@@ -1400,7 +1400,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               type="button"
               onClick={() => handleSendReminder(block)}
               disabled={!!reminderSending[block]}
-              className="w-full rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:bg-gray-400 md:w-auto"
+              className="w-full btn btn-secondary md:w-auto"
             >
               {reminderSending[block] ? "Отправка..." : "Разослать напоминание"}
             </button>
@@ -1589,7 +1589,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 type="button"
                 onClick={() => handleClearResults(block)}
                 disabled={!!resultsClearing[block]}
-                className="rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:border-gray-200 disabled:text-gray-400"
+                className="btn btn-danger px-3 py-2 text-xs"
               >
                 {resultsClearing[block] ? "Удаление..." : "Очистить публикации"}
               </button>
@@ -1798,14 +1798,14 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 <button
                   type="button"
                   onClick={handleRandomScoreCaption}
-                  className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                  className="btn btn-secondary px-3 py-2 text-xs"
                 >
                   Случайная подпись
                 </button>
                 <button
                   type="button"
                   onClick={handleBuildScoreAnnouncement}
-                  className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                  className="btn btn-primary px-3 py-2 text-xs"
                 >
                   Сформировать сообщение
                 </button>
@@ -1839,7 +1839,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               type="button"
               onClick={handlePublish}
               disabled={isPublishing || (!isSuperAdmin && !adminBlock)}
-              className="w-full rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:bg-gray-400"
+              className="w-full btn btn-primary btn-glow"
             >
               {isPublishing ? "Публикация..." : "Опубликовать результаты"}
             </button>
@@ -1877,14 +1877,14 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                     <button
                       type="button"
                       onClick={() => setShowAllCoupons((prev) => !prev)}
-                      className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                      className="btn btn-ghost px-3 py-1 text-xs"
                     >
                       {showAllCoupons ? "Скрыть неактивные" : "Показать все"}
                     </button>
                     <button
                       type="button"
                       onClick={() => setShowCouponList((prev) => !prev)}
-                      className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                      className="btn btn-ghost px-3 py-1 text-xs"
                     >
                       {showCouponList ? "Свернуть список" : `Показать список (${visibleCoupons.length})`}
                     </button>
@@ -1978,7 +1978,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   <button
                     type="button"
                     onClick={handleTransfer}
-                    className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                    className="w-full btn btn-primary"
                   >
                     Передать
                   </button>
@@ -2000,7 +2000,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   type="button"
                   onClick={handleClearTransfers}
                   disabled={transferClearing}
-                  className="rounded-lg border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:border-gray-200 disabled:text-gray-400"
+                  className="btn btn-danger px-3 py-1 text-xs"
                 >
                   {transferClearing ? "Очистка..." : "Очистить историю"}
                 </button>
@@ -2106,7 +2106,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
             <button
               type="button"
               onClick={handleGrant}
-              className="w-full rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700"
+              className="w-full btn btn-primary"
             >
               Выдать купоны
             </button>
