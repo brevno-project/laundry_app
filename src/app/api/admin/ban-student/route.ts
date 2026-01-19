@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCaller, supabaseAdmin } from "../../_utils/adminAuth";
+import { getCaller, supabaseAdmin, requireLaundryAdmin } from "../../_utils/adminAuth";
 
 export async function POST(req: NextRequest) {
   try {
     // ✅ Проверяем JWT и получаем инициатора
     const { caller, error: authError } = await getCaller(req);
     if (authError) return authError;
+    const roleError = requireLaundryAdmin(caller);
+    if (roleError) return roleError;
 
     // ✅ Получаем данные из body
     const { student_id, reason, ban } = await req.json();

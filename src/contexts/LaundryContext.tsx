@@ -195,12 +195,14 @@ type LaundryContextType = {
   isAdmin: boolean;
 
   isSuperAdmin: boolean;
+  isCleanupAdmin: boolean;
 
   needsClaim: boolean;
 
   setIsAdmin: (isAdmin: boolean) => void;
 
   setIsSuperAdmin: (isSuperAdmin: boolean) => void;
+  setIsCleanupAdmin: (isCleanupAdmin: boolean) => void;
 
   setIsJoining: (value: boolean) => void;
 
@@ -231,6 +233,7 @@ type LaundryContextType = {
       room?: string;
 
       can_view_students?: boolean;
+      is_cleanup_admin?: boolean;
 
       key_issued?: boolean;
 
@@ -283,6 +286,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(false);
+  const [isCleanupAdmin, setIsCleanupAdmin] = useState<boolean>(false);
 
   const [students, setStudents] = useState<Student[]>([]);
 
@@ -746,6 +750,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       setIsAdmin(false);
 
       setIsSuperAdmin(false);
+      setIsCleanupAdmin(false);
 
       return;
 
@@ -770,6 +775,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         setIsAdmin(false);
 
         setIsSuperAdmin(false);
+        setIsCleanupAdmin(false);
 
         return;
 
@@ -783,7 +789,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
         .from("students")
 
-        .select("id, first_name, last_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, avatar_style, avatar_seed")
+        .select("id, first_name, last_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, is_cleanup_admin, can_view_students, is_banned, ban_reason, avatar_style, avatar_seed")
 
         .eq("user_id", uid)
 
@@ -800,6 +806,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         setIsAdmin(false);
 
         setIsSuperAdmin(false);
+        setIsCleanupAdmin(false);
 
         return;
 
@@ -816,6 +823,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         setIsAdmin(false);
 
         setIsSuperAdmin(false);
+        setIsCleanupAdmin(false);
 
         return;
 
@@ -823,7 +831,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-      console.log('? User data loaded:', { full_name: me.full_name, is_admin: me.is_admin, is_super_admin: me.is_super_admin, avatar_style: me.avatar_style, avatar_seed: me.avatar_seed });
+      console.log('? User data loaded:', { full_name: me.full_name, is_admin: me.is_admin, is_super_admin: me.is_super_admin, is_cleanup_admin: me.is_cleanup_admin, avatar_style: me.avatar_style, avatar_seed: me.avatar_seed });
 
 
 
@@ -851,6 +859,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         setIsAdmin(false);
 
         setIsSuperAdmin(false);
+        setIsCleanupAdmin(false);
 
         return;
 
@@ -885,6 +894,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         is_admin: me.is_admin || false,
 
         is_super_admin: me.is_super_admin || false,
+        is_cleanup_admin: me.is_cleanup_admin || false,
 
         can_view_students: me.can_view_students || false,
 
@@ -899,6 +909,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       setIsAdmin(!!me.is_admin);
 
       setIsSuperAdmin(!!me.is_super_admin);
+      setIsCleanupAdmin(!!me.is_cleanup_admin);
 
 
 
@@ -939,6 +950,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       setIsAdmin(false);
 
       setIsSuperAdmin(false);
+      setIsCleanupAdmin(false);
 
     }
 
@@ -960,7 +972,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
     const client = supabase;
 
-    const isAdminUser = !!(isAdmin || isSuperAdmin);
+    const isAdminUser = !!(isAdmin || isSuperAdmin || isCleanupAdmin);
 
     const canViewStudents = !!(isAdminUser || user?.can_view_students);
 
@@ -978,7 +990,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
             .select(
 
-              "id, first_name, last_name, middle_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, key_issued, key_lost, avatar_style, avatar_seed"
+              "id, first_name, last_name, middle_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, is_cleanup_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, key_issued, key_lost, avatar_style, avatar_seed"
 
             )
 
@@ -1029,6 +1041,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
               is_admin: !!item.is_admin,
 
               is_super_admin: !!item.is_super_admin,
+              is_cleanup_admin: !!item.is_cleanup_admin,
 
               can_view_students: !!item.can_view_students,
 
@@ -1060,7 +1073,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
             .select(
 
-              "id, first_name, last_name, middle_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, avatar_style, avatar_seed"
+              "id, first_name, last_name, middle_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, is_cleanup_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, avatar_style, avatar_seed"
 
             )
 
@@ -1109,6 +1122,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
               is_admin: !!item.is_admin,
 
               is_super_admin: !!item.is_super_admin,
+              is_cleanup_admin: !!item.is_cleanup_admin,
 
               can_view_students: !!item.can_view_students,
 
@@ -1193,6 +1207,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
                 is_admin: !!item.is_admin,
 
                 is_super_admin: !!item.is_super_admin,
+                is_cleanup_admin: !!item.is_cleanup_admin,
 
                 can_view_students: !!item.can_view_students,
 
@@ -1261,6 +1276,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
           is_admin: false,
 
           is_super_admin: false,
+          is_cleanup_admin: false,
 
           can_view_students: false,
 
@@ -1321,6 +1337,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
           is_admin: false,
 
           is_super_admin: false,
+          is_cleanup_admin: false,
 
           can_view_students: false,
 
@@ -1362,7 +1379,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
     loadStudents();
 
-  }, [isAdmin, isSuperAdmin, user?.can_view_students]);
+  }, [isAdmin, isSuperAdmin, isCleanupAdmin, user?.can_view_students]);
 
   
 
@@ -1401,6 +1418,7 @@ const finalizeUserSession = (
   const isAdminUser = student.is_admin || false;
 
   const isSuperAdminUser = student.is_super_admin || false;
+  const isCleanupAdminUser = student.is_cleanup_admin || false;
 
   const canViewStudents = student.can_view_students || false;
 
@@ -1433,6 +1451,7 @@ const finalizeUserSession = (
     is_admin: isAdminUser,
 
     is_super_admin: isSuperAdminUser,
+    is_cleanup_admin: isCleanupAdminUser,
 
     can_view_students: canViewStudents,
 
@@ -1449,6 +1468,7 @@ const finalizeUserSession = (
   setIsAdmin(isAdminUser);
 
   setIsSuperAdmin(isSuperAdminUser);
+  setIsCleanupAdmin(isCleanupAdminUser);
 
 
 
@@ -1722,7 +1742,7 @@ const registerStudent = async (
 
       .from("students")
 
-      .select("id, first_name, last_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, avatar_style, avatar_seed")
+      .select("id, first_name, last_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, is_cleanup_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, avatar_style, avatar_seed")
 
       .eq("id", studentId)
 
@@ -1870,7 +1890,7 @@ const loginStudent = async (
 
       .from("students")
 
-      .select("id, first_name, last_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, avatar_style, avatar_seed")
+      .select("id, first_name, last_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, is_cleanup_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, avatar_style, avatar_seed")
 
       .eq("user_id", authUser.id)
 
@@ -1971,6 +1991,7 @@ const loginStudent = async (
       setIsAdmin(false);
 
       setIsSuperAdmin(false);
+      setIsCleanupAdmin(false);
 
       setIsNewUser(false);
 
@@ -4249,7 +4270,12 @@ const startWashing = async (queueItemId: string) => {
 
   ) => {
 
-    if (!isAdmin) throw new Error("Недостаточно прав");
+    if (!isAdmin && !isSuperAdmin && !isCleanupAdmin) {
+
+      throw new Error("Недостаточно прав");
+
+    }
+
 
     if (!isSupabaseConfigured || !supabase) {
 
@@ -4342,6 +4368,7 @@ const startWashing = async (queueItemId: string) => {
       room?: string;
 
       can_view_students?: boolean;
+      is_cleanup_admin?: boolean;
 
       avatar_style?: string;
 
@@ -4353,7 +4380,8 @@ const startWashing = async (queueItemId: string) => {
 
   ) => {
 
-    if (!isAdmin) return;
+    if (!isAdmin && !isSuperAdmin && !isCleanupAdmin) return;
+
 
   
 
@@ -4424,12 +4452,14 @@ const startWashing = async (queueItemId: string) => {
           room: updatedStudent.room,
 
           can_view_students: updatedStudent.can_view_students ?? false,
+          is_cleanup_admin: updatedStudent.is_cleanup_admin ?? user.is_cleanup_admin ?? false,
 
         };
 
 
 
         setUser(updatedUser);
+        setIsCleanupAdmin(!!updatedStudent.is_cleanup_admin);
 
         if (typeof window !== "undefined") {
 
@@ -5614,12 +5644,14 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     isAdmin,
 
     isSuperAdmin,
+    isCleanupAdmin,
 
     needsClaim,
 
     setIsAdmin,
 
     setIsSuperAdmin,
+    setIsCleanupAdmin,
 
     setIsJoining,
 

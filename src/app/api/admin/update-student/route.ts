@@ -65,6 +65,15 @@ export async function POST(req: NextRequest) {
     if (updates.key_lost !== undefined) {
       updateData.key_lost = updates.key_lost;
     }
+    if (updates.is_cleanup_admin !== undefined) {
+      if (!caller.is_super_admin) {
+        return NextResponse.json(
+          { error: "Only super admin can manage cleanup admins" },
+          { status: 403 }
+        );
+      }
+      updateData.is_cleanup_admin = updates.is_cleanup_admin;
+    }
     if (updates.avatar_style !== undefined) {
       updateData.avatar_style = updates.avatar_style;
     }

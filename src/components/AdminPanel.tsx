@@ -54,6 +54,7 @@ export default function AdminPanel() {
   const [editLastname, setEditLastname] = useState("");
   const [editRoom, setEditRoom] = useState("");
   const [editCanViewStudents, setEditCanViewStudents] = useState(false);
+  const [editCleanupAdmin, setEditCleanupAdmin] = useState(false);
 
   // Ban form
   const [banReason, setBanReason] = useState("");
@@ -141,6 +142,7 @@ export default function AdminPanel() {
         last_name: editLastname || undefined,
         room: editRoom || undefined,
         can_view_students: isSuperAdmin ? editCanViewStudents : undefined,
+        is_cleanup_admin: isSuperAdmin ? editCleanupAdmin : undefined,
       });
       setShowEditStudent(false);
       setSelectedStudent(null);
@@ -230,6 +232,7 @@ export default function AdminPanel() {
     setEditLastname(student.last_name || "");
     setEditRoom(student.room || "");
     setEditCanViewStudents(student.can_view_students || false);
+    setEditCleanupAdmin(!!student.is_cleanup_admin);
     setShowEditStudent(true);
   };
 
@@ -410,6 +413,12 @@ export default function AdminPanel() {
                             Суперадмин
                           </span>
                         )}
+
+                        {student.is_cleanup_admin && (
+                          <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700">
+                            Лидер уборки
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -481,6 +490,24 @@ export default function AdminPanel() {
                 >
                   <EyeIcon className="w-4 h-4" />
                   Может видеть вкладку студентов
+                </label>
+              </div>
+            )}
+
+            {isSuperAdmin && (
+              <div className="mt-3 flex items-center gap-2 rounded-lg bg-amber-50 p-3">
+                <input
+                  type="checkbox"
+                  id="adminEditCleanupAdmin"
+                  checked={editCleanupAdmin}
+                  onChange={(e) => setEditCleanupAdmin(e.target.checked)}
+                  className="h-5 w-5 cursor-pointer"
+                />
+                <label
+                  htmlFor="adminEditCleanupAdmin"
+                  className="text-sm font-semibold text-gray-900"
+                >
+                  Лидер уборки
                 </label>
               </div>
             )}

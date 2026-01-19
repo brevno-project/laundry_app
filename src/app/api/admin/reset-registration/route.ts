@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { canModifyStudent, getCaller, supabaseAdmin } from "../../_utils/adminAuth";
+import { canModifyStudent, getCaller, supabaseAdmin, requireLaundryAdmin } from "../../_utils/adminAuth";
 
 export async function POST(req: NextRequest) {
   try {
     const { caller, error: authError } = await getCaller(req);
     if (authError) return authError;
+    const roleError = requireLaundryAdmin(caller);
+    if (roleError) return roleError;
 
     const { studentId } = await req.json();
 

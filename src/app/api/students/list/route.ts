@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 
   const { data: requester, error: requesterError } = await supabaseAdmin
     .from("students")
-    .select("id, is_admin, is_super_admin, can_view_students, is_banned")
+    .select("id, is_admin, is_super_admin, is_cleanup_admin, can_view_students, is_banned")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -33,14 +33,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Requester is banned" }, { status: 403 });
   }
 
-  const canViewList = requester.is_admin || requester.is_super_admin || requester.can_view_students;
+  const canViewList =
+    requester.is_admin ||
+    requester.is_super_admin ||
+    requester.is_cleanup_admin ||
+    requester.can_view_students;
   if (!canViewList) {
     return NextResponse.json({ error: "Not allowed" }, { status: 403 });
   }
 
   const { data, error } = await supabaseAdmin
     .from("students")
-    .select("id, first_name, last_name, middle_name, full_name, room, avatar_type, telegram_chat_id, is_registered, is_banned, is_admin, is_super_admin, can_view_students, key_issued, key_lost")
+    .select("id, first_name, last_name, middle_name, full_name, room, avatar_type, telegram_chat_id, is_registered, is_banned, is_admin, is_super_admin, is_cleanup_admin, can_view_students, key_issued, key_lost")
     .order("full_name", { ascending: true });
 
   if (error) {

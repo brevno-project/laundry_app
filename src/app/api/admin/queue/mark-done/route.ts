@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCaller, supabaseAdmin, isTargetSuperAdmin } from "../../../_utils/adminAuth";
+import { getCaller, supabaseAdmin, isTargetSuperAdmin, requireLaundryAdmin } from "../../../_utils/adminAuth";
 import { v4 as uuidv4 } from "uuid";
 
 export async function POST(req: NextRequest) {
@@ -7,6 +7,8 @@ export async function POST(req: NextRequest) {
     // ✅ Проверяем JWT и получаем инициатора
     const { caller, error: authError } = await getCaller(req);
     if (authError) return authError;
+    const roleError = requireLaundryAdmin(caller);
+    if (roleError) return roleError;
 
     // ✅ Получаем данные из body
     const { queue_item_id } = await req.json();

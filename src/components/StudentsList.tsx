@@ -18,22 +18,24 @@ import Avatar from "@/components/Avatar";
 import AddStudentModal from "@/components/AddStudentModal";
 
 export default function StudentsList() {
-  const { students, isAdmin, isSuperAdmin, user, updateStudent, deleteStudent } = useLaundry();
+  const { students, isAdmin, isSuperAdmin, isCleanupAdmin, user, updateStudent, deleteStudent } = useLaundry();
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [editRoom, setEditRoom] = useState("");
   const [editFirstName, setEditFirstName] = useState("");
   const [editLastName, setEditLastName] = useState("");
   const [editMiddleName, setEditMiddleName] = useState("");
   const [editCanViewStudents, setEditCanViewStudents] = useState(false);
+  const [editCleanupAdmin, setEditCleanupAdmin] = useState(false);
   const [editKeyIssued, setEditKeyIssued] = useState(false);
   const [editKeyLost, setEditKeyLost] = useState(false);
   const [notice, setNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const isAdminUser = isAdmin || isSuperAdmin;
+  const canManageStudents = isAdmin || isSuperAdmin || isCleanupAdmin;
+  const canDeleteStudents = isAdmin || isSuperAdmin;
 
   const canManageStudent = (student: Student) =>
-    isAdminUser && (!student.is_super_admin || student.id === user?.student_id);
+    canManageStudents && (!student.is_super_admin || student.id === user?.student_id);
 
   if (!students || students.length === 0) {
     return (
@@ -74,6 +76,7 @@ export default function StudentsList() {
     setEditLastName(student.last_name || "");
     setEditMiddleName(student.middle_name || "");
     setEditCanViewStudents(!!student.can_view_students);
+    setEditCleanupAdmin(!!student.is_cleanup_admin);
     setEditKeyIssued(!!student.key_issued);
     setEditKeyLost(!!student.key_lost);
     setNotice(null);
@@ -89,6 +92,7 @@ export default function StudentsList() {
         last_name: editLastName || undefined,
         middle_name: editMiddleName || undefined,
         can_view_students: isSuperAdmin ? editCanViewStudents : undefined,
+        is_cleanup_admin: isSuperAdmin ? editCleanupAdmin : undefined,
         key_issued: editKeyIssued,
         key_lost: editKeyLost,
       });
@@ -101,7 +105,7 @@ export default function StudentsList() {
   };
 
   const handleDeleteStudent = async (student: Student) => {
-    if (!canManageStudent(student)) return;
+    if (!canDeleteStudents || !canManageStudent(student)) return;
 
     if (!confirm(`Удалить студента ${student.full_name}?`)) return;
 
@@ -140,7 +144,7 @@ export default function StudentsList() {
               <Avatar name={student.full_name} style={student.avatar_style} seed={student.avatar_seed} className="w-10 h-10" />
               <div className="flex flex-col">
                 <span>{displayName}</span>
-                {isAdminUser && (
+                {canManageStudents && (
                   <span className="mt-1 flex flex-wrap gap-1 text-[11px] font-semibold text-gray-600">
                     <span className={`rounded-full px-2 py-0.5 ${student.key_issued ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}>
                       {student.key_issued ? "Ключ выдан" : "Ключа нет"}
@@ -148,6 +152,11 @@ export default function StudentsList() {
                     {student.key_lost && (
                       <span className="rounded-full bg-red-100 px-2 py-0.5 text-red-700">
                         Ключ потерян
+                      </span>
+                    )}
+                    {isSuperAdmin && student.is_cleanup_admin && (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-700">
+                        Лидер уборки
                       </span>
                     )}
                     {isSuperAdmin && (
@@ -188,12 +197,14 @@ export default function StudentsList() {
                 >
                   <EditIcon className="w-4 h-4 inline-block mr-1" />Редактировать
                 </button>
-                <button
-                  onClick={() => handleDeleteStudent(student)}
-                  className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
-                >
-                  <DeleteIcon className="w-4 h-4 inline-block mr-1" />Удалить
-                </button>
+                {canDeleteStudents && (
+                  <button
+                    onClick={() => handleDeleteStudent(student)}
+                    className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
+                  >
+                    <DeleteIcon className="w-4 h-4 inline-block mr-1" />Удалить
+                  </button>
+                )}
               </div>
             )}
           </td>
@@ -221,7 +232,7 @@ export default function StudentsList() {
                 : "bg-gradient-to-r from-transparent via-green-300 to-transparent"
             }
           >
-            <td colSpan={isAdminUser ? 5 : 4} className="h-0.5"></td>
+            <td colSpan={canManageStudents ? 5 : 4} className="h-0.5"></td>
           </tr>
         )}
         <tr className={`border-b ${rowBorder}`}>
@@ -231,7 +242,7 @@ export default function StudentsList() {
               <Avatar name={student.full_name} style={student.avatar_style} seed={student.avatar_seed} className="w-8 h-8" />
               <div className="flex flex-col">
                 <span className="text-xs">{displayName}</span>
-                {isAdminUser && (
+                {canManageStudents && (
                   <span className="mt-1 flex flex-wrap gap-1 text-[10px] font-semibold text-gray-600">
                     <span className={`rounded-full px-1.5 py-0.5 ${student.key_issued ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}>
                       {student.key_issued ? "Ключ выдан" : "Ключа нет"}
@@ -239,6 +250,11 @@ export default function StudentsList() {
                     {student.key_lost && (
                       <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-red-700">
                         Потерян
+                      </span>
+                    )}
+                    {isSuperAdmin && student.is_cleanup_admin && (
+                      <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-amber-700">
+                        Лидер уборки
                       </span>
                     )}
                     {isSuperAdmin && (
@@ -260,7 +276,7 @@ export default function StudentsList() {
               <CloseIcon className="w-5 h-5 text-gray-400" />
             )}
           </td>
-          {isAdminUser && (
+          {canManageStudents && (
             <td className="p-1">
               {canManageStudent(student) && (
                 <div className="flex items-center gap-1">
@@ -270,12 +286,14 @@ export default function StudentsList() {
                   >
                     <EditIcon className="w-3 h-3" />
                   </button>
-                  <button
-                    onClick={() => handleDeleteStudent(student)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"
-                  >
-                    <DeleteIcon className="w-3 h-3" />
-                  </button>
+                  {canDeleteStudents && (
+                    <button
+                      onClick={() => handleDeleteStudent(student)}
+                      className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"
+                    >
+                      <DeleteIcon className="w-3 h-3" />
+                    </button>
+                  )}
                 </div>
               )}
             </td>
@@ -292,7 +310,7 @@ export default function StudentsList() {
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
             <ListIcon className="w-8 h-8" />Список студентов ({students.length})
           </h2>
-          {isAdminUser && (
+          {canManageStudents && (
             <button
               onClick={() => setShowAddModal(true)}
               className="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600"
@@ -326,7 +344,7 @@ export default function StudentsList() {
                 <col className="w-auto" />
                 <col className="w-28" />
                 <col className="w-36" />
-                {isAdminUser && <col className="w-72" />}
+                {canManageStudents && <col className="w-72" />}
               </colgroup>
               <thead>
                 <tr className="bg-blue-100 border-b-2 border-blue-300">
@@ -334,7 +352,7 @@ export default function StudentsList() {
                   <th className="text-left p-3 font-bold text-gray-900">Имя</th>
                   <th className="text-center p-3 font-bold text-gray-900">Комната</th>
                   <th className="text-center p-3 font-bold text-gray-900">Telegram</th>
-                  {isAdminUser && <th className="text-center p-3 font-bold text-gray-900">Действия</th>}
+                  {canManageStudents && <th className="text-center p-3 font-bold text-gray-900">Действия</th>}
                 </tr>
               </thead>
               <tbody>
@@ -355,7 +373,7 @@ export default function StudentsList() {
                   <th className="text-center p-1 font-bold text-gray-900">
                     <TelegramIcon className="w-5 h-5 inline-block" />
                   </th>
-                  {isAdminUser && <th className="text-left p-1 font-bold text-gray-900">Действия</th>}
+                  {canManageStudents && <th className="text-left p-1 font-bold text-gray-900">Действия</th>}
                 </tr>
               </thead>
               <tbody>
@@ -377,7 +395,7 @@ export default function StudentsList() {
                 <col className="w-auto" />
                 <col className="w-28" />
                 <col className="w-36" />
-                {isAdminUser && <col className="w-72" />}
+                {canManageStudents && <col className="w-72" />}
               </colgroup>
               <thead>
                 <tr className="bg-green-100 border-b-2 border-green-300">
@@ -385,7 +403,7 @@ export default function StudentsList() {
                   <th className="text-left p-3 font-bold text-gray-900">Имя</th>
                   <th className="text-center p-3 font-bold text-gray-900">Комната</th>
                   <th className="text-center p-3 font-bold text-gray-900">Telegram</th>
-                  {isAdminUser && <th className="text-center p-3 font-bold text-gray-900">Действия</th>}
+                  {canManageStudents && <th className="text-center p-3 font-bold text-gray-900">Действия</th>}
                 </tr>
               </thead>
               <tbody>
@@ -406,7 +424,7 @@ export default function StudentsList() {
                   <th className="text-center p-1 font-bold text-gray-900">
                     <TelegramIcon className="w-5 h-5 inline-block" />
                   </th>
-                  {isAdminUser && <th className="text-left p-1 font-bold text-gray-900">Действия</th>}
+                  {canManageStudents && <th className="text-left p-1 font-bold text-gray-900">Действия</th>}
                 </tr>
               </thead>
               <tbody>
@@ -468,7 +486,7 @@ export default function StudentsList() {
                 />
               </div>
 
-              {isAdminUser && (
+              {canManageStudents && (
                 <div className="flex flex-wrap gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-800">
                     <input
@@ -505,6 +523,24 @@ export default function StudentsList() {
                     className="text-sm font-semibold text-gray-900 cursor-pointer flex items-center gap-1"
                   >
                     <EyeIcon className="w-4 h-4" />Может видеть вкладку студентов
+                  </label>
+                </div>
+              )}
+
+              {isSuperAdmin && (
+                <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-lg">
+                  <input
+                    type="checkbox"
+                    id="cleanupAdmin"
+                    checked={editCleanupAdmin}
+                    onChange={(e) => setEditCleanupAdmin(e.target.checked)}
+                    className="w-5 h-5 cursor-pointer"
+                  />
+                  <label
+                    htmlFor="cleanupAdmin"
+                    className="text-sm font-semibold text-gray-900 cursor-pointer"
+                  >
+                    Лидер уборки
                   </label>
                 </div>
               )}

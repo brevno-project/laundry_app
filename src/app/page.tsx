@@ -20,8 +20,8 @@ import PasswordChanger from '@/components/PasswordChanger';
 import AvatarCustomizer from '@/components/AvatarCustomizer';
 
 export default function Home() {
-  const { user, isLoading, logoutStudent, isAdmin, isSuperAdmin, machineState, queue, isNewUser, setIsNewUser, students, needsClaim } = useLaundry();
-  const canViewStudentsTab = isAdmin || isSuperAdmin || !!user?.can_view_students;
+  const { user, isLoading, logoutStudent, isAdmin, isSuperAdmin, isCleanupAdmin, machineState, queue, isNewUser, setIsNewUser, students, needsClaim } = useLaundry();
+  const canViewStudentsTab = isAdmin || isSuperAdmin || isCleanupAdmin || !!user?.can_view_students;
   
   // ✅ Восстанавливаем activeTab из localStorage
   const [activeTab, setActiveTab] = React.useState(() => {

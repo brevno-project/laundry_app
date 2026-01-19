@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin, getCaller, canModifyQueueItem } from "@/app/api/_utils/adminAuth";
+import { supabaseAdmin, getCaller, canModifyQueueItem, requireLaundryAdmin } from "@/app/api/_utils/adminAuth";
 
 export async function POST(req: NextRequest) {
   try {
     const { caller, error } = await getCaller(req);
     if (error) return NextResponse.json({ error }, { status: 401 });
+    const roleError = requireLaundryAdmin(caller);
+    if (roleError) return roleError;
 
     const { a_id, b_id } = await req.json();
     if (!a_id || !b_id) {

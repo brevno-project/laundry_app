@@ -322,7 +322,8 @@ const formatRecipientLabel = (recipient: ReminderRecipient) =>
   recipient.room ? `${recipient.name} (${recipient.room})` : recipient.name;
 
 export default function CleanupResults({ embedded = false }: CleanupResultsProps) {
-  const { user, isAdmin, isSuperAdmin } = useLaundry();
+  const { user, isAdmin, isSuperAdmin, isCleanupAdmin } = useLaundry();
+  const canManageCleanup = isAdmin || isSuperAdmin || isCleanupAdmin;
   const [results, setResults] = useState<CleanupResult[]>([]);
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [schedules, setSchedules] = useState<CleanupSchedule[]>([]);
@@ -519,7 +520,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   };
 
   const loadAdminBlock = async () => {
-    if (!supabase || !user?.student_id || !isAdmin) return;
+    if (!supabase || !user?.student_id || !canManageCleanup) return;
 
     const { data: adminStudent } = await supabase
       .from("students")
@@ -552,7 +553,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   };
 
   const loadCouponTtl = async () => {
-    if (!supabase || (!isAdmin && !isSuperAdmin)) return;
+    if (!supabase || !canManageCleanup) return;
     const { data } = await supabase
       .from("app_settings")
       .select("value_int")
@@ -677,7 +678,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   useEffect(() => {
     loadAdminBlock();
     loadCouponTtl();
-  }, [user?.student_id, isAdmin, isSuperAdmin]);
+  }, [user?.student_id, isAdmin, isSuperAdmin, isCleanupAdmin]);
 
   useEffect(() => {
     if (!user?.student_id) return;
@@ -896,7 +897,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       return;
     }
 
-    if (!isAdmin && !isSuperAdmin) return;
+    if (!canManageCleanup) return;
 
     try {
       setIsPublishing(true);
@@ -1323,7 +1324,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
           {renderBlockSection("B")}
         </div>
 
-        {(isAdmin || isSuperAdmin) && (
+        {canManageCleanup && (
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-2">
               <CalendarIcon className="w-5 h-5 text-blue-600" />

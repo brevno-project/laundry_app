@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     const { data: admins } = await supabaseAdmin
       .from("students")
       .select("*")
-      .or("is_admin.eq.true,is_super_admin.eq.true")
+      .or("is_admin.eq.true,is_super_admin.eq.true,is_cleanup_admin.eq.true")
       .is("user_id", null);
 
     if (!admins || admins.length === 0) {
@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
             full_name: admin.full_name,
             admin: true,
             super_admin: admin.is_super_admin,
+            cleanup_admin: admin.is_cleanup_admin,
           },
         });
 

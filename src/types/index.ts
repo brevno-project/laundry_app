@@ -17,6 +17,7 @@ export type Student = {
   user_id?: string;
   is_admin?: boolean;
   is_super_admin?: boolean;
+  is_cleanup_admin?: boolean;
   can_view_students?: boolean; // Может ли студент видеть список студентов
   key_issued?: boolean; // ключ выдан
   key_lost?: boolean; // ключ потерян
@@ -51,6 +52,7 @@ export type User = {
   is_admin?: boolean;
   telegram_chat_id?: string;
   is_super_admin?: boolean;
+  is_cleanup_admin?: boolean;
   can_view_students?: boolean; // Может ли студент видеть список студентов
   apartment_id?: string | null;
   avatar_style?: string; // DiceBear avatar style

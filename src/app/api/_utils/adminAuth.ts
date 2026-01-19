@@ -22,6 +22,7 @@ export interface Caller {
   student_id: string;
   is_admin: boolean;
   is_super_admin: boolean;
+  is_cleanup_admin: boolean;
   is_banned: boolean;
 }
 
@@ -58,7 +59,7 @@ export async function getCaller(req: NextRequest): Promise<{ caller: Caller; err
   // ✅ Получаем данные инициатора из БД
   const { data: callerData, error: callerError } = await supabaseAdmin
     .from("students")
-    .select("id, is_admin, is_super_admin, is_banned")
+    .select("id, is_admin, is_super_admin, is_cleanup_admin, is_banned")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -82,7 +83,7 @@ export async function getCaller(req: NextRequest): Promise<{ caller: Caller; err
   }
 
   // ✅ Проверка прав админа
-  if (!callerData.is_admin && !callerData.is_super_admin) {
+  if (!callerData.is_admin && !callerData.is_super_admin && !callerData.is_cleanup_admin) {
     return {
       error: NextResponse.json(
         { error: "Insufficient permissions" },
@@ -97,6 +98,7 @@ export async function getCaller(req: NextRequest): Promise<{ caller: Caller; err
       student_id: callerData.id,
       is_admin: callerData.is_admin || false,
       is_super_admin: callerData.is_super_admin || false,
+      is_cleanup_admin: callerData.is_cleanup_admin || false,
       is_banned: callerData.is_banned || false,
     },
   };
@@ -238,6 +240,16 @@ export async function isTargetSuperAdmin(student_id: string | null | undefined):
     .maybeSingle();
   
   return !!data?.is_super_admin;
+}
+
+export function requireLaundryAdmin(caller: Caller): NextResponse | null {
+  if (!caller.is_admin && !caller.is_super_admin) {
+    return NextResponse.json(
+      { error: "Insufficient permissions" },
+      { status: 403 }
+    );
+  }
+  return null;
 }
 
 export { supabaseAdmin };
