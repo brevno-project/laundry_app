@@ -22,24 +22,39 @@ export async function POST(req: NextRequest) {
     if (!caller.is_super_admin) {
       const { data: adminStudent } = await supabaseAdmin
         .from("students")
-        .select("apartment_id")
+        .select("apartment_id, room")
         .eq("id", caller.student_id)
         .maybeSingle();
 
-      if (!adminStudent?.apartment_id) {
+      let adminBlock: string | null = null;
+
+      if (adminStudent?.apartment_id) {
+        const { data: adminApartment } = await supabaseAdmin
+          .from("apartments")
+          .select("block")
+          .eq("id", adminStudent.apartment_id)
+          .maybeSingle();
+
+        if (adminApartment?.block) {
+          adminBlock = adminApartment.block;
+        }
+      }
+
+      if (!adminBlock && adminStudent?.room) {
+        const roomBlock = adminStudent.room.trim().charAt(0).toUpperCase();
+        if (roomBlock === "A" || roomBlock === "B") {
+          adminBlock = roomBlock;
+        }
+      }
+
+      if (!adminBlock) {
         return NextResponse.json(
-          { error: "Admin apartment not set" },
+          { error: "У администратора не указан блок" },
           { status: 403 }
         );
       }
 
-      const { data: adminApartment } = await supabaseAdmin
-        .from("apartments")
-        .select("block")
-        .eq("id", adminStudent.apartment_id)
-        .maybeSingle();
-
-      if (!adminApartment?.block || adminApartment.block !== block) {
+      if (adminBlock !== block) {
         return NextResponse.json(
           { error: "Not allowed to schedule for this block" },
           { status: 403 }

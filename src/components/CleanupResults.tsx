@@ -504,25 +504,30 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
     const { data: adminStudent } = await supabase
       .from("students")
-      .select("apartment_id")
+      .select("apartment_id, room")
       .eq("id", user.student_id)
       .maybeSingle();
 
-    if (!adminStudent?.apartment_id) {
-      setAdminBlock(null);
-      return;
+    let block: "A" | "B" | null = null;
+
+    if (adminStudent?.apartment_id) {
+      const { data: adminApartment } = await supabase
+        .from("apartments")
+        .select("block")
+        .eq("id", adminStudent.apartment_id)
+        .maybeSingle();
+
+      if (adminApartment?.block === "A" || adminApartment?.block === "B") {
+        block = adminApartment.block;
+      }
     }
 
-    const { data: adminApartment } = await supabase
-      .from("apartments")
-      .select("block")
-      .eq("id", adminStudent.apartment_id)
-      .maybeSingle();
-
-    const block =
-      adminApartment?.block === "A" || adminApartment?.block === "B"
-        ? adminApartment.block
-        : null;
+    if (!block && adminStudent?.room) {
+      const roomBlock = adminStudent.room.trim().charAt(0).toUpperCase();
+      if (roomBlock === "A" || roomBlock === "B") {
+        block = roomBlock;
+      }
+    }
     setAdminBlock(block);
     if (block) setSelectedBlock(block);
   };

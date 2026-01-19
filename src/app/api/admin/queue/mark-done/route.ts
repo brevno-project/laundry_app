@@ -93,7 +93,12 @@ export async function POST(req: NextRequest) {
     }
 
     // ✅ Удаляем из очереди
-    if ((queueItem.coupons_used || 0) > 0) {
+    const shouldFinalizeCoupons =
+      (queueItem.coupons_used || 0) > 0 ||
+      queueItem.payment_type === "coupon" ||
+      queueItem.payment_type === "both";
+
+    if (shouldFinalizeCoupons) {
       await supabaseAdmin
         .from("coupons")
         .update({

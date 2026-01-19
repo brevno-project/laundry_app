@@ -76,10 +76,8 @@ const getPaymentLabel = (paymentType?: string | null, couponsUsed?: number | nul
 };
 
 export default function HistoryList() {
-  const { history } = useLaundry();
-  const [showAll, setShowAll] = useState(false);
-
-  const displayedHistory = showAll ? history : history.slice(0, 10);
+  const { history, historyHasMore, loadMoreHistory } = useLaundry();
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   if (history.length === 0) {
     return (
@@ -112,7 +110,7 @@ export default function HistoryList() {
       </div>
 
       <div className="space-y-3">
-        {displayedHistory.map((item) => {
+        {history.map((item) => {
           const cycleStart = getEarliestDate([
             item.ready_at,
             item.key_issued_at,
@@ -270,21 +268,21 @@ export default function HistoryList() {
         })}
       </div>
 
-      {history.length > 10 && (
+      {historyHasMore && (
         <button
-          onClick={() => setShowAll(!showAll)}
-          className="w-full py-4 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-900 hover:to-slate-950 text-white font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3"
+          onClick={async () => {
+            setIsLoadingMore(true);
+            await loadMoreHistory();
+            setIsLoadingMore(false);
+          }}
+          className="w-full py-4 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-900 hover:to-slate-950 text-white font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3 disabled:opacity-70"
+          disabled={isLoadingMore}
         >
           <span className="text-lg">
-            {showAll ? 'Скрыть' : `Показать еще ${history.length - 10}`}
+            {isLoadingMore ? 'Загрузка...' : 'Загрузить еще 100'}
           </span>
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={3}
-              d={showAll ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'}
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
           </svg>
         </button>
       )}

@@ -27,6 +27,7 @@ import {
 
 
 const TIMEZONE = 'Asia/Bishkek';
+const HISTORY_PAGE_SIZE = 100;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -66,6 +67,8 @@ type LaundryContextType = {
   queue: QueueItem[];
   machineState: MachineState;
   history: HistoryItem[];
+  historyHasMore: boolean;
+  loadMoreHistory: () => Promise<void>;
   refreshMyRole: () => Promise<void>;
   transferSelectedToToday: (selectedIds: string[]) => Promise<void>;
   transferSelectedToDate: (selectedIds: string[], targetDateStr: string) => Promise<void>;
@@ -145,6 +148,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     status: MachineStatus.IDLE,
   });
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [historyHasMore, setHistoryHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isNewUser, setIsNewUser] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -155,6 +159,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   const [isJoining, setIsJoining] = useState(false);
   const [needsClaim, setNeedsClaim] = useState<boolean>(false);
   const queueFetchStateRef = useRef({ inFlight: false, lastRunAt: 0 });
+  const historyLimitRef = useRef(HISTORY_PAGE_SIZE);
   const cleanupStateRef = useRef({
     lastRunDate: null as string | null,
     lastExpiredRunAt: 0,
@@ -189,12 +194,14 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       setQueue(get_local_queue());
       setMachineState(get_local_machine_state());
       setHistory(get_local_history());
+      setHistoryHasMore(false);
       loadStudents();
       setIsLoading(false);
       return;
     }
 
     if (!supabase) {
+      setHistoryHasMore(false);
       setIsLoading(false);
       return;
     }
@@ -1239,6 +1246,8 @@ const resetStudentRegistration = async (studentId: string) => {
     const fetchHistory = async () => {
       if (!isSupabaseConfigured || !supabase) {
         setHistory(get_local_history());
+        setHistoryHasMore(false);
+        setHistoryHasMore(false);
         return;
       }
       
@@ -1251,7 +1260,7 @@ const resetStudentRegistration = async (studentId: string) => {
           .from('history')
           .select('id, user_id, student_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, washing_finished_at, return_requested_at, wash_count, coupons_used, payment_type, avatar_style, avatar_seed')
           .order('finished_at', { ascending: false })
-          .limit(100);
+          .limit(historyLimitRef.current);
         
         if (!fullError && fullData) {
           historyData = fullData;
@@ -1262,7 +1271,7 @@ const resetStudentRegistration = async (studentId: string) => {
             .from('history')
             .select('id, user_id, student_id, full_name, room, started_at, finished_at, ready_at, key_issued_at, washing_started_at, washing_finished_at, return_requested_at, wash_count, coupons_used, payment_type')
             .order('finished_at', { ascending: false })
-            .limit(100);
+            .limit(historyLimitRef.current);
           
           if (!basicError && basicData) {
             // Добавляем дефолтные значения для аватара
@@ -1291,14 +1300,22 @@ const resetStudentRegistration = async (studentId: string) => {
           });
         }
         
-        setHistory(historyData || []);
-        save_local_history(historyData || []);
+        const nextHistory = historyData || [];
+        setHistory(nextHistory);
+        setHistoryHasMore(nextHistory.length >= historyLimitRef.current);
+        save_local_history(nextHistory);
       } catch (error: any) {
         console.error('❌ Error fetching history:', error);
         // Fall back to local storage
         setHistory(get_local_history());
       }
     };
+
+  const loadMoreHistory = async () => {
+    if (!isSupabaseConfigured || !supabase) return;
+    historyLimitRef.current += HISTORY_PAGE_SIZE;
+    await fetchHistory();
+  };
 
   // ФУНКЦИЯ 1: joinQueue ( 
 // ========================================
@@ -2784,6 +2801,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
     queue,
     machineState,
     history,
+    historyHasMore,
     refreshMyRole,
     transferSelectedToToday,
     transferSelectedToDate,
@@ -2834,7 +2852,8 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
    toggleAdminStatus,
    toggleSuperAdminStatus,
    loadStudents,
-   fetchHistory,
+    fetchHistory,
+    loadMoreHistory,
 
   };
 

@@ -122,7 +122,7 @@ export async function GET(req: NextRequest) {
     const dateLabel = formatDateLabel(schedule.check_date);
     const timeLabel = formatTimeLabel(schedule.check_time);
     const timeText = timeLabel ? `, ${timeLabel}` : "";
-    const message = `Напоминание: сегодня проверка блока ${schedule.block} — ${dateLabel}${timeText}.`;
+    const message = `Напоминание: сегодня проверка блока ${schedule.block}\n${dateLabel}${timeText}.`;
 
     const recipients = await getBlockRecipients(schedule.block);
     for (const chatId of recipients) {
