@@ -28,7 +28,7 @@ interface AvatarCustomizerProps {
 
 export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
   const { user, refreshMyRole, fetchQueue, loadStudents } = useLaundry();
-  const [selectedStyle, setSelectedStyle] = useState<string>(user?.avatar_style || 'avataaars');
+  const [selectedStyle, setSelectedStyle] = useState<string>(user?.avatar_style || 'thumbs');
   const [avatarSeed, setAvatarSeed] = useState<string>(user?.avatar_seed || '');
   const [previewSeed, setPreviewSeed] = useState<string>(user?.avatar_seed || '');
   const [isSaving, setIsSaving] = useState(false);

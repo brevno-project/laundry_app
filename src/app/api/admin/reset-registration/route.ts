@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
         key_lost: false,
         avatar: "default",
         avatar_type: "default",
-        avatar_style: "avataaars",
+        avatar_style: "thumbs",
         avatar_seed: null,
         claim_code_hash: null,
         claim_code_issued_at: null,
