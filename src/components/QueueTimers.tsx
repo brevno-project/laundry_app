@@ -73,9 +73,9 @@ export default function QueueTimers({ item }: QueueTimersProps) {
   };
 
   const colors = {
-    green: 'bg-green-50 text-green-900 border-green-400 shadow-green-200',
-    yellow: 'bg-yellow-50 text-yellow-900 border-yellow-400 shadow-yellow-200 animate-pulse',
-    red: 'bg-red-50 text-red-900 border-red-400 shadow-red-200 animate-pulse'
+    green: 'bg-green-50 dark:bg-slate-700 text-green-900 dark:text-green-300 border-green-400 dark:border-green-600 shadow-green-200',
+    yellow: 'bg-yellow-50 dark:bg-slate-700 text-yellow-900 dark:text-yellow-300 border-yellow-400 dark:border-yellow-600 shadow-yellow-200 animate-pulse',
+    red: 'bg-red-50 dark:bg-slate-700 text-red-900 dark:text-red-300 border-red-400 dark:border-red-600 shadow-red-200 animate-pulse'
   };
 
   const info = icons[item.status as keyof typeof icons];

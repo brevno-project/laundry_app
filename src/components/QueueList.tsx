@@ -381,8 +381,8 @@ export default function QueueList() {
           };
         case QueueStatus.READY:
           return { 
-            bg: 'bg-yellow-50', 
-            text: 'text-yellow-900', 
+            bg: 'bg-yellow-50 dark:bg-slate-700', 
+            text: 'text-yellow-900 dark:text-yellow-300', 
             badge: (
               <span className="flex items-center gap-1.5">
                 <HourglassIcon className="w-4 h-4" />
@@ -393,8 +393,8 @@ export default function QueueList() {
           };
         case QueueStatus.KEY_ISSUED:
           return {
-            bg: 'bg-blue-50',
-            text: 'text-blue-900',
+            bg: 'bg-blue-50 dark:bg-slate-700',
+            text: 'text-blue-900 dark:text-blue-300',
             badge: (
               <span className="flex items-center gap-1.5">
                 <KeyIcon className="w-4 h-4" />
@@ -405,8 +405,8 @@ export default function QueueList() {
           };
         case QueueStatus.WASHING:
           return { 
-            bg: 'bg-green-50', 
-            text: 'text-green-900', 
+            bg: 'bg-green-50 dark:bg-slate-700', 
+            text: 'text-green-900 dark:text-green-300', 
             badge: (
               <span className="flex items-center gap-1.5">
                 <WashingIcon className="w-4 h-4" />
@@ -417,8 +417,8 @@ export default function QueueList() {
           };
         case QueueStatus.RETURNING_KEY:
           return { 
-            bg: 'bg-orange-50', 
-            text: 'text-orange-900', 
+            bg: 'bg-orange-50 dark:bg-slate-700', 
+            text: 'text-orange-900 dark:text-orange-300', 
             badge: (
               <span className="flex items-center gap-1.5">
                 <KeyIcon className="w-4 h-4" />
@@ -429,8 +429,8 @@ export default function QueueList() {
           };
         case QueueStatus.DONE:
           return { 
-            bg: 'bg-emerald-50', 
-            text: 'text-emerald-900', 
+            bg: 'bg-emerald-50 dark:bg-slate-700', 
+            text: 'text-emerald-900 dark:text-emerald-300', 
             badge: (
               <span className="flex items-center gap-1.5">
                 <CheckIcon className="w-4 h-4" />
