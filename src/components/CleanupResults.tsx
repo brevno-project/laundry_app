@@ -536,8 +536,8 @@ const formatPoints = (value: number) => {
 const hasCyrillic = (value: string) => /[А-Яа-яЁё]/.test(value);
 
 const mapPublishError = (
-  message?: string,
-  t: (key: string, vars?: Record<string, string | number>) => string
+  t: (key: string, vars?: Record<string, string | number>) => string,
+  message?: string
 ) => {
   if (!message) return t("cleanup.errors.publish.default");
   if (hasCyrillic(message)) return message;
@@ -565,8 +565,8 @@ const mapPublishError = (
 };
 
 const mapScheduleError = (
-  message?: string,
-  t: (key: string, vars?: Record<string, string | number>) => string
+  t: (key: string, vars?: Record<string, string | number>) => string,
+  message?: string
 ) => {
   if (!message) return t("cleanup.errors.schedule.default");
   if (hasCyrillic(message)) return message;
@@ -588,8 +588,8 @@ const mapScheduleError = (
 };
 
 const mapReminderError = (
-  message?: string,
-  t: (key: string, vars?: Record<string, string | number>) => string
+  t: (key: string, vars?: Record<string, string | number>) => string,
+  message?: string
 ) => {
   if (!message) return t("cleanup.errors.reminders.default");
   if (hasCyrillic(message)) return message;
@@ -615,8 +615,8 @@ const mapReminderError = (
 };
 
 const mapResultsError = (
-  message?: string,
-  t: (key: string, vars?: Record<string, string | number>) => string
+  t: (key: string, vars?: Record<string, string | number>) => string,
+  message?: string
 ) => {
   if (!message) return t("cleanup.errors.results.default");
   if (hasCyrillic(message)) return message;
@@ -638,8 +638,8 @@ const mapResultsError = (
 };
 
 const mapTransferError = (
-  message?: string,
-  t: (key: string, vars?: Record<string, string | number>) => string
+  t: (key: string, vars?: Record<string, string | number>) => string,
+  message?: string
 ) => {
   if (!message) return t("cleanup.errors.transfer.default");
   if (hasCyrillic(message)) return message;
@@ -660,8 +660,8 @@ const mapTransferError = (
 };
 
 const mapGrantError = (
-  message?: string,
-  t: (key: string, vars?: Record<string, string | number>) => string
+  t: (key: string, vars?: Record<string, string | number>) => string,
+  message?: string
 ) => {
   if (!message) return t("cleanup.errors.grant.default");
   if (hasCyrillic(message)) return message;
@@ -1168,7 +1168,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       if (!response.ok) {
         setScheduleNotice((prev) => ({
           ...prev,
-          [block]: mapScheduleError(result.error, t),
+          [block]: mapScheduleError(t, result.error),
         }));
         return;
       }
@@ -1181,7 +1181,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     } catch (error: any) {
       setScheduleNotice((prev) => ({
         ...prev,
-        [block]: mapScheduleError(error?.message, t),
+        [block]: mapScheduleError(t, error?.message),
       }));
     } finally {
       setScheduleSaving((prev) => ({ ...prev, [block]: false }));
@@ -1217,7 +1217,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       if (!scheduleResponse.ok) {
         setReminderNotice((prev) => ({
           ...prev,
-          [block]: mapScheduleError(scheduleResult.error, t),
+          [block]: mapScheduleError(t, scheduleResult.error),
         }));
         return;
       }
@@ -1234,7 +1234,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       if (!response.ok) {
         setReminderNotice((prev) => ({
           ...prev,
-          [block]: mapReminderError(result.error, t),
+          [block]: mapReminderError(t, result.error),
         }));
         return;
       }
@@ -1265,7 +1265,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     } catch (error: any) {
       setReminderNotice((prev) => ({
         ...prev,
-        [block]: mapReminderError(error?.message, t),
+        [block]: mapReminderError(t, error?.message),
       }));
     } finally {
       setReminderSending((prev) => ({ ...prev, [block]: false }));
@@ -1291,7 +1291,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       if (!response.ok) {
         setResultsNotice((prev) => ({
           ...prev,
-          [block]: mapResultsError(result.error, t),
+          [block]: mapResultsError(t, result.error),
         }));
         return;
       }
@@ -1304,7 +1304,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     } catch (error: any) {
       setResultsNotice((prev) => ({
         ...prev,
-        [block]: mapResultsError(error?.message, t),
+        [block]: mapResultsError(t, error?.message),
       }));
     } finally {
       setResultsClearing((prev) => ({ ...prev, [block]: false }));
@@ -1340,14 +1340,14 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(mapPublishError(result.error, t));
+        throw new Error(mapPublishError(t, result.error));
       }
 
       setPublishNotice(t("cleanup.publish.success"));
       await refreshResults();
       await refreshCoupons();
     } catch (error: any) {
-      setPublishNotice(mapPublishError(error?.message, t));
+      setPublishNotice(mapPublishError(t, error?.message));
     } finally {
       setIsPublishing(false);
     }
@@ -1506,7 +1506,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       });
 
       if (error) {
-        throw new Error(mapTransferError(error.message, t));
+        throw new Error(mapTransferError(t, error.message));
       }
 
       setTransferCouponId("");
@@ -1514,7 +1514,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       setTransferNotice(t("cleanup.transfer.success"));
       await refreshCoupons();
     } catch (error: any) {
-      setTransferNotice(mapTransferError(error?.message, t));
+      setTransferNotice(mapTransferError(t, error?.message));
     }
   };
 
@@ -1578,7 +1578,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(mapGrantError(result.error, t));
+        throw new Error(mapGrantError(t, result.error));
       }
 
       setGrantNotice(t("cleanup.grant.success"));
@@ -1588,7 +1588,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       setGrantExpiresAt("");
       await refreshCoupons();
     } catch (error: any) {
-      setGrantNotice(mapGrantError(error?.message, t));
+      setGrantNotice(mapGrantError(t, error?.message));
     }
   };
 
