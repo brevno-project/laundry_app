@@ -41,7 +41,7 @@ export default function StudentsList() {
 
   if (!students || students.length === 0) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
         <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
           <ListIcon className="w-8 h-8" />{t("students.title")}
         </h2>
@@ -139,7 +139,7 @@ export default function StudentsList() {
             <td colSpan={5} className="h-1"></td>
           </tr>
         )}
-        <tr className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+        <tr className="border-b border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
           <td className="p-3 text-gray-700">{index + 1}</td>
           <td className="p-3 text-gray-900">
             <div className="flex items-center gap-3">
@@ -237,7 +237,7 @@ export default function StudentsList() {
             <td colSpan={canManageStudents ? 5 : 4} className="h-0.5"></td>
           </tr>
         )}
-        <tr className={`border-b ${rowBorder}`}>
+        <tr className={`border-b ${rowBorder} dark:border-slate-600 dark:hover:bg-slate-700`}>
           <td className="p-1 text-gray-900 font-semibold">{index + 1}</td>
           <td className="p-1 text-gray-900">
             <div className="flex items-center gap-2">
@@ -307,7 +307,7 @@ export default function StudentsList() {
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow-lg border border-gray-200">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
         <div className="flex items-center justify-between mb-4 px-4 pt-4 pb-2">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
             <ListIcon className="w-8 h-8" />{t("students.title")} ({students.length})
@@ -439,7 +439,7 @@ export default function StudentsList() {
 
       {editingStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-md w-full">
             <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
               <EditIcon className="w-5 h-5" />{t("students.editTitle")}
             </h3>
@@ -489,7 +489,7 @@ export default function StudentsList() {
               </div>
 
               {canManageStudents && (
-                <div className="flex flex-wrap gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <div className="flex flex-wrap gap-3 rounded-lg border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 p-3">
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-800">
                     <input
                       type="checkbox"

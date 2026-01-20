@@ -209,7 +209,7 @@ export default function HistoryList() {
 
   return (
     <div className="space-y-4">
-      <div className="relative overflow-hidden rounded-2xl shadow-md p-5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700">
+      <div className="relative overflow-hidden rounded-2xl shadow-md p-5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 dark:from-slate-700 dark:via-slate-800 dark:to-slate-900">
         <div className="pointer-events-none absolute inset-0 opacity-15" style={{ backgroundImage: 'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.45), transparent 35%), radial-gradient(circle at 80% 0%, rgba(255,255,255,0.35), transparent 40%)' }} />
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -325,7 +325,7 @@ export default function HistoryList() {
           return (
             <div
               key={item.id}
-              className={`rounded-2xl shadow-sm border ${cardTone.border} ${cardTone.bg} hover:shadow-md transition-all p-5`}
+              className={`rounded-2xl shadow-sm border ${cardTone.border} ${cardTone.bg} dark:bg-slate-800 dark:border-slate-600 hover:shadow-md transition-all p-5`}
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -362,7 +362,7 @@ export default function HistoryList() {
               </div>
 
               <div className="space-y-3">
-                <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 shadow-sm">
+                <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="flex items-center justify-between gap-2">
                       <div className={`flex items-center gap-2 ${labelTextClass}`}>
@@ -380,7 +380,7 @@ export default function HistoryList() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <div className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-200 dark:border-slate-700 shadow-sm">
+                  <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-slate-600">{t("history.totalTime")}</span>
@@ -389,14 +389,14 @@ export default function HistoryList() {
                     </div>
                   </div>
 
-                  <div className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-200 dark:border-slate-700 shadow-sm">
+                  <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-slate-600">{t("history.washCount")}</span>
                       <span className="text-lg font-bold text-slate-900">{washCount}</span>
                     </div>
                   </div>
 
-                  <div className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-200 dark:border-slate-700 shadow-sm">
+                  <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-slate-600">{t("history.payment")}</span>
                       <span className="text-sm font-bold text-slate-900 flex items-center gap-1">

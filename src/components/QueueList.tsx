@@ -369,15 +369,15 @@ export default function QueueList() {
       switch(status) {
         case QueueStatus.WAITING:
           return { 
-            bg: 'bg-gray-50', 
-            text: 'text-gray-700', 
+            bg: 'bg-slate-50 dark:bg-slate-700', 
+            text: 'text-slate-700 dark:text-slate-200', 
             badge: (
               <span className="flex items-center gap-1.5">
                 <HourglassIcon className="w-4 h-4" />
                 {queueCopy.status.waiting}
               </span>
             ), 
-            badgeColor: 'bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 font-semibold shadow-sm' 
+            badgeColor: 'bg-gradient-to-r from-slate-400 to-slate-500 text-white font-semibold shadow-sm' 
           };
         case QueueStatus.READY:
           return { 
