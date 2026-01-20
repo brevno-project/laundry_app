@@ -33,13 +33,10 @@ export default function RootLayout({
   try {
     const t = localStorage.getItem('appTheme');
     const html = document.documentElement;
-    const body = document.body;
     if (t === 'dark') {
       html.classList.add('dark');
-      body && body.classList.add('dark');
     } else {
       html.classList.remove('dark');
-      body && body.classList.remove('dark');
     }
   } catch (e) {}
 `}</Script>

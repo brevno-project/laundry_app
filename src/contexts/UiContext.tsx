@@ -1011,13 +1011,10 @@ export const UiProvider = ({ children }: { children: React.ReactNode }) => {
   useLayoutEffect(() => {
     if (typeof window === "undefined") return;
     const html = document.documentElement;
-    const body = document.body;
     if (theme === "dark") {
       html.classList.add("dark");
-      body.classList.add("dark");
     } else {
       html.classList.remove("dark");
-      body.classList.remove("dark");
     }
     localStorage.setItem("appTheme", theme);
   }, [theme]);
