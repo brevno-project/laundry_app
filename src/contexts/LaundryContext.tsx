@@ -12,8 +12,6 @@ import { User, Student, StudentLoginList, QueueItem, MachineStatus, QueueStatus,
 
 import { sendTelegramNotification } from '@/lib/telegram';
 
-import { LAUNDRY_CLOSE_HOUR, LAUNDRY_OPEN_HOUR } from '@/lib/timeHelper';
-
 import { parseISO, format } from 'date-fns';
 
 import { ru } from 'date-fns/locale';
@@ -3302,15 +3300,6 @@ const startWashing = async (queueItemId: string) => {
 
     return;
 
-  }
-
-  const nowTime = new Date();
-  const hour = nowTime.getHours();
-  const isWashingClosed = hour >= LAUNDRY_CLOSE_HOUR || hour < LAUNDRY_OPEN_HOUR;
-  if (isWashingClosed) {
-    throw new Error(
-      `Стирка сейчас закрыта. Можно стирать с ${LAUNDRY_OPEN_HOUR}:00 до ${LAUNDRY_CLOSE_HOUR}:00.`
-    );
   }
 
   

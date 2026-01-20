@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState, useLayoutEffect } from "react";
 
@@ -118,7 +118,7 @@ const translations: Record<UiLanguage, Record<string, string>> = {
     "studentActions.elapsedLabel": "Прошло времени:",
     "studentActions.finishHint": "После окончания нажмите кнопку, чтобы уведомить администратора.",
     "studentActions.finishButton": "Закончить стирку",
-    "time.closed": "Стирка сейчас закрыта. Можно стирать с {{openHour}}:00 до {{closeHour}}:00.",
+    "time.closed": "Стирка сейчас закрыта. Можно стирать с {{openHour}}:{{openMinute}}.",
     "time.warning": "До закрытия осталось: {{time}}. Успейте завершить стирку до {{closeHour}}:00!",
     "time.closedHint": "Запись в очередь доступна круглосуточно.",
     "errors.supabaseNotConfigured": "Supabase не настроен",
@@ -574,7 +574,7 @@ const translations: Record<UiLanguage, Record<string, string>> = {
     "studentActions.elapsedLabel": "Elapsed time:",
     "studentActions.finishHint": "When done, press the button to notify the admin.",
     "studentActions.finishButton": "Finish washing",
-    "time.closed": "Laundry is closed right now. You can wash from {{openHour}}:00 to {{closeHour}}:00.",
+    "time.closed": "Laundry is closed right now. You can wash from {{openHour}}:{{openMinute}}.",
     "time.warning": "Time until close: {{time}}. Please finish before {{closeHour}}:00.",
     "time.closedHint": "Queue signup is available 24/7.",
     "errors.supabaseNotConfigured": "Supabase is not configured",
@@ -1038,7 +1038,7 @@ const translations: Record<UiLanguage, Record<string, string>> = {
     "studentActions.finishHint": "Аяктагандан кийин, администраторго билдирүү үчүн баскычты басыңыз.",
     "studentActions.finishButton": "Кир жууну бүтүрүү",
 
-    "time.closed": "Азыр кир жуу жабык. {{openHour}}:00дөн {{closeHour}}:00гө чейин жууса болот.",
+    "time.closed": "Азыр кир жуу жабык. {{openHour}}:{{openMinute}}дөн кийин жууса болот.",
     "time.warning": "Жабылууга чейин: {{time}}. {{closeHour}}:00гө чейин бүтүрүп үлгүрүңүз!",
     "time.closedHint": "Кезекке жазылуу 24/7 жеткиликтүү.",
 
@@ -1505,7 +1505,7 @@ const translations: Record<UiLanguage, Record<string, string>> = {
     "studentActions.elapsedLabel": "경과 시간:",
     "studentActions.finishHint": "끝나면 버튼을 눌러 관리자에게 알리세요.",
     "studentActions.finishButton": "세탁 종료",
-    "time.closed": "지금 세탁이 종료되었습니다. {{openHour}}:00부터 {{closeHour}}:00까지 세탁할 수 있습니다.",
+    "time.closed": "지금 세탁이 종료되었습니다. {{openHour}}:{{openMinute}}부터 세탁할 수 있습니다.",
     "time.warning": "마감까지 남은 시간: {{time}}. {{closeHour}}:00 전에 마쳐 주세요!",
     "time.closedHint": "대기열 등록은 24시간 가능합니다.",
     "errors.supabaseNotConfigured": "Supabase가 설정되지 않았습니다",

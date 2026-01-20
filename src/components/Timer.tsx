@@ -80,13 +80,13 @@ export default function Timer({ startTime, endTime, label, color = 'blue', multi
     bgColor = 'bg-yellow-200 dark:bg-amber-900/30';
     textColor = 'text-yellow-900 dark:text-amber-200';
     borderColor = 'border-yellow-500 dark:border-amber-500/50';
-    zoneModifier = 'animate-pulse dark:animate-none';
+    zoneModifier = 'animate-pulse';
   } else if (timeZone === 'danger') {
     // Красная зона: более интенсивный красный цвет + пульсация
     bgColor = 'bg-red-200 dark:bg-rose-900/30';
     textColor = 'text-red-900 dark:text-rose-200';
     borderColor = 'border-red-600 dark:border-rose-500/50';
-    zoneModifier = 'animate-pulse dark:animate-none';
+    zoneModifier = 'animate-pulse';
   }
 
   return (

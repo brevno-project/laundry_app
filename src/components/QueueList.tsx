@@ -4,7 +4,6 @@ import { useLaundry } from '@/contexts/LaundryContext';
 import { useUi } from '@/contexts/UiContext';
 import { QueueStatus } from '@/types';
 import { sendTelegramNotification } from '@/lib/telegram';
-import { getLaundryTimeStatus, LAUNDRY_CLOSE_HOUR, LAUNDRY_OPEN_HOUR } from '@/lib/timeHelper';
 import { useState, useEffect, useRef } from 'react';
 import Timer from './Timer';
 import QueueTimers from './QueueTimers';
@@ -984,16 +983,6 @@ export default function QueueList() {
                             className="w-full btn bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed dark:bg-emerald-500/20 dark:text-emerald-200 dark:hover:bg-emerald-500/30 dark:border dark:border-emerald-500/40"
                             onClick={async () => {
                               try {
-                                if (getLaundryTimeStatus().isClosed) {
-                                  alertWithCheck(
-                                    t('time.closed', {
-                                      openHour: LAUNDRY_OPEN_HOUR,
-                                      closeHour: LAUNDRY_CLOSE_HOUR,
-                                    })
-                                  );
-                                  return;
-                                }
-
                                 // Запускаем стирку (меняет статус)
                                 await startWashing(item.id);
                                 
@@ -1010,7 +999,6 @@ export default function QueueList() {
                                 console.error('❌ Error in Стирать:', error);
                               }
                             }}
-                            disabled={getLaundryTimeStatus().isClosed}
                           >
                             <WashingIcon className="w-4 h-4" /> {queueCopy.actions.startWash}
                           </button>

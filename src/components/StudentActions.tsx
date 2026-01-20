@@ -6,7 +6,6 @@ import { useUi } from "@/contexts/UiContext";
 import { supabase } from "@/lib/supabase";
 import { QueueStatus } from "@/types";
 import { KeyIcon, WashingIcon, CheckIcon, InfoIcon } from "@/components/Icons";
-import { getLaundryTimeStatus, LAUNDRY_CLOSE_HOUR, LAUNDRY_OPEN_HOUR } from "@/lib/timeHelper";
 
 const getStoredFlag = (key: string) => {
   if (typeof window === "undefined") return false;
@@ -64,19 +63,8 @@ export default function StudentActions() {
 
   if (!user || !myQueueItem) return null;
 
-  const isWashingClosed = getLaundryTimeStatus().isClosed;
-
   const handleStartWashing = async () => {
     if (startSent || sending) return;
-    if (isWashingClosed) {
-      alertWithCheck(
-        t('time.closed', {
-          openHour: LAUNDRY_OPEN_HOUR,
-          closeHour: LAUNDRY_CLOSE_HOUR,
-        })
-      );
-      return;
-    }
     setSending("start");
 
     try {
@@ -206,18 +194,9 @@ export default function StudentActions() {
                   </div>
                 </div>
 
-                {isWashingClosed && (
-                  <div className="mb-4 w-full rounded-xl bg-amber-500/20 border border-amber-300 px-4 py-3 text-amber-50 text-center dark:bg-amber-900/20 dark:border-amber-500/40 dark:text-amber-200">
-                    <div className="flex items-center justify-center gap-2 font-semibold">
-                      <InfoIcon className="w-5 h-5" />
-                      {t('time.closedHint')}
-                    </div>
-                  </div>
-                )}
-
                 <button
                   onClick={handleStartWashing}
-                  disabled={sending === "start" || isWashingClosed}
+                  disabled={sending === "start"}
                   className="w-full bg-white text-blue-700 font-bold py-4 px-6 rounded-xl text-xl hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl disabled:opacity-70 btn-attn dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-100"
                 >
                   {t("studentActions.startButton")}
