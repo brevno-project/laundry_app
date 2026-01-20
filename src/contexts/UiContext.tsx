@@ -991,12 +991,7 @@ const getInitialLanguage = (): UiLanguage => {
   return "ru";
 };
 
-const getInitialTheme = (): UiTheme => {
-  if (typeof window === "undefined") return "light";
-  const stored = localStorage.getItem("appTheme") as UiTheme | null;
-  if (stored === "light" || stored === "dark") return stored;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-};
+const getInitialTheme = (): UiTheme => "light";
 
 export const UiProvider = ({ children }: { children: React.ReactNode }) => {
   const [language, setLanguage] = useState<UiLanguage>(getInitialLanguage);
