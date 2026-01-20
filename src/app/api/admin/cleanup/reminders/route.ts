@@ -57,8 +57,11 @@ async function getBlockRecipients(block: string) {
     .select("id, code")
     .eq("block", block);
 
-  const apartmentIds = (apartments || []).map((apt) => apt.id);
-  const apartmentCodes = (apartments || []).map((apt) => apt.code).filter(Boolean);
+  const typedApartments = (apartments as { id: string; code: string | null }[] | null | undefined) || [];
+  const apartmentIds = typedApartments.map((apt: { id: string; code: string | null }) => apt.id);
+  const apartmentCodes = typedApartments
+    .map((apt: { id: string; code: string | null }) => apt.code)
+    .filter(Boolean);
   const residentsMap = new Map<string, Recipient>();
 
   const selectFields = "id, telegram_chat_id, is_banned, full_name, first_name, last_name, middle_name, room";

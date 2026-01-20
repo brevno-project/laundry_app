@@ -48,15 +48,13 @@ const formatDuration = (start: string | null | undefined, end: string | null | u
   return `${mins} ${units.m}`;
 };
 
-const getCardTone = (totalMinutes: number) => {
-  if (totalMinutes > 120) return { border: 'border-rose-200', bg: 'bg-rose-50' };
-  if (totalMinutes > 90) return { border: 'border-amber-200', bg: 'bg-amber-50' };
-  return { border: 'border-emerald-200', bg: 'bg-emerald-50' };
+const getCardTone = (_totalMinutes: number) => {
+  return { border: 'border-slate-200', bg: 'bg-white' };
 };
 
-const labelIconClass = "w-5 h-5 text-slate-600";
-const labelTextClass = "text-sm font-semibold text-slate-700";
-const valueTextClass = "text-sm font-semibold text-slate-900";
+const labelIconClass = "w-5 h-5 text-slate-600 dark:text-slate-300";
+const labelTextClass = "text-sm font-semibold text-slate-700 dark:text-slate-300";
+const valueTextClass = "text-sm font-semibold text-slate-900 dark:text-slate-100";
 
 const getEarliestDate = (dates: Array<string | null | undefined>) => {
   const parsed = dates
@@ -195,7 +193,7 @@ export default function HistoryList() {
 
   if (history.length === 0) {
     return (
-      <div className="bg-slate-50 rounded-2xl shadow-sm border border-slate-200 p-12">
+      <div className="bg-slate-50 rounded-2xl shadow-sm border border-slate-200 p-12 dark:bg-slate-800 dark:border-slate-700">
         <div className="flex flex-col items-center justify-center text-center space-y-4">
           <div className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center shadow-md">
             <HistoryIcon className="w-10 h-10 text-white" />
@@ -235,7 +233,7 @@ export default function HistoryList() {
         </div>
       </div>
       {isSuperAdmin && showClearTools && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex flex-col">
               <label className="text-xs font-semibold text-slate-600">{t("history.from")}</label>
@@ -243,7 +241,7 @@ export default function HistoryList() {
                 type="date"
                 value={clearFrom}
                 onChange={(event) => setClearFrom(event.target.value)}
-                className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
               />
             </div>
             <div className="flex flex-col">
@@ -252,7 +250,7 @@ export default function HistoryList() {
                 type="date"
                 value={clearTo}
                 onChange={(event) => setClearTo(event.target.value)}
-                className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
               />
             </div>
             <div className="flex flex-col">
@@ -262,7 +260,7 @@ export default function HistoryList() {
                 value={clearRoom}
                 onChange={(event) => setClearRoom(event.target.value)}
                 placeholder={t("history.roomPlaceholder")}
-                className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
               />
             </div>
             <button
@@ -344,8 +342,8 @@ export default function HistoryList() {
                     />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900 text-lg">{item.full_name}</h3>
-                    <p className="text-sm text-gray-600">
+                    <h3 className="font-bold text-gray-900 text-lg dark:text-slate-100">{item.full_name}</h3>
+                    <p className="text-sm text-gray-600 dark:text-slate-300">
                       {item.room ? `${t("history.room")} ${item.room} - ` : ''}{formatDate(item.finished_at, locale)}
                     </p>
                   </div>
@@ -362,7 +360,7 @@ export default function HistoryList() {
               </div>
 
               <div className="space-y-3">
-                <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="flex items-center justify-between gap-2">
                       <div className={`flex items-center gap-2 ${labelTextClass}`}>
@@ -380,26 +378,26 @@ export default function HistoryList() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
+                  <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-slate-600">{t("history.totalTime")}</span>
+                        <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("history.totalTime")}</span>
                       </div>
                       <span className="text-lg font-bold text-slate-900">{totalDuration}</span>
                     </div>
                   </div>
 
-                  <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
+                  <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-600">{t("history.washCount")}</span>
-                      <span className="text-lg font-bold text-slate-900">{washCount}</span>
+                      <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("history.washCount")}</span>
+                      <span className="text-lg font-bold text-slate-900 dark:text-slate-100">{washCount}</span>
                     </div>
                   </div>
 
-                  <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
+                  <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-600">{t("history.payment")}</span>
-                      <span className="text-sm font-bold text-slate-900 flex items-center gap-1">
+                      <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("history.payment")}</span>
+                      <span className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1">
                         {paymentIcons}
                         {paymentLabel}
                       </span>

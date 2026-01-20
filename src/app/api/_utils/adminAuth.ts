@@ -6,16 +6,26 @@ const supabaseUrl =
 
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl) throw new Error("Missing SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL)");
-if (!serviceKey) throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY");
+const isSupabaseConfigured = !!(supabaseUrl && serviceKey);
 
-const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-    detectSessionInUrl: false,
-  },
-});
+const supabaseAdmin = isSupabaseConfigured
+  ? createClient(supabaseUrl as string, serviceKey as string, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    })
+  : (new Proxy(
+      {},
+      {
+        get() {
+          throw new Error(
+            "Server misconfigured: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing"
+          );
+        },
+      }
+    ) as any);
 
 export interface Caller {
   user_id: string;
@@ -31,6 +41,15 @@ export interface Caller {
  * возвращает данные инициатора из БД
  */
 export async function getCaller(req: NextRequest): Promise<{ caller: Caller; error?: never } | { caller?: never; error: NextResponse }> {
+  if (!isSupabaseConfigured) {
+    return {
+      error: NextResponse.json(
+        { error: "Server misconfigured: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing" },
+        { status: 500 }
+      ),
+    };
+  }
+
   // ✅ Получаем JWT из Authorization header
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
@@ -111,6 +130,16 @@ export async function canModifyStudent(
   caller: Caller,
   targetStudentId: string
 ): Promise<{ allowed: true; target: any; error?: never } | { allowed: false; target?: never; error: NextResponse }> {
+  if (!isSupabaseConfigured) {
+    return {
+      allowed: false,
+      error: NextResponse.json(
+        { error: "Server misconfigured: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing" },
+        { status: 500 }
+      ),
+    };
+  }
+
   // ✅ Получаем целевого студента
   const { data: targetStudent, error: targetError } = await supabaseAdmin
     .from("students")
@@ -152,6 +181,16 @@ export async function canModifyQueueItem(
   caller: Caller,
   targetQueueItemId: string
 ): Promise<{ allowed: true; target: any; error?: never } | { allowed: false; target?: never; error: NextResponse }> {
+  if (!isSupabaseConfigured) {
+    return {
+      allowed: false,
+      error: NextResponse.json(
+        { error: "Server misconfigured: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing" },
+        { status: 500 }
+      ),
+    };
+  }
+
   // ✅ Получаем целевой queue item
   const { data: targetQueueItem, error: targetError } = await supabaseAdmin
     .from("queue")
@@ -208,6 +247,15 @@ export async function canModifyQueueItem(
  * Возвращает 404 если не найден
  */
 export async function getQueueItemOr404(queue_item_id: string) {
+  if (!isSupabaseConfigured) {
+    return {
+      error: NextResponse.json(
+        { error: "Server misconfigured: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing" },
+        { status: 500 }
+      ),
+    };
+  }
+
   const { data, error } = await supabaseAdmin
     .from("queue")
     .select("id, student_id")
@@ -232,6 +280,7 @@ export async function getQueueItemOr404(queue_item_id: string) {
  */
 export async function isTargetSuperAdmin(student_id: string | null | undefined): Promise<boolean> {
   if (!student_id) return false;
+  if (!isSupabaseConfigured) return false;
   
   const { data } = await supabaseAdmin
     .from("students")

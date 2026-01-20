@@ -16,20 +16,23 @@ export default function TelegramSetup() {
   // --- Подключено ---
   if (user.telegram_chat_id) {
     return (
-      <div id="telegram-setup" className="bg-green-50 border-2 border-green-500 rounded-lg p-4">
+      <div
+        id="telegram-setup"
+        className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800"
+      >
         <div className="flex items-center gap-2 mb-2">
-          <CheckIcon className="w-6 h-6 text-green-600" />
-          <h3 className="font-bold text-lg text-green-900">{t("telegram.connected")}</h3>
+          <CheckIcon className="w-6 h-6 text-emerald-600 dark:text-emerald-300" />
+          <h3 className="font-bold text-lg text-emerald-900 dark:text-slate-100">{t("telegram.connected")}</h3>
         </div>
 
-        <p className="text-green-800 mb-3">
+        <p className="text-emerald-800 mb-3 dark:text-slate-300">
           {t("telegram.connectedHint")}
         </p>
 
         <a
           href={link}
           target="_blank"
-          className="flex items-center gap-1 text-blue-600 underline hover:text-blue-800 text-sm font-semibold"
+          className="flex items-center gap-1 text-blue-700 underline hover:text-blue-900 text-sm font-semibold dark:text-blue-300 dark:hover:text-blue-200"
         >
           <RefreshIcon className="w-4 h-4" />
           {t("telegram.reconnect")}
@@ -40,22 +43,25 @@ export default function TelegramSetup() {
 
   // --- Не подключено ---
   return (
-    <div id="telegram-setup" className="bg-yellow-50 border-2 border-yellow-500 rounded-lg p-4">
+    <div
+      id="telegram-setup"
+      className="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800"
+    >
       <div className="flex items-center gap-2 mb-3">
-        <TelegramIcon className="w-8 h-8 text-blue-600" />
-        <h3 className="font-bold text-xl text-yellow-900">{t("telegram.connectTitle")}</h3>
+        <TelegramIcon className="w-8 h-8 text-sky-600 dark:text-sky-300" />
+        <h3 className="font-bold text-xl text-amber-950 dark:text-slate-100">{t("telegram.connectTitle")}</h3>
       </div>
 
       <a
         href={link}
         target="_blank"
         data-focus-target="telegram"
-        className="block bg-blue-600 text-white font-bold text-center py-3 rounded-lg"
+        className="block rounded-xl bg-blue-600 text-white font-bold text-center py-3 shadow-sm hover:bg-blue-700"
       >
         {t("telegram.connectButton")}
       </a>
 
-      <p className="text-xs text-gray-600 mt-3 text-center">
+      <p className="text-xs text-gray-600 mt-3 text-center dark:text-slate-400">
         {t("telegram.connectHint")}
       </p>
     </div>

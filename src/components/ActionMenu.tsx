@@ -197,8 +197,8 @@ export default function ActionMenu({
         <div className="fixed inset-x-0 bottom-0 z-[100] rounded-t-2xl border-t border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 pb-5 pt-3 shadow-2xl">
           <div className="mb-3 flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
-                <PeopleIcon className="h-5 w-5 text-purple-700" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
+                <PeopleIcon className="h-5 w-5 text-purple-700 dark:text-purple-200" />
               </div>
               <div>
                 <div className="text-sm font-semibold text-gray-900">
@@ -213,7 +213,7 @@ export default function ActionMenu({
                     <Badge color="indigo">{t("admin.badge.admin")}</Badge>
                   )}
                   {student.is_cleanup_admin && (
-                    <Badge color="blue">{t("admin.badge.leader")}</Badge>
+                    <Badge color="amber">{t("admin.badge.leader")}</Badge>
                   )}
                   {student.is_registered && (
                     <Badge color="green">{t("admin.badge.registered")}</Badge>
@@ -228,7 +228,7 @@ export default function ActionMenu({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+              className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
             >
               <CloseIcon className="h-5 w-5" />
             </button>
@@ -344,10 +344,10 @@ function Section({
 }) {
   return (
     <div>
-      <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+      <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
         {title}
       </div>
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-slate-700 dark:bg-slate-900/40">
         {children}
       </div>
     </div>
@@ -371,11 +371,13 @@ function SheetButton({
       onClick={onClick}
       className={`flex w-full items-center gap-2 border-b border-gray-200 px-4 py-2.5 text-left text-sm transition-colors last:border-b-0 ${
         danger
-          ? "bg-white text-red-600 hover:bg-red-50"
-          : "bg-white text-gray-800 hover:bg-gray-50"
+          ? "bg-white text-rose-600 hover:bg-rose-50 dark:bg-slate-800 dark:text-rose-300 dark:hover:bg-rose-900/20"
+          : "bg-white text-gray-800 hover:bg-gray-50 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
       }`}
     >
-      <span className={danger ? "text-red-500" : "text-gray-500"}>{icon}</span>
+      <span className={danger ? "text-rose-500 dark:text-rose-300" : "text-gray-500 dark:text-slate-400"}>
+        {icon}
+      </span>
       <span className="font-medium">{label}</span>
     </button>
   );
@@ -386,14 +388,15 @@ function Badge({
   color,
 }: {
   children: ReactNode;
-  color: "purple" | "indigo" | "green" | "red" | "blue";
+  color: "purple" | "indigo" | "green" | "red" | "blue" | "amber";
 }) {
   const map: Record<typeof color, string> = {
-    purple: "bg-purple-100 text-purple-800",
-    indigo: "bg-indigo-100 text-indigo-800",
-    green: "bg-green-100 text-green-800",
-    red: "bg-red-100 text-red-800",
-    blue: "bg-blue-100 text-blue-800",
+    purple: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200",
+    indigo: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-200",
+    green: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/25 dark:text-emerald-200",
+    red: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200",
+    blue: "bg-sky-100 text-sky-800 dark:bg-sky-900/25 dark:text-sky-200",
+    amber: "bg-amber-100 text-amber-800 dark:bg-amber-900/25 dark:text-amber-200",
   } as const;
 
   return (

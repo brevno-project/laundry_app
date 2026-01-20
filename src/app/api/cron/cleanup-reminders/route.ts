@@ -41,8 +41,11 @@ async function getBlockRecipients(block: string) {
     .select("id, code")
     .eq("block", block);
 
-  const apartmentIds = (apartments || []).map((apt) => apt.id);
-  const apartmentCodes = (apartments || []).map((apt) => apt.code).filter(Boolean);
+  const typedApartments = (apartments as { id: string; code: string | null }[] | null | undefined) || [];
+  const apartmentIds = typedApartments.map((apt: { id: string; code: string | null }) => apt.id);
+  const apartmentCodes = typedApartments
+    .map((apt: { id: string; code: string | null }) => apt.code)
+    .filter(Boolean);
   const residentsMap = new Map<string, { telegram_chat_id: string | null; is_banned?: boolean | null }>();
 
   if (apartmentIds.length > 0) {
@@ -115,7 +118,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const list = schedules || [];
+  const list = (schedules as { block: string; check_date: string; check_time?: string | null; reminder_time?: string | null }[] | null | undefined) || [];
   let totalSent = 0;
 
   for (const schedule of list) {
@@ -137,7 +140,7 @@ export async function GET(req: NextRequest) {
       .update({ reminder_sent_at: new Date().toISOString() })
       .in(
         "block",
-        list.map((schedule) => schedule.block)
+        list.map((schedule: { block: string }) => schedule.block)
       );
   }
 

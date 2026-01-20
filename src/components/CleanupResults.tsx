@@ -1415,7 +1415,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       : t("cleanup.reminders.notSent");
 
     return (
-      <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-2">
+      <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-2 dark:border-slate-700 dark:bg-slate-800">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h4 className="text-sm font-semibold text-gray-900">{t("cleanup.block", { block })}</h4>
           <span className={`rounded-lg px-2 py-1 text-xs font-semibold ${statusClass}`}>
@@ -1434,7 +1434,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   [block]: { ...prev[block], date: e.target.value },
                 }))
               }
-              className="w-full rounded-lg border-2 border-gray-200 p-2 text-sm text-gray-900"
+              className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-sm text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
             />
           </div>
           <div>
@@ -1448,7 +1448,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   [block]: { ...prev[block], time: e.target.value },
                 }))
               }
-              className="w-full rounded-lg border-2 border-gray-200 p-2 text-sm text-gray-900"
+              className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-sm text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
             />
           </div>
           <div className="flex flex-col gap-2 md:col-span-2 md:flex-row md:items-end">
@@ -1597,27 +1597,27 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const announcer = item.announced_by ? announcers[item.announced_by] : null;
 
     return (
-      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h4 className="text-lg font-bold text-gray-900">
+            <h4 className="text-lg font-bold text-gray-900 dark:text-slate-100">
               {t("cleanup.resultCard.checkFrom", {
                 date: formatWeekLabel(item.week_start, locale),
               })}
             </h4>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-slate-400">
               {t("cleanup.resultCard.publishedAt", {
                 date: formatDateTime(item.published_at, locale),
               })}
             </p>
           </div>
-          <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+          <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-slate-900/40 dark:text-sky-200">
             {apartment?.code || t("cleanup.resultCard.apartmentFallback")}
           </span>
         </div>
-        <p className="text-sm text-gray-700 whitespace-pre-line">{item.announcement_text}</p>
+        <p className="text-sm text-gray-700 whitespace-pre-line dark:text-slate-200">{item.announcement_text}</p>
         {announcer && (
-          <p className="mt-3 text-xs text-gray-500">
+          <p className="mt-3 text-xs text-gray-500 dark:text-slate-400">
             {t("cleanup.resultCard.announcedBy", { name: announcer })}
           </p>
         )}
@@ -1633,9 +1633,9 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       ? `${formatScheduleLabel(schedule.check_date, locale)}${schedule.check_time ? `, ${formatTime(schedule.check_time)}` : ""}`
       : t("cleanup.schedule.notAssignedFull");
     const scheduleClass = schedule
-      ? "border-amber-200 bg-amber-50 text-amber-900"
-      : "border-gray-200 bg-gray-100 text-gray-500";
-    const scheduleIconClass = schedule ? "text-amber-600" : "text-gray-400";
+      ? "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-slate-900/40 dark:text-amber-200"
+      : "border-gray-200 bg-gray-100 text-gray-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300";
+    const scheduleIconClass = schedule ? "text-amber-600 dark:text-amber-300" : "text-gray-400 dark:text-slate-400";
 
     return (
       <div className="space-y-4">
@@ -1675,14 +1675,14 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         {latest ? (
           renderResultCard(latest)
         ) : (
-          <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-500">
+          <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-500 dark:border-slate-700 dark:text-slate-300">
             {t("cleanup.empty")}
           </div>
         )}
 
         {blockResults.length > 1 && (
-          <details className="rounded-xl border border-gray-200 bg-white p-4">
-            <summary className="cursor-pointer text-sm font-semibold text-gray-700">
+          <details className="rounded-xl border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+            <summary className="cursor-pointer text-sm font-semibold text-gray-700 dark:text-slate-200">
               {t("cleanup.archiveResults", { count: blockResults.length - 1 })}
             </summary>
             <div className="mt-3 space-y-3">
@@ -1753,7 +1753,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
       {showLoading ? (
         <div className="mx-auto max-w-5xl space-y-4 p-4">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm animate-pulse">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm animate-pulse dark:border-slate-700 dark:bg-slate-800">
             <div className="h-5 w-40 rounded bg-gray-200" />
             <div className="mt-3 h-4 w-64 rounded bg-gray-200" />
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -1771,7 +1771,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
           </div>
 
           {canManageCleanup && (
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4 dark:border-slate-700 dark:bg-slate-800">
             <div className="flex items-center gap-2">
               <CalendarIcon className="w-5 h-5 text-blue-600" />
               <h3 className="text-lg font-bold text-gray-900">{t("cleanup.publish.title")}</h3>
@@ -1790,7 +1790,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
             )}
 
             {scheduleBlocks.length > 0 && (
-              <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 space-y-3">
+              <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 space-y-3 dark:border-slate-700 dark:bg-slate-900/40">
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="w-4 h-4 text-blue-600" />
                   <h4 className="text-sm font-semibold text-gray-900">{t("cleanup.schedule.sectionTitle")}</h4>
@@ -1810,7 +1810,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   type="date"
                   value={weekStart}
                   onChange={(e) => setWeekStart(e.target.value)}
-                  className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
+                  className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 />
               </div>
               <div>
@@ -1819,7 +1819,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   value={selectedBlock}
                   onChange={(e) => setSelectedBlock(e.target.value as Block)}
                   disabled={!isSuperAdmin && !!adminBlock}
-                  className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900 disabled:bg-gray-100"
+                  className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-gray-900 disabled:bg-gray-100 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100 dark:disabled:bg-slate-800"
                 >
                   <option value="A">{t("cleanup.blockOption", { block: "A" })}</option>
                   <option value="B">{t("cleanup.blockOption", { block: "B" })}</option>
@@ -1830,7 +1830,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 <select
                   value={selectedApartment}
                   onChange={(e) => setSelectedApartment(e.target.value)}
-                  className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
+                  className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 >
                   <option value="">{t("cleanup.selectApartment")}</option>
                   {apartments
@@ -1844,7 +1844,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               </div>
             </div>
 
-            <div className="rounded-xl border border-dashed border-gray-200 p-4 space-y-3">
+            <div className="rounded-xl border border-dashed border-gray-200 p-4 space-y-3 dark:border-slate-700 dark:bg-slate-900/40">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h4 className="text-sm font-semibold text-gray-700">{t("cleanup.pointsByApartment")}</h4>
               </div>
@@ -1862,7 +1862,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                           [apt.id]: e.target.value,
                         }))
                       }
-                      className="w-full rounded-lg border-2 border-gray-200 p-2 text-sm text-gray-900"
+                      className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-sm text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                       placeholder={t("cleanup.pointsPlaceholder")}
                     />
                     <span className="text-xs text-gray-400">{t("cleanup.pointsSuffix")}</span>
@@ -1873,7 +1873,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 <select
                   value={scoreCaptionKey}
                   onChange={(e) => setScoreCaptionKey(e.target.value)}
-                  className="w-full rounded-lg border-2 border-gray-200 p-2 text-sm text-gray-900 md:w-auto"
+                  className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-sm text-gray-900 md:w-auto dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 >
                   {SCORE_CAPTIONS.map((caption) => (
                     <option key={caption.key} value={caption.key}>
@@ -1910,7 +1910,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   setAnnouncementMode("manual");
                 }}
                 rows={4}
-                className="w-full rounded-lg border-2 border-gray-200 p-3 text-gray-900"
+                className="w-full rounded-lg border-2 border-gray-200 bg-white p-3 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 placeholder={t("cleanup.messagePlaceholder")}
               />
             </div>
@@ -1934,7 +1934,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
         {user && (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-3">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-3 dark:border-slate-700 dark:bg-slate-800">
               <div className="flex items-center gap-2">
                 <TicketIcon className="w-5 h-5 text-purple-600" />
                 <h3 className="text-lg font-bold text-gray-900">{t("cleanup.coupons.title")}</h3>
@@ -1999,7 +1999,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                           return (
                             <div
                               key={coupon.id}
-                              className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm text-gray-700"
+                              className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm text-gray-700 dark:border-slate-700 dark:bg-slate-900/40"
                             >
                               <div className="flex items-center justify-between">
                                 <span className="font-semibold">{status}</span>
@@ -2020,7 +2020,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               )}
             </div>
 
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4 dark:border-slate-700 dark:bg-slate-800">
               <div className="flex items-center gap-2">
                 <MoneyIcon className="w-5 h-5 text-green-600" />
                 <h3 className="text-lg font-bold text-gray-900">{t("cleanup.transfer.title")}</h3>
@@ -2035,7 +2035,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                     <select
                       value={transferCouponId}
                       onChange={(e) => setTransferCouponId(e.target.value)}
-                      className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
+                      className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                     >
                       <option value="">{t("cleanup.transfer.selectCoupon")}</option>
                       {transferableCoupons.map((coupon) => (
@@ -2050,7 +2050,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                     <select
                       value={transferRecipientId}
                       onChange={(e) => setTransferRecipientId(e.target.value)}
-                      className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
+                      className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                     >
                       <option value="">{t("cleanup.transfer.selectStudent")}</option>
                       {recipients.map((student) => (
@@ -2079,7 +2079,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         )}
 
         {showTransfers && (
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-3">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-3 dark:border-slate-700 dark:bg-slate-800">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <CheckIcon className="w-5 h-5 text-emerald-600" />
@@ -2106,7 +2106,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
             ) : (
               <div className="space-y-2 text-sm text-gray-700">
                 {transfers.map((transfer) => (
-                  <div key={transfer.id} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
+                  <div key={transfer.id} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 dark:bg-slate-900/40">
                     <span>
                       {transferNames[transfer.from_student_id] || t("cleanup.transfers.someone")}
                       {" -> "}
@@ -2121,7 +2121,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         )}
 
         {isSuperAdmin && (
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4 dark:border-slate-700 dark:bg-slate-800">
             <div className="flex items-center gap-2">
               <TicketIcon className="w-5 h-5 text-purple-600" />
               <h3 className="text-lg font-bold text-gray-900">{t("cleanup.grant.title")}</h3>
@@ -2132,7 +2132,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 <select
                   value={grantStudentId}
                   onChange={(e) => setGrantStudentId(e.target.value)}
-                  className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
+                  className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 >
                   <option value="">{t("cleanup.grant.selectStudentOption")}</option>
                   {grantStudents.map((student) => (
@@ -2149,7 +2149,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   min={1}
                   value={grantCount}
                   onChange={(e) => setGrantCount(Number(e.target.value))}
-                  className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
+                  className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 />
               </div>
               <div>
@@ -2163,7 +2163,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                       setGrantExpiresAt("");
                     }
                   }}
-                  className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
+                  className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 >
                   <option value="default">{t("cleanup.grant.expiryDefault")}</option>
                   <option value="custom">{t("cleanup.grant.expiryCustom")}</option>
@@ -2177,7 +2177,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                     type="datetime-local"
                     value={grantExpiresAt}
                     onChange={(e) => setGrantExpiresAt(e.target.value)}
-                    className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
+                    className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                   />
                 </div>
               )}
@@ -2188,7 +2188,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 type="text"
                 value={grantNote}
                 onChange={(e) => setGrantNote(e.target.value)}
-                className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
+                className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 placeholder={t("cleanup.grant.notePlaceholder")}
               />
             </div>

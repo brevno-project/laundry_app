@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const admin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-);
+import { supabaseAdmin as admin } from "../../_utils/adminAuth";
 
 export async function POST(req: NextRequest) {
   try {
@@ -40,7 +34,7 @@ export async function POST(req: NextRequest) {
     // 2) Получаем студента
     const { data: student } = await admin
       .from("students")
-      .select("id, user_id, full_name, room, avatar_type, is_super_admin")  // ← ДОБАВИЛИ is_super_admin
+      .select("id, user_id, full_name, room, avatar_type, is_super_admin")  
       .eq("id", student_id)
       .maybeSingle();
 
@@ -62,9 +56,11 @@ export async function POST(req: NextRequest) {
       .select("queue_position")
       .eq("queue_date", scheduled_for_date);
 
+    const typedRows = (rows as { queue_position: number | null }[] | null | undefined) || [];
+
     const nextPos =
-      rows?.length && rows.length > 0
-        ? Math.max(...rows.map((r) => r.queue_position || 0)) + 1
+      typedRows.length > 0
+        ? Math.max(...typedRows.map((r: { queue_position: number | null }) => r.queue_position || 0)) + 1
         : 1;
 
     // 4) Вставка ПОЛНОЙ записи
@@ -89,7 +85,13 @@ export async function POST(req: NextRequest) {
         .is("used_in_queue_id", null)
         .gt("expires_at", now.toISOString());
 
-      const eligible = (couponRows || []).filter((coupon) => {
+      const typedCoupons =
+        (couponRows as
+          | { id: string; issued_at: string; expires_at: string }[]
+          | null
+          | undefined) || [];
+
+      const eligible = typedCoupons.filter((coupon: { id: string; issued_at: string; expires_at: string }) => {
         const issuedAt = new Date(coupon.issued_at).getTime();
         const expiresAt = new Date(coupon.expires_at).getTime();
         const ttlMs = expiresAt - issuedAt;
@@ -159,8 +161,14 @@ export async function POST(req: NextRequest) {
         .is("used_in_queue_id", null)
         .gt("expires_at", now);
 
-      const eligible = (couponRows || [])
-        .filter((coupon) => {
+      const typedCoupons =
+        (couponRows as
+          | { id: string; issued_at: string; expires_at: string }[]
+          | null
+          | undefined) || [];
+
+      const eligible = typedCoupons
+        .filter((coupon: { id: string; issued_at: string; expires_at: string }) => {
           const issuedAt = new Date(coupon.issued_at).getTime();
           const expiresAt = new Date(coupon.expires_at).getTime();
           const ttlMs = expiresAt - issuedAt;
@@ -191,7 +199,7 @@ export async function POST(req: NextRequest) {
       await admin
         .from("coupons")
         .update({ reserved_queue_id: row.id, reserved_at: now })
-        .in("id", eligible.map((coupon) => coupon.id));
+        .in("id", eligible.map((coupon: { id: string }) => coupon.id));
     }
 
     return NextResponse.json({ success: true });

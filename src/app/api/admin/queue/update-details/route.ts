@@ -102,8 +102,14 @@ export async function POST(req: NextRequest) {
         .is("used_in_queue_id", null)
         .gt("expires_at", now.toISOString());
 
-      const eligible = (couponRows || [])
-        .filter((coupon) => {
+      const typedCoupons =
+        (couponRows as
+          | { id: string; issued_at: string; expires_at: string }[]
+          | null
+          | undefined) || [];
+
+      const eligible = typedCoupons
+        .filter((coupon: { id: string; issued_at: string; expires_at: string }) => {
           const issuedAt = new Date(coupon.issued_at).getTime();
           const expiresAt = new Date(coupon.expires_at).getTime();
           const ttlMs = expiresAt - issuedAt;

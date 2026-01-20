@@ -169,10 +169,12 @@ export async function POST(req: NextRequest) {
     }
 
     const residentsMap = new Map<string, { id: string; is_banned?: boolean | null }>();
-    (residentsByApartment || []).forEach((student) => {
+    (residentsByApartment as { id: string; is_banned?: boolean | null }[] | null | undefined || []).forEach(
+      (student: { id: string; is_banned?: boolean | null }) => {
       residentsMap.set(student.id, student);
-    });
-    residentsByRoom.forEach((student) => {
+      }
+    );
+    residentsByRoom.forEach((student: { id: string; is_banned?: boolean | null }) => {
       if (!residentsMap.has(student.id)) {
         residentsMap.set(student.id, student);
       }

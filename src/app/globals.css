@@ -50,6 +50,10 @@ html.dark {
   background-color: #1a1f2e;
 }
 
+ .dark .bg-slate-100 {
+  background-color: var(--surface-muted);
+ }
+
 .dark .bg-blue-50 {
   background-color: #1a1f36;
 }
@@ -61,6 +65,17 @@ html.dark {
 .dark .bg-green-50 {
   background-color: #0f2419;
 }
+
+ .dark select,
+ .dark input,
+ .dark textarea {
+  color-scheme: dark;
+ }
+
+ .dark select option {
+  background-color: #0f172a;
+  color: #e2e8f0;
+ }
 
 .dark .bg-emerald-50 {
   background-color: #0d1f15;
@@ -111,6 +126,10 @@ html.dark {
   border-color: var(--border-color);
 }
 
+ .dark .border-gray-100 {
+  border-color: var(--border-color);
+ }
+
 .dark .border-blue-200,
 .dark .border-blue-300,
 .dark .border-green-200,
@@ -128,9 +147,17 @@ html.dark {
   border-color: #334155;
 }
 
+ .dark .btn-secondary:hover {
+  background-color: #0f172a;
+ }
+
 .dark .btn-ghost {
   color: #cbd5f5;
 }
+
+ .dark .btn-ghost:hover {
+  background-color: rgba(148, 163, 184, 0.12);
+ }
 
 .dark .btn-danger {
   background-color: rgba(244, 63, 94, 0.15);
@@ -319,9 +346,14 @@ html.dark {
     color: rgb(190, 18, 60);
     background-color: rgb(255, 241, 242);
     border: 1px solid rgb(254, 202, 202);
+    will-change: transform;
   }
   .btn-danger:hover {
     background-color: rgb(254, 226, 226);
+    transform: translateY(-1px);
+  }
+  .btn-danger:active {
+    transform: translateY(0) scale(0.98);
   }
   .btn-warning {
     color: white;

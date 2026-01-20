@@ -95,8 +95,9 @@ async function getAllAdminChatIds(): Promise<string[]> {
   
   console.log('📊 Admins with telegram:', data);
   
-  const chatIds = data
-    .map(student => student.telegram_chat_id)
+  const rows = (data as { telegram_chat_id: string | null }[] | null | undefined) || [];
+  const chatIds = rows
+    .map((student: { telegram_chat_id: string | null }) => student.telegram_chat_id)
     .filter((id): id is string => id !== null && id !== undefined);
   
   console.log('📤 Admin chat IDs:', chatIds);

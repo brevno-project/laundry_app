@@ -13,7 +13,7 @@ import StudentsList from '@/components/StudentsList';
 import CleanupResults from '@/components/CleanupResults';
 import ClaimAccount from '@/components/ClaimAccount';
 import GlobalAlert from '@/components/GlobalAlert';
-import { HomeIcon, HistoryIcon, PeopleIcon, SettingsIcon, DoorIcon, ListIcon, LaundryIcon } from '@/components/Icons';
+import { HomeIcon, HistoryIcon, PeopleIcon, SettingsIcon, DoorIcon, ListIcon, LaundryIcon, SunIcon, MoonIcon } from '@/components/Icons';
 import TelegramBanner from '@/components/TelegramBanner';
 import StudentActions from '@/components/StudentActions';
 import PasswordChanger from '@/components/PasswordChanger';
@@ -87,10 +87,7 @@ export default function Home() {
 
   // ✅ Отслеживание скролла для кнопки "Вверх" (только для пользователей в очереди)
   React.useEffect(() => {
-    // Проверяем, есть ли пользователь в очереди
-    const userInQueue = user && queue.some(item => item.student_id === user.student_id);
-    
-    if (!userInQueue) {
+    if (activeTab !== "history") {
       setShowScrollButton(false);
       return;
     }
@@ -105,8 +102,9 @@ export default function Home() {
     };
 
     window.addEventListener('scroll', handleScroll);
+    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [user, queue]);
+  }, [activeTab]);
 
   // ✅ Функция скролла вверх
   const scrollToTop = () => {
@@ -414,22 +412,32 @@ export default function Home() {
             </div>
             <div className="bg-white p-4 rounded-lg shadow-sm">
               <h3 className="font-bold text-lg text-gray-800 mb-3">{t("settings.theme")}</h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="inline-flex overflow-hidden rounded-full border border-gray-200 bg-gray-50 p-1 dark:border-slate-700 dark:bg-slate-900/40">
                 <button
                   type="button"
                   onClick={() => setTheme("light")}
-                  className={`btn ${theme === "light" ? "btn-primary" : "btn-secondary"}`}
                   aria-pressed={theme === "light"}
+                  className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                    theme === "light"
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "bg-transparent text-gray-600 hover:bg-white/60 dark:text-slate-300 dark:hover:bg-slate-800"
+                  }`}
                 >
-                  {t("settings.theme.light")}
+                  <SunIcon className="w-5 h-5" />
+                  <span>{t("settings.theme.light")}</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setTheme("dark")}
-                  className={`btn ${theme === "dark" ? "btn-primary" : "btn-secondary"}`}
                   aria-pressed={theme === "dark"}
+                  className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                    theme === "dark"
+                      ? "bg-slate-900 text-white shadow-sm dark:bg-slate-700"
+                      : "bg-transparent text-gray-600 hover:bg-white/60 dark:text-slate-300 dark:hover:bg-slate-800"
+                  }`}
                 >
-                  {t("settings.theme.dark")}
+                  <MoonIcon className="w-5 h-5" />
+                  <span>{t("settings.theme.dark")}</span>
                 </button>
               </div>
             </div>

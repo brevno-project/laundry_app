@@ -236,3 +236,16 @@ export const ChevronDownIcon = ({ className = "w-5 h-5" }: IconProps) => (
     <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/>
   </svg>
 );
+
+export const SunIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+    <path d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.8 1.42-1.42zM1 13h3v-2H1v2zm10-9h2V1h-2v3zm9.66 1.46l-1.41-1.41-1.8 1.79 1.42 1.42 1.79-1.8zM17 11v2h3v-2h-3zM11 23h2v-3h-2v3zM4.22 19.78l1.41 1.41 1.8-1.79-1.42-1.42-1.79 1.8zM17.66 19.95l1.8 1.79 1.41-1.41-1.79-1.8-1.42 1.42z" />
+    <path d="M12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12zm0 10a4 4 0 1 1 0-8 4 4 0 0 1 0 8z" />
+  </svg>
+);
+
+export const MoonIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+    <path d="M12.74 2a9.23 9.23 0 0 0 0 20 9.03 9.03 0 0 0 7.47-3.93 1 1 0 0 0-1.21-1.5 7 7 0 0 1-8.57-8.57 1 1 0 0 0-1.5-1.21A9.03 9.03 0 0 0 12.74 2z" />
+  </svg>
+);

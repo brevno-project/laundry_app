@@ -392,43 +392,43 @@ export default function AdminPanel() {
 
                       <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
                         {student.is_registered && (
-                          <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-medium text-emerald-700">
+                          <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-medium text-emerald-700 dark:bg-emerald-900/25 dark:text-emerald-200">
                             {t("admin.status.registered")}
                           </span>
                         )}
 
                         {!student.is_registered && (
-                          <span className="rounded-full bg-gray-200 px-2 py-0.5 font-medium text-gray-700">
+                          <span className="rounded-full bg-gray-200 px-2 py-0.5 font-medium text-gray-700 dark:bg-slate-700 dark:text-slate-200">
                             {t("admin.status.unregistered")}
                           </span>
                         )}
 
                         {student.is_banned && (
-                          <span className="rounded-full bg-red-100 px-2 py-0.5 font-medium text-red-700">
+                          <span className="rounded-full bg-red-100 px-2 py-0.5 font-medium text-red-700 dark:bg-rose-900/30 dark:text-rose-200">
                             {t("admin.status.banned")}
                           </span>
                         )}
 
                         {hasTelegram(student) && (
-                          <span className="rounded-full bg-sky-100 px-2 py-0.5 font-medium text-sky-700">
+                          <span className="rounded-full bg-sky-100 px-2 py-0.5 font-medium text-sky-700 dark:bg-sky-900/25 dark:text-sky-200">
                             Telegram
                           </span>
                         )}
 
                         {student.is_admin && !student.is_super_admin && (
-                          <span className="rounded-full bg-purple-100 px-2 py-0.5 font-medium text-purple-700">
+                          <span className="rounded-full bg-purple-100 px-2 py-0.5 font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-200">
                             {t("admin.status.admin")}
                           </span>
                         )}
 
                         {student.is_super_admin && (
-                          <span className="rounded-full bg-yellow-100 px-2 py-0.5 font-semibold text-yellow-800">
+                          <span className="rounded-full bg-yellow-100 px-2 py-0.5 font-semibold text-yellow-800 dark:bg-amber-900/30 dark:text-amber-200">
                             {t("admin.status.superAdmin")}
                           </span>
                         )}
 
                         {student.is_cleanup_admin && (
-                            <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700">
+                            <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700 dark:bg-amber-900/25 dark:text-amber-200">
                               {t("admin.status.leader")}
                             </span>
                         )}

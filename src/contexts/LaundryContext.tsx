@@ -1619,8 +1619,6 @@ const registerStudent = async (
 
     let authUser = signUpData?.user;
 
-    let userAlreadyExisted = false;
-
 
 
     if (signUpErr) {

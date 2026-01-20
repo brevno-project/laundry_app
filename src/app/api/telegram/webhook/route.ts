@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// ✅ Проверка наличия переменных окружения
-if (!process.env.TELEGRAM_WEBHOOK_SECRET) {
-  console.error("❌ Missing TELEGRAM_WEBHOOK_SECRET env");
-}
-if (!process.env.NEXT_PUBLIC_BASE_URL) {
-  console.error("❌ Missing NEXT_PUBLIC_BASE_URL env");
-}
-
 export async function POST(request: NextRequest) {
   try {
+    if (!process.env.TELEGRAM_WEBHOOK_SECRET) {
+      return NextResponse.json(
+        { error: "Server misconfigured: TELEGRAM_WEBHOOK_SECRET missing" },
+        { status: 500 }
+      );
+    }
+    if (!process.env.NEXT_PUBLIC_BASE_URL) {
+      return NextResponse.json(
+        { error: "Server misconfigured: NEXT_PUBLIC_BASE_URL missing" },
+        { status: 500 }
+      );
+    }
+
     const update = await request.json();
 
     // =============================

@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLaundry } from "@/contexts/LaundryContext";
 import { useUi } from "@/contexts/UiContext";
 import { Student } from "@/types";
@@ -32,6 +32,13 @@ export default function StudentsList() {
   const [editKeyLost, setEditKeyLost] = useState(false);
   const [notice, setNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+
+  useEffect(() => {
+    if (!notice) return;
+    const timeoutMs = notice.type === "success" ? 3500 : 6000;
+    const timer = window.setTimeout(() => setNotice(null), timeoutMs);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
   const canManageStudents = isAdmin || isSuperAdmin || isCleanupAdmin;
   const canDeleteStudents = isAdmin || isSuperAdmin;
@@ -101,7 +108,7 @@ export default function StudentsList() {
 
       setEditingStudent(null);
       setNotice({ type: "success", message: t("students.updateSuccess") });
-    } catch (error) {
+    } catch {
       setNotice({ type: "error", message: t("students.updateError") });
     }
   };
@@ -111,11 +118,24 @@ export default function StudentsList() {
 
     if (!confirm(t("students.deleteConfirm", { name: student.full_name }))) return;
 
+    const studentName =
+      student.full_name ||
+      [student.first_name, student.last_name, student.middle_name]
+        .filter(Boolean)
+        .join(" ") ||
+      "-";
+
     try {
       await deleteStudent(student.id);
-      setNotice({ type: "success", message: t("students.deleteSuccess") });
-    } catch (error) {
-      setNotice({ type: "error", message: t("students.deleteError") });
+      setNotice({
+        type: "success",
+        message: t("students.deleteSuccessToast", { name: studentName }),
+      });
+    } catch {
+      setNotice({
+        type: "error",
+        message: t("students.deleteErrorToast", { name: studentName }),
+      });
     }
   };
 
@@ -139,15 +159,15 @@ export default function StudentsList() {
             <td colSpan={5} className="h-1"></td>
           </tr>
         )}
-        <tr className="border-b border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
-          <td className="p-3 text-gray-700">{index + 1}</td>
-          <td className="p-3 text-gray-900">
+        <tr className="border-b border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/70 transition-colors">
+          <td className="p-3 text-gray-700 dark:text-slate-300">{index + 1}</td>
+          <td className="p-3 text-gray-900 dark:text-slate-100">
             <div className="flex items-center gap-3">
               <Avatar name={student.full_name} style={student.avatar_style} seed={student.avatar_seed} className="w-10 h-10" />
               <div className="flex flex-col">
                 <span>{displayName}</span>
                 {canManageStudents && (
-                  <span className="mt-1 flex flex-wrap gap-1 text-[11px] font-semibold text-gray-600">
+                  <span className="mt-1 flex flex-wrap gap-1 text-[11px] font-semibold text-gray-600 dark:text-slate-300">
                     <span className={`rounded-full px-2 py-0.5 ${student.key_issued ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}>
                       {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
                     </span>
@@ -202,7 +222,7 @@ export default function StudentsList() {
                     {canDeleteStudents && (
                       <button
                         onClick={() => handleDeleteStudent(student)}
-                        className="btn btn-danger px-3 py-1 text-sm"
+                        className="btn btn-danger px-3 py-1 text-sm transition-transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
                       >
                         <DeleteIcon className="w-4 h-4 inline-block mr-1" />{t("students.delete")}
                       </button>
@@ -218,7 +238,10 @@ export default function StudentsList() {
   const renderMobileRow = (student: Student, index: number, list: Student[], tone: "blue" | "green") => {
     const prevStudent = index > 0 ? list[index - 1] : null;
     const showDivider = prevStudent && prevStudent.room !== student.room;
-    const rowBorder = tone === "blue" ? "border-blue-200 hover:bg-blue-50" : "border-green-200 hover:bg-green-50";
+    const rowBorder =
+      tone === "blue"
+        ? "border-blue-200 hover:bg-blue-50 dark:border-slate-700 dark:hover:bg-slate-800"
+        : "border-green-200 hover:bg-green-50 dark:border-slate-700 dark:hover:bg-slate-800";
     const displayName =
       [student.first_name, student.last_name, student.middle_name].filter(Boolean).join(" ") ||
       student.full_name ||
@@ -237,7 +260,7 @@ export default function StudentsList() {
             <td colSpan={canManageStudents ? 5 : 4} className="h-0.5"></td>
           </tr>
         )}
-        <tr className={`border-b ${rowBorder} dark:border-slate-600 dark:hover:bg-slate-700`}>
+        <tr className={`border-b ${rowBorder}`}>
           <td className="p-1 text-gray-900 font-semibold">{index + 1}</td>
           <td className="p-1 text-gray-900">
             <div className="flex items-center gap-2">
@@ -291,7 +314,7 @@ export default function StudentsList() {
                   {canDeleteStudents && (
                     <button
                       onClick={() => handleDeleteStudent(student)}
-                      className="btn btn-danger px-2 py-1 text-xs"
+                      className="btn btn-danger px-2 py-1 text-xs transition-transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
                     >
                       <DeleteIcon className="w-3 h-3" />
                     </button>
@@ -323,15 +346,17 @@ export default function StudentsList() {
         </div>
 
         {notice && (
-          <div
-            className={`mx-4 mb-4 rounded-lg border px-3 py-2 text-sm ${
+          <button
+            type="button"
+            onClick={() => setNotice(null)}
+            className={`fixed bottom-6 left-1/2 z-[120] w-[min(520px,calc(100vw-2rem))] -translate-x-1/2 rounded-xl border px-4 py-3 text-left text-sm shadow-lg transition-all ${
               notice.type === "success"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border-red-200 bg-red-50 text-red-700"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-slate-700 dark:bg-slate-900/60 dark:text-emerald-200"
+                : "border-red-200 bg-red-50 text-red-800 dark:border-slate-700 dark:bg-slate-900/60 dark:text-rose-200"
             }`}
           >
             {notice.message}
-          </div>
+          </button>
         )}
 
         <div className="mb-6 px-4">

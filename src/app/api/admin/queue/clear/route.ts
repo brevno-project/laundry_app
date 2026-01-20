@@ -51,7 +51,10 @@ export async function POST(req: NextRequest) {
           .update({ reserved_queue_id: null, reserved_at: null })
           .is("used_at", null)
           .is("used_in_queue_id", null)
-          .in("reserved_queue_id", doneItems.map((item) => item.id));
+          .in(
+            "reserved_queue_id",
+            (doneItems as { id: string }[]).map((item: { id: string }) => item.id)
+          );
       }
 
       const { error: deleteError } = await supabaseAdmin
@@ -92,7 +95,10 @@ export async function POST(req: NextRequest) {
           .update({ reserved_queue_id: null, reserved_at: null })
           .is("used_at", null)
           .is("used_in_queue_id", null)
-          .in("reserved_queue_id", oldItems.map((item) => item.id));
+          .in(
+            "reserved_queue_id",
+            (oldItems as { id: string }[]).map((item: { id: string }) => item.id)
+          );
       }
 
       const { error: deleteError } = await supabaseAdmin
@@ -131,7 +137,10 @@ export async function POST(req: NextRequest) {
           .update({ reserved_queue_id: null, reserved_at: null })
           .is("used_at", null)
           .is("used_in_queue_id", null)
-          .in("reserved_queue_id", stuckItems.map((item) => item.id));
+          .in(
+            "reserved_queue_id",
+            (stuckItems as { id: string }[]).map((item: { id: string }) => item.id)
+          );
       }
 
       const { error: deleteError } = await supabaseAdmin
