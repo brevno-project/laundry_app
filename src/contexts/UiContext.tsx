@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState, useLayoutEffect } from "react";
 
 export type UiLanguage = "ru" | "en" | "ko";
 export type UiTheme = "light" | "dark";
@@ -991,7 +991,12 @@ const getInitialLanguage = (): UiLanguage => {
   return "ru";
 };
 
-const getInitialTheme = (): UiTheme => "light";
+const getInitialTheme = (): UiTheme => {
+  if (typeof window === "undefined") return "light";
+  const stored = localStorage.getItem("appTheme") as UiTheme | null;
+  if (stored === "light" || stored === "dark") return stored;
+  return "light";
+};
 
 export const UiProvider = ({ children }: { children: React.ReactNode }) => {
   const [language, setLanguage] = useState<UiLanguage>(getInitialLanguage);
@@ -1003,9 +1008,8 @@ export const UiProvider = ({ children }: { children: React.ReactNode }) => {
     document.documentElement.lang = language;
   }, [language]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (typeof window === "undefined") return;
-    localStorage.setItem("appTheme", theme);
     const html = document.documentElement;
     const body = document.body;
     if (theme === "dark") {
@@ -1015,6 +1019,7 @@ export const UiProvider = ({ children }: { children: React.ReactNode }) => {
       html.classList.remove("dark");
       body.classList.remove("dark");
     }
+    localStorage.setItem("appTheme", theme);
   }, [theme]);
 
   const t = useCallback(
