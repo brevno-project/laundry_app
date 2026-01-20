@@ -400,7 +400,7 @@ export default function StudentsList() {
                 {canManageStudents && <col className="w-72" />}
               </colgroup>
               <thead>
-                <tr className="bg-green-100 border-b-2 border-green-300">
+                <tr className="bg-green-100 dark:bg-green-900/20 border-b-2 border-green-300 dark:border-green-700">
                   <th className="text-left p-3 font-bold text-gray-900">#</th>
                   <th className="text-left p-3 font-bold text-gray-900">{t("students.name")}</th>
                   <th className="text-center p-3 font-bold text-gray-900">{t("students.room")}</th>
@@ -417,7 +417,7 @@ export default function StudentsList() {
           <div className="md:hidden overflow-x-auto">
             <table className="w-full border-collapse text-xs">
               <thead>
-                <tr className="bg-green-100 border-b-2 border-green-300">
+                <tr className="bg-green-100 dark:bg-green-900/20 border-b-2 border-green-300 dark:border-green-700">
                   <th className="text-left p-1 font-bold text-gray-900">#</th>
                   <th className="text-left p-1 font-bold text-gray-900">{t("students.name")}</th>
                   <th className="text-center p-1 font-bold text-gray-900">

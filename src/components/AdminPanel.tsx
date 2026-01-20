@@ -277,19 +277,21 @@ export default function AdminPanel() {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-2xl font-bold text-gray-900">{t("admin.loginPromptTitle")}</h2>
-        <p className="text-sm text-gray-600">{t("admin.loginPromptBody")}</p>
+        <p className="text-sm text-gray-700">{t("admin.loginPromptBody")}</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg border-2 border-purple-800 bg-purple-700 p-6 shadow-lg">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold text-white">{t("admin.panelTitle")}</h2>
-          <p className="mt-1 text-base text-purple-100">
-            {isSuperAdmin ? t("admin.panelModeSuper") : t("admin.panelModeAdmin")}
-          </p>
+    <>
+      <div className="bg-gradient-to-r from-purple-600 to-indigo-700 dark:from-purple-800 dark:to-indigo-900 p-4 rounded-lg shadow-lg mb-4">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold text-white">{t("admin.panelTitle")}</h2>
+            <p className="mt-1 text-base text-purple-100">
+              {isSuperAdmin ? t("admin.panelModeSuper") : t("admin.panelModeAdmin")}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -369,7 +371,7 @@ export default function AdminPanel() {
               {filteredStudents.map((student) => (
                 <div
                   key={student.id}
-                  className="space-y-2 rounded-lg border border-gray-200 bg-gray-50 p-3"
+                  className="space-y-2 rounded-lg border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 p-3"
                 >
                   <div className="flex items-start gap-3">
                     <Avatar
@@ -706,6 +708,7 @@ export default function AdminPanel() {
         </Modal>
       )}
     </div>
+    </>
   );
 }
 
@@ -741,7 +744,7 @@ function Modal({
   const { t } = useUi();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+      <div className="w-full max-w-md rounded-lg bg-white dark:bg-slate-800 p-6 shadow-xl">
         {children}
         <button
           type="button"

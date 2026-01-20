@@ -103,7 +103,7 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-slate-700">
       <h3 className="font-bold text-lg text-gray-900 mb-4">{t('avatar.title')}</h3>
 
       {notice && (
@@ -123,7 +123,7 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
         </div>
       )}
 
-      <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg text-center border border-blue-200">
+      <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-700 dark:to-slate-800 rounded-lg text-center border border-blue-200 dark:border-slate-600">
         <p className="text-sm text-gray-700 font-semibold mb-3">{t('avatar.previewLabel')}</p>
         <div className="flex justify-center mb-4">
           <Avatar
@@ -169,8 +169,8 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
               onClick={() => setSelectedStyle(style.id)}
               className={`p-2 rounded-lg border-2 transition-all text-left text-xs ${
                 selectedStyle === style.id
-                  ? 'border-blue-600 bg-blue-50'
-                  : 'border-gray-200 bg-white hover:border-blue-300'
+                  ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-500'
+                  : 'border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 hover:border-blue-300 dark:hover:border-blue-500'
               }`}
             >
               <div className="flex items-center justify-between mb-1">
