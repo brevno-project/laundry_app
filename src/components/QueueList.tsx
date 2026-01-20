@@ -282,7 +282,10 @@ export default function QueueList() {
   const handleSaveEdit = async () => {
     if (!editingItem) return;
   
-    if (!isAdmin) {\n      alertWithCheck(queueCopy.errors.onlyAdmin);\n      return;\n    }
+    if (!isAdmin) {
+      alertWithCheck(queueCopy.errors.onlyAdmin);
+      return;
+    }
   
     await updateQueueItemDetails(editingItem.id, {
       wash_count: editWashCount,
