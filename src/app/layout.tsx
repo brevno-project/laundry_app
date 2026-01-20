@@ -28,9 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-100 min-h-screen`}
-      >
+      <head>
         <Script id="theme-init" strategy="beforeInteractive">{`
   try {
     const t = localStorage.getItem('appTheme');
@@ -45,6 +43,10 @@ export default function RootLayout({
     }
   } catch (e) {}
 `}</Script>
+      </head>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-100 min-h-screen`}
+      >
         <UiProvider>
           <LaundryProvider>{children}</LaundryProvider>
         </UiProvider>
