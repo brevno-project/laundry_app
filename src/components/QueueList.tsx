@@ -4,6 +4,7 @@ import { useLaundry } from '@/contexts/LaundryContext';
 import { useUi } from '@/contexts/UiContext';
 import { QueueStatus } from '@/types';
 import { sendTelegramNotification } from '@/lib/telegram';
+import { getLaundryTimeStatus, LAUNDRY_CLOSE_HOUR, LAUNDRY_OPEN_HOUR } from '@/lib/timeHelper';
 import { useState, useEffect, useRef } from 'react';
 import Timer from './Timer';
 import QueueTimers from './QueueTimers';
@@ -504,19 +505,19 @@ export default function QueueList() {
                 {queueCopy.status.waiting}
               </span>
             ), 
-            badgeColor: 'bg-gradient-to-r from-slate-400 to-slate-500 text-white font-semibold shadow-sm' 
+            badgeColor: 'bg-gradient-to-r from-slate-400 to-slate-500 text-white font-semibold shadow-sm dark:from-slate-600/40 dark:to-slate-500/20 dark:text-slate-200' 
           };
         case QueueStatus.READY:
           return { 
-            bg: 'bg-yellow-50 dark:bg-slate-700', 
-            text: 'text-yellow-900 dark:text-yellow-300', 
+            bg: 'bg-yellow-50 dark:bg-amber-900/15', 
+            text: 'text-yellow-900 dark:text-amber-200', 
             badge: (
               <span className="flex items-center gap-1.5">
                 <HourglassIcon className="w-4 h-4" />
                 {queueCopy.status.ready.toUpperCase()}
               </span>
             ), 
-            badgeColor: 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 font-bold shadow-md' 
+            badgeColor: 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 font-bold shadow-md dark:from-amber-600/40 dark:to-amber-500/20 dark:text-amber-200' 
           };
         case QueueStatus.KEY_ISSUED:
           return {
@@ -528,7 +529,7 @@ export default function QueueList() {
                 {queueCopy.status.keyIssued}
               </span>
             ),
-            badgeColor: 'bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold shadow-md'
+            badgeColor: 'bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold shadow-md dark:from-blue-600/40 dark:to-blue-500/20 dark:text-blue-200'
           };
         case QueueStatus.WASHING:
           return { 
@@ -540,19 +541,19 @@ export default function QueueList() {
                 {queueCopy.status.washing.toUpperCase()}
               </span>
             ), 
-            badgeColor: 'bg-gradient-to-r from-green-400 to-green-500 text-white font-bold shadow-md' 
+            badgeColor: 'bg-gradient-to-r from-green-400 to-green-500 text-white font-bold shadow-md dark:from-emerald-600/40 dark:to-emerald-500/20 dark:text-emerald-200' 
           };
         case QueueStatus.RETURNING_KEY:
           return { 
-            bg: 'bg-orange-50 dark:bg-slate-700', 
-            text: 'text-orange-900 dark:text-orange-300', 
+            bg: 'bg-orange-50 dark:bg-amber-900/10', 
+            text: 'text-orange-900 dark:text-amber-200', 
             badge: (
               <span className="flex items-center gap-1.5">
                 <KeyIcon className="w-4 h-4" />
                 {queueCopy.status.returning.toUpperCase()}
               </span>
             ), 
-            badgeColor: 'bg-gradient-to-r from-orange-400 to-orange-500 text-white font-bold shadow-md' 
+            badgeColor: 'bg-gradient-to-r from-orange-400 to-orange-500 text-white font-bold shadow-md dark:from-orange-600/40 dark:to-orange-500/20 dark:text-orange-200' 
           };
         case QueueStatus.DONE:
           return { 
@@ -564,7 +565,7 @@ export default function QueueList() {
                 {queueCopy.status.done.toUpperCase()}
               </span>
             ), 
-            badgeColor: 'bg-gradient-to-r from-emerald-400 to-emerald-500 text-white font-bold shadow-md' 
+            badgeColor: 'bg-gradient-to-r from-emerald-400 to-emerald-500 text-white font-bold shadow-md dark:from-emerald-600/40 dark:to-emerald-500/20 dark:text-emerald-200' 
           };
         default:
           return { 
@@ -605,7 +606,7 @@ export default function QueueList() {
     <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
       {/* Header */}
       <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700 rounded-t-lg">
-        <h2 className="text-xl font-bold text-gray-800">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-slate-100">
           <CalendarIcon className="w-5 h-5 inline-block mr-1" />{queueCopy.title} ({queuedItems.length})
         </h2>
         {isSuperAdmin && queuedItems.length > 0 && (
@@ -623,8 +624,8 @@ export default function QueueList() {
       {/* ✅ Кнопки переноса для админа - вынесены из header */}
       {/* DEBUG: isAdmin={String(isAdmin)}, selectedItems.length={selectedItems.length} */}
       {isAdmin && selectedItems.length > 0 && (
-        <div className="bg-blue-50 border-2 border-blue-500 rounded-lg p-3 m-3">
-          <h4 className="font-bold text-blue-900 mb-2 text-sm">
+        <div className="bg-blue-50 border-2 border-blue-500 rounded-lg p-3 m-3 dark:bg-blue-950/30 dark:border-blue-500/30">
+          <h4 className="font-bold text-blue-900 mb-2 text-sm dark:text-blue-200">
             <CalendarIcon className="w-4 h-4 inline-block mr-1" />
             {queueCopy.moveSelected.replace("{{count}}", String(selectedItems.length))}
           </h4>
@@ -639,7 +640,7 @@ export default function QueueList() {
                 await transferSelectedToDate(selectedItems, dateStr);
                 setSelectedItems([]);
               }}
-              className="btn bg-red-500 text-white hover:bg-red-600 px-2 py-2 text-xs"
+              className="btn bg-red-500 text-white hover:bg-red-600 px-2 py-2 text-xs dark:bg-rose-500/20 dark:text-rose-100 dark:hover:bg-rose-500/30 dark:border dark:border-rose-500/40"
             >
               {queueCopy.movePrev}
             </button>
@@ -650,7 +651,7 @@ export default function QueueList() {
                 await transferSelectedToToday(selectedItems);
                 setSelectedItems([]);
               }}
-              className="btn bg-green-500 text-white hover:bg-green-600 px-2 py-2 text-xs"
+              className="btn bg-green-500 text-white hover:bg-green-600 px-2 py-2 text-xs dark:bg-emerald-500/20 dark:text-emerald-100 dark:hover:bg-emerald-500/30 dark:border dark:border-emerald-500/40"
             >
               {queueCopy.moveToday}
             </button>
@@ -664,7 +665,7 @@ export default function QueueList() {
                 await transferSelectedToDate(selectedItems, dateStr);
                 setSelectedItems([]);
               }}
-              className="btn bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 text-xs"
+              className="btn bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 text-xs dark:bg-blue-500/20 dark:text-blue-100 dark:hover:bg-blue-500/30 dark:border dark:border-blue-500/40"
             >
               {queueCopy.moveNext}
             </button>
@@ -673,7 +674,7 @@ export default function QueueList() {
           {/* Отмена выбора */}
           <button
             onClick={() => setSelectedItems([])}
-            className="w-full btn btn-neutral text-xs"
+            className="w-full btn btn-neutral text-xs dark:bg-slate-900/40 dark:text-slate-200 dark:border dark:border-slate-700 dark:hover:bg-slate-900/55"
           >
             <CloseIcon className="w-4 h-4" />
             {queueCopy.moveCancel}
@@ -683,7 +684,7 @@ export default function QueueList() {
       
       <div className="space-y-4">
         {sortedDates.map(dateKey => (
-          <div key={dateKey} className="border-t-4 border-blue-200 pt-2 px-2">
+          <div key={dateKey} className="border-t-4 border-blue-200 pt-2 px-2 dark:border-blue-500/30">
             {/* ✅ Заголовок даты */}
             <h3 className="text-lg font-bold text-blue-900 dark:text-blue-300 mb-2 sticky top-0 bg-white dark:bg-slate-800 z-10 py-1">
               {formatDateHeader(dateKey)}
@@ -723,8 +724,8 @@ export default function QueueList() {
                       <div className="flex items-center gap-3">
                         <Avatar name={item.full_name} style={item.avatar_style} seed={item.avatar_seed} className="w-12 h-12" />
                         <div>
-                          <div className="font-bold text-lg text-gray-900">{displayName}</div>
-                          {displayRoom && <div className="text-xs text-gray-600">{queueCopy.labels.room} {displayRoom}</div>}
+                          <div className="font-bold text-lg text-gray-900 dark:text-slate-100">{displayName}</div>
+                          {displayRoom && <div className="text-xs text-gray-600 dark:text-slate-300">{queueCopy.labels.room} {displayRoom}</div>}
                         </div>
                       </div>
                       <span className={`px-2 py-1 rounded-full text-xs font-bold ${statusDisplay.badgeColor} whitespace-nowrap`}>
@@ -740,13 +741,13 @@ export default function QueueList() {
                           type="checkbox"
                           checked={selectedItems.includes(item.id)}
                           onChange={() => toggleSelect(item.id)}
-                          className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                          className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 dark:bg-slate-900 dark:ring-offset-slate-900"
                         />
                         <div className="flex gap-1 ml-auto">
                           <button
                             onClick={() => changeQueuePosition(item.id, 'up')}
                             disabled={index === 0}
-                            className="w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-600 rounded hover:bg-blue-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            className="w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-600 rounded hover:bg-blue-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                             title={queueCopy.actions.moveUp}
                           >
                             <ChevronUpIcon className="w-4 h-4" />
@@ -754,7 +755,7 @@ export default function QueueList() {
                           <button
                             onClick={() => changeQueuePosition(item.id, 'down')}
                             disabled={index === groupedQueue[dateKey].length - 1}
-                            className="w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-600 rounded hover:bg-blue-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            className="w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-600 rounded hover:bg-blue-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                             title={queueCopy.actions.moveDown}
                           >
                             <ChevronDownIcon className="w-4 h-4" />
@@ -873,8 +874,8 @@ export default function QueueList() {
                       <div className="flex flex-col gap-2">
                         {/* Сообщение от админа */}
                         {item.admin_message && (
-                          <div className="bg-yellow-100 border-l-4 border-yellow-500 p-3 rounded">
-                            <p className="font-bold text-yellow-800">{queueCopy.labels.adminMessage}: {item.admin_message}</p>
+                          <div className="bg-yellow-100 border-l-4 border-yellow-500 p-3 rounded dark:bg-amber-900/30 dark:border-amber-500/40">
+                            <p className="font-bold text-yellow-800 dark:text-amber-200">{queueCopy.labels.adminMessage}: {item.admin_message}</p>
                           </div>
                         )}
                         
@@ -914,12 +915,12 @@ export default function QueueList() {
                         {isAdmin && (targetIsSuperAdmin ? isSuperAdmin : true) && openActionFor === item.id && (
                           <div 
                             ref={(el) => { actionMenuRefs.current[item.id] = el; }}
-                            className="mt-3 bg-gray-50 border rounded-lg shadow-inner p-3 space-y-2"
+                            className="mt-3 bg-gray-50 border rounded-lg shadow-inner p-3 space-y-2 dark:bg-slate-900/40 dark:border-slate-700"
                           >
 
                           {/* Позвать */}
                           <button
-                            className="w-full btn bg-orange-500 text-white"
+                            className="w-full btn bg-orange-500 text-white hover:bg-orange-600 dark:bg-orange-500/20 dark:text-orange-200 dark:hover:bg-orange-500/30 dark:border dark:border-orange-500/40"
                             onClick={async () => {
                               try {
                                 if (isSelfQueueItem) {
@@ -951,7 +952,7 @@ export default function QueueList() {
 
                           {/* Выдать ключ */}
                           <button
-                            className="w-full btn btn-primary"
+                            className="w-full btn bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500/20 dark:text-blue-200 dark:hover:bg-blue-500/30 dark:border dark:border-blue-500/40"
                             onClick={async () => {
                               try {
                                 const now = new Date().toISOString();
@@ -980,15 +981,20 @@ export default function QueueList() {
 
                           {/* Стирать */}
                           <button
-                            className="w-full btn bg-green-600 text-white"
+                            className="w-full btn bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed dark:bg-emerald-500/20 dark:text-emerald-200 dark:hover:bg-emerald-500/30 dark:border dark:border-emerald-500/40"
                             onClick={async () => {
                               try {
-                                const now = new Date().toISOString();
-                                // Сначала устанавливаем timestamp
-                                await updateQueueItem(item.id, { 
-                                  washing_started_at: now
-                                });
-                                // Потом запускаем стирку (меняет статус)
+                                if (getLaundryTimeStatus().isClosed) {
+                                  alertWithCheck(
+                                    t('time.closed', {
+                                      openHour: LAUNDRY_OPEN_HOUR,
+                                      closeHour: LAUNDRY_CLOSE_HOUR,
+                                    })
+                                  );
+                                  return;
+                                }
+
+                                // Запускаем стирку (меняет статус)
                                 await startWashing(item.id);
                                 
                                 // ✅ Отправляем уведомление студенту что админ запустил стирку
@@ -1004,13 +1010,14 @@ export default function QueueList() {
                                 console.error('❌ Error in Стирать:', error);
                               }
                             }}
+                            disabled={getLaundryTimeStatus().isClosed}
                           >
                             <WashingIcon className="w-4 h-4" /> {queueCopy.actions.startWash}
                           </button>
 
                           {/* Вернуть ключ */}
                           <button
-                            className="w-full btn bg-orange-600 text-white"
+                            className="w-full btn bg-orange-600 text-white hover:bg-orange-700 dark:bg-orange-500/20 dark:text-orange-200 dark:hover:bg-orange-500/30 dark:border dark:border-orange-500/40"
                             onClick={async () => {
                               try {
                                 if (isSelfQueueItem) {
@@ -1041,7 +1048,7 @@ export default function QueueList() {
 
                           {/* Завершить */}
                           <button
-                            className="w-full btn bg-emerald-600 text-white"
+                            className="w-full btn bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200 dark:hover:bg-emerald-500/30 dark:border dark:border-emerald-500/40"
                             onClick={async () => {
                               try {
                                 await markDone(item.id);
@@ -1056,7 +1063,7 @@ export default function QueueList() {
 
                           {/* В ожидание - сбрасывает все timestamps */}
                           <button
-                            className="w-full btn bg-purple-500 text-white"
+                            className="w-full btn bg-purple-600 text-white hover:bg-purple-700 dark:bg-purple-500/20 dark:text-purple-200 dark:hover:bg-purple-500/30 dark:border dark:border-purple-500/40"
                             onClick={async () => {
                               // Сначала сбрасываем все timestamps
                               await updateQueueItem(item.id, { 
@@ -1088,7 +1095,7 @@ export default function QueueList() {
 
                           <button
                             onClick={() => setOpenActionFor(null)}
-                            className="w-full text-gray-500 py-2 text-sm"
+                            className="w-full text-gray-500 py-2 text-sm hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200"
                           >
                             {queueCopy.actions.hideMenu}
                           </button>

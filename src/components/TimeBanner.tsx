@@ -47,7 +47,7 @@ export default function TimeBanner() {
 
   const Icon = timeStatus.isClosed ? ClockIcon : WarningIcon;
   const message = timeStatus.isClosed
-    ? t('time.closed', { openHour: LAUNDRY_OPEN_HOUR })
+    ? t('time.closed', { openHour: LAUNDRY_OPEN_HOUR, closeHour: LAUNDRY_CLOSE_HOUR })
     : t('time.warning', {
         time: formatRemaining(timeStatus.minutesUntilClose, language),
         closeHour: LAUNDRY_CLOSE_HOUR,
@@ -62,7 +62,7 @@ export default function TimeBanner() {
       {timeStatus.isClosed && (
         <p className="text-white text-sm text-center mt-2 flex items-center justify-center gap-1">
           <EditIcon className="w-4 h-4" />
-          {t('time.closedHint', { openHour: LAUNDRY_OPEN_HOUR })}
+          {t('time.closedHint')}
         </p>
       )}
     </div>

@@ -6,6 +6,7 @@ import { useUi } from "@/contexts/UiContext";
 import { supabase } from "@/lib/supabase";
 import { QueueStatus } from "@/types";
 import { KeyIcon, WashingIcon, CheckIcon, InfoIcon } from "@/components/Icons";
+import { getLaundryTimeStatus, LAUNDRY_CLOSE_HOUR, LAUNDRY_OPEN_HOUR } from "@/lib/timeHelper";
 
 const getStoredFlag = (key: string) => {
   if (typeof window === "undefined") return false;
@@ -63,8 +64,19 @@ export default function StudentActions() {
 
   if (!user || !myQueueItem) return null;
 
+  const isWashingClosed = getLaundryTimeStatus().isClosed;
+
   const handleStartWashing = async () => {
     if (startSent || sending) return;
+    if (isWashingClosed) {
+      alertWithCheck(
+        t('time.closed', {
+          openHour: LAUNDRY_OPEN_HOUR,
+          closeHour: LAUNDRY_CLOSE_HOUR,
+        })
+      );
+      return;
+    }
     setSending("start");
 
     try {
@@ -170,11 +182,11 @@ export default function StudentActions() {
 
   return (
     <div id="student-action-button" className="mb-6 w-full animate-slideDown">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-xl p-6 border-2 border-blue-400">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-xl p-6 border-2 border-blue-400 dark:from-slate-800 dark:to-slate-900 dark:border-slate-700">
         {myQueueItem.status === QueueStatus.KEY_ISSUED && (
           <>
             {startSent ? (
-              <div className="w-full rounded-xl bg-emerald-500/20 border border-emerald-200 px-4 py-3 text-emerald-50 text-center">
+              <div className="w-full rounded-xl bg-emerald-500/20 border border-emerald-200 px-4 py-3 text-emerald-50 text-center dark:border-emerald-500/40 dark:text-emerald-100">
                 <div className="flex items-center justify-center gap-2 font-semibold">
                   <CheckIcon className="w-5 h-5" />
                   {t("studentActions.noticeSent")}
@@ -185,19 +197,28 @@ export default function StudentActions() {
                 <div className="text-center mb-4">
                   <div className="flex items-center justify-center gap-3 mb-2">
                     <KeyIcon className="w-7 h-7 text-white flex-shrink-0" />
-                    <h3 className="text-2xl font-bold text-white">{t("studentActions.startTitle")}</h3>
+                    <h3 className="text-2xl font-bold text-white dark:text-slate-100">{t("studentActions.startTitle")}</h3>
                   </div>
-                  <p className="text-blue-100">{t("studentActions.startHint")}</p>
-                  <div className="flex items-center justify-center gap-1 text-blue-200 text-sm mt-2">
+                  <p className="text-blue-100 dark:text-slate-300">{t("studentActions.startHint")}</p>
+                  <div className="flex items-center justify-center gap-1 text-blue-200 text-sm mt-2 dark:text-slate-400">
                     <InfoIcon className="w-4 h-4 flex-shrink-0" />
                     <span>{t("studentActions.startInfo")}</span>
                   </div>
                 </div>
 
+                {isWashingClosed && (
+                  <div className="mb-4 w-full rounded-xl bg-amber-500/20 border border-amber-300 px-4 py-3 text-amber-50 text-center dark:bg-amber-900/20 dark:border-amber-500/40 dark:text-amber-200">
+                    <div className="flex items-center justify-center gap-2 font-semibold">
+                      <InfoIcon className="w-5 h-5" />
+                      {t('time.closedHint')}
+                    </div>
+                  </div>
+                )}
+
                 <button
                   onClick={handleStartWashing}
-                  disabled={sending === "start"}
-                  className="w-full bg-white text-blue-700 font-bold py-4 px-6 rounded-xl text-xl hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl disabled:opacity-70 btn-attn"
+                  disabled={sending === "start" || isWashingClosed}
+                  className="w-full bg-white text-blue-700 font-bold py-4 px-6 rounded-xl text-xl hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl disabled:opacity-70 btn-attn dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-100"
                 >
                   {t("studentActions.startButton")}
                 </button>
@@ -209,7 +230,7 @@ export default function StudentActions() {
         {myQueueItem.status === QueueStatus.WASHING && (
           <>
             {finishSent ? (
-              <div className="w-full rounded-xl bg-emerald-500/20 border border-emerald-200 px-4 py-3 text-emerald-50 text-center">
+              <div className="w-full rounded-xl bg-emerald-500/20 border border-emerald-200 px-4 py-3 text-emerald-50 text-center dark:border-emerald-500/40 dark:text-emerald-100">
                 <div className="flex items-center justify-center gap-2 font-semibold">
                   <CheckIcon className="w-5 h-5" />
                   {t("studentActions.noticeSent")}
@@ -218,13 +239,13 @@ export default function StudentActions() {
             ) : (
               <>
                 <div className="text-center mb-4">
-                  <h3 className="text-2xl font-bold text-white mb-2">{t("studentActions.washingTitle")}</h3>
-                  <div className="bg-white/20 rounded-xl py-3 px-6 mb-3">
-                    <div className="text-blue-100 text-sm mb-1">{t("studentActions.elapsedLabel")}</div>
-                    <div className="text-4xl font-black text-white">{washingTime}</div>
+                  <h3 className="text-2xl font-bold text-white mb-2 dark:text-slate-100">{t("studentActions.washingTitle")}</h3>
+                  <div className="bg-white/20 rounded-xl py-3 px-6 mb-3 dark:bg-slate-950/30">
+                    <div className="text-blue-100 text-sm mb-1 dark:text-slate-300">{t("studentActions.elapsedLabel")}</div>
+                    <div className="text-4xl font-black text-white dark:text-slate-100">{washingTime}</div>
                   </div>
-                  <p className="text-blue-100 text-sm">{t("studentActions.finishHint")}</p>
-                  <div className="flex items-center justify-center gap-1 text-blue-200 text-sm mt-2">
+                  <p className="text-blue-100 text-sm dark:text-slate-300">{t("studentActions.finishHint")}</p>
+                  <div className="flex items-center justify-center gap-1 text-blue-200 text-sm mt-2 dark:text-slate-400">
                     <InfoIcon className="w-4 h-4 flex-shrink-0" />
                     <span>{t("studentActions.startInfo")}</span>
                   </div>
@@ -233,7 +254,7 @@ export default function StudentActions() {
                 <button
                   onClick={handleFinishWashing}
                   disabled={sending === "finish"}
-                  className="w-full bg-red-600 text-white font-bold py-4 px-6 rounded-xl text-xl hover:bg-red-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-70 btn-attn"
+                  className="w-full bg-red-600 text-white font-bold py-4 px-6 rounded-xl text-xl hover:bg-red-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-70 btn-attn dark:bg-rose-500/30 dark:text-rose-100 dark:hover:bg-rose-500/40"
                 >
                   <div className="flex items-center justify-center gap-2">
                     <WashingIcon className="w-5 h-5" />
@@ -248,3 +269,4 @@ export default function StudentActions() {
     </div>
   );
 }
+

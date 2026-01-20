@@ -1,8 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCaller, supabaseAdmin, getQueueItemOr404, isTargetSuperAdmin, requireLaundryAdmin } from "../../../_utils/adminAuth";
+import { LAUNDRY_CLOSE_HOUR, LAUNDRY_OPEN_HOUR } from "@/lib/timeHelper";
 
 export async function POST(req: NextRequest) {
   try {
+    const nowTime = new Date();
+    const hour = nowTime.getHours();
+    const isWashingClosed = hour >= LAUNDRY_CLOSE_HOUR || hour < LAUNDRY_OPEN_HOUR;
+    if (isWashingClosed) {
+      return NextResponse.json(
+        {
+          error: `Стирка сейчас закрыта. Можно стирать с ${LAUNDRY_OPEN_HOUR}:00 до ${LAUNDRY_CLOSE_HOUR}:00.`,
+          code: "WASHING_CLOSED",
+        },
+        { status: 403 }
+      );
+    }
+
     // ✅ Проверяем JWT и получаем инициатора
     const { caller, error: authError } = await getCaller(req);
     if (authError) return authError;
@@ -113,9 +127,10 @@ export async function POST(req: NextRequest) {
     }
 
     // ✅ Обновляем статус очереди на WASHING
+    const startedAt = new Date().toISOString();
     const { error: updateError } = await supabaseAdmin
       .from("queue")
-      .update({ status: "washing" })
+      .update({ status: "washing", washing_started_at: startedAt })
       .eq("id", queue_item_id);
 
     if (updateError) {
@@ -126,7 +141,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ✅ Обновляем состояние машины
-    const now = new Date().toISOString();
+    const now = startedAt;
     const { error: machineError } = await supabaseAdmin
       .from("machine_state")
       .upsert({
