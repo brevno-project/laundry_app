@@ -284,6 +284,7 @@ export default function AdminPanel() {
 
   return (
     <>
+      <div className="space-y-4">
       <div className="bg-gradient-to-r from-purple-600 to-indigo-700 dark:from-purple-800 dark:to-indigo-900 p-4 rounded-lg shadow-lg mb-4">
         <div className="mb-4 flex items-center justify-between">
           <div>
