@@ -535,131 +535,149 @@ const formatPoints = (value: number) => {
 
 const hasCyrillic = (value: string) => /[А-Яа-яЁё]/.test(value);
 
-const mapPublishError = (message?: string) => {
-  if (!message) return "Ошибка публикации";
+const mapPublishError = (
+  message?: string,
+  t: (key: string, vars?: Record<string, string | number>) => string
+) => {
+  if (!message) return t("cleanup.errors.publish.default");
   if (hasCyrillic(message)) return message;
   switch (message) {
     case "Invalid token":
     case "Missing or invalid Authorization header":
-      return "Сессия устарела. Выйдите и войдите снова.";
+      return t("errors.sessionExpired");
     case "Missing required fields":
-      return "Заполните все обязательные поля";
+      return t("errors.fillRequired");
     case "Invalid block":
-      return "Некорректный блок";
+      return t("cleanup.errors.invalidBlock");
     case "Admin apartment not set":
-      return "У администратора не указана квартира";
+      return t("cleanup.errors.adminApartmentMissing");
     case "Not allowed to publish for this block":
-      return "Нельзя публиковать результаты для этого блока";
+      return t("cleanup.errors.publish.notAllowed");
     case "Apartment not found":
-      return "Квартира не найдена";
+      return t("cleanup.errors.apartmentNotFound");
     case "Apartment block mismatch":
-      return "Квартира не относится к выбранному блоку";
+      return t("cleanup.errors.apartmentBlockMismatch");
     case "Insert failed":
-      return "Не удалось сохранить результаты";
+      return t("cleanup.errors.publish.insertFailed");
     default:
-      return "Ошибка публикации";
+      return t("cleanup.errors.publish.default");
   }
 };
 
-const mapScheduleError = (message?: string) => {
-  if (!message) return "Ошибка расписания";
+const mapScheduleError = (
+  message?: string,
+  t: (key: string, vars?: Record<string, string | number>) => string
+) => {
+  if (!message) return t("cleanup.errors.schedule.default");
   if (hasCyrillic(message)) return message;
   switch (message) {
     case "Invalid token":
     case "Missing or invalid Authorization header":
-      return "Сессия устарела. Выйдите и войдите снова.";
+      return t("errors.sessionExpired");
     case "Missing required fields":
-      return "Заполните дату проверки";
+      return t("cleanup.schedule.missingDate");
     case "Invalid block":
-      return "Некорректный блок";
+      return t("cleanup.errors.invalidBlock");
     case "Not allowed to schedule for this block":
-      return "Нельзя менять расписание этого блока";
+      return t("cleanup.errors.schedule.notAllowed");
     case "Insert failed":
-      return "Не удалось сохранить расписание";
+      return t("cleanup.errors.schedule.insertFailed");
     default:
-      return "Ошибка расписания";
+      return t("cleanup.errors.schedule.default");
   }
 };
 
-const mapReminderError = (message?: string) => {
-  if (!message) return "Ошибка отправки напоминаний";
+const mapReminderError = (
+  message?: string,
+  t: (key: string, vars?: Record<string, string | number>) => string
+) => {
+  if (!message) return t("cleanup.errors.reminders.default");
   if (hasCyrillic(message)) return message;
   switch (message) {
     case "Invalid token":
     case "Missing or invalid Authorization header":
-      return "Сессия устарела. Выйдите и войдите снова.";
+      return t("errors.sessionExpired");
     case "Missing block":
-      return "Не указан блок";
+      return t("cleanup.errors.blockMissing");
     case "Invalid block":
-      return "Некорректный блок";
+      return t("cleanup.errors.invalidBlock");
     case "Admin apartment not set":
-      return "У администратора не указана квартира";
+      return t("cleanup.errors.adminApartmentMissing");
     case "Not allowed to send reminders for this block":
-      return "Нельзя отправлять напоминания для этого блока";
+      return t("cleanup.errors.reminders.notAllowed");
     case "Schedule not found":
-      return "Расписание не найдено";
+      return t("cleanup.errors.schedule.notFound");
     case "Internal server error":
-      return "Внутренняя ошибка сервера";
+      return t("errors.internalServer");
     default:
-      return "Ошибка отправки напоминаний";
+      return t("cleanup.errors.reminders.default");
   }
 };
 
-const mapResultsError = (message?: string) => {
-  if (!message) return "Ошибка удаления публикаций";
+const mapResultsError = (
+  message?: string,
+  t: (key: string, vars?: Record<string, string | number>) => string
+) => {
+  if (!message) return t("cleanup.errors.results.default");
   if (hasCyrillic(message)) return message;
   switch (message) {
     case "Invalid token":
     case "Missing or invalid Authorization header":
-      return "Сессия устарела. Выйдите и войдите снова.";
+      return t("errors.sessionExpired");
     case "Missing block":
-      return "Не указан блок";
+      return t("cleanup.errors.blockMissing");
     case "Invalid block":
-      return "Некорректный блок";
+      return t("cleanup.errors.invalidBlock");
     case "Admin apartment not set":
-      return "У администратора не указана квартира";
+      return t("cleanup.errors.adminApartmentMissing");
     case "Not allowed to clear results for this block":
-      return "Нельзя очищать публикации этого блока";
+      return t("cleanup.errors.results.notAllowed");
     default:
-      return "Ошибка удаления публикаций";
+      return t("cleanup.errors.results.default");
   }
 };
 
-const mapTransferError = (message?: string) => {
-  if (!message) return "Ошибка передачи";
+const mapTransferError = (
+  message?: string,
+  t: (key: string, vars?: Record<string, string | number>) => string
+) => {
+  if (!message) return t("cleanup.errors.transfer.default");
   if (hasCyrillic(message)) return message;
   switch (message) {
     case "Coupon not found":
-      return "Купон не найден";
+      return t("cleanup.errors.transfer.couponNotFound");
     case "Coupon expired":
-      return "Купон уже сгорел";
+      return t("cleanup.errors.transfer.couponExpired");
     case "Not allowed":
-      return "Недостаточно прав для передачи";
+      return t("cleanup.errors.transfer.notAllowed");
     case "Coupon is reserved or used":
-      return "Купон уже в очереди или использован";
+      return t("cleanup.errors.transfer.couponReservedOrUsed");
     case "Different apartment":
-      return "Передавать можно только внутри одной квартиры";
+      return t("cleanup.errors.transfer.differentApartment");
     default:
-      return "Ошибка передачи";
+      return t("cleanup.errors.transfer.default");
   }
 };
 
-const mapGrantError = (message?: string) => {
-  if (!message) return "Ошибка выдачи";
+const mapGrantError = (
+  message?: string,
+  t: (key: string, vars?: Record<string, string | number>) => string
+) => {
+  if (!message) return t("cleanup.errors.grant.default");
   if (hasCyrillic(message)) return message;
   switch (message) {
     case "Only super admin can grant coupons":
-      return "Только суперадмин может выдавать купоны";
+      return t("cleanup.errors.grant.onlySuperAdmin");
     case "Missing student_id or invalid count":
-      return "Выберите студента и количество";
+      return t("cleanup.grant.missingStudentOrCount");
     case "Invalid expires_at":
-      return "Некорректный срок купона";
+      return t("cleanup.errors.grant.invalidExpiry");
     case "expires_at must be in the future":
-      return "Срок купона должен быть в будущем";
+      return t("cleanup.errors.grant.expiryMustBeFuture");
     case "Internal server error":
-      return "Внутренняя ошибка сервера";
+      return t("errors.internalServer");
     default:
-      return "Ошибка выдачи";
+      return t("cleanup.errors.grant.default");
   }
 };
 
@@ -680,12 +698,15 @@ type ReminderRecipient = {
   room?: string | null;
 };
 
-const formatTtlLabel = (seconds: number) => {
+const formatTtlLabel = (
+  seconds: number,
+  t: (key: string, vars?: Record<string, string | number>) => string
+) => {
   if (seconds % 60 === 0) {
     const minutes = seconds / 60;
-    return `${minutes} мин.`;
+    return t("cleanup.ttl.minutes", { count: minutes });
   }
-  return `${seconds} сек.`;
+  return t("cleanup.ttl.seconds", { count: seconds });
 };
 
 const formatRecipientLabel = (recipient: ReminderRecipient) =>
@@ -794,7 +815,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const authedFetch = async (url: string, options: RequestInit = {}) => {
     const token = await getAuthToken();
     if (!token) {
-      throw new Error("Не удалось получить токен.");
+      throw new Error(t("errors.tokenFetchFailed"));
     }
 
     const buildOptions = (authToken: string): RequestInit => {
@@ -1124,7 +1145,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     if (!supabase) return;
     const draft = scheduleDrafts[block];
     if (!draft?.date) {
-      setScheduleNotice((prev) => ({ ...prev, [block]: "Укажите дату проверки." }));
+      setScheduleNotice((prev) => ({ ...prev, [block]: t("cleanup.schedule.missingDate") }));
       return;
     }
 
@@ -1145,17 +1166,23 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
       const result = await response.json();
       if (!response.ok) {
-        setScheduleNotice((prev) => ({ ...prev, [block]: mapScheduleError(result.error) }));
+        setScheduleNotice((prev) => ({
+          ...prev,
+          [block]: mapScheduleError(result.error, t),
+        }));
         return;
       }
 
-      setScheduleNotice((prev) => ({ ...prev, [block]: "Сохранено." }));
+      setScheduleNotice((prev) => ({ ...prev, [block]: t("cleanup.schedule.saved") }));
       setReminderNotice((prev) => ({ ...prev, [block]: null }));
       setReminderRecipients((prev) => ({ ...prev, [block]: [] }));
       setReminderFailures((prev) => ({ ...prev, [block]: [] }));
       await loadSchedules();
     } catch (error: any) {
-      setScheduleNotice((prev) => ({ ...prev, [block]: mapScheduleError(error?.message) }));
+      setScheduleNotice((prev) => ({
+        ...prev,
+        [block]: mapScheduleError(error?.message, t),
+      }));
     } finally {
       setScheduleSaving((prev) => ({ ...prev, [block]: false }));
     }
@@ -1165,7 +1192,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     if (!supabase) return;
     const draft = scheduleDrafts[block];
     if (!draft?.date) {
-      setReminderNotice((prev) => ({ ...prev, [block]: "Укажите дату проверки." }));
+      setReminderNotice((prev) => ({ ...prev, [block]: t("cleanup.schedule.missingDate") }));
       return;
     }
 
@@ -1190,7 +1217,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       if (!scheduleResponse.ok) {
         setReminderNotice((prev) => ({
           ...prev,
-          [block]: mapScheduleError(scheduleResult.error),
+          [block]: mapScheduleError(scheduleResult.error, t),
         }));
         return;
       }
@@ -1205,7 +1232,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
       const result = await response.json();
       if (!response.ok) {
-        setReminderNotice((prev) => ({ ...prev, [block]: mapReminderError(result.error) }));
+        setReminderNotice((prev) => ({
+          ...prev,
+          [block]: mapReminderError(result.error, t),
+        }));
         return;
       }
 
@@ -1217,23 +1247,26 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       if (sentList.length > 0) {
         setReminderNotice((prev) => ({
           ...prev,
-          [block]: `Отправлено: ${sentList.length}`,
+          [block]: t("cleanup.reminders.sentCount", { count: sentList.length }),
         }));
       } else if (failedList.length > 0) {
         setReminderNotice((prev) => ({
           ...prev,
-          [block]: "Не удалось отправить уведомления.",
+          [block]: t("cleanup.reminders.sendFailed"),
         }));
       } else {
         setReminderNotice((prev) => ({
           ...prev,
-          [block]: "Нет получателей с Telegram.",
+          [block]: t("cleanup.reminders.noRecipientsWithTelegram"),
         }));
       }
 
       await loadSchedules();
     } catch (error: any) {
-      setReminderNotice((prev) => ({ ...prev, [block]: mapReminderError(error?.message) }));
+      setReminderNotice((prev) => ({
+        ...prev,
+        [block]: mapReminderError(error?.message, t),
+      }));
     } finally {
       setReminderSending((prev) => ({ ...prev, [block]: false }));
     }
@@ -1241,7 +1274,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
   const handleClearResults = async (block: Block) => {
     if (!supabase) return;
-    if (!window.confirm(`Удалить все публикации блока ${block}?`)) return;
+    if (!window.confirm(t("cleanup.results.clearConfirm", { block }))) return;
 
     try {
       setResultsClearing((prev) => ({ ...prev, [block]: true }));
@@ -1258,20 +1291,20 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       if (!response.ok) {
         setResultsNotice((prev) => ({
           ...prev,
-          [block]: mapResultsError(result.error),
+          [block]: mapResultsError(result.error, t),
         }));
         return;
       }
 
       setResultsNotice((prev) => ({
         ...prev,
-        [block]: `Публикации удалены: ${result.deleted || 0}`,
+        [block]: t("cleanup.results.deletedCount", { count: result.deleted || 0 }),
       }));
       await loadResults();
     } catch (error: any) {
       setResultsNotice((prev) => ({
         ...prev,
-        [block]: mapResultsError(error?.message),
+        [block]: mapResultsError(error?.message, t),
       }));
     } finally {
       setResultsClearing((prev) => ({ ...prev, [block]: false }));
@@ -1280,7 +1313,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
   const handlePublish = async () => {
     if (!supabase || !announcementText || !selectedApartment || !weekStart) {
-      setPublishNotice("Заполните все поля.");
+      setPublishNotice(t("errors.fillRequired"));
       return;
     }
 
@@ -1307,14 +1340,14 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(mapPublishError(result.error));
+        throw new Error(mapPublishError(result.error, t));
       }
 
-      setPublishNotice("Результаты опубликованы.");
+      setPublishNotice(t("cleanup.publish.success"));
       await refreshResults();
       await refreshCoupons();
     } catch (error: any) {
-      setPublishNotice(mapPublishError(error?.message));
+      setPublishNotice(mapPublishError(error?.message, t));
     } finally {
       setIsPublishing(false);
     }
@@ -1327,7 +1360,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
   const handleBuildScoreAnnouncement = () => {
     if (!selectedApartment) {
-      setPublishNotice("Выберите квартиру-победителя.");
+      setPublishNotice(t("cleanup.publish.selectWinner"));
       return;
     }
 
@@ -1337,22 +1370,26 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         if (rawValue === undefined || rawValue === "") return null;
         const parsed = Number(rawValue);
         if (Number.isNaN(parsed)) return null;
-        return `${apt.code} — ${formatPoints(parsed)}`;
+        const pointsLabel =
+          language === "ru"
+            ? formatPoints(parsed)
+            : t("cleanup.points", { count: parsed });
+        return `${apt.code} — ${pointsLabel}`;
       })
       .filter(Boolean) as string[];
 
     if (scoreLines.length === 0) {
-      setPublishNotice("Введите баллы хотя бы для одной квартиры.");
+      setPublishNotice(t("cleanup.publish.enterPoints"));
       return;
     }
 
     const winnerCode = apartmentMap[selectedApartment]?.code || "—";
     const lines = [
-      "Итоги проверки:",
+      t("cleanup.announcement.summaryTitle"),
       "",
       ...scoreLines,
       "",
-      `🏆 Победитель: ${winnerCode} 💪`,
+      t("cleanup.announcement.winnerLine", { winner: winnerCode }),
     ];
 
     if (selectedScoreCaption) {
@@ -1369,25 +1406,25 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const current = schedulesByBlock[block];
     const currentLabel = current
       ? `${formatScheduleLabel(current.check_date, locale)}${current.check_time ? `, ${formatTime(current.check_time)}` : ""}`
-      : "не назначено";
+      : t("cleanup.schedule.notAssigned");
     const statusClass = current
       ? "border border-amber-200 bg-amber-50 text-amber-800"
       : "border border-gray-200 bg-gray-100 text-gray-500";
     const lastSentLabel = current?.reminder_sent_at
       ? formatDateTime(current.reminder_sent_at, locale)
-      : "не отправлялось";
+      : t("cleanup.reminders.notSent");
 
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h4 className="text-sm font-semibold text-gray-900">Блок {block}</h4>
+          <h4 className="text-sm font-semibold text-gray-900">{t("cleanup.block", { block })}</h4>
           <span className={`rounded-lg px-2 py-1 text-xs font-semibold ${statusClass}`}>
-            Сейчас: {currentLabel}. Последняя рассылка: {lastSentLabel}
+            {t("cleanup.schedule.status", { current: currentLabel, lastSent: lastSentLabel })}
           </span>
         </div>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Дата проверки</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">{t("cleanup.schedule.date")}</label>
             <input
               type="date"
               value={draft?.date || ""}
@@ -1401,7 +1438,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Время проверки</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">{t("cleanup.schedule.time")}</label>
             <input
               type="time"
               value={draft?.time || ""}
@@ -1421,7 +1458,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               disabled={!!scheduleSaving[block]}
               className="w-full btn btn-primary btn-glow md:w-auto"
             >
-              {scheduleSaving[block] ? "Сохранение..." : "Сохранить"}
+              {scheduleSaving[block] ? t("common.saving") : t("common.save")}
             </button>
             <button
               type="button"
@@ -1429,7 +1466,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               disabled={!!reminderSending[block]}
               className="w-full btn btn-secondary md:w-auto"
             >
-              {reminderSending[block] ? "Отправка..." : "Разослать напоминание"}
+              {reminderSending[block] ? t("cleanup.reminders.sending") : t("cleanup.reminders.send")}
             </button>
           </div>
         </div>
@@ -1441,12 +1478,14 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         )}
         {reminderRecipients[block].length > 0 && (
           <p className="text-xs text-emerald-700">
-            Получили: {reminderRecipients[block].map(formatRecipientLabel).join(", ")}
+            {t("cleanup.reminders.recipients", { recipients: reminderRecipients[block].map(formatRecipientLabel).join(", ") })}
           </p>
         )}
         {reminderFailures[block].length > 0 && (
           <p className="text-xs text-rose-600">
-            Не доставлено: {reminderFailures[block].map(formatRecipientLabel).join(", ")}
+            {t("cleanup.reminders.notDelivered", {
+              recipients: reminderFailures[block].map(formatRecipientLabel).join(", "),
+            })}
           </p>
         )}
       </div>
@@ -1455,7 +1494,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
   const handleTransfer = async () => {
     if (!supabase || !transferCouponId || !transferRecipientId) {
-      setTransferNotice("Выберите купон и получателя.");
+      setTransferNotice(t("cleanup.transfer.missingSelection"));
       return;
     }
 
@@ -1467,21 +1506,21 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       });
 
       if (error) {
-        throw new Error(mapTransferError(error.message));
+        throw new Error(mapTransferError(error.message, t));
       }
 
       setTransferCouponId("");
       setTransferRecipientId("");
-      setTransferNotice("Купон передан.");
+      setTransferNotice(t("cleanup.transfer.success"));
       await refreshCoupons();
     } catch (error: any) {
-      setTransferNotice(mapTransferError(error?.message));
+      setTransferNotice(mapTransferError(error?.message, t));
     }
   };
 
   const handleClearTransfers = async () => {
     if (!supabase) return;
-    if (!window.confirm("Очистить историю передач купонов?")) return;
+    if (!window.confirm(t("cleanup.transfers.clearConfirm"))) return;
 
     try {
       setTransferClearing(true);
@@ -1495,15 +1534,15 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
       const result = await response.json();
       if (!response.ok) {
-        setTransferHistoryNotice(result.error || "Ошибка очистки.");
+        setTransferHistoryNotice(result.error || t("cleanup.transfers.clearError"));
         return;
       }
 
       setTransfers([]);
       setTransferNames({});
-      setTransferHistoryNotice("История передач очищена.");
+      setTransferHistoryNotice(t("cleanup.transfers.cleared"));
     } catch (error: any) {
-      setTransferHistoryNotice(error?.message || "Ошибка очистки.");
+      setTransferHistoryNotice(error?.message || t("cleanup.transfers.clearError"));
     } finally {
       setTransferClearing(false);
     }
@@ -1511,11 +1550,11 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
   const handleGrant = async () => {
     if (!supabase || !grantStudentId) {
-      setGrantNotice("Выберите студента.");
+      setGrantNotice(t("cleanup.grant.selectStudent"));
       return;
     }
     if (grantExpiryMode === "custom" && !grantExpiresAt) {
-      setGrantNotice("Укажите срок действия купона.");
+      setGrantNotice(t("cleanup.grant.enterExpiry"));
       return;
     }
 
@@ -1539,17 +1578,17 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(mapGrantError(result.error));
+        throw new Error(mapGrantError(result.error, t));
       }
 
-      setGrantNotice("Купоны выданы.");
+      setGrantNotice(t("cleanup.grant.success"));
       setGrantCount(1);
       setGrantNote("");
       setGrantExpiryMode("default");
       setGrantExpiresAt("");
       await refreshCoupons();
     } catch (error: any) {
-      setGrantNotice(mapGrantError(error?.message));
+      setGrantNotice(mapGrantError(error?.message, t));
     }
   };
 
@@ -1562,19 +1601,25 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         <div className="flex items-center justify-between mb-3">
           <div>
             <h4 className="text-lg font-bold text-gray-900">
-              Проверка от {formatWeekLabel(item.week_start, locale)}
+              {t("cleanup.resultCard.checkFrom", {
+                date: formatWeekLabel(item.week_start, locale),
+              })}
             </h4>
             <p className="text-xs text-gray-500">
-              Опубликовано: {formatDateTime(item.published_at, locale)}
+              {t("cleanup.resultCard.publishedAt", {
+                date: formatDateTime(item.published_at, locale),
+              })}
             </p>
           </div>
           <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
-            {apartment?.code || "Квартира"}
+            {apartment?.code || t("cleanup.resultCard.apartmentFallback")}
           </span>
         </div>
         <p className="text-sm text-gray-700 whitespace-pre-line">{item.announcement_text}</p>
         {announcer && (
-          <p className="mt-3 text-xs text-gray-500">Объявил: {announcer}</p>
+          <p className="mt-3 text-xs text-gray-500">
+            {t("cleanup.resultCard.announcedBy", { name: announcer })}
+          </p>
         )}
       </div>
     );
@@ -1586,7 +1631,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const schedule = schedulesByBlock[block];
     const scheduleText = schedule
       ? `${formatScheduleLabel(schedule.check_date, locale)}${schedule.check_time ? `, ${formatTime(schedule.check_time)}` : ""}`
-      : "Дата проверки не назначена.";
+      : t("cleanup.schedule.notAssignedFull");
     const scheduleClass = schedule
       ? "border-amber-200 bg-amber-50 text-amber-900"
       : "border-gray-200 bg-gray-100 text-gray-500";
@@ -1601,12 +1646,12 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
             </div>
             <div>
               <h3 className="text-xl font-bold text-gray-900">
-                Блок {block}
+                {t("cleanup.block", { block })}
               </h3>
-              <p className="text-xs text-gray-500">Результаты уборки</p>
+              <p className="text-xs text-gray-500">{t("cleanup.blockSubtitle")}</p>
               <div className={`mt-2 inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-base font-semibold ${scheduleClass}`}>
                 <CalendarIcon className={`h-4 w-4 ${scheduleIconClass}`} />
-                <span>Проверка: {scheduleText}</span>
+                <span>{t("cleanup.check.label", { date: scheduleText })}</span>
               </div>
             </div>
           </div>
@@ -1618,7 +1663,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 disabled={!!resultsClearing[block]}
                 className="btn btn-danger px-3 py-2 text-xs"
               >
-                {resultsClearing[block] ? "Удаление..." : "Очистить публикации"}
+                {resultsClearing[block] ? t("cleanup.results.clearing") : t("cleanup.results.clear")}
               </button>
               {resultsNotice[block] && (
                 <span className="text-xs text-slate-600">{resultsNotice[block]}</span>
@@ -1638,7 +1683,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         {blockResults.length > 1 && (
           <details className="rounded-xl border border-gray-200 bg-white p-4">
             <summary className="cursor-pointer text-sm font-semibold text-gray-700">
-              Архив результатов ({blockResults.length - 1})
+              {t("cleanup.archiveResults", { count: blockResults.length - 1 })}
             </summary>
             <div className="mt-3 space-y-3">
               {blockResults.slice(1).map(renderResultCard)}
@@ -1729,18 +1774,18 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
             <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-2">
               <CalendarIcon className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-bold text-gray-900">Публикация результатов</h3>
+              <h3 className="text-lg font-bold text-gray-900">{t("cleanup.publish.title")}</h3>
             </div>
 
             {couponTtlSeconds !== null && (
               <p className="text-xs text-gray-500">
-                Купоны действуют {formatTtlLabel(couponTtlSeconds)}
+                {t("cleanup.ttl.label", { ttl: formatTtlLabel(couponTtlSeconds, t) })}
               </p>
             )}
 
             {!isSuperAdmin && !adminBlock && (
               <p className="text-sm text-red-600">
-                Для публикации нужен назначенный блок.
+                {t("cleanup.publish.blockRequired")}
               </p>
             )}
 
@@ -1748,7 +1793,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="w-4 h-4 text-blue-600" />
-                  <h4 className="text-sm font-semibold text-gray-900">Расписание проверки</h4>
+                  <h4 className="text-sm font-semibold text-gray-900">{t("cleanup.schedule.sectionTitle")}</h4>
                 </div>
                 <div className="space-y-3">
                   {scheduleBlocks.map((block) => (
@@ -1760,7 +1805,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Дата итогов</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{t("cleanup.publish.weekStart")}</label>
                 <input
                   type="date"
                   value={weekStart}
@@ -1769,25 +1814,25 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Блок</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{t("cleanup.publish.block")}</label>
                 <select
                   value={selectedBlock}
                   onChange={(e) => setSelectedBlock(e.target.value as Block)}
                   disabled={!isSuperAdmin && !!adminBlock}
                   className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900 disabled:bg-gray-100"
                 >
-                  <option value="A">Блок A</option>
-                  <option value="B">Блок B</option>
+                  <option value="A">{t("cleanup.blockOption", { block: "A" })}</option>
+                  <option value="B">{t("cleanup.blockOption", { block: "B" })}</option>
                 </select>
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Квартира-победитель</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{t("cleanup.publish.winnerApartment")}</label>
                 <select
                   value={selectedApartment}
                   onChange={(e) => setSelectedApartment(e.target.value)}
                   className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
                 >
-                  <option value="">Выберите квартиру</option>
+                  <option value="">{t("cleanup.selectApartment")}</option>
                   {apartments
                     .filter((apt) => !apt.block || apt.block === selectedBlock)
                     .map((apt) => (
@@ -1801,7 +1846,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
             <div className="rounded-xl border border-dashed border-gray-200 p-4 space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h4 className="text-sm font-semibold text-gray-700">Баллы по квартирам</h4>
+                <h4 className="text-sm font-semibold text-gray-700">{t("cleanup.pointsByApartment")}</h4>
               </div>
               <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                 {apartmentsForBlock.map((apt) => (
@@ -1818,9 +1863,9 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                         }))
                       }
                       className="w-full rounded-lg border-2 border-gray-200 p-2 text-sm text-gray-900"
-                      placeholder="Баллы"
+                      placeholder={t("cleanup.pointsPlaceholder")}
                     />
-                    <span className="text-xs text-gray-400">баллов</span>
+                    <span className="text-xs text-gray-400">{t("cleanup.pointsSuffix")}</span>
                   </div>
                 ))}
               </div>
@@ -1841,23 +1886,23 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   onClick={handleRandomScoreCaption}
                   className="btn btn-secondary px-3 py-2 text-xs"
                 >
-                  Случайная подпись
+                  {t("cleanup.caption.random")}
                 </button>
                 <button
                   type="button"
                   onClick={handleBuildScoreAnnouncement}
                   className="btn btn-primary px-3 py-2 text-xs"
                 >
-                  Сформировать сообщение
+                  {t("cleanup.buildMessage")}
                 </button>
               </div>
               <p className="text-xs text-gray-500">
-                Победителя выбирайте в поле "Квартира-победитель" выше.
+                {t("cleanup.winnerHint")}
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Сообщение</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">{t("cleanup.message")}</label>
               <textarea
                 value={announcementText}
                 onChange={(e) => {
@@ -1866,7 +1911,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 }}
                 rows={4}
                 className="w-full rounded-lg border-2 border-gray-200 p-3 text-gray-900"
-                placeholder="Напишите сообщение для блока"
+                placeholder={t("cleanup.messagePlaceholder")}
               />
             </div>
 
@@ -1882,7 +1927,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               disabled={isPublishing || (!isSuperAdmin && !adminBlock)}
               className="w-full btn btn-primary btn-glow"
             >
-              {isPublishing ? "Публикация..." : "Опубликовать результаты"}
+              {isPublishing ? t("cleanup.publish.publishing") : t("cleanup.publish.publish")}
             </button>
           </div>
         )}
@@ -1892,25 +1937,25 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
             <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-3">
               <div className="flex items-center gap-2">
                 <TicketIcon className="w-5 h-5 text-purple-600" />
-                <h3 className="text-lg font-bold text-gray-900">Мои купоны</h3>
+                <h3 className="text-lg font-bold text-gray-900">{t("cleanup.coupons.title")}</h3>
               </div>
 
               {coupons.length === 0 ? (
-                <p className="text-sm text-gray-500">Пока нет купонов.</p>
+                <p className="text-sm text-gray-500">{t("cleanup.coupons.empty")}</p>
               ) : (
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-700">
                     <span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
-                      Активные: {couponStats.active}
+                      {t("cleanup.coupons.stats.active", { count: couponStats.active })}
                     </span>
                     <span className="rounded-full bg-blue-50 px-2 py-1 text-blue-700">
-                      В очереди: {couponStats.reserved}
+                      {t("cleanup.coupons.stats.reserved", { count: couponStats.reserved })}
                     </span>
                     <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-700">
-                      Использованы: {couponStats.used}
+                      {t("cleanup.coupons.stats.used", { count: couponStats.used })}
                     </span>
                     <span className="rounded-full bg-amber-50 px-2 py-1 text-amber-700">
-                      Сгорели: {couponStats.expired}
+                      {t("cleanup.coupons.stats.expired", { count: couponStats.expired })}
                     </span>
                   </div>
 
@@ -1920,32 +1965,36 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                       onClick={() => setShowAllCoupons((prev) => !prev)}
                       className="btn btn-ghost px-3 py-1 text-xs"
                     >
-                      {showAllCoupons ? "Скрыть неактивные" : "Показать все"}
+                      {showAllCoupons
+                        ? t("cleanup.coupons.hideInactive")
+                        : t("cleanup.coupons.showAll")}
                     </button>
                     <button
                       type="button"
                       onClick={() => setShowCouponList((prev) => !prev)}
                       className="btn btn-ghost px-3 py-1 text-xs"
                     >
-                      {showCouponList ? "Свернуть список" : `Показать список (${visibleCoupons.length})`}
+                      {showCouponList
+                        ? t("cleanup.coupons.collapseList")
+                        : t("cleanup.coupons.showList", { count: visibleCoupons.length })}
                     </button>
                   </div>
 
                   {showCouponList && (
                     visibleCoupons.length === 0 ? (
-                      <p className="text-sm text-gray-500">Нет купонов для показа.</p>
+                      <p className="text-sm text-gray-500">{t("cleanup.coupons.noneToShow")}</p>
                     ) : (
                       <div className="space-y-2">
                         {visibleCoupons.map((coupon) => {
                           const isExpired = new Date(coupon.expires_at).getTime() <= Date.now();
                           const isUsed = !!coupon.used_at || !!coupon.used_in_queue_id;
                           const status = isUsed
-                            ? "Использован"
+                            ? t("cleanup.coupons.status.used")
                             : coupon.reserved_queue_id
-                              ? "В очереди"
+                              ? t("cleanup.coupons.status.reserved")
                               : isExpired
-                                ? "Сгорел"
-                                : "Активен";
+                                ? t("cleanup.coupons.status.expired")
+                                : t("cleanup.coupons.status.active");
 
                           return (
                             <div
@@ -1974,21 +2023,21 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
             <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
               <div className="flex items-center gap-2">
                 <MoneyIcon className="w-5 h-5 text-green-600" />
-                <h3 className="text-lg font-bold text-gray-900">Передать купон</h3>
+                <h3 className="text-lg font-bold text-gray-900">{t("cleanup.transfer.title")}</h3>
               </div>
 
               {recipients.length === 0 ? (
-                <p className="text-sm text-gray-500">Нет получателей в вашей квартире.</p>
+                <p className="text-sm text-gray-500">{t("cleanup.transfer.noRecipients")}</p>
               ) : (
                 <>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Купон</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">{t("cleanup.transfer.coupon")}</label>
                     <select
                       value={transferCouponId}
                       onChange={(e) => setTransferCouponId(e.target.value)}
                       className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
                     >
-                      <option value="">Выберите купон</option>
+                      <option value="">{t("cleanup.transfer.selectCoupon")}</option>
                       {transferableCoupons.map((coupon) => (
                         <option key={coupon.id} value={coupon.id}>
                           {formatCouponOptionLabel(coupon, locale, t)}
@@ -1997,13 +2046,13 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Кому передать</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">{t("cleanup.transfer.to")}</label>
                     <select
                       value={transferRecipientId}
                       onChange={(e) => setTransferRecipientId(e.target.value)}
                       className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
                     >
-                      <option value="">Выберите студента</option>
+                      <option value="">{t("cleanup.transfer.selectStudent")}</option>
                       {recipients.map((student) => (
                         <option key={student.id} value={student.id}>
                           {student.full_name} {student.room ? `(${student.room})` : ""}
@@ -2021,7 +2070,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                     onClick={handleTransfer}
                     className="w-full btn btn-primary"
                   >
-                    Передать
+                    {t("cleanup.transfer.send")}
                   </button>
                 </>
               )}
@@ -2034,7 +2083,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <CheckIcon className="w-5 h-5 text-emerald-600" />
-                <h3 className="text-lg font-bold text-gray-900">Передачи купонов</h3>
+                <h3 className="text-lg font-bold text-gray-900">{t("cleanup.transfers.title")}</h3>
               </div>
               {(isAdmin || isSuperAdmin) && (
                 <button
@@ -2043,7 +2092,9 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   disabled={transferClearing}
                   className="btn btn-danger px-3 py-1 text-xs"
                 >
-                  {transferClearing ? "Очистка..." : "Очистить историю"}
+                  {transferClearing
+                    ? t("cleanup.transfers.clearing")
+                    : t("cleanup.transfers.clear")}
                 </button>
               )}
             </div>
@@ -2051,15 +2102,15 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               <p className="text-xs text-slate-600">{transferHistoryNotice}</p>
             )}
             {transfers.length === 0 ? (
-              <p className="text-sm text-gray-500">Пока нет передач.</p>
+              <p className="text-sm text-gray-500">{t("cleanup.transfers.empty")}</p>
             ) : (
               <div className="space-y-2 text-sm text-gray-700">
                 {transfers.map((transfer) => (
                   <div key={transfer.id} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
                     <span>
-                      {transferNames[transfer.from_student_id] || "Кто-то"}
+                      {transferNames[transfer.from_student_id] || t("cleanup.transfers.someone")}
                       {" -> "}
-                      {transferNames[transfer.to_student_id] || "Кто-то"}
+                      {transferNames[transfer.to_student_id] || t("cleanup.transfers.someone")}
                     </span>
                     <span className="text-xs text-gray-500">{formatDateTime(transfer.created_at, locale)}</span>
                   </div>
@@ -2073,17 +2124,17 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-2">
               <TicketIcon className="w-5 h-5 text-purple-600" />
-              <h3 className="text-lg font-bold text-gray-900">Выдать купоны вручную</h3>
+              <h3 className="text-lg font-bold text-gray-900">{t("cleanup.grant.title")}</h3>
             </div>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Студент</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{t("cleanup.grant.student")}</label>
                 <select
                   value={grantStudentId}
                   onChange={(e) => setGrantStudentId(e.target.value)}
                   className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
                 >
-                  <option value="">Выберите студента</option>
+                  <option value="">{t("cleanup.grant.selectStudentOption")}</option>
                   {grantStudents.map((student) => (
                     <option key={student.id} value={student.id}>
                       {student.full_name} {student.room ? `(${student.room})` : ""}
@@ -2092,7 +2143,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Количество</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{t("cleanup.grant.count")}</label>
                 <input
                   type="number"
                   min={1}
@@ -2102,7 +2153,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Срок действия</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{t("cleanup.grant.expiry")}</label>
                 <select
                   value={grantExpiryMode}
                   onChange={(e) => {
@@ -2114,14 +2165,14 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   }}
                   className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
                 >
-                  <option value="default">По умолчанию</option>
-                  <option value="custom">До даты/времени</option>
-                  <option value="permanent">Бессрочно</option>
+                  <option value="default">{t("cleanup.grant.expiryDefault")}</option>
+                  <option value="custom">{t("cleanup.grant.expiryCustom")}</option>
+                  <option value="permanent">{t("cleanup.grant.expiryPermanent")}</option>
                 </select>
               </div>
               {grantExpiryMode === "custom" && (
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Действует до</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">{t("cleanup.grant.validUntil")}</label>
                   <input
                     type="datetime-local"
                     value={grantExpiresAt}
@@ -2132,13 +2183,13 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               )}
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Комментарий</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">{t("cleanup.grant.note")}</label>
               <input
                 type="text"
                 value={grantNote}
                 onChange={(e) => setGrantNote(e.target.value)}
                 className="w-full rounded-lg border-2 border-gray-200 p-2 text-gray-900"
-                placeholder="Причина или примечание"
+                placeholder={t("cleanup.grant.notePlaceholder")}
               />
             </div>
             {grantNotice && (
@@ -2149,7 +2200,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               onClick={handleGrant}
               className="w-full btn btn-primary"
             >
-              Выдать купоны
+              {t("cleanup.grant.submit")}
             </button>
           </div>
         )}
