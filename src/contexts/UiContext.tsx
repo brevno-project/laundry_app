@@ -1011,7 +1011,12 @@ export const UiProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (typeof window === "undefined") return;
     localStorage.setItem("appTheme", theme);
-    document.documentElement.classList.toggle("dark", theme === "dark");
+    const html = document.documentElement;
+    if (theme === "dark") {
+      html.classList.add("dark");
+    } else {
+      html.classList.remove("dark");
+    }
   }, [theme]);
 
   const t = useCallback(
