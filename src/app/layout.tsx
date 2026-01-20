@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import React from "react";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { LaundryProvider } from '@/contexts/LaundryContext';
@@ -29,6 +31,20 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-100 min-h-screen`}
       >
+        <Script id="theme-init" strategy="beforeInteractive">{`
+  try {
+    const t = localStorage.getItem('appTheme');
+    const html = document.documentElement;
+    const body = document.body;
+    if (t === 'dark') {
+      html.classList.add('dark');
+      body && body.classList.add('dark');
+    } else {
+      html.classList.remove('dark');
+      body && body.classList.remove('dark');
+    }
+  } catch (e) {}
+`}</Script>
         <UiProvider>
           <LaundryProvider>{children}</LaundryProvider>
         </UiProvider>
