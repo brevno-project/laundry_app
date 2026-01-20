@@ -69,16 +69,28 @@ html.dark {
 }
 
 .dark .bg-emerald-50 {
-  background-color: #0f2419;
+  background-color: #0d1f15;
+}
+
+.dark .border-emerald-200 {
+  border-color: #1e4d2b;
 }
 
 .dark .bg-amber-50 {
-  background-color: #2a1f0d;
+  background-color: #241a0b;
+}
+
+.dark .border-amber-200 {
+  border-color: #4d3d1a;
 }
 
 .dark .bg-red-50,
 .dark .bg-rose-50 {
-  background-color: #2a1214;
+  background-color: #240f11;
+}
+
+.dark .border-rose-200 {
+  border-color: #5c1f2a;
 }
 
 .dark .bg-purple-50 {

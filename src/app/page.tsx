@@ -127,7 +127,7 @@ export default function Home() {
 
 
       {/* Заголовок */}
-      <header className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 shadow-lg sticky top-0 z-10">
+      <header className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-slate-800 dark:to-slate-900 p-4 shadow-lg sticky top-0 z-10">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white flex items-center justify-center gap-2"><LaundryIcon className="w-7 h-7" /> {t("app.title")}</h1>
           {user && (

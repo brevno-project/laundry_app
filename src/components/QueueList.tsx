@@ -465,7 +465,7 @@ export default function QueueList() {
 
   if (queuedItems.length === 0) {
     return (
-      <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
+      <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
         <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><CalendarIcon className="w-6 h-6" />{queueCopy.title}</h2>
         </div>
@@ -475,9 +475,9 @@ export default function QueueList() {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg border border-gray-200">
+    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
       {/* Header */}
-      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-t-lg">
+      <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700 rounded-t-lg">
         <h2 className="text-xl font-bold text-gray-800">
           <CalendarIcon className="w-5 h-5 inline-block mr-1" />{queueCopy.title} ({queuedItems.length})
         </h2>
@@ -558,7 +558,7 @@ export default function QueueList() {
         {sortedDates.map(dateKey => (
           <div key={dateKey} className="border-t-4 border-blue-200 pt-2 px-2">
             {/* ✅ Заголовок даты */}
-            <h3 className="text-lg font-bold text-blue-900 mb-2 sticky top-0 bg-white z-10 py-1">
+            <h3 className="text-lg font-bold text-blue-900 dark:text-blue-300 mb-2 sticky top-0 bg-white dark:bg-slate-800 z-10 py-1">
               {formatDateHeader(dateKey)}
             </h3>
             
@@ -979,7 +979,7 @@ export default function QueueList() {
       {/* Модальное окно редактирования */}
       {showEditModal && editingItem && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-md w-full">
             <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><EditIcon className="w-5 h-5" />{queueCopy.actions.editTitle}</h3>
             <p className="text-gray-700 mb-3">
               {queueCopy.actions.editStudent}: <span className="font-bold">{editingItem.full_name}</span>
@@ -1055,7 +1055,7 @@ export default function QueueList() {
 {/* Модальное окно подтверждения очистки очереди */}
 {showClearConfirm && (
   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-2xl">
+    <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-md w-full shadow-2xl">
       <h3 className="text-xl font-bold text-gray-900 mb-4">{queueCopy.clearTitle}</h3>
       <p className="text-gray-700 mb-6">{queueCopy.clearConfirm}</p>
       <div className="flex gap-3">
