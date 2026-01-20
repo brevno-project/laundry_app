@@ -67,7 +67,7 @@ export default function TelegramBanner({ onGoToSettings }: TelegramBannerProps) 
         <div className="flex gap-3">
           <button
             onClick={handleDismiss}
-            className="flex-1 btn btn-ghost text-white hover:bg-white/10"
+            className="flex-1 btn btn-ghost text-white border border-white/20 bg-white/5 hover:bg-white/10"
           >
             {t("telegram.bannerLater")}
           </button>

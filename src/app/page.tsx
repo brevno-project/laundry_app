@@ -26,13 +26,7 @@ export default function Home() {
   const locale = language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "ko-KR";
   const canViewStudentsTab = isAdmin || isSuperAdmin || isCleanupAdmin || !!user?.can_view_students;
   
-  // ✅ Восстанавливаем activeTab из localStorage
-  const [activeTab, setActiveTab] = React.useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('activeTab') || 'main';
-    }
-    return 'main';
-  });
+  const [activeTab, setActiveTab] = React.useState("main");
   
   const [showScrollButton, setShowScrollButton] = React.useState(false);
   const [scrollTarget, setScrollTarget] = React.useState<string | null>(null);
@@ -44,6 +38,14 @@ export default function Home() {
       localStorage.setItem('activeTab', tab);
     }
   };
+
+  React.useEffect(() => {
+    if (!authReady) return;
+    if (typeof window === "undefined") return;
+    const stored = localStorage.getItem("activeTab");
+    if (!stored) return;
+    setActiveTab(stored);
+  }, [authReady]);
 
   // ✅ ТЫ FIX: Сбрасываем activeTab на 'main' когда нет пользователя
   React.useEffect(() => {
@@ -121,7 +123,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-gray-50">
+    <div className="min-h-screen w-full bg-gray-50 dark:bg-slate-950">
 
 
       {/* Заголовок */}
@@ -133,7 +135,7 @@ export default function Home() {
               {t("header.signedInAs")}: <span className="font-semibold">{user.full_name}</span>
               {user.room && <span className="ml-2">{t("header.room")} {user.room}</span>}
               {isCleanupAdmin && (
-                <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-900">
+                <span className="ml-2 inline-flex items-center rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-200">
                   {t("header.leader")}
                 </span>
               )}

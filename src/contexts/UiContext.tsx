@@ -37,7 +37,7 @@ const translations: Record<UiLanguage, Record<string, string>> = {
     "settings.language": "Язык",
     "settings.theme": "Тема",
     "settings.theme.light": "Светлая",
-    "settings.theme.dark": "Ночная",
+    "settings.theme.dark": "Темная",
     "settings.language.ru": "Русский",
     "settings.language.en": "English",
     "settings.language.ko": "한국어",
@@ -492,7 +492,7 @@ const translations: Record<UiLanguage, Record<string, string>> = {
     "settings.language": "Language",
     "settings.theme": "Theme",
     "settings.theme.light": "Light",
-    "settings.theme.dark": "Night",
+    "settings.theme.dark": "Dark",
     "settings.language.ru": "Russian",
     "settings.language.en": "English",
     "settings.language.ko": "Korean",
@@ -947,7 +947,7 @@ const translations: Record<UiLanguage, Record<string, string>> = {
     "settings.language": "언어",
     "settings.theme": "테마",
     "settings.theme.light": "라이트",
-    "settings.theme.dark": "나이트",
+    "settings.theme.dark": "다크",
     "settings.language.ru": "러시아어",
     "settings.language.en": "영어",
     "settings.language.ko": "한국어",
@@ -1390,22 +1390,29 @@ const interpolate = (text: string, vars?: Record<string, string | number>) => {
 };
 
 const getInitialLanguage = (): UiLanguage => {
-  if (typeof window === "undefined") return "ru";
-  const stored = localStorage.getItem("appLanguage") as UiLanguage | null;
-  if (stored === "ru" || stored === "en" || stored === "ko") return stored;
   return "ru";
 };
 
 const getInitialTheme = (): UiTheme => {
-  if (typeof window === "undefined") return "light";
-  const stored = localStorage.getItem("appTheme") as UiTheme | null;
-  if (stored === "light" || stored === "dark") return stored;
   return "light";
 };
 
 export const UiProvider = ({ children }: { children: React.ReactNode }) => {
   const [language, setLanguage] = useState<UiLanguage>(getInitialLanguage);
   const [theme, setTheme] = useState<UiTheme>(getInitialTheme);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const storedLanguage = localStorage.getItem("appLanguage") as UiLanguage | null;
+    if (storedLanguage === "ru" || storedLanguage === "en" || storedLanguage === "ko") {
+      setLanguage(storedLanguage);
+    }
+
+    const storedTheme = localStorage.getItem("appTheme") as UiTheme | null;
+    if (storedTheme === "light" || storedTheme === "dark") {
+      setTheme(storedTheme);
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

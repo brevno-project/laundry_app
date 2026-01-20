@@ -177,7 +177,7 @@ export default function StudentsList() {
                       </span>
                     )}
                     {isSuperAdmin && student.is_cleanup_admin && (
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-700">
+                      <span className="rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-200">
                         {t("header.leader")}
                       </span>
                     )}
@@ -278,7 +278,7 @@ export default function StudentsList() {
                       </span>
                     )}
                     {isSuperAdmin && student.is_cleanup_admin && (
-                      <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-amber-700">
+                      <span className="rounded-full border border-amber-200 bg-amber-100 px-1.5 py-0.5 text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-200">
                         {t("header.leader")}
                       </span>
                     )}
