@@ -1,4 +1,3 @@
-// SVG иконки для замены смайликов
 import React from 'react';
 
 interface IconProps {
@@ -128,9 +127,14 @@ export const WashingIcon = ({ className = "w-5 h-5" }: IconProps) => (
 );
 
 export const WashingSpinner = ({ className = "w-4 h-4" }: IconProps) => (
-  <svg className={`loading-spinner ${className}`} viewBox="0 0 50 50" aria-hidden="true">
-    <circle className="loading-spinner-track" cx="25" cy="25" r="20" fill="none" stroke="currentColor" strokeWidth="4" />
-    <circle className="loading-spinner-head" cx="25" cy="25" r="20" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+  <svg
+    className={`loading-spinner ${className}`}
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+  >
+    <circle className="loading-spinner-dot loading-spinner-dot-1" cx="12" cy="3.5" r="2.2" />
+    <circle className="loading-spinner-dot loading-spinner-dot-2" cx="20.5" cy="12" r="2.2" />
+    <circle className="loading-spinner-dot loading-spinner-dot-3" cx="12" cy="20.5" r="2.2" />
   </svg>
 );
 
@@ -152,7 +156,6 @@ export const MoneyIcon = ({ className = "w-5 h-5" }: IconProps) => (
   </svg>
 );
 
-// Новая иконка стиральной машины для заголовка (отличается от WashingIcon)
 export const LaundryIcon = ({ className = "w-5 h-5" }: IconProps) => (
   <svg className={className} fill="currentColor" viewBox="0 0 48 48">
     <g data-name="Laundry a shirt">

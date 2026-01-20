@@ -1,7 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, FormEvent } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
+import { useUi } from '@/contexts/UiContext';
 import { supabase } from '@/lib/supabase';
 import { CalendarIcon, MoneyIcon, TicketIcon, WashingSpinner } from '@/components/Icons';
 
@@ -13,14 +14,6 @@ type CouponOption = {
 
 const PERMANENT_COUPON_YEARS = 5;
 
-const formatCouponDateTime = (dateStr: string) =>
-  new Date(dateStr).toLocaleString('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-
 const isPermanentCoupon = (coupon: CouponOption) => {
   const expiresAt = new Date(coupon.expires_at).getTime();
   if (Number.isNaN(expiresAt)) return false;
@@ -30,11 +23,9 @@ const isPermanentCoupon = (coupon: CouponOption) => {
   return expiresAt - baseTime >= thresholdMs;
 };
 
-const formatCouponLabel = (coupon: CouponOption) =>
-  isPermanentCoupon(coupon) ? 'Бессрочный' : `До ${formatCouponDateTime(coupon.expires_at)}`;
-
 export default function UserForm() {
   const { user, joinQueue, getUserQueueItem, queue } = useLaundry();
+  const { t, language } = useUi();
   const [washCount, setWashCount] = useState<number>(1);
   const [eligibleCoupons, setEligibleCoupons] = useState<CouponOption[]>([]);
   const [selectedCouponIds, setSelectedCouponIds] = useState<string[]>([]);
@@ -43,44 +34,59 @@ export default function UserForm() {
   const [activeCoupons, setActiveCoupons] = useState<number>(0);
   const [couponNotice, setCouponNotice] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string>(''); // 
-  
+  const [selectedDate, setSelectedDate] = useState<string>('');
+
+  const alertWithCheck = (message: string) => {
+    const trimmed = message.trim();
+    const suffix = trimmed.endsWith("✅") ? "" : " ✅";
+    alert(`${message}${suffix}`);
+  };
+
   const existingQueueItem = getUserQueueItem();
   const isInQueue = !!existingQueueItem;
-  
+
   const queuePosition = existingQueueItem ? queue.findIndex(item => item.id === existingQueueItem.id) + 1 : 0;
   const maxCoupons = Math.min(availableCoupons, washCount);
   const selectedCouponCount = selectedCouponIds.length;
+  const locale = language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : 'ko-KR';
 
-  // ✅ Устанавливаем сегодняшнюю дату по умолчанию
+  const formatCouponDateTime = (dateStr: string) =>
+    new Date(dateStr).toLocaleString(locale, {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+  const formatCouponLabel = (coupon: CouponOption) =>
+    isPermanentCoupon(coupon)
+      ? t('coupon.permanent')
+      : t('coupon.until', { date: formatCouponDateTime(coupon.expires_at) });
+
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
     setSelectedDate(today);
   }, []);
 
-  // ✅ Генерируем доступные даты (сегодня + 7 дней вперед)
   const getAvailableDates = () => {
-    const dates = [];
+    const dates = [] as Array<{ value: string; label: string }>;
     const today = new Date();
-    
+
     for (let i = 0; i < 8; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       const dateStr = date.toISOString().slice(0, 10);
-      
-      // Форматируем дату для отображения
-      const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
-      const dayName = dayNames[date.getDay()];
+      const dayName = date.toLocaleDateString(locale, { weekday: 'short' });
       const day = date.getDate();
       const month = date.getMonth() + 1;
-      
+
       let label = `${dayName}, ${day}.${month.toString().padStart(2, '0')}`;
-      if (i === 0) label += ' (Сегодня)';
-      if (i === 1) label += ' (Завтра)';
-      
+      if (i === 0) label += ` (${t('queue.dateToday')})`;
+      if (i === 1) label += ` (${t('queue.dateTomorrow')})`;
+
       dates.push({ value: dateStr, label });
     }
-    
+
     return dates;
   };
 
@@ -138,7 +144,7 @@ export default function UserForm() {
     setSelectedCouponIds((prev) => prev.filter((id) => eligibleIds.has(id)));
     setCouponNotice(
       active.length > 0 && eligible.length === 0
-        ? 'Купоны недоступны на выбранную дату.'
+        ? t('queue.noEligibleCoupons')
         : null
     );
   };
@@ -224,11 +230,10 @@ export default function UserForm() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    
+
     if (user?.full_name && !isInQueue && !isSubmitting) {
       setIsSubmitting(true);
-      
-      // ✅ Передаем выбранную дату в joinQueue (без expectedFinishAt)
+
       try {
         await joinQueue(
           user.full_name,
@@ -242,9 +247,9 @@ export default function UserForm() {
         setSelectedCouponIds([]);
         await loadCoupons();
       } catch (error: any) {
-        alert(error?.message || 'Не удалось встать в очередь');
+        alertWithCheck(error?.message || t('queue.submitError'));
       }
-      
+
       setTimeout(() => {
         setIsSubmitting(false);
       }, 2000);
@@ -253,13 +258,12 @@ export default function UserForm() {
 
   return (
     <div className="space-y-4">
-      
       <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">Встать в очередь</h2>
+        <h2 className="text-2xl font-bold mb-4 text-gray-800">{t('queue.joinTitle')}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="mb-4">
             <label htmlFor="name" className="block text-sm font-bold mb-2 text-gray-700">
-              Имя
+              {t('queue.nameLabel')}
             </label>
             <input
               id="name"
@@ -271,12 +275,12 @@ export default function UserForm() {
           </div>
           <div className="mb-4">
             <label htmlFor="room" className="block text-sm font-bold mb-2 text-gray-700">
-              Комната
+              {t('queue.roomLabel')}
             </label>
             <input
               id="room"
               type="text"
-              value={user?.room || 'Не указана'}
+              value={user?.room || t('queue.roomUnknown')}
               readOnly
               className="mt-1 block w-full rounded-md border-2 border-gray-200 bg-gray-50 shadow-sm p-3 text-gray-700 cursor-not-allowed"
             />
@@ -284,10 +288,9 @@ export default function UserForm() {
 
           {!isInQueue ? (
             <>
-              {/* ✅ НОВОЕ ПОЛЕ: Выбор даты */}
               <div className="mb-4">
                 <label htmlFor="selectedDate" className="block text-sm font-bold mb-2 text-gray-700">
-                  Выберите дату стирки
+                  {t('queue.dateLabel')}
                 </label>
                 <select
                   id="selectedDate"
@@ -302,12 +305,12 @@ export default function UserForm() {
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-500 mt-1">Вы можете записаться на любой день из списка</p>
+                <p className="text-xs text-gray-500 mt-1">{t('queue.dateNote')}</p>
               </div>
 
               <div className="mb-4">
                 <label htmlFor="washCount" className="block text-sm font-bold mb-2 text-gray-700">
-                  Количество стирок
+                  {t('queue.washCount')}
                 </label>
                 <select
                   id="washCount"
@@ -323,22 +326,21 @@ export default function UserForm() {
 
               <div className="mb-4">
                 <label className="block text-sm font-bold mb-2 text-gray-700">
-                  Купоны
+                  {t('queue.couponsLabel')}
                 </label>
                 <p className="text-xs text-gray-500 mb-2">
-                  Доступно на выбранную дату: {availableCoupons} (активных: {activeCoupons})
+                  {t('queue.availableCoupons', { available: availableCoupons, active: activeCoupons })}
                 </p>
                 {couponNotice && (
                   <p className="text-xs text-red-500 mb-2">{couponNotice}</p>
                 )}
                 {eligibleCoupons.length === 0 ? (
-                  <p className="text-xs text-gray-500">Нет доступных купонов.</p>
+                  <p className="text-xs text-gray-500">{t('queue.noEligibleCoupons')}</p>
                 ) : (
                   <div className="space-y-2">
                     {eligibleCoupons.map((coupon) => {
                       const isSelected = selectedCouponIds.includes(coupon.id);
-                      const isLimitReached =
-                        !isSelected && selectedCouponIds.length >= maxCoupons;
+                      const isLimitReached = !isSelected && selectedCouponIds.length >= maxCoupons;
                       return (
                         <label
                           key={coupon.id}
@@ -361,19 +363,19 @@ export default function UserForm() {
                 )}
                 {maxCoupons > 0 && (
                   <p className="mt-2 text-xs text-gray-500">
-                    Можно выбрать до {maxCoupons} купонов.
+                    {t('queue.couponLimit', { count: maxCoupons })}
                   </p>
                 )}
                 <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
                   {selectedCouponCount > 0 ? (
                     <>
                       <TicketIcon className="w-4 h-4 text-purple-600" />
-                      {selectedCouponCount >= washCount ? 'Оплата купонами' : 'Купоны + деньги'}
+                      {selectedCouponCount >= washCount ? t('queue.paymentCoupons') : t('queue.paymentCouponsMoney')}
                     </>
                   ) : (
                     <>
                       <MoneyIcon className="w-4 h-4 text-green-600" />
-                      Оплата деньгами
+                      {t('queue.paymentMoney')}
                     </>
                   )}
                 </div>
@@ -382,17 +384,17 @@ export default function UserForm() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full btn btn-primary btn-lg btn-glow"
+                className="w-full btn btn-primary btn-lg btn-glow btn-attn"
               >
                 {isSubmitting ? (
                   <>
                     <WashingSpinner className="w-4 h-4" />
-                    <span>Добавление...</span>
+                    <span>{t('queue.submitting')}</span>
                   </>
                 ) : (
                   <>
                     <CalendarIcon className="w-5 h-5" />
-                    Встать в очередь
+                    {t('queue.submit')}
                   </>
                 )}
               </button>
@@ -400,24 +402,25 @@ export default function UserForm() {
           ) : (
             <div className="bg-blue-50 border-2 border-blue-300 rounded-md p-4">
               <p className="text-blue-800 font-bold text-center text-lg">
-                Вы в очереди!
+                {t('queue.inQueue')}
               </p>
               <p className="text-blue-600 font-black text-center mt-2 text-3xl">
-                Позиция #{queuePosition}
+                {t('queue.position', { position: queuePosition })}
               </p>
-              {/* ✅ Показываем дату записи */}
               {existingQueueItem?.scheduled_for_date && (
                 <p className="text-blue-600 text-center mt-2">
-                  Записаны на: {new Date(existingQueueItem.scheduled_for_date).toLocaleDateString('ru-RU', {
-                    weekday: 'short',
-                    day: 'numeric',
-                    month: 'numeric'
+                  {t('queue.scheduledFor', {
+                    date: new Date(existingQueueItem.scheduled_for_date).toLocaleDateString(locale, {
+                      weekday: 'short',
+                      day: 'numeric',
+                      month: 'numeric',
+                    }),
                   })}
                 </p>
               )}
               {(existingQueueItem?.coupons_used ?? 0) > 0 && (
                 <div className="text-blue-600 text-center mt-2 text-sm">
-                  <span className="font-semibold">Купоны:</span>{' '}
+                  <span className="font-semibold">{t('queue.couponsUsedLabel')}</span>{' '}
                   {reservedCoupons.length > 0
                     ? reservedCoupons.map((coupon) => formatCouponLabel(coupon)).join(', ')
                     : existingQueueItem?.coupons_used}

@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useLaundry } from '@/contexts/LaundryContext';
+import { useUi } from '@/contexts/UiContext';
 import { QueueStatus } from '@/types';
 import { sendTelegramNotification } from '@/lib/telegram';
 import { useState, useEffect, useRef } from 'react';
@@ -35,6 +36,202 @@ export default function QueueList() {
     unbanStudent,
     clearQueue,
   } = useLaundry();
+  const { t, language } = useUi();
+  const locale = language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "ko-KR";
+  const queueCopy = {
+    ru: {
+      title: "Очередь",
+      empty: "Никого нет в очереди.",
+      clear: "Очистить",
+      clearTitle: "Подтверждение",
+      clearConfirm: "Вы уверены, что хотите очистить всю очередь? Это действие нельзя отменить!",
+      clearSuccess: "Очередь очищена ✅",
+      clearError: "Ошибка: {{message}} ✅",
+      moveSelected: "Перенести выбранных ({{count}})",
+      movePrev: "Назад",
+      moveToday: "Сегодня",
+      moveNext: "Вперед",
+      moveCancel: "Отменить выбор",
+      status: {
+        waiting: "Ожидание",
+        ready: "За ключом",
+        keyIssued: "Ключ выдан",
+        washing: "Стирка",
+        returning: "Возврат ключа",
+        done: "Завершено",
+      },
+      timers: {
+        returning: "Возвращает ключ",
+        washing: "Стирает",
+        keyIssued: "Ключ выдан",
+        ready: "Идет за ключом",
+      },
+      labels: {
+        room: "Комната",
+        payment: "Оплата",
+        washCount: "Стирок",
+        finished: "Закончил",
+        finishes: "Закончит",
+        adminMessage: "Сообщение от админа",
+      },
+      actions: {
+        actions: "Действия",
+        call: "Позвать",
+        issueKey: "Выдать ключ",
+        startWash: "Стирать",
+        returnKey: "Вернуть ключ",
+        finish: "Завершить",
+        reset: "В ожидание",
+        remove: "Удалить",
+        hideMenu: "Скрыть меню",
+        moveUp: "Переместить вверх",
+        moveDown: "Переместить вниз",
+        editTitle: "Редактировать запись",
+        editStudent: "Студент",
+        editDate: "Дата стирки",
+        editWashCount: "Количество стирок",
+        editCoupons: "Купоны",
+      },
+      errors: {
+        onlyAdmin: "Только администратор может редактировать записи",
+        callSelf: "Нельзя вызвать себя за ключом.",
+        returnSelf: "Нельзя вызвать себя на возврат ключа.",
+        callFail: "Не удалось вызвать",
+        issueFail: "Не удалось выдать ключ",
+        startFail: "Не удалось начать стирку",
+        returnFail: "Не удалось вызвать на возврат",
+        finishFail: "Не удалось завершить",
+      },
+    },
+    en: {
+      title: "Queue",
+      empty: "No one is in the queue.",
+      clear: "Clear",
+      clearTitle: "Confirmation",
+      clearConfirm: "Are you sure you want to clear the entire queue? This action cannot be undone!",
+      clearSuccess: "Queue cleared ✅",
+      clearError: "Error: {{message}} ✅",
+      moveSelected: "Move selected ({{count}})",
+      movePrev: "Back",
+      moveToday: "Today",
+      moveNext: "Forward",
+      moveCancel: "Cancel selection",
+      status: {
+        waiting: "Waiting",
+        ready: "Called for key",
+        keyIssued: "Key issued",
+        washing: "Washing",
+        returning: "Return key",
+        done: "Completed",
+      },
+      timers: {
+        returning: "Returning key",
+        washing: "Washing",
+        keyIssued: "Key issued",
+        ready: "Going for key",
+      },
+      labels: {
+        room: "Room",
+        payment: "Payment",
+        washCount: "Washes",
+        finished: "Finished",
+        finishes: "Finishes",
+        adminMessage: "Admin message",
+      },
+      actions: {
+        actions: "Actions",
+        call: "Call",
+        issueKey: "Issue key",
+        startWash: "Start washing",
+        returnKey: "Request return",
+        finish: "Finish",
+        reset: "Back to waiting",
+        remove: "Remove",
+        hideMenu: "Hide menu",
+        moveUp: "Move up",
+        moveDown: "Move down",
+        editTitle: "Edit entry",
+        editStudent: "Student",
+        editDate: "Wash date",
+        editWashCount: "Wash count",
+        editCoupons: "Coupons",
+      },
+      errors: {
+        onlyAdmin: "Only an admin can edit entries",
+        callSelf: "You can't call yourself for the key.",
+        returnSelf: "You can't request your own key return.",
+        callFail: "Failed to call",
+        issueFail: "Failed to issue key",
+        startFail: "Failed to start washing",
+        returnFail: "Failed to request return",
+        finishFail: "Failed to finish",
+      },
+    },
+    ko: {
+      title: "대기열",
+      empty: "대기열에 아무도 없습니다.",
+      clear: "비우기",
+      clearTitle: "확인",
+      clearConfirm: "전체 대기열을 비우시겠습니까? 이 동작은 되돌릴 수 없습니다!",
+      clearSuccess: "대기열이 비워졌습니다 ✅",
+      clearError: "오류: {{message}} ✅",
+      moveSelected: "선택 항목 이동 ({{count}})",
+      movePrev: "이전",
+      moveToday: "오늘",
+      moveNext: "다음",
+      moveCancel: "선택 취소",
+      status: {
+        waiting: "대기",
+        ready: "열쇠 받으러 감",
+        keyIssued: "열쇠 발급",
+        washing: "세탁",
+        returning: "열쇠 반환",
+        done: "완료",
+      },
+      timers: {
+        returning: "열쇠 반환 중",
+        washing: "세탁 중",
+        keyIssued: "열쇠 발급",
+        ready: "열쇠 받으러 감",
+      },
+      labels: {
+        room: "방",
+        payment: "결제",
+        washCount: "세탁 횟수",
+        finished: "완료 시간",
+        finishes: "예정 종료",
+        adminMessage: "관리자 메시지",
+      },
+      actions: {
+        actions: "작업",
+        call: "호출",
+        issueKey: "열쇠 발급",
+        startWash: "세탁 시작",
+        returnKey: "열쇠 반환 요청",
+        finish: "완료",
+        reset: "대기 상태로",
+        remove: "삭제",
+        hideMenu: "메뉴 닫기",
+        moveUp: "위로 이동",
+        moveDown: "아래로 이동",
+        editTitle: "기록 편집",
+        editStudent: "학생",
+        editDate: "세탁 날짜",
+        editWashCount: "세탁 횟수",
+        editCoupons: "쿠폰",
+      },
+      errors: {
+        onlyAdmin: "관리자만 항목을 편집할 수 있습니다",
+        callSelf: "본인을 열쇠 호출할 수 없습니다.",
+        returnSelf: "본인에게 열쇠 반환 요청할 수 없습니다.",
+        callFail: "호출 실패",
+        issueFail: "열쇠 발급 실패",
+        startFail: "세탁 시작 실패",
+        returnFail: "반환 요청 실패",
+        finishFail: "완료 실패",
+      },
+    },
+  }[language];
   
   const [tempTimes, setTempTimes] = useState<{ [key: string]: string }>({});
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -67,10 +264,16 @@ export default function QueueList() {
     );
   };
 
+  const alertWithCheck = (message: string) => {
+    const trimmed = message.trim();
+    const suffix = trimmed.endsWith("✅") ? "" : " ✅";
+    alert(`${message}${suffix}`);
+  };
+
   const showActionError = (error: unknown, fallback: string) => {
     const message =
-      error instanceof Error ? error.message : String(error ?? '').trim();
-    alert(`❌ ${message || fallback} ✅`);
+      error instanceof Error ? error.message : String(error ?? "").trim();
+    alertWithCheck(message || fallback);
   };
 
   // Функция для переключения статуса потери ключа
@@ -79,10 +282,7 @@ export default function QueueList() {
   const handleSaveEdit = async () => {
     if (!editingItem) return;
   
-    if (!isAdmin) {
-      alert('❌ Только администратор может редактировать записи' + " \u2705");
-      return;
-    }
+    if (!isAdmin) {\n      alertWithCheck(queueCopy.errors.onlyAdmin);\n      return;\n    }
   
     await updateQueueItemDetails(editingItem.id, {
       wash_count: editWashCount,
@@ -111,51 +311,56 @@ export default function QueueList() {
 
   // ✅ Форматирование даты для заголовка
   const formatDateHeader = (dateStr: string) => {
-    const date = new Date(dateStr + 'T00:00:00');
+    const date = new Date(`${dateStr}T00:00:00`);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    const dayNames = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
-    
-    const itemDate = new Date(dateStr + 'T00:00:00');
+
+    const itemDate = new Date(`${dateStr}T00:00:00`);
     itemDate.setHours(0, 0, 0, 0);
-    
+
+    const dayLabel = date.toLocaleDateString(locale, {
+      weekday: "long",
+      day: "numeric",
+      month: "numeric",
+    });
+
     if (itemDate.getTime() === today.getTime()) {
-      return 'Сегодня, ' + dayNames[date.getDay()] + ' ' + date.getDate() + '.' + (date.getMonth() + 1);
+      return `${t("queue.dateToday")}, ${dayLabel}`;
     }
-    
+
     if (itemDate.getTime() === tomorrow.getTime()) {
-      return 'Завтра, ' + dayNames[date.getDay()] + ' ' + date.getDate() + '.' + (date.getMonth() + 1);
+      return `${t("queue.dateTomorrow")}, ${dayLabel}`;
     }
-    
-    return dayNames[date.getDay()] + ', ' + date.getDate() + '.' + (date.getMonth() + 1);
+
+    return dayLabel;
   };
 
   // Добавь эту функцию в начало компонента QueueList:
   const getAvailableDates = () => {
     const dates = [];
     const today = new Date();
-    
+
     for (let i = 0; i < 8; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
-      const dateStr = date.toISOString().slice(0, 10);      
-      const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
-    const dayName = dayNames[date.getDay()];
-    const day = date.getDate();
-    const month = date.getMonth() + 1;
-    
-    let label = `${dayName}, ${day}.${month.toString().padStart(2, '0')}`;
-    if (i === 0) label += ' (Сегодня)';
-    if (i === 1) label += ' (Завтра)';
-    
-    dates.push({ value: dateStr, label });
-  }
-  
-  return dates;
-};
+      const dateStr = date.toISOString().slice(0, 10);
+      const dayLabel = date.toLocaleDateString(locale, {
+        weekday: "short",
+        day: "2-digit",
+        month: "2-digit",
+      });
+
+      let label = dayLabel;
+      if (i === 0) label += ` (${t("queue.dateToday")})`;
+      if (i === 1) label += ` (${t("queue.dateTomorrow")})`;
+
+      dates.push({ value: dateStr, label });
+    }
+
+    return dates;
+  };
     // Функция для получения цвета и текста статуса с SVG иконками
     const getStatusDisplay = (status: QueueStatus, item?: any) => {
       switch(status) {
@@ -166,7 +371,7 @@ export default function QueueList() {
             badge: (
               <span className="flex items-center gap-1.5">
                 <HourglassIcon className="w-4 h-4" />
-                Ожидание
+                {queueCopy.status.waiting}
               </span>
             ), 
             badgeColor: 'bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 font-semibold shadow-sm' 
@@ -178,7 +383,7 @@ export default function QueueList() {
             badge: (
               <span className="flex items-center gap-1.5">
                 <HourglassIcon className="w-4 h-4" />
-                ЗА КЛЮЧОМ
+                {queueCopy.status.ready.toUpperCase()}
               </span>
             ), 
             badgeColor: 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 font-bold shadow-md' 
@@ -190,7 +395,7 @@ export default function QueueList() {
             badge: (
               <span className="flex items-center gap-1.5">
                 <KeyIcon className="w-4 h-4" />
-                Ключ выдан
+                {queueCopy.status.keyIssued}
               </span>
             ),
             badgeColor: 'bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold shadow-md'
@@ -202,7 +407,7 @@ export default function QueueList() {
             badge: (
               <span className="flex items-center gap-1.5">
                 <WashingIcon className="w-4 h-4" />
-                СТИРКА
+                {queueCopy.status.washing.toUpperCase()}
               </span>
             ), 
             badgeColor: 'bg-gradient-to-r from-green-400 to-green-500 text-white font-bold shadow-md' 
@@ -214,7 +419,7 @@ export default function QueueList() {
             badge: (
               <span className="flex items-center gap-1.5">
                 <KeyIcon className="w-4 h-4" />
-                ВОЗВРАТ КЛЮЧА
+                {queueCopy.status.returning.toUpperCase()}
               </span>
             ), 
             badgeColor: 'bg-gradient-to-r from-orange-400 to-orange-500 text-white font-bold shadow-md' 
@@ -226,7 +431,7 @@ export default function QueueList() {
             badge: (
               <span className="flex items-center gap-1.5">
                 <CheckIcon className="w-4 h-4" />
-                ЗАВЕРШЕНО
+                {queueCopy.status.done.toUpperCase()}
               </span>
             ), 
             badgeColor: 'bg-gradient-to-r from-emerald-400 to-emerald-500 text-white font-bold shadow-md' 
@@ -259,9 +464,9 @@ export default function QueueList() {
     return (
       <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><CalendarIcon className="w-6 h-6" />Очередь</h2>
+        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><CalendarIcon className="w-6 h-6" />{queueCopy.title}</h2>
         </div>
-        <p className="mt-2 text-sm text-gray-600">Никого нет в очереди.</p>
+        <p className="mt-2 text-sm text-gray-600">{queueCopy.empty}</p>
       </div>
     );
   }
@@ -271,16 +476,16 @@ export default function QueueList() {
       {/* Header */}
       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-t-lg">
         <h2 className="text-xl font-bold text-gray-800">
-          <CalendarIcon className="w-5 h-5 inline-block mr-1" />Очередь ({queuedItems.length})
+          <CalendarIcon className="w-5 h-5 inline-block mr-1" />{queueCopy.title} ({queuedItems.length})
         </h2>
         {isSuperAdmin && queuedItems.length > 0 && (
           <button
             onClick={() => setShowClearConfirm(true)}
             className="btn btn-danger px-3 py-1.5 text-sm shadow-md hover:shadow-lg active:scale-95"
-            title="Очистить всю очередь"
+            title={queueCopy.clear}
           >
             <DeleteIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">Очистить</span>
+            <span className="hidden sm:inline">{queueCopy.clear}</span>
           </button>
         )}
       </div>
@@ -291,7 +496,7 @@ export default function QueueList() {
         <div className="bg-blue-50 border-2 border-blue-500 rounded-lg p-3 m-3">
           <h4 className="font-bold text-blue-900 mb-2 text-sm">
             <CalendarIcon className="w-4 h-4 inline-block mr-1" />
-            Перенести выбранных ({selectedItems.length})
+            {queueCopy.moveSelected.replace("{{count}}", String(selectedItems.length))}
           </h4>
   
           <div className="grid grid-cols-3 gap-2">
@@ -306,7 +511,7 @@ export default function QueueList() {
               }}
               className="btn bg-red-500 text-white hover:bg-red-600 px-2 py-2 text-xs"
             >
-              Назад
+              {queueCopy.movePrev}
             </button>
     
             {/* Сегодня */}
@@ -317,7 +522,7 @@ export default function QueueList() {
               }}
               className="btn bg-green-500 text-white hover:bg-green-600 px-2 py-2 text-xs"
             >
-              Сегодня
+              {queueCopy.moveToday}
             </button>
     
             {/* Вперед */}
@@ -331,7 +536,7 @@ export default function QueueList() {
               }}
               className="btn bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 text-xs"
             >
-              Вперед
+              {queueCopy.moveNext}
             </button>
           </div>
   
@@ -341,7 +546,7 @@ export default function QueueList() {
             className="w-full btn btn-neutral text-xs"
           >
             <CloseIcon className="w-4 h-4" />
-            Отменить выбор
+            {queueCopy.moveCancel}
           </button>
         </div>
       )}
@@ -389,7 +594,7 @@ export default function QueueList() {
                         <Avatar name={item.full_name} style={item.avatar_style} seed={item.avatar_seed} className="w-12 h-12" />
                         <div>
                           <div className="font-bold text-lg text-gray-900">{displayName}</div>
-                          {displayRoom && <div className="text-xs text-gray-600">Комната {displayRoom}</div>}
+                          {displayRoom && <div className="text-xs text-gray-600">{queueCopy.labels.room} {displayRoom}</div>}
                         </div>
                       </div>
                       <span className={`px-2 py-1 rounded-full text-xs font-bold ${statusDisplay.badgeColor} whitespace-nowrap`}>
@@ -412,7 +617,7 @@ export default function QueueList() {
                             onClick={() => changeQueuePosition(item.id, 'up')}
                             disabled={index === 0}
                             className="w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-600 rounded hover:bg-blue-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                            title="Переместить вверх"
+                            title={queueCopy.actions.moveUp}
                           >
                             <ChevronUpIcon className="w-4 h-4" />
                           </button>
@@ -420,7 +625,7 @@ export default function QueueList() {
                             onClick={() => changeQueuePosition(item.id, 'down')}
                             disabled={index === groupedQueue[dateKey].length - 1}
                             className="w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-600 rounded hover:bg-blue-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                            title="Переместить вниз"
+                            title={queueCopy.actions.moveDown}
                           >
                             <ChevronDownIcon className="w-4 h-4" />
                           </button>
@@ -435,7 +640,7 @@ export default function QueueList() {
                             <Timer 
                               startTime={item.return_requested_at} 
                               endTime={item.finished_at || undefined}
-                              label="Возвращает ключ" 
+                              label={queueCopy.timers.returning} 
                               color="orange" 
                             />
                           )}
@@ -448,7 +653,7 @@ export default function QueueList() {
                                 item.finished_at ||
                                 undefined
                               }
-                              label="Стирает" 
+                              label={queueCopy.timers.washing} 
                               color="green" 
                               multiplier={item.wash_count || 1}
                             />
@@ -457,7 +662,7 @@ export default function QueueList() {
                             <Timer 
                               startTime={item.key_issued_at} 
                               endTime={item.washing_started_at || undefined}
-                              label="Ключ выдан" 
+                              label={queueCopy.timers.keyIssued} 
                               color="blue" 
                             />
                           )}
@@ -465,7 +670,7 @@ export default function QueueList() {
                             <Timer 
                               startTime={item.ready_at} 
                               endTime={item.key_issued_at || undefined}
-                              label="Идет за ключом" 
+                              label={queueCopy.timers.ready} 
                               color="yellow" 
                             />
                           )}
@@ -475,28 +680,32 @@ export default function QueueList() {
                     {/* Инфо - компактная сетка */}
                     <div className="grid grid-cols-3 gap-2 mb-2 text-sm">
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-600">Стирок</span>
+                        <span className="text-xs text-gray-600">{queueCopy.labels.washCount}</span>
                         <span className="text-lg font-bold text-blue-700">{item.wash_count || 1}</span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-600">Оплата</span>
+                        <span className="text-xs text-gray-600">{queueCopy.labels.payment}</span>
                         <span className="text-sm font-bold text-gray-900 flex items-center gap-1">
                           {couponsUsed > 0 || item.payment_type === 'coupon' || item.payment_type === 'both' ? (
                             <>
                               <TicketIcon className="w-4 h-4 text-purple-600" />
-                              <span>{couponsUsed > 0 ? `Купоны: ${couponsUsed}` : 'Купон'}</span>
+                              <span>
+                                {couponsUsed > 0
+                                  ? t("payment.coupons", { count: couponsUsed })
+                                  : t("payment.coupon")}
+                              </span>
                               {item.payment_type === 'both' && (
                                 <>
                                   <span>+</span>
                                   <MoneyIcon className="w-4 h-4 text-green-600" />
-                                  <span>деньги</span>
+                                  <span>{t("payment.money")}</span>
                                 </>
                               )}
                             </>
                           ) : (
                             <>
                               <MoneyIcon className="w-4 h-4 text-green-600" />
-                              <span>Деньги</span>
+                              <span>{t("payment.money")}</span>
                             </>
                           )}
                         </span>
@@ -504,7 +713,7 @@ export default function QueueList() {
                       {/* Время */}
                       {item.status === QueueStatus.DONE && item.finished_at ? (
                         <div className="flex flex-col">
-                          <span className="text-xs text-gray-600">Закончил</span>
+                          <span className="text-xs text-gray-600">{queueCopy.labels.finished}</span>
                           <span className="text-lg font-bold text-emerald-700">
                             {(() => {
                               const date = new Date(item.finished_at);
@@ -516,7 +725,7 @@ export default function QueueList() {
                         </div>
                       ) : item.expected_finish_at ? (
                         <div className="flex flex-col">
-                          <span className="text-xs text-gray-600">Закончит</span>
+                          <span className="text-xs text-gray-600">{queueCopy.labels.finishes}</span>
                           <span className="text-lg font-bold text-blue-700">
                             {(() => {
                               const date = new Date(item.expected_finish_at);
@@ -535,7 +744,7 @@ export default function QueueList() {
                         {/* Сообщение от админа */}
                         {item.admin_message && (
                           <div className="bg-yellow-100 border-l-4 border-yellow-500 p-3 rounded">
-                            <p className="font-bold text-yellow-800">📢 {item.admin_message}</p>
+                            <p className="font-bold text-yellow-800">{queueCopy.labels.adminMessage}: {item.admin_message}</p>
                           </div>
                         )}
                         
@@ -543,10 +752,10 @@ export default function QueueList() {
                         {isCurrentUser && item.status === QueueStatus.WAITING && (
                           <button
                             onClick={() => leaveQueue(item.id)}
-                            className="w-full btn btn-danger"
+                            className="w-full btn btn-danger btn-attn"
                           >
                             <CloseIcon className="w-4 h-4" />
-                            Покинуть очередь
+                            {t("queue.leave")}
                           </button>
                         )}
                         
@@ -569,7 +778,7 @@ export default function QueueList() {
                             }}
                             className="w-full btn btn-secondary mt-2"
                           >
-                            <EditIcon className="w-4 h-4" /> Действия
+                            <EditIcon className="w-4 h-4" /> {queueCopy.actions.actions}
                           </button>
                         )}
                         {isAdmin && (targetIsSuperAdmin ? isSuperAdmin : true) && openActionFor === item.id && (
@@ -584,7 +793,7 @@ export default function QueueList() {
                             onClick={async () => {
                               try {
                                 if (isSelfQueueItem) {
-                                  alert('Нельзя вызвать себя за ключом.');
+                                  alertWithCheck(queueCopy.errors.callSelf);
                                   return;
                                 }
                                 await updateQueueItem(item.id, { 
@@ -601,13 +810,13 @@ export default function QueueList() {
                                   admin_student_id: user?.student_id,
                                 });
                               } catch (error) {
-                                showActionError(error, 'Не удалось вызвать');
+                                showActionError(error, queueCopy.errors.callFail);
                                 console.error('❌ Error in Позвать:', error);
                               }
                             }}
                             disabled={isSelfQueueItem}
                           >
-                            <BellIcon className="w-4 h-4" /> Позвать
+                            <BellIcon className="w-4 h-4" /> {queueCopy.actions.call}
                           </button>
 
                           {/* Выдать ключ */}
@@ -631,12 +840,12 @@ export default function QueueList() {
                                   student_id: item.student_id,
                                 });
                               } catch (error) {
-                                showActionError(error, 'Не удалось выдать ключ');
+                                showActionError(error, queueCopy.errors.issueFail);
                                 console.error('❌ Error in Выдать ключ:', error);
                               }
                             }}
                           >
-                            <KeyIcon className="w-4 h-4" /> Выдать ключ
+                            <KeyIcon className="w-4 h-4" /> {queueCopy.actions.issueKey}
                           </button>
 
                           {/* Стирать */}
@@ -661,12 +870,12 @@ export default function QueueList() {
                                   wash_count: item.wash_count,
                                 });
                               } catch (error) {
-                                showActionError(error, 'Не удалось начать стирку');
+                                showActionError(error, queueCopy.errors.startFail);
                                 console.error('❌ Error in Стирать:', error);
                               }
                             }}
                           >
-                            <WashingIcon className="w-4 h-4" /> Стирать
+                            <WashingIcon className="w-4 h-4" /> {queueCopy.actions.startWash}
                           </button>
 
                           {/* Вернуть ключ */}
@@ -675,7 +884,7 @@ export default function QueueList() {
                             onClick={async () => {
                               try {
                                 if (isSelfQueueItem) {
-                                  alert('Нельзя вызвать себя на возврат ключа.');
+                                  alertWithCheck(queueCopy.errors.returnSelf);
                                   return;
                                 }
                                 await updateQueueItem(item.id, { 
@@ -691,13 +900,13 @@ export default function QueueList() {
                                   admin_student_id: user?.student_id
                                 });
                               } catch (error) {
-                                showActionError(error, 'Не удалось вызвать на возврат');
+                                showActionError(error, queueCopy.errors.returnFail);
                                 console.error('? Error in Вернуть ключ:', error);
                               }
                             }}
                             disabled={isSelfQueueItem}
                           >
-                            <BellIcon className="w-4 h-4" /> Вернуть ключ
+                            <BellIcon className="w-4 h-4" /> {queueCopy.actions.returnKey}
                           </button>
 
                           {/* Завершить */}
@@ -707,12 +916,12 @@ export default function QueueList() {
                               try {
                                 await markDone(item.id);
                               } catch (error) {
-                                showActionError(error, 'Не удалось завершить');
+                                showActionError(error, queueCopy.errors.finishFail);
                                 console.error('❌ Error in Завершить:', error);
                               }
                             }}
                           >
-                            <CheckIcon className="w-4 h-4" /> Завершить
+                            <CheckIcon className="w-4 h-4" /> {queueCopy.actions.finish}
                           </button>
 
                           {/* В ожидание - сбрасывает все timestamps */}
@@ -732,26 +941,26 @@ export default function QueueList() {
                               await setQueueStatus(item.id, QueueStatus.WAITING);
                             }}
                           >
-                            <WaitIcon className="w-4 h-4" /> В ожидание
+                            <WaitIcon className="w-4 h-4" /> {queueCopy.actions.reset}
                           </button>
 
                           {/* Удалить */}
                           <button
                             className="w-full btn btn-danger"
                             onClick={async () => {
-                              if (confirm(`Удалить ${item.full_name}?`)) {
+                              if (confirm(t("common.deleteConfirm", { name: item.full_name }))) {
                                 await removeFromQueue(item.id);
                               }
                             }}
                           >
-                            <DeleteIcon className="w-4 h-4" /> Удалить
+                            <DeleteIcon className="w-4 h-4" /> {queueCopy.actions.remove}
                           </button>
 
                           <button
                             onClick={() => setOpenActionFor(null)}
                             className="w-full text-gray-500 py-2 text-sm"
                           >
-                            Скрыть меню
+                            {queueCopy.actions.hideMenu}
                           </button>
                         </div>
                       )}
@@ -768,9 +977,9 @@ export default function QueueList() {
       {showEditModal && editingItem && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><EditIcon className="w-5 h-5" />Редактировать запись</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><EditIcon className="w-5 h-5" />{queueCopy.actions.editTitle}</h3>
             <p className="text-gray-700 mb-3">
-              Студент: <span className="font-bold">{editingItem.full_name}</span>
+              {queueCopy.actions.editStudent}: <span className="font-bold">{editingItem.full_name}</span>
             </p>
             
             <div className="space-y-3">
@@ -778,7 +987,7 @@ export default function QueueList() {
               <div>
                 <label className="block text-sm font-bold mb-2 text-gray-900 flex items-center gap-1">
                   <CalendarIcon className="w-4 h-4" />
-                  Дата стирки
+                  {queueCopy.actions.editDate}
                 </label>
           <select
             value={editDate}
@@ -795,7 +1004,7 @@ export default function QueueList() {
 
         {/* Количество стирок */}
         <div>
-          <label className="block text-sm font-bold mb-2 text-gray-900">Количество стирок</label>
+          <label className="block text-sm font-bold mb-2 text-gray-900">{queueCopy.actions.editWashCount}</label>
           <select
             value={editWashCount}
             onChange={(e) => setEditWashCount(Number(e.target.value))}
@@ -809,7 +1018,7 @@ export default function QueueList() {
         
         {/* Купоны */}
         <div>
-          <label className="block text-sm font-bold mb-2 text-gray-900">Купоны</label>
+          <label className="block text-sm font-bold mb-2 text-gray-900">{queueCopy.actions.editCoupons}</label>
           <select
             value={editCouponsUsed}
             onChange={(e) => setEditCouponsUsed(Number(e.target.value))}
@@ -827,13 +1036,13 @@ export default function QueueList() {
           onClick={() => setShowEditModal(false)}
           className="flex-1 btn btn-neutral"
         >
-          Отмена
+          {t("common.cancel")}
         </button>
         <button
           onClick={handleSaveEdit}
           className="flex-1 btn btn-primary"
         >
-          Сохранить
+          {t("common.save")}
         </button>
       </div>
     </div>
@@ -844,31 +1053,28 @@ export default function QueueList() {
 {showClearConfirm && (
   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
     <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-2xl">
-      <h3 className="text-xl font-bold text-gray-900 mb-4">⚠️ Подтверждение</h3>
-      <p className="text-gray-700 mb-6">
-        Вы уверены, что хотите <strong className="text-red-600">очистить всю очередь</strong>? 
-        Это действие нельзя отменить!
-      </p>
+      <h3 className="text-xl font-bold text-gray-900 mb-4">{queueCopy.clearTitle}</h3>
+      <p className="text-gray-700 mb-6">{queueCopy.clearConfirm}</p>
       <div className="flex gap-3">
         <button
           onClick={() => setShowClearConfirm(false)}
           className="flex-1 btn btn-neutral"
         >
-          Отмена
+          {t("common.cancel")}
         </button>
         <button
           onClick={async () => {
             try {
               await clearQueue();
               setShowClearConfirm(false);
-              alert('✅ Очередь очищена' + " \u2705");
+              alertWithCheck(queueCopy.clearSuccess);
             } catch (err: any) {
-              alert('❌ Ошибка: ' + err.message + " \u2705");
+              alertWithCheck(queueCopy.clearError.replace("{{message}}", err?.message || ""));
             }
           }}
           className="flex-1 btn btn-danger"
         >
-          Очистить
+          {queueCopy.clear}
         </button>
       </div>
     </div>
@@ -877,4 +1083,10 @@ export default function QueueList() {
     </div>
   );
 }
+
+
+
+
+
+
 

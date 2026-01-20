@@ -1,22 +1,23 @@
-"use client";
+﻿"use client";
 
 import { useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
+import { UiLanguage, useUi } from '@/contexts/UiContext';
 import Avatar from '@/components/Avatar';
 import Timer from './Timer';
 import { HistoryIcon, ClockIcon, CheckIcon, MoneyIcon, TicketIcon, WashingIcon, DeleteIcon, WashingSpinner } from './Icons';
 import { supabase } from '@/lib/supabase';
 
-const formatTime = (dateStr?: string | null) => {
+const formatTime = (dateStr?: string | null, locale: string = 'ru-RU') => {
   if (!dateStr) return '-';
   const date = new Date(dateStr);
-  return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 };
 
-const formatDate = (dateStr?: string | null) => {
+const formatDate = (dateStr?: string | null, locale: string = 'ru-RU') => {
   if (!dateStr) return '-';
   const date = new Date(dateStr);
-  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+  return date.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
 const getDurationMinutes = (start?: string | null, end?: string | null) => {
@@ -32,13 +33,19 @@ const getDurationMinutes = (start?: string | null, end?: string | null) => {
   return minutes < 0 ? 0 : minutes;
 };
 
-const formatDuration = (start?: string | null, end?: string | null) => {
+const formatDuration = (start: string | null | undefined, end: string | null | undefined, language: UiLanguage) => {
   if (!start || !end) return '-';
   const minutes = getDurationMinutes(start, end);
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  if (hours > 0) return `${hours} ч ${mins} мин`;
-  return `${mins} мин`;
+  const units =
+    language === 'ru'
+      ? { h: 'ч', m: 'мин' }
+      : language === 'en'
+        ? { h: 'h', m: 'min' }
+        : { h: '시간', m: '분' };
+  if (hours > 0) return `${hours} ${units.h} ${mins} ${units.m}`;
+  return `${mins} ${units.m}`;
 };
 
 const getCardTone = (totalMinutes: number) => {
@@ -62,22 +69,10 @@ const getEarliestDate = (dates: Array<string | null | undefined>) => {
   return parsed[0].value;
 };
 
-const getPaymentLabel = (paymentType?: string | null, couponsUsed?: number | null) => {
-  const couponCount = couponsUsed || 0;
-  if (couponCount > 0) {
-    return paymentType === 'both'
-      ? `Купоны: ${couponCount} + деньги`
-      : `Купоны: ${couponCount}`;
-  }
-  if (!paymentType) return '-';
-  if (paymentType === 'coupon') return 'Купон';
-  if (paymentType === 'both') return 'Купон + деньги';
-  if (paymentType === 'money' || paymentType === 'cash') return 'Деньги';
-  return paymentType;
-};
-
 export default function HistoryList() {
   const { history, historyTotalCount, historyHasMore, loadMoreHistory, isSuperAdmin, fetchHistory } = useLaundry();
+  const { t, language } = useUi();
+  const locale = language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : 'ko-KR';
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showClearTools, setShowClearTools] = useState(false);
   const [clearFrom, setClearFrom] = useState('');
@@ -86,14 +81,34 @@ export default function HistoryList() {
   const [clearNotice, setClearNotice] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
 
+  const alertWithCheck = (message: string) => {
+    const trimmed = message.trim();
+    const suffix = trimmed.endsWith("✅") ? "" : " ✅";
+    alert(`${message}${suffix}`);
+  };
+
+  const getPaymentLabel = (paymentType?: string | null, couponsUsed?: number | null) => {
+    const couponCount = couponsUsed || 0;
+    if (couponCount > 0) {
+      return paymentType === 'both'
+        ? t('payment.couponsMoney', { count: couponCount })
+        : t('payment.coupons', { count: couponCount });
+    }
+    if (!paymentType) return '-';
+    if (paymentType === 'coupon') return t('payment.coupon');
+    if (paymentType === 'both') return t('payment.couponMoney');
+    if (paymentType === 'money' || paymentType === 'cash') return t('payment.money');
+    return paymentType;
+  };
+
   const authedFetch = async (url: string, options: RequestInit = {}) => {
     if (!supabase) {
-      throw new Error('Supabase не настроен');
+      throw new Error(t("errors.supabaseNotConfigured"));
     }
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     if (!token) {
-      throw new Error('Нет активной сессии');
+      throw new Error(t("errors.noActiveSession"));
     }
     return fetch(url, {
       ...options,
@@ -120,14 +135,14 @@ export default function HistoryList() {
           };
 
     if (mode === 'range' && !payload.from && !payload.to && !payload.room) {
-      setClearNotice('Укажите период или комнату для выборочной очистки.');
+      setClearNotice(t("history.clearRangeMissing"));
       return;
     }
 
     const confirmText =
       mode === 'all'
-        ? 'Очистить всю историю стирок?'
-        : 'Очистить выбранные записи истории?';
+        ? t("history.clearConfirmAll")
+        : t("history.clearConfirmRange");
     if (!confirm(confirmText)) return;
 
     setClearing(true);
@@ -138,15 +153,15 @@ export default function HistoryList() {
       });
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || 'Ошибка очистки истории');
+        throw new Error(result.error || t("history.clearError"));
       }
       await fetchHistory();
-      setClearNotice(`Удалено записей: ${result.count ?? 0}`);
+      setClearNotice(t("history.clearDeleted", { count: result.count ?? 0 }));
       setClearFrom('');
       setClearTo('');
       setClearRoom('');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Ошибка очистки истории';
+      const message = error instanceof Error ? error.message : t("history.clearError");
       setClearNotice(message);
     } finally {
       setClearing(false);
@@ -155,7 +170,7 @@ export default function HistoryList() {
 
   const clearHistoryItem = async (historyId: string) => {
     if (clearing) return;
-    const confirmed = confirm('Удалить эту запись истории?');
+    const confirmed = confirm(t("history.deleteConfirm"));
     if (!confirmed) return;
     setClearing(true);
     try {
@@ -165,13 +180,13 @@ export default function HistoryList() {
       });
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || 'Ошибка удаления записи');
+        throw new Error(result.error || t("history.deleteError"));
       }
       await fetchHistory();
-      alert(`Удалено ✅`);
+      alertWithCheck(t("history.deleteSuccess"));
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Ошибка удаления записи';
-      alert(`Ошибка: ${message} ✅`);
+      const message = error instanceof Error ? error.message : t("history.deleteError");
+      alertWithCheck(t("history.deleteErrorAlert", { message }));
     } finally {
       setClearing(false);
     }
@@ -185,8 +200,8 @@ export default function HistoryList() {
           <div className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center shadow-md">
             <HistoryIcon className="w-10 h-10 text-white" />
           </div>
-          <h3 className="text-2xl font-bold text-gray-800">История пуста</h3>
-          <p className="text-gray-600">Записей о стирках пока нет.</p>
+          <h3 className="text-2xl font-bold text-gray-800">{t("history.emptyTitle")}</h3>
+          <p className="text-gray-600">{t("history.emptyHint")}</p>
         </div>
       </div>
     );
@@ -202,8 +217,8 @@ export default function HistoryList() {
               <HistoryIcon className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">История</h2>
-              <p className="text-blue-100 text-sm">Всего стирок: {historyTotalCount}</p>
+              <h2 className="text-2xl font-bold text-white">{t("history.title")}</h2>
+              <p className="text-blue-100 text-sm">{t("history.total", { count: historyTotalCount })}</p>
             </div>
           </div>
           {isSuperAdmin && (
@@ -214,7 +229,7 @@ export default function HistoryList() {
               }}
               className="btn btn-secondary"
             >
-              {showClearTools ? 'Скрыть очистку' : 'Очистка истории'}
+              {showClearTools ? t("history.clearHide") : t("history.clear")}
             </button>
           )}
         </div>
@@ -223,7 +238,7 @@ export default function HistoryList() {
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-600">С</label>
+              <label className="text-xs font-semibold text-slate-600">{t("history.from")}</label>
               <input
                 type="date"
                 value={clearFrom}
@@ -232,7 +247,7 @@ export default function HistoryList() {
               />
             </div>
             <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-600">По</label>
+              <label className="text-xs font-semibold text-slate-600">{t("history.to")}</label>
               <input
                 type="date"
                 value={clearTo}
@@ -241,12 +256,12 @@ export default function HistoryList() {
               />
             </div>
             <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-600">Комната</label>
+              <label className="text-xs font-semibold text-slate-600">{t("history.room")}</label>
               <input
                 type="text"
                 value={clearRoom}
                 onChange={(event) => setClearRoom(event.target.value)}
-                placeholder="Например A301"
+                placeholder={t("history.roomPlaceholder")}
                 className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
               />
             </div>
@@ -255,14 +270,14 @@ export default function HistoryList() {
               disabled={clearing}
               className="btn btn-primary"
             >
-              Очистить выборочно
+              {t("history.clearRange")}
             </button>
             <button
               onClick={() => clearHistory('all')}
               disabled={clearing}
               className="btn btn-danger"
             >
-              Очистить всё
+              {t("history.clearAll")}
             </button>
           </div>
           {clearNotice && (
@@ -282,13 +297,13 @@ export default function HistoryList() {
           const cycleEnd = item.finished_at ?? item.washing_finished_at ?? null;
           const hasCycleTimes = Boolean(cycleStart && cycleEnd);
           const totalMinutes = hasCycleTimes ? getDurationMinutes(cycleStart, cycleEnd) : 0;
-          const totalDuration = hasCycleTimes ? formatDuration(cycleStart, cycleEnd) : '-';
+          const totalDuration = hasCycleTimes ? formatDuration(cycleStart, cycleEnd, language) : '-';
           const cardTone = hasCycleTimes ? getCardTone(totalMinutes) : { border: 'border-slate-200', bg: 'bg-white' };
 
           const washStart = item.washing_started_at ?? null;
           const washEnd = item.washing_finished_at ?? null;
           const hasWashTimes = Boolean(washStart && washEnd);
-          const washingDuration = hasWashTimes ? formatDuration(washStart, washEnd) : '-';
+          const washingDuration = hasWashTimes ? formatDuration(washStart, washEnd, language) : '-';
 
           const washCount = item.wash_count ?? '-';
           const couponsUsed = item.coupons_used ?? 0;
@@ -325,7 +340,7 @@ export default function HistoryList() {
                   <div>
                     <h3 className="font-bold text-gray-900 text-lg">{item.full_name}</h3>
                     <p className="text-sm text-gray-600">
-                      {item.room ? `Комната ${item.room} - ` : ''}{formatDate(item.finished_at)}
+                      {item.room ? `${t("history.room")} ${item.room} - ` : ''}{formatDate(item.finished_at, locale)}
                     </p>
                   </div>
                 </div>
@@ -335,7 +350,7 @@ export default function HistoryList() {
                     className="btn btn-danger px-3 py-1.5 text-xs"
                   >
                     <DeleteIcon className="w-4 h-4" />
-                    Удалить
+                    {t("history.delete")}
                   </button>
                 )}
               </div>
@@ -345,15 +360,15 @@ export default function HistoryList() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="flex items-center justify-between gap-2">
                       <div className={`flex items-center gap-2 ${labelTextClass}`}>
-                        <ClockIcon className={labelIconClass} />Начало стирки
+                        <ClockIcon className={labelIconClass} />{t("history.washStart")}
                       </div>
-                      <span className={valueTextClass}>{formatTime(cycleStart)}</span>
+                      <span className={valueTextClass}>{formatTime(cycleStart, locale)}</span>
                     </div>
                     <div className="flex items-center justify-between gap-2">
                       <div className={`flex items-center gap-2 ${labelTextClass}`}>
-                        <CheckIcon className={labelIconClass} />Конец стирки
+                        <CheckIcon className={labelIconClass} />{t("history.washEnd")}
                       </div>
-                      <span className={valueTextClass}>{formatTime(cycleEnd)}</span>
+                      <span className={valueTextClass}>{formatTime(cycleEnd, locale)}</span>
                     </div>
                   </div>
                 </div>
@@ -362,7 +377,7 @@ export default function HistoryList() {
                   <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-slate-600">Общее время</span>
+                        <span className="text-sm font-medium text-slate-600">{t("history.totalTime")}</span>
                       </div>
                       <span className="text-lg font-bold text-slate-900">{totalDuration}</span>
                     </div>
@@ -370,14 +385,14 @@ export default function HistoryList() {
 
                   <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-600">Количество стирок</span>
+                      <span className="text-sm font-medium text-slate-600">{t("history.washCount")}</span>
                       <span className="text-lg font-bold text-slate-900">{washCount}</span>
                     </div>
                   </div>
 
                   <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-600">Оплата</span>
+                      <span className="text-sm font-medium text-slate-600">{t("history.payment")}</span>
                       <span className="text-sm font-bold text-slate-900 flex items-center gap-1">
                         {paymentIcons}
                         {paymentLabel}
@@ -391,7 +406,7 @@ export default function HistoryList() {
                     <Timer 
                       startTime={item.return_requested_at} 
                       endTime={item.finished_at}
-                      label="Возвращал ключ" 
+                      label={t("history.keyReturned")} 
                       color="orange"
                     />
                   )}
@@ -404,7 +419,7 @@ export default function HistoryList() {
                         item.return_requested_at ||
                         item.finished_at
                       }
-                      label="Стирал" 
+                      label={t("history.washing")} 
                       color="green"
                       multiplier={item.wash_count || 1}
                     />
@@ -414,7 +429,7 @@ export default function HistoryList() {
                     <Timer 
                       startTime={item.key_issued_at} 
                       endTime={item.washing_started_at}
-                      label="Ключ был выдан" 
+                      label={t("history.keyIssued")} 
                       color="blue"
                     />
                   )}
@@ -423,7 +438,7 @@ export default function HistoryList() {
                     <Timer 
                       startTime={item.ready_at} 
                       endTime={item.key_issued_at}
-                      label="Шел за ключом" 
+                      label={t("history.keyFetch")} 
                       color="yellow"
                     />
                   )}
@@ -448,10 +463,10 @@ export default function HistoryList() {
             {isLoadingMore ? (
               <>
                 <WashingSpinner className="w-5 h-5" />
-                <span>Загрузка...</span>
+                <span>{t("history.loadingMore")}</span>
               </>
             ) : (
-              <>Загрузить еще 50</>
+              <>{t("history.loadMore")}</>
             )}
           </span>
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -462,3 +477,8 @@ export default function HistoryList() {
     </div>
   );
 }
+
+
+
+
+

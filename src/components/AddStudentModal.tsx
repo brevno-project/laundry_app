@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
-import React, { useState } from 'react';
-import { useLaundry } from '@/contexts/LaundryContext';
-import { WashingSpinner } from '@/components/Icons';
+import React, { useState } from "react";
+import { useLaundry } from "@/contexts/LaundryContext";
+import { useUi } from "@/contexts/UiContext";
+import { WashingSpinner } from "@/components/Icons";
 
 interface AddStudentModalProps {
   onClose: () => void;
@@ -10,58 +11,53 @@ interface AddStudentModalProps {
 
 export default function AddStudentModal({ onClose }: AddStudentModalProps) {
   const { addStudent } = useLaundry();
-  
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [middleName, setMiddleName] = useState('');
-  const [room, setRoom] = useState('');
+  const { t } = useUi();
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [room, setRoom] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const alertWithCheck = (message: string) => {
+    const trimmed = message.trim();
+    const suffix = trimmed.endsWith("✅") ? "" : " ✅";
+    alert(`${message}${suffix}`);
+  };
 
   const validateRoom = (roomValue: string): { valid: boolean; error?: string } => {
     if (!roomValue.trim()) {
-      return { valid: false, error: 'Комната обязательна' };
+      return { valid: false, error: t("students.addRoomRequired") };
     }
 
     const trimmedRoom = roomValue.trim().toUpperCase();
-
-    // Проверка формата: только английские буквы A или B + 3 цифры
     const roomRegex = /^[AB][0-9]{3}$/;
     if (!roomRegex.test(trimmedRoom)) {
-      return { 
-        valid: false, 
-        error: 'Формат: A или B + 3 цифры (например: A301, B402)' 
-      };
+      return { valid: false, error: t("students.addRoomFormat") };
     }
 
-    // Проверка диапазона номеров: 101-999
-    const roomNumber = parseInt(trimmedRoom.slice(1));
+    const roomNumber = parseInt(trimmedRoom.slice(1), 10);
     if (roomNumber < 101 || roomNumber > 999) {
-      return { 
-        valid: false, 
-        error: 'Номер комнаты должен быть от 101 до 999' 
-      };
+      return { valid: false, error: t("students.addRoomRange") };
     }
 
     return { valid: true };
   };
 
   const handleSubmit = async () => {
-    // Валидация имени
     if (!firstName.trim()) {
-      alert('❌ Укажите имя' + " \u2705");
+      alertWithCheck(t("students.addMissingFirstName"));
       return;
     }
 
-    // Валидация фамилии
     if (!lastName.trim()) {
-      alert('❌ Укажите фамилию' + " \u2705");
+      alertWithCheck(t("students.addMissingLastName"));
       return;
     }
 
-    // Валидация комнаты
     const roomValidation = validateRoom(room);
     if (!roomValidation.valid) {
-      alert(`❌ ${roomValidation.error}` + " \u2705");
+      alertWithCheck(roomValidation.error || t("students.addRoomFormat"));
       return;
     }
 
@@ -75,17 +71,19 @@ export default function AddStudentModal({ onClose }: AddStudentModalProps) {
         validatedRoom,
         middleName.trim() || ""
       );
-      
-      alert('✅ Студент добавлен!' + " \u2705");
+
+      alertWithCheck(t("students.addSuccess"));
       onClose();
     } catch (error: any) {
-      console.error('Error adding student:', error);
-      
-      // Проверка на дубликат
-      if (error.message?.includes('duplicate key') || error.message?.includes('unique_student_fullname')) {
-        alert('❌ Студент с таким ФИО и комнатой уже существует' + " \u2705");
+      const message =
+        typeof error?.message === "string" && error.message.trim().length > 0
+          ? error.message
+          : t("students.addErrorFallback");
+
+      if (message.includes("duplicate key") || message.includes("unique_student_fullname")) {
+        alertWithCheck(t("students.addDuplicate"));
       } else {
-        alert('❌ Ошибка добавления: ' + (error.message || 'Неизвестная ошибка') + " \u2705");
+        alertWithCheck(t("students.addError", { message }));
       }
     } finally {
       setIsSubmitting(false);
@@ -93,85 +91,86 @@ export default function AddStudentModal({ onClose }: AddStudentModalProps) {
   };
 
   const handleRoomChange = (value: string) => {
-    // Разрешаем только английские буквы A, B и цифры
-    const filtered = value.toUpperCase().replace(/[^AB0-9]/g, '');
+    const filtered = value.toUpperCase().replace(/[^AB0-9]/g, "");
     setRoom(filtered);
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg p-6 max-w-md w-full">
-        <h3 className="text-xl font-bold text-gray-900 mb-4">➕ Добавить студента</h3>
-        
+        <h3 className="text-xl font-bold text-gray-900 mb-4">
+          {t("students.addTitle")}
+        </h3>
+
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-bold mb-2 text-gray-900">
-              Комната <span className="text-red-500">*</span>
+              {t("students.field.room")} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               value={room}
-              onChange={(e) => handleRoomChange(e.target.value)}
-              placeholder="A301 или B402"
+              onChange={(event) => handleRoomChange(event.target.value)}
+              placeholder={t("students.field.roomPlaceholder")}
               className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900 uppercase"
               maxLength={4}
               disabled={isSubmitting}
             />
             <p className="text-xs text-gray-500 mt-1">
-              Только блоки A или B, номера 101-999 (например: A301, B402)
+              {t("students.addRoomHint")}
             </p>
           </div>
-          
+
           <div>
             <label className="block text-sm font-bold mb-2 text-gray-900">
-              Фамилия <span className="text-red-500">*</span>
+              {t("students.field.lastName")} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
+              onChange={(event) => setLastName(event.target.value)}
               className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900"
-              placeholder="Иванов"
+              placeholder={t("students.field.lastNamePlaceholder")}
               disabled={isSubmitting}
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-bold mb-2 text-gray-900">
-              Имя <span className="text-red-500">*</span>
+              {t("students.field.firstName")} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
+              onChange={(event) => setFirstName(event.target.value)}
               className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900"
-              placeholder="Иван"
+              placeholder={t("students.field.firstNamePlaceholder")}
               disabled={isSubmitting}
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-bold mb-2 text-gray-900">
-              Отчество
+              {t("students.field.middleName")}
             </label>
             <input
               type="text"
               value={middleName}
-              onChange={(e) => setMiddleName(e.target.value)}
+              onChange={(event) => setMiddleName(event.target.value)}
               className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900"
-              placeholder="Иванович"
+              placeholder={t("students.field.middleNamePlaceholder")}
               disabled={isSubmitting}
             />
           </div>
         </div>
-        
+
         <div className="flex gap-2 mt-6">
           <button
             onClick={onClose}
             disabled={isSubmitting}
             className="flex-1 btn btn-neutral"
           >
-            Отмена
+            {t("common.cancel")}
           </button>
           <button
             onClick={handleSubmit}
@@ -181,10 +180,10 @@ export default function AddStudentModal({ onClose }: AddStudentModalProps) {
             {isSubmitting ? (
               <>
                 <WashingSpinner className="w-4 h-4" />
-                <span>⏳ Добавление...</span>
+                <span>{t("students.addSubmitting")}</span>
               </>
             ) : (
-              <>➕ Добавить</>
+              <>{t("students.addSubmit")}</>
             )}
           </button>
         </div>

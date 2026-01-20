@@ -1,25 +1,26 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
+import { useUi } from '@/contexts/UiContext';
 import Avatar from '@/components/Avatar';
 import { CheckIcon, CloseIcon, WashingSpinner } from '@/components/Icons';
 import { supabase } from '@/lib/supabase';
 
 const AVATAR_STYLES = [
-  { id: 'avataaars', name: 'Avataaars', description: 'Классический с волосами и одеждой' },
-  { id: 'lorelei', name: 'Lorelei', description: 'Женские аватары' },
-  { id: 'pixel-art', name: 'Pixel Art', description: 'Пиксельный стиль' },
-  { id: 'adventurer', name: 'Adventurer', description: 'Приключенческий стиль' },
-  { id: 'big-ears', name: 'Big Ears', description: 'С большими ушами' },
-  { id: 'bottts', name: 'Bottts', description: 'Роботы' },
-  { id: 'croodles', name: 'Croodles', description: 'Рисованные' },
-  { id: 'micah', name: 'Micah', description: 'Минималистичные' },
-  { id: 'miniavs', name: 'Mini Avatars', description: 'Мини аватары' },
-  { id: 'notionists', name: 'Notionists', description: 'Абстрактные' },
-  { id: 'personas', name: 'Personas', description: 'Персонажи' },
-  { id: 'thumbs', name: 'Thumbs', description: 'Большие пальцы' },
-  { id: 'fun-emoji', name: 'Fun Emoji', description: 'Забавные эмодзи' },
+  { id: 'avataaars', name: 'Avataaars', descKey: 'avatar.style.avataaars.desc' },
+  { id: 'lorelei', name: 'Lorelei', descKey: 'avatar.style.lorelei.desc' },
+  { id: 'pixel-art', name: 'Pixel Art', descKey: 'avatar.style.pixel-art.desc' },
+  { id: 'adventurer', name: 'Adventurer', descKey: 'avatar.style.adventurer.desc' },
+  { id: 'big-ears', name: 'Big Ears', descKey: 'avatar.style.big-ears.desc' },
+  { id: 'bottts', name: 'Bottts', descKey: 'avatar.style.bottts.desc' },
+  { id: 'croodles', name: 'Croodles', descKey: 'avatar.style.croodles.desc' },
+  { id: 'micah', name: 'Micah', descKey: 'avatar.style.micah.desc' },
+  { id: 'miniavs', name: 'Mini Avatars', descKey: 'avatar.style.miniavs.desc' },
+  { id: 'notionists', name: 'Notionists', descKey: 'avatar.style.notionists.desc' },
+  { id: 'personas', name: 'Personas', descKey: 'avatar.style.personas.desc' },
+  { id: 'thumbs', name: 'Thumbs', descKey: 'avatar.style.thumbs.desc' },
+  { id: 'fun-emoji', name: 'Fun Emoji', descKey: 'avatar.style.fun-emoji.desc' },
 ];
 
 interface AvatarCustomizerProps {
@@ -28,6 +29,7 @@ interface AvatarCustomizerProps {
 
 export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
   const { user, refreshMyRole, fetchQueue, loadStudents } = useLaundry();
+  const { t } = useUi();
   const [selectedStyle, setSelectedStyle] = useState<string>(user?.avatar_style || 'bottts');
   const [avatarSeed, setAvatarSeed] = useState<string>(user?.avatar_seed || '');
   const [previewSeed, setPreviewSeed] = useState<string>(user?.avatar_seed || '');
@@ -55,12 +57,11 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
 
     setIsSaving(true);
     try {
-      // ✅ ИСПРАВЛЕНО: Используем текущую сессию без refresh (refresh может вызвать logout если токен истек)
-      const { data: { session }, error } = await supabase!.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
       const accessToken = session?.access_token;
-      
+
       if (error || !accessToken) {
-        throw new Error('No authentication token');
+        throw new Error(t('errors.noActiveSession'));
       }
 
       const response = await fetch('/api/student/update-avatar', {
@@ -77,40 +78,24 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to save avatar');
+        throw new Error(error.error || t('avatar.saveError'));
       }
 
-      const result = await response.json();
-
-      console.log('✅ Avatar saved successfully:', result);
-
-      // ✅ Перезагружаем данные пользователя из БД
-      console.log('🔄 Refreshing user data...');
       if (refreshMyRole) {
         await refreshMyRole();
-        console.log('✅ User data refreshed');
       }
-
-      // ✅ Перезагружаем список студентов чтобы обновить аватар при следующем входе
-      console.log('🔄 Refreshing students list...');
       if (loadStudents) {
         await loadStudents();
-        console.log('✅ Students list refreshed');
       }
-
-      // ✅ Перезагружаем очередь чтобы обновить аватар везде
-      console.log('🔄 Refreshing queue...');
       if (fetchQueue) {
         await fetchQueue();
-        console.log('✅ Queue refreshed');
       }
 
-      setNotice({ type: 'success', message: 'Аватар сохранён!' });
+      setNotice({ type: 'success', message: t('avatar.saved') });
       onSave?.(selectedStyle, avatarSeed);
       setTimeout(() => setNotice(null), 3000);
     } catch (error) {
-      console.error('Error saving avatar:', error);
-      setNotice({ type: 'error', message: 'Ошибка при сохранении аватара' });
+      setNotice({ type: 'error', message: (error as Error).message || t('avatar.saveError') });
       setTimeout(() => setNotice(null), 3000);
     } finally {
       setIsSaving(false);
@@ -119,7 +104,7 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-      <h3 className="font-bold text-lg text-gray-900 mb-4">Выбор стиля аватара</h3>
+      <h3 className="font-bold text-lg text-gray-900 mb-4">{t('avatar.title')}</h3>
 
       {notice && (
         <div
@@ -138,9 +123,8 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
         </div>
       )}
 
-      {/* Превью аватара + кнопка сохранения */}
       <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg text-center border border-blue-200">
-        <p className="text-sm text-gray-700 font-semibold mb-3">Превью вашего аватара:</p>
+        <p className="text-sm text-gray-700 font-semibold mb-3">{t('avatar.previewLabel')}</p>
         <div className="flex justify-center mb-4">
           <Avatar
             name={previewSeed || user?.full_name || 'default'}
@@ -148,36 +132,36 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
             className="w-32 h-32"
           />
         </div>
-        <p className="text-xs text-gray-600 mb-4">Стиль: <span className="font-semibold">{AVATAR_STYLES.find(s => s.id === selectedStyle)?.name}</span></p>
-        
-        {/* Кнопка сохранения */}
+        <p className="text-xs text-gray-600 mb-4">
+          {t('avatar.currentStyleLabel')}{' '}
+          <span className="font-semibold">{AVATAR_STYLES.find(s => s.id === selectedStyle)?.name}</span>
+        </p>
+
         <button
           onClick={handleSave}
           disabled={isSaving || (selectedStyle === user?.avatar_style && avatarSeed === user?.avatar_seed)}
           className="w-full btn btn-primary btn-glow mb-3"
         >
           {isSaving ? (
-              <>
-                <WashingSpinner className="w-4 h-4" />
-                <span>Сохранение...</span>
-              </>
-            ) : (
-              <>✓ Сохранить</>
-            )}
+            <>
+              <WashingSpinner className="w-4 h-4" />
+              <span>{t('avatar.saving')}</span>
+            </>
+          ) : (
+            <>{t('avatar.save')}</>
+          )}
         </button>
 
-        {/* Кнопка рандома под сохранить */}
         <button
           onClick={generateRandomSeed}
           className="w-full btn btn-secondary"
         >
-          🎲 Выбрать случайный аватар
+          {t('avatar.random')}
         </button>
       </div>
 
-      {/* Выбор стиля */}
       <div className="mb-6">
-        <label className="block text-sm font-semibold text-gray-900 mb-3">Выберите стиль:</label>
+        <label className="block text-sm font-semibold text-gray-900 mb-3">{t('avatar.chooseStyle')}</label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
           {AVATAR_STYLES.map((style) => (
             <button
@@ -195,7 +179,7 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
                   <CheckIcon className="w-3 h-3 text-blue-600" />
                 )}
               </div>
-              <p className="text-gray-600 text-xs">{style.description}</p>
+              <p className="text-gray-600 text-xs">{t(style.descKey)}</p>
               <div className="mt-1 flex justify-center">
                 <Avatar
                   name={previewSeed || user?.full_name || 'default'}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
+import { useUi } from '@/contexts/UiContext';
 import { TelegramIcon } from '@/components/Icons';
 
 interface TelegramBannerProps {
@@ -14,6 +15,7 @@ interface TelegramBannerProps {
  */
 export default function TelegramBanner({ onGoToSettings }: TelegramBannerProps) {
   const { user, isAdmin } = useLaundry();
+  const { t } = useUi();
   const [dismissed, setDismissed] = useState(false);
   const [shouldShow, setShouldShow] = useState(false);
 
@@ -54,10 +56,10 @@ export default function TelegramBanner({ onGoToSettings }: TelegramBannerProps) 
         <div className="text-center mb-6">
           <div className="mb-4"><TelegramIcon className="w-16 h-16 text-blue-400 mx-auto" /></div>
           <h2 className="text-2xl font-bold text-white mb-2">
-            Подключите Telegram
+            {t("telegram.bannerTitle")}
           </h2>
           <p className="text-gray-400">
-            Получайте уведомления когда вас позовут за ключом
+            {t("telegram.bannerBody")}
           </p>
         </div>
 
@@ -65,15 +67,15 @@ export default function TelegramBanner({ onGoToSettings }: TelegramBannerProps) 
         <div className="flex gap-3">
           <button
             onClick={handleDismiss}
-            className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 rounded-lg transition-colors"
+            className="flex-1 btn btn-ghost text-white hover:bg-white/10"
           >
-            Позже
+            {t("telegram.bannerLater")}
           </button>
           <button
             onClick={handleGoToSettings}
-            className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-lg transition-colors"
+            className="flex-1 btn btn-primary btn-glow"
           >
-            Перейти в настройки
+            {t("telegram.bannerButton")}
           </button>
         </div>
       </div>

@@ -851,15 +851,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         const banReason = me.ban_reason || "Не указана";
 
         if (typeof window !== "undefined") {
-
-          localStorage.setItem(
-
-            "banNotice",
-
-            `Вы забанены. Причина: ${banReason}. Обратитесь к администратору.`
-
-          );
-
+          localStorage.setItem("banReason", banReason);
         }
 
 
@@ -1258,7 +1250,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
           .from("students_login_list")
 
-          .select("id, full_name, room, is_registered, is_banned, key_issued, key_lost, avatar_style, avatar_seed")
+          .select("id, full_name, room, is_registered, is_banned, ban_reason, key_issued, key_lost, avatar_style, avatar_seed")
 
           .order("full_name", { ascending: true });
 
@@ -1285,6 +1277,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
           created_at: new Date().toISOString(),
 
           is_banned: !!item.is_banned,
+          ban_reason: item.ban_reason || null,
 
           user_id: undefined,
 
@@ -1321,7 +1314,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
           .from("students_login_list")
 
-          .select("id, full_name, room, is_registered, is_banned, key_issued, key_lost")
+          .select("id, full_name, room, is_registered, is_banned, ban_reason, key_issued, key_lost")
 
           .order("full_name", { ascending: true });
 
@@ -1346,6 +1339,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
           created_at: new Date().toISOString(),
 
           is_banned: !!item.is_banned,
+          ban_reason: item.ban_reason || null,
 
           user_id: undefined,
 
@@ -1938,15 +1932,7 @@ const loginStudent = async (
       const banReason = updatedStudent.ban_reason || "Не указана";
 
       if (typeof window !== "undefined") {
-
-        localStorage.setItem(
-
-          "banNotice",
-
-          `Вы забанены. Причина: ${banReason}. Обратитесь к администратору.`
-
-        );
-
+        localStorage.setItem("banReason", banReason);
       }
 
       await supabase.auth.signOut({ scope: 'local' });
@@ -2688,15 +2674,7 @@ const joinQueue = async (
         const banReason = studentData.ban_reason || 'Не указана';
 
         if (typeof window !== "undefined") {
-
-          localStorage.setItem(
-
-            "banNotice",
-
-            `Вы забанены. Причина: ${banReason}. Обратитесь к администратору.`
-
-          );
-
+          localStorage.setItem("banReason", banReason);
         }
 
         await logoutStudent();
@@ -2734,15 +2712,7 @@ const joinQueue = async (
         const banReason = studentData.ban_reason || 'Не указана';
 
         if (typeof window !== "undefined") {
-
-          localStorage.setItem(
-
-            "banNotice",
-
-            `Вы забанены. Причина: ${banReason}. Обратитесь к администратору.`
-
-          );
-
+          localStorage.setItem("banReason", banReason);
         }
 
         await logoutStudent();

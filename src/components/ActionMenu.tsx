@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { useUi } from "@/contexts/UiContext";
 import { Student } from "@/types";
 import {
   CalendarIcon,
@@ -17,7 +18,7 @@ interface Props {
   student: Student;
   isAdmin: boolean;
   isSuperAdmin: boolean;
-  currentUserId?: string; // <-- теперь не обязательно
+  currentUserId?: string;
   onEdit: (s: Student) => void;
   onBan: (s: Student) => void;
   onUnban: (id: string) => void;
@@ -26,7 +27,6 @@ interface Props {
   onAddToQueue: (s: Student) => void;
   onToggleAdmin: (id: string, makeAdmin: boolean) => void;
 }
-
 
 type ActionKey =
   | "queue"
@@ -50,8 +50,8 @@ export default function ActionMenu({
   onToggleAdmin,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const { t } = useUi();
 
-  // Если вообще не админ — не показываем ничего
   if (!isAdmin && !isSuperAdmin) return null;
 
   const isSelf = currentUserId ? student.id === currentUserId : false;
@@ -67,40 +67,35 @@ export default function ActionMenu({
   if (targetIsSuperAdmin && !isSelf) return null;
 
   function can(action: ActionKey): boolean {
-    // Суперадмин
     if (isSuperAdmin) {
-      // Сам над собой
       if (isSelf && targetIsSuperAdmin) {
         const selfMatrix: Record<ActionKey, boolean> = {
           queue: true,
           edit: true,
           reset: true,
-          ban: false, // ни бан, ни разбан над собой
+          ban: false,
           delete: false,
           toggleAdmin: false,
         };
         return selfMatrix[action];
       }
 
-      // Нельзя удалять суперадмина ни при каких условиях
       if (action === "delete" && targetIsSuperAdmin) {
         return false;
       }
 
-      // Над другим админом (не супер)
       if (targetIsAdmin && !targetIsSuperAdmin) {
         const overAdmin: Record<ActionKey, boolean> = {
           queue: true,
           edit: true,
           reset: true,
           ban: true,
-          delete: false, // намеренно запрещено
+          delete: false,
           toggleAdmin: true,
         };
         return overAdmin[action];
       }
 
-      // Над другим суперадмином (если такое вообще будет) — всё, кроме delete
       if (targetIsSuperAdmin && !isSelf) {
         const overSuper: Record<ActionKey, boolean> = {
           queue: true,
@@ -113,7 +108,6 @@ export default function ActionMenu({
         return overSuper[action];
       }
 
-      // Над обычным студентом
       const overStudent: Record<ActionKey, boolean> = {
         queue: true,
         edit: true,
@@ -125,9 +119,7 @@ export default function ActionMenu({
       return overStudent[action];
     }
 
-    // Обычный админ
     if (isAdmin) {
-      // Над собой
       if (isSelf) {
         const selfAdmin: Record<ActionKey, boolean> = {
           queue: true,
@@ -140,7 +132,6 @@ export default function ActionMenu({
         return selfAdmin[action];
       }
 
-      // Над суперадмином или другим админом — только безопасное
       if (targetIsSuperAdmin || targetIsAdmin) {
         const overAdminOrSuper: Record<ActionKey, boolean> = {
           queue: true,
@@ -153,7 +144,6 @@ export default function ActionMenu({
         return overAdminOrSuper[action];
       }
 
-      // Над обычным студентом
       const overStudent: Record<ActionKey, boolean> = {
         queue: true,
         edit: true,
@@ -181,20 +171,21 @@ export default function ActionMenu({
   const fullName =
     student.full_name ||
     [student.first_name, student.last_name].filter(Boolean).join(" ");
+  const roomLabel = student.room
+    ? t("admin.actions.roomLabel", { room: student.room })
+    : t("admin.actions.roomMissing");
 
   return (
     <>
-      {/* КНОПКА УПРАВЛЕНИЯ НА ВСЮ ШИРИНУ */}
       <button
         type="button"
         onClick={() => setOpen(true)}
         className="flex w-full items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50 active:bg-gray-100"
       >
-        <PeopleIcon className="w-4 h-4" />
-        <span>Управление</span>
+        <PeopleIcon className="h-4 w-4" />
+        <span>{t("admin.actions.manage")}</span>
       </button>
 
-      {/* ЗАТЕМНЕНИЕ */}
       {open && (
         <div
           className="fixed inset-0 z-[90] bg-black/40"
@@ -202,34 +193,34 @@ export default function ActionMenu({
         />
       )}
 
-      {/* BOTTOM SHEET */}
       {open && (
-        <div className="fixed inset-x-0 bottom-0 z-[100] rounded-t-2xl border-t border-gray-200 bg-white px-4 pt-3 pb-5 shadow-2xl">
-          {/* ХЭДЕР */}
-          <div className="flex items-start justify-between mb-3">
+        <div className="fixed inset-x-0 bottom-0 z-[100] rounded-t-2xl border-t border-gray-200 bg-white px-4 pb-5 pt-3 shadow-2xl">
+          <div className="mb-3 flex items-start justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
-                <PeopleIcon className="w-5 h-5 text-purple-700" />
+                <PeopleIcon className="h-5 w-5 text-purple-700" />
               </div>
               <div>
                 <div className="text-sm font-semibold text-gray-900">
-                  {fullName || "Без имени"}
+                  {fullName || t("admin.actions.noName")}
                 </div>
-                <div className="text-xs text-gray-500">
-                  {student.room ? `Комната ${student.room}` : "Комната не указана"}
-                </div>
+                <div className="text-xs text-gray-500">{roomLabel}</div>
                 <div className="mt-1 flex flex-wrap gap-1">
                   {student.is_super_admin && (
-                    <Badge color="purple">Суперадмин</Badge>
+                    <Badge color="purple">{t("admin.badge.superAdmin")}</Badge>
                   )}
                   {!student.is_super_admin && student.is_admin && (
-                    <Badge color="indigo">Админ</Badge>
+                    <Badge color="indigo">{t("admin.badge.admin")}</Badge>
                   )}
-                    {student.is_cleanup_admin && (
-                      <Badge color="blue">Лидер</Badge>
-                    )}
-                  {student.is_registered && <Badge color="green">Зарегистрирован</Badge>}
-                  {student.is_banned && <Badge color="red">Забанен</Badge>}
+                  {student.is_cleanup_admin && (
+                    <Badge color="blue">{t("admin.badge.leader")}</Badge>
+                  )}
+                  {student.is_registered && (
+                    <Badge color="green">{t("admin.badge.registered")}</Badge>
+                  )}
+                  {student.is_banned && (
+                    <Badge color="red">{t("admin.badge.banned")}</Badge>
+                  )}
                   {hasTelegram && <Badge color="blue">Telegram</Badge>}
                 </div>
               </div>
@@ -239,19 +230,18 @@ export default function ActionMenu({
               onClick={() => setOpen(false)}
               className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
             >
-              <CloseIcon className="w-5 h-5" />
+              <CloseIcon className="h-5 w-5" />
             </button>
           </div>
 
-          <div className="h-px bg-gray-200 mb-3" />
+          <div className="mb-3 h-px bg-gray-200" />
 
           <div className="space-y-4 text-sm">
-            {/* ОЧЕРЕДЬ */}
             {can("queue") && (
-              <Section title="Очередь">
+              <Section title={t("admin.section.queue")}>
                 <SheetButton
-                  icon={<CalendarIcon className="w-4 h-4" />}
-                  label="Поставить в очередь"
+                  icon={<CalendarIcon className="h-4 w-4" />}
+                  label={t("admin.action.queueAdd")}
                   onClick={() => {
                     onAddToQueue(student);
                     setOpen(false);
@@ -260,13 +250,12 @@ export default function ActionMenu({
               </Section>
             )}
 
-            {/* УЧЁТНАЯ ЗАПИСЬ */}
             {(can("edit") || can("reset") || can("ban")) && (
-              <Section title="Учётная запись">
+              <Section title={t("admin.section.account")}>
                 {can("edit") && (
                   <SheetButton
-                    icon={<EditIcon className="w-4 h-4" />}
-                    label="Редактировать профиль"
+                    icon={<EditIcon className="h-4 w-4" />}
+                    label={t("admin.action.editProfile")}
                     onClick={() => {
                       onEdit(student);
                       setOpen(false);
@@ -276,8 +265,8 @@ export default function ActionMenu({
 
                 {can("reset") && (
                   <SheetButton
-                    icon={<RefreshIcon className="w-4 h-4" />}
-                    label="Сбросить регистрацию"
+                    icon={<RefreshIcon className="h-4 w-4" />}
+                    label={t("admin.action.resetRegistration")}
                     onClick={() => {
                       onReset(student);
                       setOpen(false);
@@ -287,8 +276,8 @@ export default function ActionMenu({
 
                 {can("ban") && !targetIsBanned && (
                   <SheetButton
-                    icon={<BanIcon className="w-4 h-4" />}
-                    label="Забанить"
+                    icon={<BanIcon className="h-4 w-4" />}
+                    label={t("admin.action.ban")}
                     onClick={() => {
                       onBan(student);
                       setOpen(false);
@@ -298,8 +287,8 @@ export default function ActionMenu({
 
                 {can("ban") && targetIsBanned && (
                   <SheetButton
-                    icon={<CheckIcon className="w-4 h-4" />}
-                    label="Разбанить"
+                    icon={<CheckIcon className="h-4 w-4" />}
+                    label={t("admin.action.unban")}
                     onClick={() => {
                       onUnban(student.id);
                       setOpen(false);
@@ -309,12 +298,15 @@ export default function ActionMenu({
               </Section>
             )}
 
-            {/* ПРАВА (ТОЛЬКО ДЛЯ СУПЕРАДМИНА) */}
             {isSuperAdmin && can("toggleAdmin") && !targetIsSuperAdmin && (
-              <Section title="Права доступа">
+              <Section title={t("admin.section.rights")}>
                 <SheetButton
-                  icon={<PeopleIcon className="w-4 h-4" />}
-                  label={student.is_admin ? "Снять права админа" : "Сделать админом"}
+                  icon={<PeopleIcon className="h-4 w-4" />}
+                  label={
+                    student.is_admin
+                      ? t("admin.action.removeAdmin")
+                      : t("admin.action.makeAdmin")
+                  }
                   onClick={() => {
                     onToggleAdmin(student.id, !student.is_admin);
                     setOpen(false);
@@ -323,12 +315,11 @@ export default function ActionMenu({
               </Section>
             )}
 
-            {/* ОПАСНАЯ ЗОНА */}
             {can("delete") && (
-              <Section title="Опасная зона">
+              <Section title={t("admin.section.danger")}>
                 <SheetButton
-                  icon={<DeleteIcon className="w-4 h-4" />}
-                  label="Удалить студента"
+                  icon={<DeleteIcon className="h-4 w-4" />}
+                  label={t("admin.action.deleteStudent")}
                   danger
                   onClick={() => {
                     onDelete(student);
@@ -349,7 +340,7 @@ function Section({
   children,
 }: {
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div>
@@ -369,7 +360,7 @@ function SheetButton({
   onClick,
   danger = false,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   onClick: () => void;
   danger?: boolean;
@@ -378,11 +369,11 @@ function SheetButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm transition-colors ${
+      className={`flex w-full items-center gap-2 border-b border-gray-200 px-4 py-2.5 text-left text-sm transition-colors last:border-b-0 ${
         danger
           ? "bg-white text-red-600 hover:bg-red-50"
           : "bg-white text-gray-800 hover:bg-gray-50"
-      } border-b border-gray-200 last:border-b-0`}
+      }`}
     >
       <span className={danger ? "text-red-500" : "text-gray-500"}>{icon}</span>
       <span className="font-medium">{label}</span>
@@ -394,7 +385,7 @@ function Badge({
   children,
   color,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   color: "purple" | "indigo" | "green" | "red" | "blue";
 }) {
   const map: Record<typeof color, string> = {

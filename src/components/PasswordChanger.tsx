@@ -2,11 +2,13 @@
 
 import React, { useState } from "react";
 import { useLaundry } from "@/contexts/LaundryContext";
+import { useUi } from "@/contexts/UiContext";
 import { supabase } from "@/lib/supabase";
 import { WashingSpinner } from "@/components/Icons";
 
 export default function PasswordChanger() {
   const { user } = useLaundry();
+  const { t } = useUi();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -21,22 +23,22 @@ export default function PasswordChanger() {
     if (!user) return;
 
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setError("Заполните все поля");
+      setError(t("password.errorRequired"));
       return;
     }
 
     if (newPassword.length < 6) {
-      setError("Пароль должен быть не короче 6 символов");
+      setError(t("password.errorMin"));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("Пароли не совпадают");
+      setError(t("password.errorMismatch"));
       return;
     }
 
     if (currentPassword === newPassword) {
-      setError("Новый пароль должен отличаться от текущего");
+      setError(t("password.errorSame"));
       return;
     }
 
@@ -45,7 +47,7 @@ export default function PasswordChanger() {
     setSuccess("");
 
     try {
-      if (!supabase) throw new Error("Supabase не настроен");
+      if (!supabase) throw new Error(t("errors.supabaseNotConfigured"));
 
       const { data: studentData, error: emailErr } = await supabase
         .from("students")
@@ -56,7 +58,7 @@ export default function PasswordChanger() {
       if (emailErr) throw emailErr;
 
       const authEmail = studentData?.auth_email;
-      if (!authEmail) throw new Error("auth_email отсутствует");
+      if (!authEmail) throw new Error(t("password.errorAuthMissing"));
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: authEmail,
@@ -64,7 +66,7 @@ export default function PasswordChanger() {
       });
 
       if (signInError) {
-        throw new Error("Неверный текущий пароль");
+        throw new Error(t("password.errorCurrentInvalid"));
       }
 
       const { error: updateError } = await supabase.auth.updateUser({
@@ -72,15 +74,15 @@ export default function PasswordChanger() {
       });
 
       if (updateError) {
-        throw new Error("Ошибка смены пароля");
+        throw new Error(t("password.errorUpdate"));
       }
 
-      setSuccess("Пароль успешно изменен");
+      setSuccess(t("password.success"));
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (err: any) {
-      setError(err.message || "Ошибка смены пароля");
+      setError(err.message || t("password.errorUpdate"));
     } finally {
       setLoading(false);
     }
@@ -88,7 +90,7 @@ export default function PasswordChanger() {
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm">
-      <h3 className="font-bold text-lg text-gray-800 mb-3">Изменение пароля</h3>
+      <h3 className="font-bold text-lg text-gray-800 mb-3">{t("password.title")}</h3>
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded-lg mb-3">
@@ -104,7 +106,7 @@ export default function PasswordChanger() {
 
       <div className="space-y-3">
         <div>
-          <label className="block text-sm font-bold mb-1 text-gray-900">Текущий пароль</label>
+          <label className="block text-sm font-bold mb-1 text-gray-900">{t("password.current")}</label>
           <div className="flex items-stretch gap-2">
             <input
               type={showCurrent ? "text" : "password"}
@@ -115,20 +117,20 @@ export default function PasswordChanger() {
                 setSuccess("");
               }}
               className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-3 text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-              placeholder="Введите текущий пароль"
+              placeholder={t("password.placeholderCurrent")}
             />
             <button
               type="button"
               onClick={() => setShowCurrent(!showCurrent)}
               className="shrink-0 px-3 rounded-lg border border-gray-300 text-xs font-semibold text-gray-700 hover:text-gray-900 hover:border-gray-400"
             >
-              {showCurrent ? "Скрыть" : "Показать"}
+              {showCurrent ? t("auth.hide") : t("auth.show")}
             </button>
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-bold mb-1 text-gray-900">Новый пароль</label>
+          <label className="block text-sm font-bold mb-1 text-gray-900">{t("password.new")}</label>
           <div className="flex items-stretch gap-2">
             <input
               type={showNew ? "text" : "password"}
@@ -139,21 +141,21 @@ export default function PasswordChanger() {
                 setSuccess("");
               }}
               className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-3 text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-              placeholder="Введите новый пароль"
+              placeholder={t("password.placeholderNew")}
             />
             <button
               type="button"
               onClick={() => setShowNew(!showNew)}
               className="shrink-0 px-3 rounded-lg border border-gray-300 text-xs font-semibold text-gray-700 hover:text-gray-900 hover:border-gray-400"
             >
-              {showNew ? "Скрыть" : "Показать"}
+              {showNew ? t("auth.hide") : t("auth.show")}
             </button>
           </div>
-          <p className="mt-1 text-xs text-gray-500">Минимум 6 символов</p>
+          <p className="mt-1 text-xs text-gray-500">{t("password.minHint")}</p>
         </div>
 
         <div>
-          <label className="block text-sm font-bold mb-1 text-gray-900">Подтвердите новый пароль</label>
+          <label className="block text-sm font-bold mb-1 text-gray-900">{t("password.confirm")}</label>
           <div className="flex items-stretch gap-2">
             <input
               type={showConfirm ? "text" : "password"}
@@ -164,14 +166,14 @@ export default function PasswordChanger() {
                 setSuccess("");
               }}
               className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-3 text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-              placeholder="Повторите пароль"
+              placeholder={t("password.placeholderConfirm")}
             />
             <button
               type="button"
               onClick={() => setShowConfirm(!showConfirm)}
               className="shrink-0 px-3 rounded-lg border border-gray-300 text-xs font-semibold text-gray-700 hover:text-gray-900 hover:border-gray-400"
             >
-              {showConfirm ? "Скрыть" : "Показать"}
+              {showConfirm ? t("auth.hide") : t("auth.show")}
             </button>
           </div>
         </div>
@@ -184,10 +186,10 @@ export default function PasswordChanger() {
           {loading ? (
             <>
               <WashingSpinner className="w-4 h-4" />
-              <span>Изменение...</span>
+              <span>{t("password.updating")}</span>
             </>
           ) : (
-            <>Изменить пароль</>
+            <>{t("password.update")}</>
           )}
         </button>
       </div>

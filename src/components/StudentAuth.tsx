@@ -1,13 +1,15 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLaundry } from "@/contexts/LaundryContext";
+import { useUi } from "@/contexts/UiContext";
 import { Student } from "@/types";
 import { DoorIcon, CheckIcon, CloseIcon, BackIcon, WashingSpinner } from "@/components/Icons";
 import Avatar from "@/components/Avatar";
 
 export default function StudentAuth() {
   const { students, registerStudent, loginStudent, loadStudents } = useLaundry();
+  const { t } = useUi();
 
   const [step, setStep] = useState<"select" | "auth">("select");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -22,15 +24,20 @@ export default function StudentAuth() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    const storedReason = localStorage.getItem("banReason");
     const notice = localStorage.getItem("banNotice");
-    if (notice) {
+    if (storedReason) {
+      setBanNotice(t("ban.notice", { reason: storedReason }));
+      localStorage.removeItem("banReason");
+      localStorage.removeItem("banNotice");
+    } else if (notice) {
       setBanNotice(notice);
       localStorage.removeItem("banNotice");
     }
     // Refresh students list only once on mount
     if (!hasLoadedRef.current) {
       hasLoadedRef.current = true;
-      console.log('🔄 StudentAuth: loading fresh students list (once)...');
+      console.log('StudentAuth: loading fresh students list (once)...');
       loadStudents();
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -38,7 +45,7 @@ export default function StudentAuth() {
   // Логируем данные студентов при их изменении
   useEffect(() => {
     if (students.length > 0) {
-      console.log('📋 StudentAuth: students loaded (first 3):', students.slice(0, 3).map(s => ({
+      console.log('StudentAuth: students loaded (first 3):', students.slice(0, 3).map(s => ({
         full_name: s.full_name,
         avatar_style: s.avatar_style,
         avatar_seed: s.avatar_seed
@@ -68,18 +75,28 @@ export default function StudentAuth() {
     setError("");
     setPassword("");
     setShowPassword(false);
+    if (student.is_banned) {
+      const reason = student.ban_reason || t("ban.reasonUnknown");
+      setBanNotice(t("ban.notice", { reason }));
+    }
   };
 
   const handleAuth = async () => {
     if (!selectedStudent) return;
 
+    if (selectedStudent.is_banned) {
+      const reason = selectedStudent.ban_reason || t("ban.reasonUnknown");
+      setBanNotice(t("ban.notice", { reason }));
+      return;
+    }
+
     if (!password) {
-      setError("Введите пароль");
+      setError(t("auth.passwordRequired"));
       return;
     }
 
     if (!selectedStudent.is_registered && password.length < 6) {
-      setError("Пароль должен быть минимум 6 символов");
+      setError(t("auth.passwordMin"));
       return;
     }
 
@@ -96,8 +113,8 @@ export default function StudentAuth() {
       setError(
         err.message ||
           (selectedStudent.is_registered
-            ? "Неправильный пароль"
-            : "Ошибка регистрации")
+            ? t("auth.invalidPassword")
+            : t("auth.registrationError"))
       );
     } finally {
       setLoading(false);
@@ -113,24 +130,24 @@ export default function StudentAuth() {
         {banNoticeBanner}
 
         <h2 className="text-2xl font-bold mb-4 text-gray-900 text-center">
-          Очередь на стирку
+          {t("auth.title")}
         </h2>
         <h3 className="text-lg font-bold mb-4 text-gray-900 text-center">
-          Выберите себя из списка
+          {t("auth.subtitle")}
         </h3>
 
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Поиск по имени или комнате..."
+          placeholder={t("auth.searchPlaceholder")}
           className="w-full p-4 rounded-lg border-2 border-blue-400 bg-white text-gray-900 text-xl font-semibold mb-4 focus:border-blue-600 focus:ring-2 focus:ring-blue-300 placeholder:text-gray-600"
         />
 
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {filteredStudents.length === 0 ? (
             <div className="text-center py-8 text-gray-900 font-bold text-xl">
-              Ничего не найдено
+              {t("auth.notFound")}
             </div>
           ) : (
             filteredStudents.map((student) => (
@@ -153,7 +170,7 @@ export default function StudentAuth() {
                       </div>
                       {student.room && (
                         <div className="text-base text-gray-700 font-bold flex items-center gap-1">
-                          <DoorIcon className="w-4 h-4" /> Комната {student.room}
+                          <DoorIcon className="w-4 h-4" /> {t("header.room")} {student.room}
                         </div>
                       )}
                     </div>
@@ -164,11 +181,11 @@ export default function StudentAuth() {
                       <div className="bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md">
                         <CheckIcon className="w-5 h-5" />
                       </div>
-                    ) : (
-                      <div className="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
-                        NEW
-                      </div>
-                    )}
+                      ) : (
+                        <div className="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
+                          {t("auth.new")}
+                        </div>
+                      )}
                   </div>
                 </div>
               </button>
@@ -193,7 +210,7 @@ export default function StudentAuth() {
         }}
         className="text-blue-600 hover:text-blue-800 font-bold mb-4 flex items-center gap-2"
       >
-        <BackIcon className="w-5 h-5" /> Назад
+        <BackIcon className="w-5 h-5" /> {t("auth.back")}
       </button>
 
       <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6 flex items-center gap-3">
@@ -209,20 +226,20 @@ export default function StudentAuth() {
           </div>
           {selectedStudent?.room && (
             <div className="text-sm text-gray-900 font-medium flex items-center gap-1">
-              <DoorIcon className="w-4 h-4" /> Комната {selectedStudent.room}
+              <DoorIcon className="w-4 h-4" /> {t("header.room")} {selectedStudent.room}
             </div>
           )}
         </div>
       </div>
 
       <h2 className="text-2xl font-black mb-2 text-gray-900">
-        {selectedStudent?.is_registered ? "Вход" : "Первый раз?"}
+        {selectedStudent?.is_registered ? t("auth.enter") : t("auth.firstTime")}
       </h2>
 
       <p className="text-gray-900 mb-6 font-medium">
         {selectedStudent?.is_registered
-          ? "Введите ваш пароль"
-          : "Придумайте пароль для регистрации"}
+          ? t("auth.enterPassword")
+          : t("auth.createPassword")}
       </p>
 
       <div className="space-y-4">
@@ -231,7 +248,7 @@ export default function StudentAuth() {
             htmlFor="password"
             className="block text-sm font-bold mb-2 text-gray-900"
           >
-            Пароль
+            {t("auth.password")}
           </label>
 
           <div className="relative">
@@ -245,7 +262,7 @@ export default function StudentAuth() {
               }}
               onKeyDown={(e) => e.key === "Enter" && handleAuth()}
               className="w-full rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-4 pr-20 text-lg font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-              placeholder="Введите пароль"
+              placeholder={t("auth.password")}
               autoFocus
             />
 
@@ -254,13 +271,13 @@ export default function StudentAuth() {
               onClick={() => setShowPassword((v) => !v)}
               className="absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-gray-700 hover:text-gray-900"
             >
-              {showPassword ? "Скрыть" : "Показать"}
+              {showPassword ? t("auth.hide") : t("auth.show")}
             </button>
           </div>
 
           {!selectedStudent?.is_registered && (
             <p className="text-xs text-gray-700 mt-1 font-medium">
-              От 6 символов
+              {t("auth.minChars")}
             </p>
           )}
         </div>
@@ -280,14 +297,15 @@ export default function StudentAuth() {
           {loading ? (
             <>
               <WashingSpinner className="w-4 h-4" />
-              <span>Загрузка...</span>
+              <span>{t("common.loading")}</span>
             </>
           ) : selectedStudent?.is_registered
-          ? "Войти"
-          : "Зарегистрироваться"
+          ? t("auth.login")
+          : t("auth.register")
         }
         </button>
       </div>
     </div>
   );
 }
+

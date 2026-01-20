@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useLaundry } from "@/contexts/LaundryContext";
+import { useUi } from "@/contexts/UiContext";
 import { supabase } from "@/lib/supabase";
 import { QueueStatus } from "@/types";
 import { KeyIcon, WashingIcon, CheckIcon, InfoIcon } from "@/components/Icons";
@@ -20,10 +21,17 @@ const buildNotifyKey = (type: "start" | "finish", id: string) => `laundryNotify:
 
 export default function StudentActions() {
   const { user, queue } = useLaundry();
+  const { t } = useUi();
   const [washingTime, setWashingTime] = useState("0:00");
   const [startSent, setStartSent] = useState(false);
   const [finishSent, setFinishSent] = useState(false);
   const [sending, setSending] = useState<null | "start" | "finish">(null);
+
+  const alertWithCheck = (message: string) => {
+    const trimmed = message.trim();
+    const suffix = trimmed.endsWith("✅") ? "" : " ✅";
+    alert(`${message}${suffix}`);
+  };
 
   const myQueueItem = queue.find(
     (item) =>
@@ -61,13 +69,13 @@ export default function StudentActions() {
 
     try {
       if (!supabase) {
-        alert("Supabase не настроен" + " ✅");
+        alertWithCheck(t("errors.supabaseNotConfigured"));
         return;
       }
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        alert("Нет активной сессии" + " ✅");
+        alertWithCheck(t("errors.noActiveSession"));
         return;
       }
 
@@ -91,10 +99,10 @@ export default function StudentActions() {
         setStartSent(true);
         setStoredFlag(key);
       } else {
-        alert("Ошибка отправки уведомления" + " ✅");
+        alertWithCheck(t("errors.notifyFailed"));
       }
     } catch (error) {
-      alert("Ошибка: " + (error as Error).message + " ✅");
+      alertWithCheck(t("errors.generic", { message: (error as Error).message }));
     } finally {
       setSending(null);
     }
@@ -106,17 +114,16 @@ export default function StudentActions() {
 
     try {
       if (!supabase) {
-        alert("Supabase не настроен" + " ✅");
+        alertWithCheck(t("errors.supabaseNotConfigured"));
         return;
       }
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        alert("Нет активной сессии" + " ✅");
+        alertWithCheck(t("errors.noActiveSession"));
         return;
       }
 
-      // Отправляем уведомление админам
       const response = await fetch("/api/telegram/notify", {
         method: "POST",
         headers: {
@@ -132,7 +139,6 @@ export default function StudentActions() {
         }),
       });
 
-      // Отправляем уведомление студенту о завершении стирки
       if (response.ok) {
         await fetch("/api/telegram/notify", {
           method: "POST",
@@ -153,10 +159,10 @@ export default function StudentActions() {
         setFinishSent(true);
         setStoredFlag(key);
       } else {
-        alert("Ошибка отправки уведомления" + " ✅");
+        alertWithCheck(t("errors.notifyFailed"));
       }
     } catch (error) {
-      alert("Ошибка: " + (error as Error).message + " ✅");
+      alertWithCheck(t("errors.generic", { message: (error as Error).message }));
     } finally {
       setSending(null);
     }
@@ -171,7 +177,7 @@ export default function StudentActions() {
               <div className="w-full rounded-xl bg-emerald-500/20 border border-emerald-200 px-4 py-3 text-emerald-50 text-center">
                 <div className="flex items-center justify-center gap-2 font-semibold">
                   <CheckIcon className="w-5 h-5" />
-                  Уведомление отправлено
+                  {t("studentActions.noticeSent")}
                 </div>
               </div>
             ) : (
@@ -179,23 +185,21 @@ export default function StudentActions() {
                 <div className="text-center mb-4">
                   <div className="flex items-center justify-center gap-3 mb-2">
                     <KeyIcon className="w-7 h-7 text-white flex-shrink-0" />
-                    <h3 className="text-2xl font-bold text-white">Можно начинать стирку</h3>
+                    <h3 className="text-2xl font-bold text-white">{t("studentActions.startTitle")}</h3>
                   </div>
-                  <p className="text-blue-100">
-                    Нажмите кнопку, чтобы сообщить администратору о начале стирки.
-                  </p>
+                  <p className="text-blue-100">{t("studentActions.startHint")}</p>
                   <div className="flex items-center justify-center gap-1 text-blue-200 text-sm mt-2">
                     <InfoIcon className="w-4 h-4 flex-shrink-0" />
-                    <span>Уведомление отправится в Telegram.</span>
+                    <span>{t("studentActions.startInfo")}</span>
                   </div>
                 </div>
 
                 <button
                   onClick={handleStartWashing}
                   disabled={sending === "start"}
-                  className="w-full bg-white text-blue-700 font-bold py-4 px-6 rounded-xl text-xl hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl disabled:opacity-70"
+                  className="w-full bg-white text-blue-700 font-bold py-4 px-6 rounded-xl text-xl hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl disabled:opacity-70 btn-attn"
                 >
-                  Начать стирку
+                  {t("studentActions.startButton")}
                 </button>
               </>
             )}
@@ -208,34 +212,32 @@ export default function StudentActions() {
               <div className="w-full rounded-xl bg-emerald-500/20 border border-emerald-200 px-4 py-3 text-emerald-50 text-center">
                 <div className="flex items-center justify-center gap-2 font-semibold">
                   <CheckIcon className="w-5 h-5" />
-                  Уведомление отправлено
+                  {t("studentActions.noticeSent")}
                 </div>
               </div>
             ) : (
               <>
                 <div className="text-center mb-4">
-                  <h3 className="text-2xl font-bold text-white mb-2">Стирка идет</h3>
+                  <h3 className="text-2xl font-bold text-white mb-2">{t("studentActions.washingTitle")}</h3>
                   <div className="bg-white/20 rounded-xl py-3 px-6 mb-3">
-                    <div className="text-blue-100 text-sm mb-1">Прошло времени:</div>
+                    <div className="text-blue-100 text-sm mb-1">{t("studentActions.elapsedLabel")}</div>
                     <div className="text-4xl font-black text-white">{washingTime}</div>
                   </div>
-                  <p className="text-blue-100 text-sm">
-                    После окончания нажмите кнопку, чтобы уведомить администратора.
-                  </p>
+                  <p className="text-blue-100 text-sm">{t("studentActions.finishHint")}</p>
                   <div className="flex items-center justify-center gap-1 text-blue-200 text-sm mt-2">
                     <InfoIcon className="w-4 h-4 flex-shrink-0" />
-                    <span>Уведомление отправится в Telegram.</span>
+                    <span>{t("studentActions.startInfo")}</span>
                   </div>
                 </div>
 
                 <button
                   onClick={handleFinishWashing}
                   disabled={sending === "finish"}
-                  className="w-full bg-red-600 text-white font-bold py-4 px-6 rounded-xl text-xl hover:bg-red-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-70"
+                  className="w-full bg-red-600 text-white font-bold py-4 px-6 rounded-xl text-xl hover:bg-red-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-70 btn-attn"
                 >
                   <div className="flex items-center justify-center gap-2">
                     <WashingIcon className="w-5 h-5" />
-                    Закончить стирку
+                    {t("studentActions.finishButton")}
                   </div>
                 </button>
               </>

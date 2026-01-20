@@ -18,9 +18,12 @@ import TelegramBanner from '@/components/TelegramBanner';
 import StudentActions from '@/components/StudentActions';
 import PasswordChanger from '@/components/PasswordChanger';
 import AvatarCustomizer from '@/components/AvatarCustomizer';
+import { useUi } from '@/contexts/UiContext';
 
 export default function Home() {
   const { user, isLoading, authReady, logoutStudent, isAdmin, isSuperAdmin, isCleanupAdmin, machineState, queue, isNewUser, setIsNewUser, students, needsClaim } = useLaundry();
+  const { t, language, setLanguage, theme, setTheme } = useUi();
+  const locale = language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "ko-KR";
   const canViewStudentsTab = isAdmin || isSuperAdmin || isCleanupAdmin || !!user?.can_view_students;
   
   // ✅ Восстанавливаем activeTab из localStorage
@@ -32,6 +35,7 @@ export default function Home() {
   });
   
   const [showScrollButton, setShowScrollButton] = React.useState(false);
+  const [scrollTarget, setScrollTarget] = React.useState<string | null>(null);
 
   // ✅ Сохраняем activeTab в localStorage при изменении
   const handleTabChange = (tab: string) => {
@@ -63,6 +67,22 @@ export default function Home() {
     }
   }, [activeTab, canViewStudentsTab, user, authReady]);
 
+  React.useEffect(() => {
+    if (activeTab !== 'settings' || !scrollTarget) return;
+    const targetId = scrollTarget;
+    const scrollToTarget = () => {
+      const element = document.getElementById(targetId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const focusTarget = element.querySelector<HTMLElement>('[data-focus-target="telegram"]');
+        if (focusTarget) {
+          focusTarget.focus({ preventScroll: true });
+        }
+        setScrollTarget(null);
+      }
+    };
+    requestAnimationFrame(() => setTimeout(scrollToTarget, 80));
+  }, [activeTab, scrollTarget]);
 
 
   // ✅ Отслеживание скролла для кнопки "Вверх" (только для пользователей в очереди)
@@ -97,7 +117,7 @@ export default function Home() {
   if (isLoading || !authReady) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+        <div className="text-xl">{t("common.loading")}</div>
       </div>
     );
   }
@@ -109,11 +129,16 @@ export default function Home() {
       {/* Заголовок */}
       <header className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 shadow-lg sticky top-0 z-10">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white flex items-center justify-center gap-2"><LaundryIcon className="w-7 h-7" /> Очередь на стирку</h1>
+          <h1 className="text-2xl font-bold text-white flex items-center justify-center gap-2"><LaundryIcon className="w-7 h-7" /> {t("app.title")}</h1>
           {user && (
             <p className="text-sm text-blue-100 mt-1">
-              Вы вошли как: <span className="font-semibold">{user.full_name}</span>
-              {user.room && <span className="ml-2">Комната {user.room}</span>}
+              {t("header.signedInAs")}: <span className="font-semibold">{user.full_name}</span>
+              {user.room && <span className="ml-2">{t("header.room")} {user.room}</span>}
+              {isCleanupAdmin && (
+                <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-900">
+                  {t("header.leader")}
+                </span>
+              )}
             </p>
           )}
         </div>
@@ -132,7 +157,7 @@ export default function Home() {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              <HomeIcon className="w-5 h-5 inline-block mr-2" />Главная</button>
+              <HomeIcon className="w-5 h-5 inline-block mr-2" />{t("nav.main")}</button>
             <button
               onClick={() => handleTabChange('history')}
               className={`flex-none shrink-0 min-w-[96px] py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
@@ -141,7 +166,7 @@ export default function Home() {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              <HistoryIcon className="w-5 h-5 inline-block mr-2" />История</button>
+              <HistoryIcon className="w-5 h-5 inline-block mr-2" />{t("nav.history")}</button>
             <button
               onClick={() => handleTabChange('cleanup')}
               className={`flex-none shrink-0 min-w-[96px] py-3 px-4 text-sm font-semibold border-b-2 transition-colors ${
@@ -150,7 +175,7 @@ export default function Home() {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              <ListIcon className="w-5 h-5 inline-block mr-2" />Уборка</button>
+              <ListIcon className="w-5 h-5 inline-block mr-2" />{t("nav.cleanup")}</button>
             {/* Вкладка Студенты доступна админам и пользователям с флагом can_view_students */}
             {canViewStudentsTab && (
               <button
@@ -161,7 +186,7 @@ export default function Home() {
                     : 'border-transparent text-gray-600 hover:text-gray-900'
                 }`}
               >
-                <PeopleIcon className="w-5 h-5 inline-block mr-2" />Студенты</button>
+                <PeopleIcon className="w-5 h-5 inline-block mr-2" />{t("nav.students")}</button>
             )}
             <button
               onClick={() => handleTabChange('settings')}
@@ -171,14 +196,19 @@ export default function Home() {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              <SettingsIcon className="w-5 h-5 inline-block mr-2" />Настройки</button>
+              <SettingsIcon className="w-5 h-5 inline-block mr-2" />{t("nav.settings")}</button>
           </div>
           </div>
         </nav>
       )}
 
       {/* Полноэкранный баннер для подключения Telegram */}
-      <TelegramBanner onGoToSettings={() => handleTabChange('settings')} />
+      <TelegramBanner
+        onGoToSettings={() => {
+          handleTabChange('settings');
+          setScrollTarget('telegram-setup');
+        }}
+      />
       
       {/* Глобальный баннер для всех студентов в очереди */}
       <GlobalAlert />
@@ -194,7 +224,7 @@ export default function Home() {
             
             {/* Статус машины */}
             <div className="mb-6 max-w-3xl mx-auto px-3">
-              <h3 className="text-lg font-semibold mb-3 text-gray-700">Статус машины</h3>
+              <h3 className="text-lg font-semibold mb-3 text-gray-700">{t("machine.status")}</h3>
               {machineState.status === 'idle' ? (
                 <div className="relative overflow-hidden rounded-xl shadow-lg min-h-[120px]">
                   {/* Базовый фон */}
@@ -230,7 +260,7 @@ export default function Home() {
                       <path d="M18 2.01L6 2c-1.11 0-2 .89-2 2v16c0 1.11.89 2 2 2h12c1.11 0 2-.89 2-2V4c0-1.11-.89-1.99-2-1.99zM18 20H6v-9.02h12V20zm0-11H6V4h12v5zM8 5h1.5v1.5H8V5zm3.5 0H13v1.5h-1.5V5z"/>
                       <circle cx="12" cy="15" r="3.5"/>
                     </svg>
-                    <div className="text-2xl font-bold text-white">Свободна</div>
+                    <div className="text-2xl font-bold text-white">{t("machine.available")}</div>
                   </div>
                 </div>
               ) : (
@@ -269,7 +299,7 @@ export default function Home() {
                         <path d="M18 2.01L6 2c-1.11 0-2 .89-2 2v16c0 1.11.89 2 2 2h12c1.11 0 2-.89 2-2V4c0-1.11-.89-1.99-2-1.99zM18 20H6v-9.02h12V20zm0-11H6V4h12v5zM8 5h1.5v1.5H8V5zm3.5 0H13v1.5h-1.5V5z"/>
                         <circle cx="12" cy="15" r="3.5"/>
                       </svg>
-                      <div className="text-2xl font-bold text-white">Занята</div>
+                      <div className="text-2xl font-bold text-white">{t("machine.busy")}</div>
                     </div>
                     
                     {/* Полупрозрачная карточка с информацией */}
@@ -280,7 +310,7 @@ export default function Home() {
                           if (currentItem) {
                             return (
                               <div>
-                                <div className="text-xs text-white/70 font-medium uppercase tracking-wider mb-1">Стирает</div>
+                                <div className="text-xs text-white/70 font-medium uppercase tracking-wider mb-1">{t("machine.current")}</div>
                                 <div className="text-2xl font-bold text-white">
                                   {currentItem.full_name}
                                 </div>
@@ -291,9 +321,9 @@ export default function Home() {
                         })()}
                         {machineState.expected_finish_at && (
                           <div className="pt-3 border-t border-white/20">
-                            <div className="text-xs text-white/70 font-medium uppercase tracking-wider mb-1">Окончание</div>
+                            <div className="text-xs text-white/70 font-medium uppercase tracking-wider mb-1">{t("machine.ends")}</div>
                             <div className="text-xl font-bold text-white">
-                              {new Date(machineState.expected_finish_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                              {new Date(machineState.expected_finish_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
                             </div>
                           </div>
                         )}
@@ -353,12 +383,62 @@ export default function Home() {
         {/* Настройки */}
         {activeTab === 'settings' && user && (
           <div className="w-full space-y-4 px-3">
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <h3 className="font-bold text-lg text-gray-800 mb-3">{t("settings.language")}</h3>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setLanguage("ru")}
+                  className={`btn ${language === "ru" ? "btn-primary" : "btn-secondary"}`}
+                  aria-pressed={language === "ru"}
+                >
+                  {t("settings.language.ru")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLanguage("en")}
+                  className={`btn ${language === "en" ? "btn-primary" : "btn-secondary"}`}
+                  aria-pressed={language === "en"}
+                >
+                  {t("settings.language.en")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLanguage("ko")}
+                  className={`btn ${language === "ko" ? "btn-primary" : "btn-secondary"}`}
+                  aria-pressed={language === "ko"}
+                >
+                  {t("settings.language.ko")}
+                </button>
+              </div>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <h3 className="font-bold text-lg text-gray-800 mb-3">{t("settings.theme")}</h3>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTheme("light")}
+                  className={`btn ${theme === "light" ? "btn-primary" : "btn-secondary"}`}
+                  aria-pressed={theme === "light"}
+                >
+                  {t("settings.theme.light")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTheme("dark")}
+                  className={`btn ${theme === "dark" ? "btn-primary" : "btn-secondary"}`}
+                  aria-pressed={theme === "dark"}
+                >
+                  {t("settings.theme.dark")}
+                </button>
+              </div>
+            </div>
             <AvatarCustomizer />
             <PasswordChanger />
-            {!user.can_view_students && <TelegramSetup />}
+            <TelegramSetup />
             
             <div className="bg-white p-4 rounded-lg shadow-sm">
-              <h3 className="font-bold text-lg text-gray-800 mb-3">Аккаунт</h3>
+              <h3 className="font-bold text-lg text-gray-800 mb-3">{t("settings.account")}</h3>
               <button
                 onClick={() => {
                   logoutStudent();
@@ -366,9 +446,9 @@ export default function Home() {
                   setIsNewUser(false);
                   localStorage.removeItem('needsTelegramSetup');
                 }}
-                className="w-full btn btn-danger btn-lg"
+                className="w-full btn btn-danger btn-lg btn-attn"
               >
-                <DoorIcon className="w-5 h-5" />Выйти из аккаунта
+                <DoorIcon className="w-5 h-5" />{t("settings.logout")}
               </button>
             </div>
           </div>
@@ -380,7 +460,7 @@ export default function Home() {
         <button
           onClick={scrollToTop}
           className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all duration-300 z-50 animate-pulse-slow"
-          aria-label="Прокрутить вверх"
+          aria-label={t("common.scrollTop")}
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />

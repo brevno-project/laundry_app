@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLaundry } from "@/contexts/LaundryContext";
+import { useUi } from "@/contexts/UiContext";
 import { supabase } from "@/lib/supabase";
 import type {
   Apartment,
@@ -462,25 +463,25 @@ const getNextWednesdayISO = () => {
   return formatLocalDate(next);
 };
 
-const formatWeekLabel = (dateStr?: string) => {
+const formatWeekLabel = (dateStr?: string, locale: string = "ru-RU") => {
   if (!dateStr) return "-";
   const date = new Date(`${dateStr}T00:00:00`);
-  return date.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
+  return date.toLocaleDateString(locale, { day: "numeric", month: "long" });
 };
 
-const formatScheduleLabel = (dateStr?: string) => {
+const formatScheduleLabel = (dateStr?: string, locale: string = "ru-RU") => {
   if (!dateStr) return "-";
   const date = new Date(`${dateStr}T00:00:00`);
-  return date.toLocaleDateString("ru-RU", {
+  return date.toLocaleDateString(locale, {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
 };
 
-const formatDateTime = (dateStr?: string | null) => {
+const formatDateTime = (dateStr?: string | null, locale: string = "ru-RU") => {
   if (!dateStr) return "-";
-  return new Date(dateStr).toLocaleString("ru-RU", {
+  return new Date(dateStr).toLocaleString(locale, {
     day: "numeric",
     month: "short",
     hour: "2-digit",
@@ -499,11 +500,20 @@ const isPermanentCoupon = (coupon: Coupon) => {
   return expiresAt - baseTime >= thresholdMs;
 };
 
-const formatCouponExpiry = (coupon: Coupon) =>
-  isPermanentCoupon(coupon) ? "Бессрочный" : `До: ${formatDateTime(coupon.expires_at)}`;
+const formatCouponExpiry = (
+  coupon: Coupon,
+  locale: string,
+  t: (key: string, vars?: Record<string, string | number>) => string
+) => (isPermanentCoupon(coupon) ? t("coupon.permanent") : t("coupon.until", { date: formatDateTime(coupon.expires_at, locale) }));
 
-const formatCouponOptionLabel = (coupon: Coupon) =>
-  isPermanentCoupon(coupon) ? "Купон бессрочный" : `Купон до ${formatDateTime(coupon.expires_at)}`;
+const formatCouponOptionLabel = (
+  coupon: Coupon,
+  locale: string,
+  t: (key: string, vars?: Record<string, string | number>) => string
+) =>
+  isPermanentCoupon(coupon)
+    ? t("coupon.optionPermanent")
+    : t("coupon.optionUntil", { date: formatDateTime(coupon.expires_at, locale) });
 
 const formatTime = (timeStr?: string | null) => {
   if (!timeStr) return "";
@@ -683,6 +693,8 @@ const formatRecipientLabel = (recipient: ReminderRecipient) =>
 
 export default function CleanupResults({ embedded = false }: CleanupResultsProps) {
   const { user, isAdmin, isSuperAdmin, isCleanupAdmin } = useLaundry();
+  const { t, language } = useUi();
+  const locale = language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "ko-KR";
   const canManageCleanup = isAdmin || isSuperAdmin || isCleanupAdmin;
   const [results, setResults] = useState<CleanupResult[]>([]);
   const [apartments, setApartments] = useState<Apartment[]>([]);
@@ -694,6 +706,8 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [transfers, setTransfers] = useState<CouponTransfer[]>([]);
   const [transferNames, setTransferNames] = useState<Record<string, string>>({});
   const [recipients, setRecipients] = useState<Student[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [adminBlock, setAdminBlock] = useState<Block | null>(null);
   const [weekStart, setWeekStart] = useState(getNextWednesdayISO());
   const [selectedBlock, setSelectedBlock] = useState<Block>("A");
@@ -1030,9 +1044,22 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   };
 
   useEffect(() => {
-    loadApartments();
-    loadResults();
-    loadSchedules();
+    let isActive = true;
+    const loadInitial = async () => {
+      setIsLoading(true);
+      try {
+        await Promise.all([loadApartments(), loadResults(), loadSchedules()]);
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+          setHasLoadedOnce(true);
+        }
+      }
+    };
+    loadInitial();
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -1341,13 +1368,13 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const draft = scheduleDrafts[block];
     const current = schedulesByBlock[block];
     const currentLabel = current
-      ? `${formatScheduleLabel(current.check_date)}${current.check_time ? `, ${formatTime(current.check_time)}` : ""}`
+      ? `${formatScheduleLabel(current.check_date, locale)}${current.check_time ? `, ${formatTime(current.check_time)}` : ""}`
       : "не назначено";
     const statusClass = current
       ? "border border-amber-200 bg-amber-50 text-amber-800"
       : "border border-gray-200 bg-gray-100 text-gray-500";
     const lastSentLabel = current?.reminder_sent_at
-      ? formatDateTime(current.reminder_sent_at)
+      ? formatDateTime(current.reminder_sent_at, locale)
       : "не отправлялось";
 
     return (
@@ -1535,10 +1562,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         <div className="flex items-center justify-between mb-3">
           <div>
             <h4 className="text-lg font-bold text-gray-900">
-              Проверка от {formatWeekLabel(item.week_start)}
+              Проверка от {formatWeekLabel(item.week_start, locale)}
             </h4>
             <p className="text-xs text-gray-500">
-              Опубликовано: {formatDateTime(item.published_at)}
+              Опубликовано: {formatDateTime(item.published_at, locale)}
             </p>
           </div>
           <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
@@ -1558,7 +1585,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const latest = blockResults[0];
     const schedule = schedulesByBlock[block];
     const scheduleText = schedule
-      ? `${formatScheduleLabel(schedule.check_date)}${schedule.check_time ? `, ${formatTime(schedule.check_time)}` : ""}`
+      ? `${formatScheduleLabel(schedule.check_date, locale)}${schedule.check_time ? `, ${formatTime(schedule.check_time)}` : ""}`
       : "Дата проверки не назначена.";
     const scheduleClass = schedule
       ? "border-amber-200 bg-amber-50 text-amber-900"
@@ -1604,7 +1631,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
           renderResultCard(latest)
         ) : (
           <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-500">
-            Результатов пока нет.
+            {t("cleanup.empty")}
           </div>
         )}
 
@@ -1661,6 +1688,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       : []) as Block[];
 
   const showTransfers = !!user && (isAdmin || isSuperAdmin || transfers.length > 0);
+  const showLoading = !hasLoadedOnce || (isLoading && results.length === 0 && schedules.length === 0 && apartments.length === 0);
 
   return (
     <div className={embedded ? "w-full" : "min-h-screen bg-gray-50"}>
@@ -1668,24 +1696,37 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         <header className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 shadow-lg">
           <div className="mx-auto max-w-5xl flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">Результаты уборки</h1>
-              <p className="text-sm text-blue-100">Объявления по блокам и архив</p>
+              <h1 className="text-2xl font-bold text-white">{t("cleanup.title")}</h1>
+              <p className="text-sm text-blue-100">{t("cleanup.subtitle")}</p>
             </div>
             <Link href="/" className="text-sm text-blue-100 underline">
-              На главную
+              {t("cleanup.toHome")}
             </Link>
           </div>
         </header>
       )}
 
-      <div className="mx-auto max-w-5xl space-y-6 p-4">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {renderBlockSection("A")}
-          {renderBlockSection("B")}
+      {showLoading ? (
+        <div className="mx-auto max-w-5xl space-y-4 p-4">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm animate-pulse">
+            <div className="h-5 w-40 rounded bg-gray-200" />
+            <div className="mt-3 h-4 w-64 rounded bg-gray-200" />
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className="h-20 rounded bg-gray-100" />
+              <div className="h-20 rounded bg-gray-100" />
+            </div>
+          </div>
+          <p className="text-sm text-gray-500">{t("common.loading")}</p>
         </div>
+      ) : (
+        <div className="mx-auto max-w-5xl space-y-6 p-4">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {renderBlockSection("A")}
+            {renderBlockSection("B")}
+          </div>
 
-        {canManageCleanup && (
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
+          {canManageCleanup && (
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-2">
               <CalendarIcon className="w-5 h-5 text-blue-600" />
               <h3 className="text-lg font-bold text-gray-900">Публикация результатов</h3>
@@ -1914,7 +1955,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                               <div className="flex items-center justify-between">
                                 <span className="font-semibold">{status}</span>
                                 <span className="text-xs text-gray-500">
-                                  {formatCouponExpiry(coupon)}
+                                  {formatCouponExpiry(coupon, locale, t)}
                                 </span>
                               </div>
                               {coupon.note && (
@@ -1950,7 +1991,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                       <option value="">Выберите купон</option>
                       {transferableCoupons.map((coupon) => (
                         <option key={coupon.id} value={coupon.id}>
-                          {formatCouponOptionLabel(coupon)}
+                          {formatCouponOptionLabel(coupon, locale, t)}
                         </option>
                       ))}
                     </select>
@@ -2020,7 +2061,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                       {" -> "}
                       {transferNames[transfer.to_student_id] || "Кто-то"}
                     </span>
-                    <span className="text-xs text-gray-500">{formatDateTime(transfer.created_at)}</span>
+                    <span className="text-xs text-gray-500">{formatDateTime(transfer.created_at, locale)}</span>
                   </div>
                 ))}
               </div>
@@ -2113,6 +2154,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

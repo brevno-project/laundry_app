@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useLaundry } from "@/contexts/LaundryContext";
+import { useUi } from "@/contexts/UiContext";
 import { Student } from "@/types";
 import {
   ListIcon,
@@ -19,6 +20,7 @@ import AddStudentModal from "@/components/AddStudentModal";
 
 export default function StudentsList() {
   const { students, isAdmin, isSuperAdmin, isCleanupAdmin, user, updateStudent, deleteStudent } = useLaundry();
+  const { t } = useUi();
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [editRoom, setEditRoom] = useState("");
   const [editFirstName, setEditFirstName] = useState("");
@@ -41,9 +43,9 @@ export default function StudentsList() {
     return (
       <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
         <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
-          <ListIcon className="w-8 h-8" />Список студентов
+          <ListIcon className="w-8 h-8" />{t("students.title")}
         </h2>
-        <p className="text-gray-700 text-lg">Студенты пока не найдены.</p>
+        <p className="text-gray-700 text-lg">{t("students.empty")}</p>
       </div>
     );
   }
@@ -98,22 +100,22 @@ export default function StudentsList() {
       });
 
       setEditingStudent(null);
-      setNotice({ type: "success", message: "Студент обновлен." });
+      setNotice({ type: "success", message: t("students.updateSuccess") });
     } catch (error) {
-      setNotice({ type: "error", message: "Ошибка обновления студента." });
+      setNotice({ type: "error", message: t("students.updateError") });
     }
   };
 
   const handleDeleteStudent = async (student: Student) => {
     if (!canDeleteStudents || !canManageStudent(student)) return;
 
-    if (!confirm(`Удалить студента ${student.full_name}?`)) return;
+    if (!confirm(t("students.deleteConfirm", { name: student.full_name }))) return;
 
     try {
       await deleteStudent(student.id);
-      setNotice({ type: "success", message: "Студент удален." });
+      setNotice({ type: "success", message: t("students.deleteSuccess") });
     } catch (error) {
-      setNotice({ type: "error", message: "Ошибка удаления студента." });
+      setNotice({ type: "error", message: t("students.deleteError") });
     }
   };
 
@@ -147,22 +149,22 @@ export default function StudentsList() {
                 {canManageStudents && (
                   <span className="mt-1 flex flex-wrap gap-1 text-[11px] font-semibold text-gray-600">
                     <span className={`rounded-full px-2 py-0.5 ${student.key_issued ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}>
-                      {student.key_issued ? "Ключ выдан" : "Ключа нет"}
+                      {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
                     </span>
                     {student.key_lost && (
                       <span className="rounded-full bg-red-100 px-2 py-0.5 text-red-700">
-                        Ключ потерян
+                        {t("students.keyLost")}
                       </span>
                     )}
                     {isSuperAdmin && student.is_cleanup_admin && (
-                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-700">
-                          Лидер
-                        </span>
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-700">
+                        {t("header.leader")}
+                      </span>
                     )}
                     {isSuperAdmin && (
                       <span className={`rounded-full px-2 py-0.5 ${student.can_view_students ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-500"}`}>
                         <EyeIcon className="w-3 h-3 inline-block mr-1" />
-                        {student.can_view_students ? "Список открыт" : "Список закрыт"}
+                        {student.can_view_students ? t("students.listOpen") : t("students.listClosed")}
                       </span>
                     )}
                   </span>
@@ -180,11 +182,11 @@ export default function StudentsList() {
           <td className="p-3 text-center">
             {hasTelegram(student) ? (
               <span className="text-green-600 font-semibold flex items-center justify-center gap-1">
-                <CheckIcon className="w-4 h-4" />Подключен
+                <CheckIcon className="w-4 h-4" />{t("students.connected")}
               </span>
             ) : (
               <span className="text-gray-400 flex items-center justify-center gap-1">
-                <CloseIcon className="w-4 h-4" />Не подключен
+                <CloseIcon className="w-4 h-4" />{t("students.notConnected")}
               </span>
             )}
           </td>
@@ -195,16 +197,16 @@ export default function StudentsList() {
                   onClick={() => openEditModal(student)}
                   className="btn btn-primary px-3 py-1 text-sm"
                 >
-                  <EditIcon className="w-4 h-4 inline-block mr-1" />Редактировать
+                  <EditIcon className="w-4 h-4 inline-block mr-1" />{t("students.edit")}
                 </button>
-                {canDeleteStudents && (
-                  <button
-                    onClick={() => handleDeleteStudent(student)}
-                    className="btn btn-danger px-3 py-1 text-sm"
-                  >
-                    <DeleteIcon className="w-4 h-4 inline-block mr-1" />Удалить
-                  </button>
-                )}
+                    {canDeleteStudents && (
+                      <button
+                        onClick={() => handleDeleteStudent(student)}
+                        className="btn btn-danger px-3 py-1 text-sm"
+                      >
+                        <DeleteIcon className="w-4 h-4 inline-block mr-1" />{t("students.delete")}
+                      </button>
+                    )}
               </div>
             )}
           </td>
@@ -245,22 +247,22 @@ export default function StudentsList() {
                 {canManageStudents && (
                   <span className="mt-1 flex flex-wrap gap-1 text-[10px] font-semibold text-gray-600">
                     <span className={`rounded-full px-1.5 py-0.5 ${student.key_issued ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}>
-                      {student.key_issued ? "Ключ выдан" : "Ключа нет"}
+                      {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
                     </span>
                     {student.key_lost && (
                       <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-red-700">
-                        Потерян
+                        {t("students.keyLost")}
                       </span>
                     )}
                     {isSuperAdmin && student.is_cleanup_admin && (
-                        <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-amber-700">
-                          Лидер
-                        </span>
+                      <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-amber-700">
+                        {t("header.leader")}
+                      </span>
                     )}
                     {isSuperAdmin && (
                       <span className={`rounded-full px-1.5 py-0.5 ${student.can_view_students ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-500"}`}>
                         <EyeIcon className="w-3 h-3 inline-block mr-1" />
-                        {student.can_view_students ? "Открыт" : "Закрыт"}
+                        {student.can_view_students ? t("students.listOpenShort") : t("students.listClosedShort")}
                       </span>
                     )}
                   </span>
@@ -308,14 +310,14 @@ export default function StudentsList() {
       <div className="bg-white rounded-lg shadow-lg border border-gray-200">
         <div className="flex items-center justify-between mb-4 px-4 pt-4 pb-2">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <ListIcon className="w-8 h-8" />Список студентов ({students.length})
+            <ListIcon className="w-8 h-8" />{t("students.title")} ({students.length})
           </h2>
           {canManageStudents && (
             <button
               onClick={() => setShowAddModal(true)}
               className="btn btn-primary btn-glow"
             >
-              + Добавить студента
+              + {t("students.add")}
             </button>
           )}
         </div>
@@ -334,7 +336,7 @@ export default function StudentsList() {
 
         <div className="mb-6 px-4">
           <h3 className="text-xl font-bold mb-3 text-blue-700 flex items-center gap-2 px-4">
-            <RoomIcon className="w-5 h-5" />Блок A ({blockA.length})
+            <RoomIcon className="w-5 h-5" />{t("students.blockA")} ({blockA.length})
           </h3>
 
           <div className="hidden md:block overflow-x-auto">
@@ -349,10 +351,10 @@ export default function StudentsList() {
               <thead>
                 <tr className="bg-blue-100 border-b-2 border-blue-300">
                   <th className="text-left p-3 font-bold text-gray-900">#</th>
-                  <th className="text-left p-3 font-bold text-gray-900">Имя</th>
-                  <th className="text-center p-3 font-bold text-gray-900">Комната</th>
-                  <th className="text-center p-3 font-bold text-gray-900">Telegram</th>
-                  {canManageStudents && <th className="text-center p-3 font-bold text-gray-900">Действия</th>}
+                  <th className="text-left p-3 font-bold text-gray-900">{t("students.name")}</th>
+                  <th className="text-center p-3 font-bold text-gray-900">{t("students.room")}</th>
+                  <th className="text-center p-3 font-bold text-gray-900">{t("students.telegram")}</th>
+                  {canManageStudents && <th className="text-center p-3 font-bold text-gray-900">{t("students.actions")}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -366,14 +368,14 @@ export default function StudentsList() {
               <thead>
                 <tr className="bg-blue-100 border-b-2 border-blue-300">
                   <th className="text-left p-1 font-bold text-gray-900">#</th>
-                  <th className="text-left p-1 font-bold text-gray-900">Имя</th>
+                  <th className="text-left p-1 font-bold text-gray-900">{t("students.name")}</th>
                   <th className="text-center p-1 font-bold text-gray-900">
                     <DoorIcon className="w-5 h-5 inline-block" />
                   </th>
                   <th className="text-center p-1 font-bold text-gray-900">
                     <TelegramIcon className="w-5 h-5 inline-block" />
                   </th>
-                  {canManageStudents && <th className="text-left p-1 font-bold text-gray-900">Действия</th>}
+                  {canManageStudents && <th className="text-left p-1 font-bold text-gray-900">{t("students.actions")}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -385,7 +387,7 @@ export default function StudentsList() {
 
         <div className="pb-4 px-4">
           <h3 className="text-xl font-bold mb-3 text-green-700 flex items-center gap-2 px-4">
-            <RoomIcon className="w-5 h-5" />Блок B ({blockB.length})
+            <RoomIcon className="w-5 h-5" />{t("students.blockB")} ({blockB.length})
           </h3>
 
           <div className="hidden md:block overflow-x-auto">
@@ -400,10 +402,10 @@ export default function StudentsList() {
               <thead>
                 <tr className="bg-green-100 border-b-2 border-green-300">
                   <th className="text-left p-3 font-bold text-gray-900">#</th>
-                  <th className="text-left p-3 font-bold text-gray-900">Имя</th>
-                  <th className="text-center p-3 font-bold text-gray-900">Комната</th>
-                  <th className="text-center p-3 font-bold text-gray-900">Telegram</th>
-                  {canManageStudents && <th className="text-center p-3 font-bold text-gray-900">Действия</th>}
+                  <th className="text-left p-3 font-bold text-gray-900">{t("students.name")}</th>
+                  <th className="text-center p-3 font-bold text-gray-900">{t("students.room")}</th>
+                  <th className="text-center p-3 font-bold text-gray-900">{t("students.telegram")}</th>
+                  {canManageStudents && <th className="text-center p-3 font-bold text-gray-900">{t("students.actions")}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -417,14 +419,14 @@ export default function StudentsList() {
               <thead>
                 <tr className="bg-green-100 border-b-2 border-green-300">
                   <th className="text-left p-1 font-bold text-gray-900">#</th>
-                  <th className="text-left p-1 font-bold text-gray-900">Имя</th>
+                  <th className="text-left p-1 font-bold text-gray-900">{t("students.name")}</th>
                   <th className="text-center p-1 font-bold text-gray-900">
                     <DoorIcon className="w-5 h-5 inline-block" />
                   </th>
                   <th className="text-center p-1 font-bold text-gray-900">
                     <TelegramIcon className="w-5 h-5 inline-block" />
                   </th>
-                  {canManageStudents && <th className="text-left p-1 font-bold text-gray-900">Действия</th>}
+                  {canManageStudents && <th className="text-left p-1 font-bold text-gray-900">{t("students.actions")}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -439,12 +441,12 @@ export default function StudentsList() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <EditIcon className="w-5 h-5" />Редактирование студента
+              <EditIcon className="w-5 h-5" />{t("students.editTitle")}
             </h3>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-bold mb-2 text-gray-900">Фамилия</label>
+                <label className="block text-sm font-bold mb-2 text-gray-900">{t("students.field.lastName")}</label>
                 <input
                   type="text"
                   value={editLastName}
@@ -454,7 +456,7 @@ export default function StudentsList() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold mb-2 text-gray-900">Имя *</label>
+                <label className="block text-sm font-bold mb-2 text-gray-900">{t("students.field.firstName")}</label>
                 <input
                   type="text"
                   value={editFirstName}
@@ -465,23 +467,23 @@ export default function StudentsList() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold mb-2 text-gray-900">Отчество (опционально)</label>
+                <label className="block text-sm font-bold mb-2 text-gray-900">{t("students.field.middleName")}</label>
                 <input
                   type="text"
                   value={editMiddleName}
                   onChange={(e) => setEditMiddleName(e.target.value)}
-                  placeholder="Иванович"
+                  placeholder={t("students.field.middleNamePlaceholder")}
                   className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold mb-2 text-gray-900">Комната</label>
+                <label className="block text-sm font-bold mb-2 text-gray-900">{t("students.field.room")}</label>
                 <input
                   type="text"
                   value={editRoom}
                   onChange={(e) => setEditRoom(e.target.value)}
-                  placeholder="A301, B402"
+                  placeholder={t("students.field.roomPlaceholder")}
                   className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
                 />
               </div>
@@ -495,7 +497,7 @@ export default function StudentsList() {
                       onChange={(e) => setEditKeyIssued(e.target.checked)}
                       className="h-5 w-5 cursor-pointer"
                     />
-                    Ключ выдан
+                    {t("students.keyIssued")}
                   </label>
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-800">
                     <input
@@ -504,7 +506,7 @@ export default function StudentsList() {
                       onChange={(e) => setEditKeyLost(e.target.checked)}
                       className="h-5 w-5 cursor-pointer"
                     />
-                    Ключ потерян
+                    {t("students.keyLost")}
                   </label>
                 </div>
               )}
@@ -522,7 +524,7 @@ export default function StudentsList() {
                     htmlFor="canViewStudents"
                     className="text-sm font-semibold text-gray-900 cursor-pointer flex items-center gap-1"
                   >
-                    <EyeIcon className="w-4 h-4" />Может видеть вкладку студентов
+                    <EyeIcon className="w-4 h-4" />{t("students.canView")}
                   </label>
                 </div>
               )}
@@ -540,7 +542,7 @@ export default function StudentsList() {
                     htmlFor="cleanupAdmin"
                     className="text-sm font-semibold text-gray-900 cursor-pointer"
                   >
-                      Лидер
+                      {t("header.leader")}
                   </label>
                 </div>
               )}
@@ -551,14 +553,14 @@ export default function StudentsList() {
                 onClick={() => setEditingStudent(null)}
                 className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
               >
-                Отмена
+                {t("common.cancel")}
               </button>
               <button
                 onClick={handleSaveEdit}
                 className="flex-1 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2"
               >
                 <CheckIcon className="w-5 h-5" />
-                Сохранить
+                {t("common.save")}
               </button>
             </div>
           </div>

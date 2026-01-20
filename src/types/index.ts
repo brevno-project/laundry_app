@@ -32,6 +32,12 @@ export type StudentLoginList = {
   full_name: string;
   room: string | null;
   is_registered: boolean;
+  is_banned?: boolean;
+  ban_reason?: string | null;
+  key_issued?: boolean;
+  key_lost?: boolean;
+  avatar_style?: string;
+  avatar_seed?: string | null;
 };
 
 export type StudentAuth = {

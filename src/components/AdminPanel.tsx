@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { useLaundry } from "@/contexts/LaundryContext";
+import { useUi } from "@/contexts/UiContext";
 import { Student } from "@/types";
 import { CloseIcon, EditIcon, PeopleIcon, EyeIcon } from "@/components/Icons";
 import ActionMenu from "@/components/ActionMenu";
@@ -27,6 +28,8 @@ export default function AdminPanel() {
     toggleAdminStatus,
     isSuperAdmin,
   } = useLaundry();
+  const { t, language } = useUi();
+  const locale = language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "ko-KR";
 
   const [showStudents, setShowStudents] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
@@ -63,6 +66,12 @@ export default function AdminPanel() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
 
+  const alertWithCheck = (message: string) => {
+    const trimmed = message.trim();
+    const suffix = trimmed.endsWith("✅") ? "" : " ✅";
+    alert(`${message}${suffix}`);
+  };
+
   // Available dates for queue (today + 7 days)
   const getAvailableDates = () => {
     const dates: { value: string; label: string }[] = [];
@@ -73,14 +82,13 @@ export default function AdminPanel() {
       date.setDate(today.getDate() + i);
       const value = date.toISOString().slice(0, 10);
 
-      const dayNames = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
-      const dayName = dayNames[date.getDay()];
+      const dayName = date.toLocaleDateString(locale, { weekday: "short" });
       const day = date.getDate();
       const month = date.getMonth() + 1;
 
       let label = `${dayName}, ${day}.${month.toString().padStart(2, "0")}`;
-      if (i === 0) label += " (сегодня)";
-      if (i === 1) label += " (завтра)";
+      if (i === 0) label += ` (${t("queue.dateToday")})`;
+      if (i === 1) label += ` (${t("queue.dateTomorrow")})`;
 
       dates.push({ value, label });
     }
@@ -127,9 +135,9 @@ export default function AdminPanel() {
       await resetStudentRegistration(selectedStudent.id);
       setShowResetConfirm(false);
       setSelectedStudent(null);
-      alert("Регистрация сброшена" + " ✅");
+      alertWithCheck(t("admin.resetSuccess"));
     } catch (err: any) {
-      alert("Ошибка сброса регистрации" + " ✅");
+      alertWithCheck(t("admin.resetError"));
     }
   };
 
@@ -146,9 +154,9 @@ export default function AdminPanel() {
       });
       setShowEditStudent(false);
       setSelectedStudent(null);
-      setNotice({ type: "success", message: "Студент обновлен." });
+      setNotice({ type: "success", message: t("students.updateSuccess") });
     } catch (err: any) {
-      setNotice({ type: "error", message: "Ошибка обновления студента." });
+      setNotice({ type: "error", message: t("students.updateError") });
     }
   };
 
@@ -156,22 +164,22 @@ export default function AdminPanel() {
     if (!selectedStudent) return;
 
     try {
-      await banStudent(selectedStudent.id, banReason || "Не указано");
+      await banStudent(selectedStudent.id, banReason || t("ban.reasonUnknown"));
       setShowBanStudent(false);
       setSelectedStudent(null);
       setBanReason("");
-      alert("Студент забанен" + " ✅");
+      alertWithCheck(t("admin.banSuccess"));
     } catch (err: any) {
-      alert("Ошибка: " + err.message + " ✅");
+      alertWithCheck(t("admin.error", { message: err.message }));
     }
   };
 
   const handleUnbanStudent = async (studentId: string) => {
     try {
       await unbanStudent(studentId);
-      alert("Студент разбанен" + " ✅");
+      alertWithCheck(t("admin.unbanSuccess"));
     } catch (err: any) {
-      alert("Ошибка: " + err.message + " ✅");
+      alertWithCheck(t("admin.error", { message: err.message }));
     }
   };
 
@@ -182,9 +190,9 @@ export default function AdminPanel() {
       await deleteStudent(selectedStudent.id);
       setShowDeleteConfirm(false);
       setSelectedStudent(null);
-      alert("Студент удален" + " ✅");
+      alertWithCheck(t("admin.deleteSuccess"));
     } catch (err: any) {
-      alert("Ошибка: " + err.message + " ✅");
+      alertWithCheck(t("admin.error", { message: err.message }));
     }
   };
 
@@ -202,18 +210,20 @@ export default function AdminPanel() {
       );
 
       setShowAddToQueue(false);
-      alert("Студент добавлен в очередь" + " ✅");
+      alertWithCheck(t("admin.addQueueSuccess"));
     } catch (err: any) {
-      alert("Ошибка: " + err.message + " ✅");
+      alertWithCheck(t("admin.error", { message: err.message }));
     }
   };
 
   const handleToggleAdmin = async (studentId: string, makeAdmin: boolean) => {
     try {
       await toggleAdminStatus(studentId, makeAdmin);
-      alert((makeAdmin ? "Назначен администратором" : "Права администратора сняты") + " ✅");
+      alertWithCheck(
+        makeAdmin ? t("admin.toggleAdminGranted") : t("admin.toggleAdminRevoked")
+      );
     } catch (error: any) {
-      alert("Ошибка: " + error.message + " ✅");
+      alertWithCheck(t("admin.error", { message: error.message }));
     }
   };
 
@@ -250,12 +260,14 @@ export default function AdminPanel() {
   if (!user) {
     return (
       <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-6 shadow-sm">
-        <h2 className="mb-3 text-2xl font-bold text-yellow-800">Требуется вход</h2>
+        <h2 className="mb-3 text-2xl font-bold text-yellow-800">
+          {t("admin.loginRequiredTitle")}
+        </h2>
         <p className="mb-2 text-sm text-yellow-800">
-          Сначала войдите как студент с правами администратора, затем введите админ-ключ.
+          {t("admin.loginRequiredBody")}
         </p>
         <p className="text-xs text-yellow-700">
-          Это нужно для корректной работы с базой и политиками безопасности.
+          {t("admin.loginRequiredHint")}
         </p>
       </div>
     );
@@ -264,10 +276,8 @@ export default function AdminPanel() {
   if (!isAdmin) {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-2xl font-bold text-gray-900">Администратор</h2>
-        <p className="text-sm text-gray-600">
-          Войдите как студент с правами администратора для доступа к панели.
-        </p>
+        <h2 className="mb-4 text-2xl font-bold text-gray-900">{t("admin.loginPromptTitle")}</h2>
+        <p className="text-sm text-gray-600">{t("admin.loginPromptBody")}</p>
       </div>
     );
   }
@@ -276,9 +286,9 @@ export default function AdminPanel() {
     <div className="rounded-lg border-2 border-purple-800 bg-purple-700 p-6 shadow-lg">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-white">Панель администратора</h2>
+          <h2 className="text-3xl font-bold text-white">{t("admin.panelTitle")}</h2>
           <p className="mt-1 text-base text-purple-100">
-            {isSuperAdmin ? "Режим суперадмина" : "Режим администратора"}
+            {isSuperAdmin ? t("admin.panelModeSuper") : t("admin.panelModeAdmin")}
           </p>
         </div>
       </div>
@@ -290,7 +300,7 @@ export default function AdminPanel() {
           className="w-full flex items-center justify-center gap-2 rounded-md bg-purple-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-purple-700"
         >
           <PeopleIcon className="h-5 w-5" />
-          {showStudents ? "Скрыть студентов" : "Управление студентами"}
+          {showStudents ? t("admin.studentsToggleHide") : t("admin.studentsToggleShow")}
         </button>
 
         {showStudents && (
@@ -308,7 +318,7 @@ export default function AdminPanel() {
             )}
             <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <h3 className="text-xl font-semibold text-gray-900">
-                Студенты ({filteredStudents.length})
+                {t("admin.studentsCount", { count: filteredStudents.length })}
               </h3>
 
               <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row">
@@ -317,7 +327,7 @@ export default function AdminPanel() {
                   onClick={() => setShowAddStudent(true)}
                   className="flex flex-1 items-center justify-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
                 >
-                  Добавить студента
+                  {t("admin.addStudent")}
                 </button>
               </div>
             </div>
@@ -327,7 +337,7 @@ export default function AdminPanel() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Поиск по имени или комнате"
+              placeholder={t("admin.searchPlaceholder")}
                 className="w-full rounded-md border-2 border-gray-300 p-2 text-sm text-gray-900"
               />
 
@@ -335,22 +345,22 @@ export default function AdminPanel() {
                 <FilterButton
                   active={filterStatus === "all"}
                   onClick={() => setFilterStatus("all")}
-                  label="Все"
+                  label={t("admin.filter.all")}
                 />
                 <FilterButton
                   active={filterStatus === "registered"}
                   onClick={() => setFilterStatus("registered")}
-                  label="Зарег."
+                  label={t("admin.filter.registered")}
                 />
                 <FilterButton
                   active={filterStatus === "unregistered"}
                   onClick={() => setFilterStatus("unregistered")}
-                  label="Не зар."
+                  label={t("admin.filter.unregistered")}
                 />
                 <FilterButton
                   active={filterStatus === "banned"}
                   onClick={() => setFilterStatus("banned")}
-                  label="Баны"
+                  label={t("admin.filter.banned")}
                 />
               </div>
             </div>
@@ -374,25 +384,25 @@ export default function AdminPanel() {
                         {student.full_name}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {student.room || "Нет"}
+                        {student.room || t("admin.roomMissing")}
                       </div>
 
                       <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
                         {student.is_registered && (
                           <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-medium text-emerald-700">
-                            Зарегистрирован
+                            {t("admin.status.registered")}
                           </span>
                         )}
 
                         {!student.is_registered && (
                           <span className="rounded-full bg-gray-200 px-2 py-0.5 font-medium text-gray-700">
-                            Не зарегистрирован
+                            {t("admin.status.unregistered")}
                           </span>
                         )}
 
                         {student.is_banned && (
                           <span className="rounded-full bg-red-100 px-2 py-0.5 font-medium text-red-700">
-                            Заблокирован
+                            {t("admin.status.banned")}
                           </span>
                         )}
 
@@ -404,19 +414,19 @@ export default function AdminPanel() {
 
                         {student.is_admin && !student.is_super_admin && (
                           <span className="rounded-full bg-purple-100 px-2 py-0.5 font-medium text-purple-700">
-                            Админ
+                            {t("admin.status.admin")}
                           </span>
                         )}
 
                         {student.is_super_admin && (
                           <span className="rounded-full bg-yellow-100 px-2 py-0.5 font-semibold text-yellow-800">
-                            Суперадмин
+                            {t("admin.status.superAdmin")}
                           </span>
                         )}
 
                         {student.is_cleanup_admin && (
                             <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700">
-                              Лидер
+                              {t("admin.status.leader")}
                             </span>
                         )}
                       </div>
@@ -451,28 +461,28 @@ export default function AdminPanel() {
         <Modal onClose={() => setShowEditStudent(false)}>
           <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
             <EditIcon className="h-5 w-5" />
-            Редактировать студента
+            {t("admin.editTitle")}
           </h3>
           <div className="space-y-3">
             <input
               type="text"
               value={editFirstname}
               onChange={(e) => setEditFirstname(e.target.value)}
-              placeholder="Имя"
+              placeholder={t("students.field.firstNamePlaceholder")}
               className="w-full rounded-lg border-2 border-gray-300 p-3 text-gray-900"
             />
             <input
               type="text"
               value={editLastname}
               onChange={(e) => setEditLastname(e.target.value)}
-              placeholder="Фамилия"
+              placeholder={t("students.field.lastNamePlaceholder")}
               className="w-full rounded-lg border-2 border-gray-300 p-3 text-gray-900"
             />
             <input
               type="text"
               value={editRoom}
               onChange={(e) => setEditRoom(e.target.value)}
-              placeholder="Комната"
+              placeholder={t("students.field.roomPlaceholder")}
               className="w-full rounded-lg border-2 border-gray-300 p-3 text-gray-900"
             />
             {isSuperAdmin && (
@@ -489,7 +499,7 @@ export default function AdminPanel() {
                   className="text-sm font-semibold text-gray-900 flex items-center gap-1"
                 >
                   <EyeIcon className="w-4 h-4" />
-                  Может видеть вкладку студентов
+                  {t("students.canView")}
                 </label>
               </div>
             )}
@@ -507,7 +517,7 @@ export default function AdminPanel() {
                   htmlFor="adminEditCleanupAdmin"
                   className="text-sm font-semibold text-gray-900"
                 >
-                  Лидер
+                  {t("admin.status.leader")}
                 </label>
               </div>
             )}
@@ -519,14 +529,14 @@ export default function AdminPanel() {
               onClick={() => setShowEditStudent(false)}
               className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
             >
-              Отмена
+              {t("common.cancel")}
             </button>
             <button
               type="button"
               onClick={handleEditStudent}
               className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
             >
-              Сохранить
+              {t("common.save")}
             </button>
           </div>
         </Modal>
@@ -534,13 +544,12 @@ export default function AdminPanel() {
 
       {showResetConfirm && selectedStudent && (
         <Modal onClose={() => setShowResetConfirm(false)}>
-          <h3 className="mb-3 text-xl font-bold text-orange-700">Сбросить регистрацию?</h3>
+          <h3 className="mb-3 text-xl font-bold text-orange-700">{t("admin.resetTitle")}</h3>
           <p className="mb-3 text-sm text-gray-800">
-            Сбросить регистрацию для{" "}
-            <span className="font-semibold">{selectedStudent.full_name}</span>?
+            {t("admin.resetConfirm", { name: selectedStudent.full_name })}
           </p>
           <p className="mb-4 text-xs font-semibold text-orange-600">
-            Студент сможет зарегистрироваться заново.
+            {t("admin.resetHint")}
           </p>
           <div className="flex gap-2">
             <button
@@ -548,14 +557,14 @@ export default function AdminPanel() {
               onClick={() => setShowResetConfirm(false)}
               className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
             >
-              Отмена
+              {t("common.cancel")}
             </button>
             <button
               type="button"
               onClick={handleResetStudent}
               className="flex-1 rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700"
             >
-              Сбросить
+              {t("admin.resetAction")}
             </button>
           </div>
         </Modal>
@@ -563,15 +572,14 @@ export default function AdminPanel() {
 
       {showBanStudent && selectedStudent && (
         <Modal onClose={() => setShowBanStudent(false)}>
-          <h3 className="mb-4 text-xl font-bold text-gray-900">Забанить студента</h3>
+          <h3 className="mb-4 text-xl font-bold text-gray-900">{t("admin.banTitle")}</h3>
           <p className="mb-3 text-sm text-gray-800">
-            Забанить{" "}
-            <span className="font-semibold">{selectedStudent.full_name}</span>?
+            {t("admin.banConfirm", { name: selectedStudent.full_name })}
           </p>
           <textarea
             value={banReason}
             onChange={(e) => setBanReason(e.target.value)}
-            placeholder="Причина бана (опционально)"
+            placeholder={t("admin.banPlaceholder")}
             className="h-24 w-full rounded-lg border-2 border-gray-300 p-3 text-sm text-gray-900"
           />
           <div className="mt-4 flex gap-2">
@@ -580,14 +588,14 @@ export default function AdminPanel() {
               onClick={() => setShowBanStudent(false)}
               className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
             >
-              Отмена
+              {t("common.cancel")}
             </button>
             <button
               type="button"
               onClick={handleBanStudent}
               className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
             >
-              Забанить
+              {t("admin.banAction")}
             </button>
           </div>
         </Modal>
@@ -595,13 +603,12 @@ export default function AdminPanel() {
 
       {showDeleteConfirm && selectedStudent && (
         <Modal onClose={() => setShowDeleteConfirm(false)}>
-          <h3 className="mb-3 text-xl font-bold text-red-700">Удалить студента?</h3>
+          <h3 className="mb-3 text-xl font-bold text-red-700">{t("admin.deleteTitle")}</h3>
           <p className="mb-3 text-sm text-gray-800">
-            Вы уверены, что хотите удалить{" "}
-            <span className="font-semibold">{selectedStudent.full_name}</span>?
+            {t("admin.deleteConfirm", { name: selectedStudent.full_name })}
           </p>
           <p className="mb-4 text-xs font-semibold text-red-600">
-            Это действие нельзя отменить. Будут удалены все данные студента.
+            {t("admin.deleteHint")}
           </p>
           <div className="flex gap-2">
             <button
@@ -609,14 +616,14 @@ export default function AdminPanel() {
               onClick={() => setShowDeleteConfirm(false)}
               className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
             >
-              Отмена
+              {t("common.cancel")}
             </button>
             <button
               type="button"
               onClick={handleDeleteStudent}
               className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
             >
-              Удалить
+              {t("admin.deleteAction")}
             </button>
           </div>
         </Modal>
@@ -624,15 +631,15 @@ export default function AdminPanel() {
 
       {showAddToQueue && selectedStudent && (
         <Modal onClose={() => setShowAddToQueue(false)}>
-          <h3 className="mb-3 text-xl font-bold text-gray-900">Поставить в очередь</h3>
+          <h3 className="mb-3 text-xl font-bold text-gray-900">{t("admin.addQueueTitle")}</h3>
           <p className="mb-3 text-sm text-gray-800">
-            Студент:{" "}
+            {t("admin.addQueueStudent")}:{" "}
             <span className="font-semibold">{selectedStudent.full_name}</span>
           </p>
 
           <div className="space-y-3 text-sm">
             <div>
-              <label className="mb-1 block font-semibold text-gray-900">Дата стирки</label>
+              <label className="mb-1 block font-semibold text-gray-900">{t("admin.addQueueDate")}</label>
               <select
                 value={queueDate}
                 onChange={(e) => setQueueDate(e.target.value)}
@@ -647,7 +654,7 @@ export default function AdminPanel() {
             </div>
 
             <div>
-              <label className="mb-1 block font-semibold text-gray-900">Количество стирок</label>
+              <label className="mb-1 block font-semibold text-gray-900">{t("admin.addQueueWashCount")}</label>
               <select
                 value={queueWashCount}
                 onChange={(e) => setQueueWashCount(Number(e.target.value))}
@@ -662,7 +669,7 @@ export default function AdminPanel() {
             </div>
 
             <div>
-              <label className="mb-1 block font-semibold text-gray-900">Купоны</label>
+              <label className="mb-1 block font-semibold text-gray-900">{t("admin.addQueueCoupons")}</label>
               <select
                 value={queueCouponsUsed}
                 onChange={(e) => setQueueCouponsUsed(Number(e.target.value))}
@@ -675,7 +682,7 @@ export default function AdminPanel() {
                 ))}
               </select>
               <p className="mt-1 text-xs text-gray-500">
-                Проверка доступных купонов выполнится при добавлении.
+                {t("admin.addQueueHint")}
               </p>
             </div>
           </div>
@@ -686,14 +693,14 @@ export default function AdminPanel() {
               onClick={() => setShowAddToQueue(false)}
               className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
             >
-              Отмена
+              {t("common.cancel")}
             </button>
             <button
               type="button"
               onClick={handleAddToQueue}
               className="flex-1 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700"
             >
-              Добавить
+              {t("admin.addQueueAction")}
             </button>
           </div>
         </Modal>
@@ -741,7 +748,7 @@ function Modal({
           className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-gray-800"
         >
           <CloseIcon className="h-4 w-4" />
-          Закрыть
+          {t("admin.close")}
         </button>
       </div>
     </div>
