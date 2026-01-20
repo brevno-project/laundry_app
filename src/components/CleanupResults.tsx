@@ -715,7 +715,7 @@ const formatRecipientLabel = (recipient: ReminderRecipient) =>
 export default function CleanupResults({ embedded = false }: CleanupResultsProps) {
   const { user, isAdmin, isSuperAdmin, isCleanupAdmin } = useLaundry();
   const { t, language } = useUi();
-  const locale = language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "ko-KR";
+  const locale = language === "ru" ? "ru-RU" : language === "en" ? "en-US" : language === "ko" ? "ko-KR" : "ky-KG";
   const canManageCleanup = isAdmin || isSuperAdmin || isCleanupAdmin;
   const [results, setResults] = useState<CleanupResult[]>([]);
   const [apartments, setApartments] = useState<Apartment[]>([]);

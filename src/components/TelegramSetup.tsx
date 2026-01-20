@@ -45,11 +45,11 @@ export default function TelegramSetup() {
   return (
     <div
       id="telegram-setup"
-      className="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800"
+      className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
     >
       <div className="flex items-center gap-2 mb-3">
         <TelegramIcon className="w-8 h-8 text-sky-600 dark:text-sky-300" />
-        <h3 className="font-bold text-xl text-amber-950 dark:text-slate-100">{t("telegram.connectTitle")}</h3>
+        <h3 className="font-bold text-xl text-slate-900 dark:text-slate-100">{t("telegram.connectTitle")}</h3>
       </div>
 
       <a

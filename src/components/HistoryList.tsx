@@ -43,7 +43,9 @@ const formatDuration = (start: string | null | undefined, end: string | null | u
       ? { h: 'ч', m: 'мин' }
       : language === 'en'
         ? { h: 'h', m: 'min' }
-        : { h: '시간', m: '분' };
+        : language === 'ko'
+          ? { h: '시간', m: '분' }
+          : { h: 'саат', m: 'мүн' };
   if (hours > 0) return `${hours} ${units.h} ${mins} ${units.m}`;
   return `${mins} ${units.m}`;
 };
@@ -70,7 +72,7 @@ const getEarliestDate = (dates: Array<string | null | undefined>) => {
 export default function HistoryList() {
   const { history, historyTotalCount, historyHasMore, loadMoreHistory, isSuperAdmin, fetchHistory, students } = useLaundry();
   const { t, language } = useUi();
-  const locale = language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : 'ko-KR';
+  const locale = language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : language === 'ko' ? 'ko-KR' : 'ky-KG';
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showClearTools, setShowClearTools] = useState(false);
   const [clearFrom, setClearFrom] = useState('');

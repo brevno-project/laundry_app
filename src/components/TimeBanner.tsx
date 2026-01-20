@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import { getLaundryTimeStatus, LAUNDRY_CLOSE_HOUR, LAUNDRY_OPEN_HOUR, TimeStatus } from '@/lib/timeHelper';
 import { EditIcon, ClockIcon, WarningIcon } from '@/components/Icons';
-import { useUi } from '@/contexts/UiContext';
+import { UiLanguage, useUi } from '@/contexts/UiContext';
 
-const formatRemaining = (minutes: number, language: 'ru' | 'en' | 'ko') => {
+const formatRemaining = (minutes: number, language: UiLanguage) => {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   if (language === 'en') {
@@ -13,6 +13,9 @@ const formatRemaining = (minutes: number, language: 'ru' | 'en' | 'ko') => {
   }
   if (language === 'ko') {
     return hours > 0 ? `${hours}시간 ${mins}분` : `${mins}분`;
+  }
+  if (language === 'ky') {
+    return hours > 0 ? `${hours} саат ${mins} мүн` : `${mins} мүн`;
   }
   return hours > 0 ? `${hours} ч ${mins} мин` : `${mins} мин`;
 };

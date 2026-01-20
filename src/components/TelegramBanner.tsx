@@ -48,8 +48,8 @@ export default function TelegramBanner({ onGoToSettings }: TelegramBannerProps) 
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-900 rounded-lg p-6 max-w-md w-full shadow-2xl relative border border-gray-700">
+    <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+      <div className="bg-slate-950/95 rounded-lg p-6 max-w-md w-full shadow-2xl relative border border-slate-700/70">
 
 
         {/* Заголовок */}
@@ -58,7 +58,7 @@ export default function TelegramBanner({ onGoToSettings }: TelegramBannerProps) 
           <h2 className="text-2xl font-bold text-white mb-2">
             {t("telegram.bannerTitle")}
           </h2>
-          <p className="text-gray-400">
+          <p className="text-slate-400">
             {t("telegram.bannerBody")}
           </p>
         </div>

@@ -23,7 +23,7 @@ import { useUi } from '@/contexts/UiContext';
 export default function Home() {
   const { user, isLoading, authReady, logoutStudent, isAdmin, isSuperAdmin, isCleanupAdmin, machineState, queue, isNewUser, setIsNewUser, students, needsClaim } = useLaundry();
   const { t, language, setLanguage, theme, setTheme } = useUi();
-  const locale = language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "ko-KR";
+  const locale = language === "ru" ? "ru-RU" : language === "en" ? "en-US" : language === "ko" ? "ko-KR" : "ky-KG";
   const canViewStudentsTab = isAdmin || isSuperAdmin || isCleanupAdmin || !!user?.can_view_students;
   
   const [activeTab, setActiveTab] = React.useState("main");
@@ -135,7 +135,7 @@ export default function Home() {
               {t("header.signedInAs")}: <span className="font-semibold">{user.full_name}</span>
               {user.room && <span className="ml-2">{t("header.room")} {user.room}</span>}
               {isCleanupAdmin && (
-                <span className="ml-2 inline-flex items-center rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-200">
+                <span className="ml-2 inline-flex items-center rounded-full border border-indigo-200 bg-indigo-100 px-3 py-1 text-sm font-semibold text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200">
                   {t("header.leader")}
                 </span>
               )}
@@ -409,6 +409,14 @@ export default function Home() {
                   aria-pressed={language === "ko"}
                 >
                   {t("settings.language.ko")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLanguage("ky")}
+                  className={`btn ${language === "ky" ? "btn-primary" : "btn-secondary"}`}
+                  aria-pressed={language === "ky"}
+                >
+                  {t("settings.language.ky")}
                 </button>
               </div>
             </div>

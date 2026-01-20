@@ -29,7 +29,7 @@ export default function AdminPanel() {
     isSuperAdmin,
   } = useLaundry();
   const { t, language } = useUi();
-  const locale = language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "ko-KR";
+  const locale = language === "ru" ? "ru-RU" : language === "en" ? "en-US" : language === "ko" ? "ko-KR" : "ky-KG";
 
   const [showStudents, setShowStudents] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
@@ -428,7 +428,7 @@ export default function AdminPanel() {
                         )}
 
                         {student.is_cleanup_admin && (
-                            <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700 dark:bg-amber-900/25 dark:text-amber-200">
+                            <span className="rounded-full border border-indigo-200 bg-indigo-100 px-2 py-0.5 font-medium text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200">
                               {t("admin.status.leader")}
                             </span>
                         )}
@@ -508,7 +508,7 @@ export default function AdminPanel() {
             )}
 
             {isSuperAdmin && (
-              <div className="mt-3 flex items-center gap-2 rounded-lg bg-amber-50 p-3">
+              <div className="mt-3 flex items-center gap-2 rounded-lg bg-indigo-50 p-3 dark:bg-slate-900/60">
                 <input
                   type="checkbox"
                   id="adminEditCleanupAdmin"
@@ -518,7 +518,7 @@ export default function AdminPanel() {
                 />
                 <label
                   htmlFor="adminEditCleanupAdmin"
-                  className="text-sm font-semibold text-gray-900"
+                  className="text-sm font-semibold text-gray-900 dark:text-slate-200"
                 >
                   {t("admin.status.leader")}
                 </label>

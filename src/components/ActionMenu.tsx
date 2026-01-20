@@ -213,7 +213,7 @@ export default function ActionMenu({
                     <Badge color="indigo">{t("admin.badge.admin")}</Badge>
                   )}
                   {student.is_cleanup_admin && (
-                    <Badge color="amber">{t("admin.badge.leader")}</Badge>
+                    <Badge color="indigo">{t("admin.badge.leader")}</Badge>
                   )}
                   {student.is_registered && (
                     <Badge color="green">{t("admin.badge.registered")}</Badge>

@@ -48,7 +48,7 @@ export default function UserForm() {
   const queuePosition = existingQueueItem ? queue.findIndex(item => item.id === existingQueueItem.id) + 1 : 0;
   const maxCoupons = Math.min(availableCoupons, washCount);
   const selectedCouponCount = selectedCouponIds.length;
-  const locale = language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : 'ko-KR';
+  const locale = language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : language === 'ko' ? 'ko-KR' : 'ky-KG';
 
   const formatCouponDateTime = (dateStr: string) =>
     new Date(dateStr).toLocaleString(locale, {
