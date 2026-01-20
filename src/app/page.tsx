@@ -375,7 +375,7 @@ export default function Home() {
 
         {/* Студенты - доступно админам и пользователям с can_view_students */}
         {activeTab === 'students' && canViewStudentsTab && (
-          <div className="w-full space-y-4">
+          <div className="w-full space-y-4 p-3">
             <StudentsList />
           </div>
         )}

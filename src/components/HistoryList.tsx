@@ -70,7 +70,7 @@ const getEarliestDate = (dates: Array<string | null | undefined>) => {
 };
 
 export default function HistoryList() {
-  const { history, historyTotalCount, historyHasMore, loadMoreHistory, isSuperAdmin, fetchHistory } = useLaundry();
+  const { history, historyTotalCount, historyHasMore, loadMoreHistory, isSuperAdmin, fetchHistory, students } = useLaundry();
   const { t, language } = useUi();
   const locale = language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : 'ko-KR';
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -209,7 +209,7 @@ export default function HistoryList() {
 
   return (
     <div className="space-y-4">
-      <div className="relative overflow-hidden rounded-2xl shadow-md p-5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700">
+      <div className="relative overflow-hidden rounded-2xl shadow-md p-5 bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700">
         <div className="pointer-events-none absolute inset-0 opacity-15" style={{ backgroundImage: 'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.45), transparent 35%), radial-gradient(circle at 80% 0%, rgba(255,255,255,0.35), transparent 40%)' }} />
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -218,7 +218,7 @@ export default function HistoryList() {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-white">{t("history.title")}</h2>
-              <p className="text-blue-100 text-sm">{t("history.total", { count: historyTotalCount })}</p>
+              <p className="text-purple-100 text-sm">{t("history.total", { count: historyTotalCount })}</p>
             </div>
           </div>
           {isSuperAdmin && (
@@ -313,13 +313,13 @@ export default function HistoryList() {
             ? paymentType === 'both'
               ? (
                 <>
-                  <TicketIcon className="w-4 h-4 text-blue-600" />
-                  <MoneyIcon className="w-4 h-4 text-blue-600" />
+                  <TicketIcon className="w-4 h-4 text-purple-600" />
+                  <MoneyIcon className="w-4 h-4 text-purple-600" />
                 </>
               )
-              : <TicketIcon className="w-4 h-4 text-blue-600" />
+              : <TicketIcon className="w-4 h-4 text-purple-600" />
             : paymentType === 'money' || paymentType === 'cash'
-              ? <MoneyIcon className="w-4 h-4 text-blue-600" />
+              ? <MoneyIcon className="w-4 h-4 text-purple-600" />
               : null;
 
           return (
@@ -332,8 +332,14 @@ export default function HistoryList() {
                   <div className="relative">
                     <Avatar
                       name={item.full_name}
-                      style={item.avatar_style}
-                      seed={item.avatar_seed}
+                      style={(() => {
+                        const student = students.find(s => s.id === item.student_id);
+                        return student?.avatar_style || item.avatar_style;
+                      })()}
+                      seed={(() => {
+                        const student = students.find(s => s.id === item.student_id);
+                        return student?.avatar_seed || item.avatar_seed;
+                      })()}
                       className="w-12 h-12 ring-4 ring-white shadow-md"
                     />
                   </div>
