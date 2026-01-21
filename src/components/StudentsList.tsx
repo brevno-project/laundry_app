@@ -537,7 +537,7 @@ export default function StudentsList() {
               )}
 
               {isSuperAdmin && (
-                <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+                <div className="flex items-center gap-2 p-3 rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40">
                   <input
                     type="checkbox"
                     id="canViewStudents"
@@ -547,7 +547,7 @@ export default function StudentsList() {
                   />
                   <label
                     htmlFor="canViewStudents"
-                    className="text-sm font-semibold text-gray-900 cursor-pointer flex items-center gap-1"
+                    className="text-sm font-semibold text-gray-900 cursor-pointer flex items-center gap-1 dark:text-slate-100"
                   >
                     <EyeIcon className="w-4 h-4" />{t("students.canView")}
                   </label>
@@ -555,7 +555,7 @@ export default function StudentsList() {
               )}
 
               {isSuperAdmin && (
-                <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-lg">
+                <div className="flex items-center gap-2 p-3 rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40">
                   <input
                     type="checkbox"
                     id="cleanupAdmin"
@@ -565,7 +565,7 @@ export default function StudentsList() {
                   />
                   <label
                     htmlFor="cleanupAdmin"
-                    className="text-sm font-semibold text-gray-900 cursor-pointer"
+                    className="text-sm font-semibold text-gray-900 cursor-pointer dark:text-slate-100"
                   >
                       {t("header.leader")}
                   </label>

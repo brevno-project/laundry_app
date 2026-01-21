@@ -285,11 +285,11 @@ export default function AdminPanel() {
   return (
     <>
       <div className="space-y-4">
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-700 dark:from-purple-800 dark:to-indigo-900 p-4 rounded-lg shadow-lg mb-4">
+      <div className="bg-gradient-to-r from-indigo-600 via-slate-700 to-slate-800 dark:from-slate-700 dark:via-slate-800 dark:to-slate-900 p-4 rounded-lg shadow-lg mb-4">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold text-white">{t("admin.panelTitle")}</h2>
-            <p className="mt-1 text-base text-purple-100">
+            <p className="mt-1 text-base text-slate-200">
               {isSuperAdmin ? t("admin.panelModeSuper") : t("admin.panelModeAdmin")}
             </p>
           </div>
@@ -300,7 +300,7 @@ export default function AdminPanel() {
         <button
           type="button"
           onClick={() => setShowStudents((v) => !v)}
-          className="w-full flex items-center justify-center gap-2 rounded-md bg-purple-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-purple-700"
+          className="w-full flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 dark:bg-slate-700 dark:hover:bg-slate-600"
         >
           <PeopleIcon className="h-5 w-5" />
           {showStudents ? t("admin.studentsToggleHide") : t("admin.studentsToggleShow")}

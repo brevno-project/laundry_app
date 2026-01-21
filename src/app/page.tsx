@@ -13,7 +13,7 @@ import StudentsList from '@/components/StudentsList';
 import CleanupResults from '@/components/CleanupResults';
 import ClaimAccount from '@/components/ClaimAccount';
 import GlobalAlert from '@/components/GlobalAlert';
-import { HomeIcon, HistoryIcon, PeopleIcon, SettingsIcon, DoorIcon, ListIcon, LaundryIcon, SunIcon, MoonIcon } from '@/components/Icons';
+import { HomeIcon, HistoryIcon, PeopleIcon, SettingsIcon, DoorIcon, ListIcon, LaundryIcon, SunIcon, MoonIcon, WashingSpinner } from '@/components/Icons';
 import TelegramBanner from '@/components/TelegramBanner';
 import StudentActions from '@/components/StudentActions';
 import PasswordChanger from '@/components/PasswordChanger';
@@ -27,6 +27,7 @@ export default function Home() {
   const canViewStudentsTab = isAdmin || isSuperAdmin || isCleanupAdmin || !!user?.can_view_students;
   
   const [activeTab, setActiveTab] = React.useState("main");
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
   
   const [showScrollButton, setShowScrollButton] = React.useState(false);
   const [scrollTarget, setScrollTarget] = React.useState<string | null>(null);
@@ -458,15 +459,31 @@ export default function Home() {
             <div className="bg-white p-4 rounded-lg shadow-sm">
               <h3 className="font-bold text-lg text-gray-800 mb-3">{t("settings.account")}</h3>
               <button
-                onClick={() => {
-                  logoutStudent();
-                  handleTabChange('main');
-                  setIsNewUser(false);
-                  localStorage.removeItem('needsTelegramSetup');
+                onClick={async () => {
+                  if (isLoggingOut) return;
+                  setIsLoggingOut(true);
+                  try {
+                    await logoutStudent();
+                    handleTabChange('main');
+                    setIsNewUser(false);
+                    localStorage.removeItem('needsTelegramSetup');
+                  } finally {
+                    setIsLoggingOut(false);
+                  }
                 }}
-                className="w-full btn btn-danger btn-lg btn-attn"
+                disabled={isLoggingOut}
+                className="w-full btn btn-danger btn-lg disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                <DoorIcon className="w-5 h-5" />{t("settings.logout")}
+                {isLoggingOut ? (
+                  <>
+                    <WashingSpinner className="w-5 h-5" />
+                    <span>{t("settings.logout")}...</span>
+                  </>
+                ) : (
+                  <>
+                    <DoorIcon className="w-5 h-5" />{t("settings.logout")}
+                  </>
+                )}
               </button>
             </div>
           </div>

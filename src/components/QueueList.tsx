@@ -7,7 +7,7 @@ import { sendTelegramNotification } from '@/lib/telegram';
 import { useState, useEffect, useRef } from 'react';
 import Timer from './Timer';
 import QueueTimers from './QueueTimers';
-import { CalendarIcon, BellIcon, KeyIcon, WashingIcon, BellOffIcon, WaitIcon, CheckIcon, DeleteIcon, EditIcon, TicketIcon, MoneyIcon, HourglassIcon, CloseIcon, ChevronUpIcon, ChevronDownIcon } from '@/components/Icons';
+import { CalendarIcon, BellIcon, KeyIcon, WashingIcon, BellOffIcon, WaitIcon, CheckIcon, DeleteIcon, EditIcon, TicketIcon, MoneyIcon, HourglassIcon, CloseIcon, ChevronUpIcon, ChevronDownIcon, WashingSpinner } from '@/components/Icons';
 import Avatar from '@/components/Avatar';
 
 export default function QueueList() {
@@ -371,6 +371,7 @@ export default function QueueList() {
   const [editCouponsUsed, setEditCouponsUsed] = useState(0);
   const [editDate, setEditDate] = useState('');
   const [openActionFor, setOpenActionFor] = useState<string | null>(null);
+  const [leavingQueueId, setLeavingQueueId] = useState<string | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const actionMenuRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -881,11 +882,31 @@ export default function QueueList() {
                         {/* Кнопки пользователя */}
                         {isCurrentUser && item.status === QueueStatus.WAITING && (
                           <button
-                            onClick={() => leaveQueue(item.id)}
-                            className="w-full btn btn-danger btn-attn"
+                            onClick={async () => {
+                              if (leavingQueueId) return;
+                              setLeavingQueueId(item.id);
+                              try {
+                                await leaveQueue(item.id);
+                              } catch (error) {
+                                showActionError(error, t("queue.submitError"));
+                              } finally {
+                                setLeavingQueueId(null);
+                              }
+                            }}
+                            disabled={leavingQueueId === item.id}
+                            className="w-full btn btn-danger disabled:opacity-70 disabled:cursor-not-allowed"
                           >
-                            <CloseIcon className="w-4 h-4" />
-                            {t("queue.leave")}
+                            {leavingQueueId === item.id ? (
+                              <>
+                                <WashingSpinner className="w-4 h-4" />
+                                <span>{t("queue.leave")}...</span>
+                              </>
+                            ) : (
+                              <>
+                                <CloseIcon className="w-4 h-4" />
+                                {t("queue.leave")}
+                              </>
+                            )}
                           </button>
                         )}
                         
