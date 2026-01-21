@@ -19,12 +19,14 @@ import StudentActions from '@/components/StudentActions';
 import PasswordChanger from '@/components/PasswordChanger';
 import AvatarCustomizer from '@/components/AvatarCustomizer';
 import { useUi } from '@/contexts/UiContext';
+import { supabase } from '@/lib/supabase';
 
 export default function Home() {
   const { user, isLoading, authReady, logoutStudent, isAdmin, isSuperAdmin, isCleanupAdmin, machineState, queue, isNewUser, setIsNewUser, students, needsClaim } = useLaundry();
   const { t, language, setLanguage, theme, setTheme } = useUi();
   const locale = language === "ru" ? "ru-RU" : language === "en" ? "en-US" : language === "ko" ? "ko-KR" : "ky-KG";
   const canViewStudentsTab = isAdmin || isSuperAdmin || isCleanupAdmin || !!user?.can_view_students;
+  const [didSyncLanguageFromDb, setDidSyncLanguageFromDb] = React.useState(false);
   
   const [activeTab, setActiveTab] = React.useState("main");
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
@@ -47,6 +49,46 @@ export default function Home() {
     if (!stored) return;
     setActiveTab(stored);
   }, [authReady]);
+
+  React.useEffect(() => {
+    if (!authReady) return;
+    if (!user) {
+      setDidSyncLanguageFromDb(false);
+    }
+  }, [user, authReady]);
+
+  React.useEffect(() => {
+    if (!authReady) return;
+    if (!user) return;
+    if (didSyncLanguageFromDb) return;
+    const dbLang = user.ui_language;
+    if (dbLang === "ru" || dbLang === "en" || dbLang === "ko" || dbLang === "ky") {
+      setLanguage(dbLang);
+    }
+    setDidSyncLanguageFromDb(true);
+  }, [authReady, user, didSyncLanguageFromDb, setLanguage]);
+
+  const handleLanguageChange = async (next: "ru" | "en" | "ko" | "ky") => {
+    setLanguage(next);
+    if (!user) return;
+    if (!supabase) return;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+
+      await fetch("/api/student/update-language", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ ui_language: next }),
+      });
+    } catch {
+      // ignore
+    }
+  };
 
   // ✅ ТЫ FIX: Сбрасываем activeTab на 'main' когда нет пользователя
   React.useEffect(() => {
@@ -90,7 +132,7 @@ export default function Home() {
 
   // ✅ Отслеживание скролла для кнопки "Вверх" (только для пользователей в очереди)
   React.useEffect(() => {
-    if (activeTab !== "history") {
+    if (activeTab !== "history" && activeTab !== "main") {
       setShowScrollButton(false);
       return;
     }
@@ -391,7 +433,7 @@ export default function Home() {
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => setLanguage("ru")}
+                  onClick={() => handleLanguageChange("ru")}
                   className={`btn ${language === "ru" ? "btn-primary" : "btn-secondary"}`}
                   aria-pressed={language === "ru"}
                 >
@@ -399,7 +441,7 @@ export default function Home() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setLanguage("en")}
+                  onClick={() => handleLanguageChange("en")}
                   className={`btn ${language === "en" ? "btn-primary" : "btn-secondary"}`}
                   aria-pressed={language === "en"}
                 >
@@ -407,7 +449,7 @@ export default function Home() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setLanguage("ko")}
+                  onClick={() => handleLanguageChange("ko")}
                   className={`btn ${language === "ko" ? "btn-primary" : "btn-secondary"}`}
                   aria-pressed={language === "ko"}
                 >
@@ -415,7 +457,7 @@ export default function Home() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setLanguage("ky")}
+                  onClick={() => handleLanguageChange("ky")}
                   className={`btn ${language === "ky" ? "btn-primary" : "btn-secondary"}`}
                   aria-pressed={language === "ky"}
                 >

@@ -821,7 +821,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
         .from("students")
 
-        .select("id, first_name, last_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, is_cleanup_admin, can_view_students, is_banned, ban_reason, avatar_style, avatar_seed")
+        .select("id, first_name, last_name, full_name, room, telegram_chat_id, ui_language, is_admin, is_super_admin, is_cleanup_admin, can_view_students, is_banned, ban_reason, avatar_style, avatar_seed")
 
         .eq("user_id", uid)
 
@@ -906,6 +906,8 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         room: me.room,
 
         telegram_chat_id: me.telegram_chat_id,
+
+        ui_language: (me as any).ui_language || undefined,
 
         avatar_style: me.avatar_style || 'bottts',
 
@@ -1469,6 +1471,8 @@ const finalizeUserSession = (
     room: student.room || undefined,
 
     telegram_chat_id: student.telegram_chat_id || undefined,
+
+    ui_language: (student as any).ui_language || undefined,
 
     avatar_style: student.avatar_style || 'bottts',
 

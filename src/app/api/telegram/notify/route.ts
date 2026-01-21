@@ -5,6 +5,13 @@ import { admin } from '@/lib/supabase-admin';
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID;
 
+type UiLanguage = "ru" | "en" | "ko" | "ky";
+
+const normalizeUiLanguage = (value: unknown): UiLanguage => {
+  if (value === "ru" || value === "en" || value === "ko" || value === "ky") return value;
+  return "ru";
+};
+
 // Типы уведомлений
 type NotificationType = 
   | 'joined'                    // Студент встал в очередь → ВСЕМ админам
@@ -33,6 +40,11 @@ interface TelegramNotification {
   message?: string;
 }
 
+type TelegramRecipient = {
+  telegram_chat_id: string;
+  ui_language: UiLanguage;
+};
+
 // Получить информацию об админе
 async function getAdminInfo(admin_student_id?: string): Promise<{ full_name: string; room: string; telegram_chat_id: string | null } | null> {
   if (!admin_student_id) {
@@ -52,74 +64,67 @@ async function getAdminInfo(admin_student_id?: string): Promise<{ full_name: str
   return data;
 }
 
-// Получить telegram_chat_id студента
-async function getStudentTelegramChatId(student_id?: string): Promise<string | null> {
-  console.log('🔍 getStudentTelegramChatId called with student_id:', student_id);
-  
+// Получить данные студента для рассылки
+async function getStudentRecipient(student_id?: string): Promise<TelegramRecipient | null> {
+  console.log('🔍 getStudentRecipient called with student_id:', student_id);
+
   if (!student_id) {
     console.log('❌ Missing student_id');
     return null;
   }
-  
+
   const { data, error } = await admin
     .from('students')
-    .select('telegram_chat_id, full_name')
+    .select('telegram_chat_id, full_name, ui_language')
     .eq('id', student_id)
     .maybeSingle();
-  
+
   console.log('📊 Query result:', { data, error: error?.message });
-  
+
   if (error || !data?.telegram_chat_id) {
     console.log('❌ No telegram_chat_id found for student:', student_id);
     return null;
   }
-  
+
   console.log('✅ Found telegram_chat_id for student:', data.full_name, '- chat_id:', data.telegram_chat_id);
-  return data.telegram_chat_id;
+
+  return {
+    telegram_chat_id: data.telegram_chat_id,
+    ui_language: normalizeUiLanguage((data as any).ui_language),
+  };
 }
 
-// ✅ Получить telegram_chat_id всех админов
-async function getAllAdminChatIds(): Promise<string[]> {
-  console.log('🔍 Getting all admin chat IDs...');
-  
+// ✅ Получить данные всех админов для рассылки
+async function getAllAdminRecipients(): Promise<TelegramRecipient[]> {
+  console.log('🔍 Getting all admin recipients...');
+
   const { data, error } = await admin
     .from('students')
-    .select('telegram_chat_id, full_name, is_admin')
+    .select('telegram_chat_id, full_name, is_admin, ui_language')
     .eq('is_admin', true)
     .not('telegram_chat_id', 'is', null);
-  
-  if (error) {
-    console.error('❌ Error getting admin chat IDs:', error);
-    return [];
-  }
-  
-  console.log('📊 Admins with telegram:', data);
-  
-  const rows = (data as { telegram_chat_id: string | null }[] | null | undefined) || [];
-  const chatIds = rows
-    .map((student: { telegram_chat_id: string | null }) => student.telegram_chat_id)
-    .filter((id): id is string => id !== null && id !== undefined);
-  
-  console.log('📤 Admin chat IDs:', chatIds);
-  return chatIds;
-}
 
-// ✅ Получить всех студентов с telegram_chat_id для массовой рассылки
-async function getAllStudentChatIds(): Promise<string[]> {
-  const { data, error } = await admin
-    .from('students')
-    .select('telegram_chat_id')
-    .not('telegram_chat_id', 'is', null);
-  
-  if (error || !data) {
+  if (error) {
+    console.error('❌ Error getting admin recipients:', error);
     return [];
   }
-  
-  return data.map((student: { telegram_chat_id: string }) => student.telegram_chat_id).filter((id: string) => id);
+
+  console.log('📊 Admins with telegram:', data);
+
+  const rows =
+    ((data as { telegram_chat_id: string | null; ui_language?: unknown }[] | null | undefined) || [])
+      .filter((row) => !!row.telegram_chat_id)
+      .map((row) => ({
+        telegram_chat_id: row.telegram_chat_id as string,
+        ui_language: normalizeUiLanguage(row.ui_language),
+      }));
+
+  console.log('📤 Admin recipients:', rows.length);
+  return rows;
 }
 
 // Форматирование сообщения
-async function formatMessage(notification: TelegramNotification, isForAdmin: boolean = false): Promise<string> {
+async function formatMessage(notification: TelegramNotification, ui_language: UiLanguage, isForAdmin: boolean = false): Promise<string> {
   const { type, full_name, room, wash_count, payment_type, queue_length, expected_finish_at, admin_student_id } = notification;
   
   const roomInfo = room ? ` (${room})` : '';
@@ -129,8 +134,19 @@ async function formatMessage(notification: TelegramNotification, isForAdmin: boo
     const date = new Date(expected_finish_at);
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
-    timeInfo = `\n⏰ Закончит в: ${hours}:${minutes}`;
+    if (ui_language === "en") timeInfo = `\n⏰ Finishes at: ${hours}:${minutes}`;
+    else if (ui_language === "ko") timeInfo = `\n⏰ 종료 시간: ${hours}:${minutes}`;
+    else if (ui_language === "ky") timeInfo = `\n⏰ Аяктоо убактысы: ${hours}:${minutes}`;
+    else timeInfo = `\n⏰ Закончит в: ${hours}:${minutes}`;
   }
+
+  const paymentLabel = (() => {
+    const isCoupon = payment_type === 'coupon';
+    if (ui_language === "en") return isCoupon ? "🎫 Coupon" : "💵 Cash";
+    if (ui_language === "ko") return isCoupon ? "🎫 쿠폰" : "💵 현금";
+    if (ui_language === "ky") return isCoupon ? "🎫 Купон" : "💵 Нак акча";
+    return isCoupon ? "🎫 Купон" : "💵 Деньги";
+  })();
   
   let adminInfo = null;
   if (admin_student_id && (type === 'admin_call_for_key' || type === 'admin_return_key')) {
@@ -139,15 +155,63 @@ async function formatMessage(notification: TelegramNotification, isForAdmin: boo
   
   switch (type) {
     case 'joined':
+      if (ui_language === "en") {
+        return `🧺 *New in queue!*
+
+👤 ${full_name}${roomInfo}
+🔢 Washes: ${wash_count || 1}
+💰 Payment: ${paymentLabel}${timeInfo}
+
+📊 Total in queue: ${queue_length} ppl.`;
+      }
+      if (ui_language === "ko") {
+        return `🧺 *대기열에 새로 추가!*
+
+👤 ${full_name}${roomInfo}
+🔢 세탁 횟수: ${wash_count || 1}
+💰 결제: ${paymentLabel}${timeInfo}
+
+📊 대기열 총원: ${queue_length}명`;
+      }
+      if (ui_language === "ky") {
+        return `🧺 *Кезекке жаңы кошулду!*
+
+👤 ${full_name}${roomInfo}
+🔢 Жуу саны: ${wash_count || 1}
+💰 Төлөм: ${paymentLabel}${timeInfo}
+
+📊 Кезекте жалпы: ${queue_length} адам`;
+      }
       return `🧺 *Новый в очереди!*
 
 👤 ${full_name}${roomInfo}
 🔢 Стирок: ${wash_count || 1}
-💰 Оплата: ${payment_type === 'coupon' ? '🎫 Купон' : '💵 Деньги'}${timeInfo}
+💰 Оплата: ${paymentLabel}${timeInfo}
 
 📊 Всего в очереди: ${queue_length} чел.`;
     
     case 'left':
+      if (ui_language === "en") {
+        return `❌ *Left the queue*
+
+👤 ${full_name}${roomInfo}
+
+📊 Remaining: ${queue_length} ppl.`;
+      }
+      if (ui_language === "ko") {
+        return `❌ *대기열에서 나감*
+
+👤 ${full_name}${roomInfo}
+
+📊 남은 인원: ${queue_length}명`;
+      }
+      if (ui_language === "ky") {
+        return `❌ *Кезектен чыкты*
+
+👤 ${full_name}${roomInfo}
+
+📊 Калганы: ${queue_length} адам`;
+      }
       return `❌ *Покинул очередь*
 
 👤 ${full_name}${roomInfo}
@@ -155,6 +219,39 @@ async function formatMessage(notification: TelegramNotification, isForAdmin: boo
 📊 Осталось: ${queue_length} чел.`;
     
     case 'washing_started':
+      if (ui_language === "en") {
+        return `🌀 *WASHING STARTED!*
+
+🎉 Admin confirmed start of washing
+
+👤 ${full_name}${roomInfo}
+🔢 Washes: ${wash_count || 1}
+
+⏱️ Timer started
+📱 When you finish washing, tap "Finished washing" in the app`;
+      }
+      if (ui_language === "ko") {
+        return `🌀 *세탁 시작!*
+
+🎉 관리자가 세탁 시작을 확인했습니다
+
+👤 ${full_name}${roomInfo}
+🔢 세탁 횟수: ${wash_count || 1}
+
+⏱️ 타이머 시작
+📱 세탁이 끝나면 앱에서 "세탁 완료" 버튼을 눌러주세요`;
+      }
+      if (ui_language === "ky") {
+        return `🌀 *ЖУУ БАШТАЛДЫ!*
+
+🎉 Админ жуунун башталганын тастыктады
+
+👤 ${full_name}${roomInfo}
+🔢 Жуу саны: ${wash_count || 1}
+
+⏱️ Таймер иштеди
+📱 Жуу бүткөндө колдонмодон "Жууду бүттүм" баскычын басууну унутпаңыз`;
+      }
       return `🌀 *СТИРКА НАЧАТА!*
 
 🎉 Админ подтвердил начало стирки
@@ -167,12 +264,54 @@ async function formatMessage(notification: TelegramNotification, isForAdmin: boo
     
     case 'washing_done':
       if (isForAdmin) {
+        if (ui_language === "en") {
+          return `✅ *Washing completed!*
+
+👤 ${full_name}${roomInfo}
+
+✅ Moved to history`;
+        }
+        if (ui_language === "ko") {
+          return `✅ *세탁 완료!*
+
+👤 ${full_name}${roomInfo}
+
+✅ 기록으로 이동됨`;
+        }
+        if (ui_language === "ky") {
+          return `✅ *Жуу аяктады!*
+
+👤 ${full_name}${roomInfo}
+
+✅ Тарыхка көчүрүлдү`;
+        }
         return `✅ *Стирка завершена!*
 
 👤 ${full_name}${roomInfo}
 
 ✅ Запись перенесена в историю`;
       } else {
+        if (ui_language === "en") {
+          return `✅ *You completed washing!*
+
+👤 ${full_name}${roomInfo}
+
+📋 Moved to history`;
+        }
+        if (ui_language === "ko") {
+          return `✅ *세탁을 완료했습니다!*
+
+👤 ${full_name}${roomInfo}
+
+📋 기록으로 이동됨`;
+        }
+        if (ui_language === "ky") {
+          return `✅ *Жууну аяктадыңыз!*
+
+👤 ${full_name}${roomInfo}
+
+📋 Тарыхка көчүрүлдү`;
+        }
         return `✅ *Вы завершили стирку!*
 
 👤 ${full_name}${roomInfo}
@@ -182,6 +321,36 @@ async function formatMessage(notification: TelegramNotification, isForAdmin: boo
     
     case 'admin_call_for_key':
       if (adminInfo && adminInfo.room) {
+        if (ui_language === "en") {
+          return `🔔 *YOU ARE CALLED FOR THE KEY!*
+
+👤 ${full_name}${timeInfo}
+
+🏠 Please come to room: *${adminInfo.room}*
+👨‍💼 Admin: ${adminInfo.full_name}
+
+💰 Pay in advance or choose coupons in the app`;
+        }
+        if (ui_language === "ko") {
+          return `🔔 *열쇠 받으러 오세요!*
+
+👤 ${full_name}${timeInfo}
+
+🏠 방으로 오세요: *${adminInfo.room}*
+👨‍💼 관리자: ${adminInfo.full_name}
+
+💰 세탁 비용은 미리 결제하거나 앱에서 쿠폰을 선택해주세요`;
+        }
+        if (ui_language === "ky") {
+          return `🔔 *КЛЮЧ ҮЧҮН ЧАКЫРЫЛДЫҢЫЗ!*
+
+👤 ${full_name}${timeInfo}
+
+🏠 Бөлмөгө келиңиз: *${adminInfo.room}*
+👨‍💼 Админ: ${adminInfo.full_name}
+
+💰 Жууну алдын ала төлөңүз же колдонмодон купон тандаңыз`;
+        }
         return `🔔 *ВАС ЗОВУТ ЗА КЛЮЧОМ!*
 
 👤 ${full_name}${timeInfo}
@@ -191,9 +360,36 @@ async function formatMessage(notification: TelegramNotification, isForAdmin: boo
 
 💰 Стирку необходимо оплатить заранее или выбрать купоны в приложении`;
       }
+      if (ui_language === "en") return `⚠️ ERROR: Failed to get admin room`;
+      if (ui_language === "ko") return `⚠️ 오류: 관리자 방 정보를 가져올 수 없습니다`;
+      if (ui_language === "ky") return `⚠️ КАТА: Админдин бөлмөсүн ала алган жокпуз`;
       return `⚠️ ОШИБКА: Не удалось получить комнату админа`;
     
     case 'admin_key_issued':
+      if (ui_language === "en") {
+        return `🔑 *KEY ISSUED!*
+
+👤 ${full_name}${roomInfo}
+📢 Go to the washer!
+
+📱 Don’t forget to tap "Started washing" in the app`;
+      }
+      if (ui_language === "ko") {
+        return `🔑 *열쇠를 받았습니다!*
+
+👤 ${full_name}${roomInfo}
+📢 세탁기로 가세요!
+
+📱 앱에서 "세탁 시작" 버튼을 누르는 것을 잊지 마세요`;
+      }
+      if (ui_language === "ky") {
+        return `🔑 *КЛЮЧ БЕРИЛДИ!*
+
+👤 ${full_name}${roomInfo}
+📢 Кир жуу машинасына барыңыз!
+
+📱 Колдонмодон "Жууну баштадым" баскычын басууну унутпаңыз`;
+      }
       return `🔑 *КЛЮЧ ВЫДАН!*
 
 👤 ${full_name}${roomInfo}
@@ -203,6 +399,36 @@ async function formatMessage(notification: TelegramNotification, isForAdmin: boo
     
     case 'admin_return_key':
       if (adminInfo && adminInfo.room) {
+        if (ui_language === "en") {
+          return `⏰ *RETURN THE KEY!*
+
+👤 ${full_name}${timeInfo}
+
+🏠 Return the key to room: *${adminInfo.room}*
+👨‍💼 Admin: ${adminInfo.full_name}
+
+⚡ As soon as possible!`;
+        }
+        if (ui_language === "ko") {
+          return `⏰ *열쇠를 반납해주세요!*
+
+👤 ${full_name}${timeInfo}
+
+🏠 방으로 열쇠를 반납: *${adminInfo.room}*
+👨‍💼 관리자: ${adminInfo.full_name}
+
+⚡ 가능한 빨리!`;
+        }
+        if (ui_language === "ky") {
+          return `⏰ *КЛЮЧТУ КАЙТАРЫҢЫЗ!*
+
+👤 ${full_name}${timeInfo}
+
+🏠 Ключту бөлмөгө кайтарыңыз: *${adminInfo.room}*
+👨‍💼 Админ: ${adminInfo.full_name}
+
+⚡ Мүмкүн болушунча тез!`;
+        }
         return `⏰ *ВЕРНИТЕ КЛЮЧ!*
 
 👤 ${full_name}${timeInfo}
@@ -212,17 +438,30 @@ async function formatMessage(notification: TelegramNotification, isForAdmin: boo
 
 ⚡ Как можно скорее!`;
       }
+      if (ui_language === "en") return `⚠️ ERROR: Failed to get admin room`;
+      if (ui_language === "ko") return `⚠️ 오류: 관리자 방 정보를 가져올 수 없습니다`;
+      if (ui_language === "ky") return `⚠️ КАТА: Админдин бөлмөсүн ала алган жокпуз`;
       return `⚠️ ОШИБКА: Не удалось получить комнату админа`;
     
-    case 'admin_key_issued':
-      return `🔑 *КЛЮЧ ВЫДАН!*
-
-👤 ${full_name}${roomInfo}
-📢 Идите к стиралке!
-
-📱 Не забудьте нажать "Начал стирать" в приложении`;
-    
     case 'washing_started_by_student':
+      if (ui_language === "en") {
+        return `👤 ${full_name}${roomInfo}
+✅ Pressed "Started washing"
+
+👨‍💼 Admin, confirm start of washing in the app`;
+      }
+      if (ui_language === "ko") {
+        return `👤 ${full_name}${roomInfo}
+✅ "세탁 시작"을 눌렀습니다
+
+👨‍💼 관리자님, 앱에서 세탁 시작을 확인해주세요`;
+      }
+      if (ui_language === "ky") {
+        return `👤 ${full_name}${roomInfo}
+✅ "Жууну баштадым" баскычын басты
+
+👨‍💼 Админ, колдонмодон жуунун башталганын тастыктаңыз`;
+      }
       return `👤 ${full_name}${roomInfo}
 ✅ Нажал кнопку "Начал стирать"
 
@@ -230,6 +469,30 @@ async function formatMessage(notification: TelegramNotification, isForAdmin: boo
     
     case 'washing_finished_by_student':
       // Для админа: студент закончил стирать
+      if (ui_language === "en") {
+        return `✅ *STUDENT FINISHED WASHING!*
+
+👤 ${full_name}${roomInfo}
+✅ Pressed "Finished washing"
+
+🔑 Tap "Return key" to call them`;
+      }
+      if (ui_language === "ko") {
+        return `✅ *학생이 세탁을 끝냈습니다!*
+
+👤 ${full_name}${roomInfo}
+✅ "세탁 완료"를 눌렀습니다
+
+🔑 "열쇠 반납"을 눌러 호출하세요`;
+      }
+      if (ui_language === "ky") {
+        return `✅ *СТУДЕНТ ЖУУНУ БҮТТҮ!* 
+
+👤 ${full_name}${roomInfo}
+✅ "Жууду бүттүм" баскычын басты
+
+🔑 "Ключту кайтар" баскычын басып чакырыңыз`;
+      }
       return `✅ *СТУДЕНТ ЗАКОНЧИЛ СТИРАТЬ!*
 
 👤 ${full_name}${roomInfo}
@@ -239,6 +502,33 @@ async function formatMessage(notification: TelegramNotification, isForAdmin: boo
     
     case 'washing_finished':
       // Для студента: стирка завершена
+      if (ui_language === "en") {
+        return `✅ *WASHING FINISHED!*
+
+🎉 Great! You finished washing
+
+🧺 Don’t forget to take your items and leave the laundry room clean
+
+⏳ Wait until the admin calls you to return the key`;
+      }
+      if (ui_language === "ko") {
+        return `✅ *세탁 완료!*
+
+🎉 잘했어요! 세탁이 끝났습니다
+
+🧺 물건을 챙기고 세탁실 정리를 해주세요
+
+⏳ 관리자가 열쇠 반납을 요청할 때까지 기다려주세요`;
+      }
+      if (ui_language === "ky") {
+        return `✅ *ЖУУ АЯКТАДЫ!*
+
+🎉 Сонун! Жууну бүтүрдүңүз
+
+🧺 Буюмдарыңызды алып, кир жуучу бөлмөнү таза калтырыңыз
+
+⏳ Админ ключту кайтарууга чакырганча күтүңүз`;
+      }
       return `✅ *СТИРКА ЗАВЕРШЕНА!*
 
 🎉 Отлично! Вы закончили стирать
@@ -248,6 +538,30 @@ async function formatMessage(notification: TelegramNotification, isForAdmin: boo
 ⏳ Ожидайте когда админ позовет вернуть ключ`;
     
     case 'return_key_reminder':
+      if (ui_language === "en") {
+        return `⚠️ *REMINDER!*
+
+👤 ${full_name}${roomInfo}
+🔑 Please return the key!
+
+⏱️ Other students are waiting!`;
+      }
+      if (ui_language === "ko") {
+        return `⚠️ *알림!*
+
+👤 ${full_name}${roomInfo}
+🔑 열쇠를 반납해주세요!
+
+⏱️ 다른 학생들이 기다리고 있습니다!`;
+      }
+      if (ui_language === "ky") {
+        return `⚠️ *ЭСКЕРТҮҮ!*
+
+👤 ${full_name}${roomInfo}
+🔑 Сураныч, ключту кайтарыңыз!
+
+⏱️ Башка студенттер күтүп жатышат!`;
+      }
       return `⚠️ *НАПОМИНАНИЕ!*
 
 👤 ${full_name}${roomInfo}
@@ -256,6 +570,9 @@ async function formatMessage(notification: TelegramNotification, isForAdmin: boo
 ⏱️ Другие студенты ждут своей очереди!`;
     
     default:
+      if (ui_language === "en") return `📋 Queue update`;
+      if (ui_language === "ko") return `📋 대기열 업데이트`;
+      if (ui_language === "ky") return `📋 Кезек жаңыртылды`;
       return `📋 Обновление очереди`;
   }
 }
@@ -408,8 +725,6 @@ export async function POST(request: NextRequest) {
       student_id: notification.student_id,
       queue_item_id: notification.queue_item_id
     });
-
-    const message = await formatMessage(notification);
     let success = false;
 
     // ✅ Четкая логика маршрутизации уведомлений
@@ -431,14 +746,14 @@ export async function POST(request: NextRequest) {
 
     // ✅ Отправить ВСЕМ админам (только для общих событий очереди)
     if (isAllAdmins) {
-      const adminChatIds = await getAllAdminChatIds();
-      console.log('📤 Sending to ALL admins from DB:', adminChatIds.length);
-      
-      const adminMessage = await formatMessage(notification, true);
-      
-      for (const chatId of adminChatIds) {
-        const adminSuccess = await sendTelegramMessage(chatId, adminMessage);
-        if (adminSuccess) console.log('✅ Sent to admin:', chatId);
+      const adminRecipients = await getAllAdminRecipients();
+      const adminChatIds = adminRecipients.map((r) => r.telegram_chat_id);
+      console.log('📤 Sending to ALL admins from DB:', adminRecipients.length);
+
+      for (const recipient of adminRecipients) {
+        const adminMessage = await formatMessage(notification, recipient.ui_language, true);
+        const adminSuccess = await sendTelegramMessage(recipient.telegram_chat_id, adminMessage);
+        if (adminSuccess) console.log('✅ Sent to admin:', recipient.telegram_chat_id);
         success = success || adminSuccess;
       }
       
@@ -446,7 +761,8 @@ export async function POST(request: NextRequest) {
       if (TELEGRAM_ADMIN_CHAT_ID) {
         if (!adminChatIds.includes(TELEGRAM_ADMIN_CHAT_ID)) {
           console.log('📤 Sending to main admin from .env:', TELEGRAM_ADMIN_CHAT_ID);
-          const mainAdminSuccess = await sendTelegramMessage(TELEGRAM_ADMIN_CHAT_ID, adminMessage);
+          const mainAdminMessage = await formatMessage(notification, "ru", true);
+          const mainAdminSuccess = await sendTelegramMessage(TELEGRAM_ADMIN_CHAT_ID, mainAdminMessage);
           if (mainAdminSuccess) console.log('✅ Sent to main admin');
           success = success || mainAdminSuccess;
         } else {
@@ -460,15 +776,15 @@ export async function POST(request: NextRequest) {
     // ✅ Отправить студенту (админские действия и статусы)
     if (isForStudent && notification.student_id) {
       console.log('👤 Sending notification to student:', notification.student_id);
-      
-      const studentMessage = await formatMessage(notification, false);
-      const studentChatId = await getStudentTelegramChatId(notification.student_id);
-      
-      if (studentChatId) {
-        console.log('📤 About to send to student chat_id:', studentChatId);
-        const studentSuccess = await sendTelegramMessage(studentChatId, studentMessage);
-        console.log('📥 Send result to student:', { studentSuccess, chatId: studentChatId });
-        if (studentSuccess) console.log('✅ Sent to student:', studentChatId);
+
+      const studentRecipient = await getStudentRecipient(notification.student_id);
+
+      if (studentRecipient) {
+        const studentMessage = await formatMessage(notification, studentRecipient.ui_language, false);
+        console.log('📤 About to send to student chat_id:', studentRecipient.telegram_chat_id);
+        const studentSuccess = await sendTelegramMessage(studentRecipient.telegram_chat_id, studentMessage);
+        console.log('📥 Send result to student:', { studentSuccess, chatId: studentRecipient.telegram_chat_id });
+        if (studentSuccess) console.log('✅ Sent to student:', studentRecipient.telegram_chat_id);
         success = success || studentSuccess;
       } else {
         console.log('⚠️ Student has no telegram chat_id');

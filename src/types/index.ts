@@ -10,6 +10,7 @@ export type Student = {
   is_registered: boolean;
   registered_at?: string;
   telegram_chat_id?: string;
+  ui_language?: "ru" | "en" | "ko" | "ky";
   created_at: string;
   is_banned?: boolean;
   banned_at?: string | null;
@@ -57,6 +58,7 @@ export type User = {
   room?: string;
   is_admin?: boolean;
   telegram_chat_id?: string;
+  ui_language?: "ru" | "en" | "ko" | "ky";
   is_super_admin?: boolean;
   is_cleanup_admin?: boolean;
   can_view_students?: boolean; // Может ли студент видеть список студентов

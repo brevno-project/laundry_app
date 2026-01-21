@@ -197,7 +197,7 @@ export default function StudentActions() {
                 <button
                   onClick={handleStartWashing}
                   disabled={sending === "start"}
-                  className="w-full bg-emerald-600 text-white font-bold py-4 px-6 rounded-xl text-xl hover:bg-emerald-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full bg-blue-600 text-white font-bold py-4 px-6 rounded-xl text-xl hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {sending === "start" ? (
                     <div className="flex items-center justify-center gap-2">
@@ -240,7 +240,7 @@ export default function StudentActions() {
                 <button
                   onClick={handleFinishWashing}
                   disabled={sending === "finish"}
-                  className="w-full bg-rose-600 text-white font-bold py-4 px-6 rounded-xl text-xl hover:bg-rose-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full bg-blue-500/20 border border-blue-300/40 text-blue-50 font-bold py-4 px-6 rounded-xl text-xl hover:bg-blue-500/30 hover:border-blue-200/50 transition-all shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed dark:bg-blue-500/15 dark:border-blue-400/30"
                 >
                   <div className="flex items-center justify-center gap-2">
                     {sending === "finish" ? (
