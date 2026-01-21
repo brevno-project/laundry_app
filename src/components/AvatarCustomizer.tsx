@@ -103,7 +103,7 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
   };
 
   return (
-    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-slate-700">
+    <div className="bg-sky-50/70 backdrop-blur-sm dark:bg-slate-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-slate-700">
       <h3 className="font-bold text-lg text-gray-900 mb-4">{t('avatar.title')}</h3>
 
       {notice && (
@@ -170,7 +170,7 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
               className={`p-2 rounded-lg border-2 transition-all text-left text-xs ${
                 selectedStyle === style.id
                   ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-500'
-                  : 'border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 hover:border-blue-300 dark:hover:border-blue-500'
+                  : 'border-gray-200 dark:border-slate-600 bg-sky-50/70 backdrop-blur-sm dark:bg-slate-700 hover:border-blue-300 dark:hover:border-blue-500'
               }`}
             >
               <div className="flex items-center justify-between mb-1">

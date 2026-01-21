@@ -89,7 +89,7 @@ export default function PasswordChanger() {
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm">
+    <div className="bg-sky-50/70 backdrop-blur-sm dark:bg-slate-800 p-4 rounded-lg shadow-sm">
       <h3 className="font-bold text-lg text-gray-800 mb-3">{t("password.title")}</h3>
 
       {error && (
@@ -116,7 +116,7 @@ export default function PasswordChanger() {
                 setError("");
                 setSuccess("");
               }}
-              className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-3 text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white/60 text-gray-900 p-3 text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
               placeholder={t("password.placeholderCurrent")}
             />
             <button
@@ -140,7 +140,7 @@ export default function PasswordChanger() {
                 setError("");
                 setSuccess("");
               }}
-              className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-3 text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white/60 text-gray-900 p-3 text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
               placeholder={t("password.placeholderNew")}
             />
             <button
@@ -165,7 +165,7 @@ export default function PasswordChanger() {
                 setError("");
                 setSuccess("");
               }}
-              className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-3 text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white/60 text-gray-900 p-3 text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
               placeholder={t("password.placeholderConfirm")}
             />
             <button

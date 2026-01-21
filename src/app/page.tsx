@@ -189,7 +189,7 @@ export default function Home() {
 
       {/* Табы */}
       {user && (
-        <nav className="bg-white border-b shadow-sm sticky top-14 z-10">
+        <nav className="bg-sky-50/70 backdrop-blur-sm border-b shadow-sm sticky top-14 z-10 dark:bg-slate-900/60">
           <div className="mx-auto max-w-5xl">
             <div className="flex gap-1 overflow-x-auto px-2 md:justify-center md:gap-3 md:overflow-visible md:px-4">
             <button
@@ -428,7 +428,7 @@ export default function Home() {
         {/* Настройки */}
         {activeTab === 'settings' && user && (
           <div className="w-full space-y-4 px-3">
-            <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="bg-sky-50/70 backdrop-blur-sm p-4 rounded-lg shadow-sm dark:bg-slate-800">
               <h3 className="font-bold text-lg text-gray-800 mb-3">{t("settings.language")}</h3>
               <div className="flex flex-wrap gap-2">
                 <button
@@ -465,7 +465,7 @@ export default function Home() {
                 </button>
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="bg-sky-50/70 backdrop-blur-sm p-4 rounded-lg shadow-sm dark:bg-slate-800">
               <h3 className="font-bold text-lg text-gray-800 mb-3">{t("settings.theme")}</h3>
               <div className="inline-flex overflow-hidden rounded-full border border-gray-200 bg-gray-50 p-1 dark:border-slate-700 dark:bg-slate-900/40">
                 <button
@@ -500,7 +500,7 @@ export default function Home() {
             <PasswordChanger />
             <TelegramSetup />
             
-            <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="bg-sky-50/70 backdrop-blur-sm p-4 rounded-lg shadow-sm dark:bg-slate-800">
               <h3 className="font-bold text-lg text-gray-800 mb-3">{t("settings.account")}</h3>
               <button
                 onClick={async () => {

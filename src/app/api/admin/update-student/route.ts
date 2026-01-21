@@ -65,6 +65,9 @@ export async function POST(req: NextRequest) {
     if (updates.key_lost !== undefined) {
       updateData.key_lost = updates.key_lost;
     }
+    if (updates.stay_type !== undefined) {
+      updateData.stay_type = updates.stay_type;
+    }
     if (updates.is_cleanup_admin !== undefined) {
       if (!caller.is_super_admin) {
         return NextResponse.json(

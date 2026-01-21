@@ -1118,19 +1118,40 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
   useEffect(() => {
     if (schedules.length === 0) return;
+    const todayIso = new Date().toISOString().slice(0, 10);
     setScheduleDrafts((prev) => {
       const next = { ...prev };
+      const autoAdvanceNotices: Record<string, string> = {};
       schedules.forEach((schedule) => {
+        const savedDate = schedule.check_date || "";
+        const shouldAutoAdvance = !!savedDate && savedDate < todayIso;
+        const currentDraftDate = prev[schedule.block]?.date;
+
+        if (shouldAutoAdvance && (!currentDraftDate || currentDraftDate === savedDate)) {
+          autoAdvanceNotices[schedule.block] = t("cleanup.schedule.autoAdvanced");
+        }
+
         next[schedule.block] = {
-          date: schedule.check_date || prev[schedule.block]?.date || getNextWednesdayISO(),
+          date:
+            shouldAutoAdvance && (!currentDraftDate || currentDraftDate === savedDate)
+              ? getNextWednesdayISO()
+              : schedule.check_date || prev[schedule.block]?.date || getNextWednesdayISO(),
           time: schedule.check_time
             ? formatTime(schedule.check_time)
             : prev[schedule.block]?.time || "19:00",
         };
       });
+
+      if (Object.keys(autoAdvanceNotices).length > 0) {
+        setScheduleNotice((prevNotice) => ({
+          ...prevNotice,
+          ...autoAdvanceNotices,
+        }));
+      }
+
       return next;
     });
-  }, [schedules]);
+  }, [schedules, t]);
 
   const refreshResults = async () => {
     await loadResults();
@@ -1415,7 +1436,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       : t("cleanup.reminders.notSent");
 
     return (
-      <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-2 dark:border-slate-700 dark:bg-slate-800">
+      <div className="rounded-xl border border-gray-200 bg-sky-50/70 backdrop-blur-sm p-4 space-y-2 dark:border-slate-700 dark:bg-slate-800">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h4 className="text-sm font-semibold text-gray-900">{t("cleanup.block", { block })}</h4>
           <span className={`rounded-lg px-2 py-1 text-xs font-semibold ${statusClass}`}>
@@ -1434,7 +1455,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   [block]: { ...prev[block], date: e.target.value },
                 }))
               }
-              className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-sm text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
+              className="w-full rounded-lg border-2 border-gray-200 bg-white/60 p-2 text-sm text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
             />
           </div>
           <div>
@@ -1448,7 +1469,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   [block]: { ...prev[block], time: e.target.value },
                 }))
               }
-              className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-sm text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
+              className="w-full rounded-lg border-2 border-gray-200 bg-white/60 p-2 text-sm text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
             />
           </div>
           <div className="flex flex-col gap-2 md:col-span-2 md:flex-row md:items-end">
@@ -1597,7 +1618,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const announcer = item.announced_by ? announcers[item.announced_by] : null;
 
     return (
-      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+      <div className="rounded-xl border border-gray-200 bg-sky-50/70 backdrop-blur-sm p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h4 className="text-lg font-bold text-gray-900 dark:text-slate-100">
@@ -1681,7 +1702,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         )}
 
         {blockResults.length > 1 && (
-          <details className="rounded-xl border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+          <details className="rounded-xl border border-gray-200 bg-sky-50/70 backdrop-blur-sm p-4 dark:border-slate-700 dark:bg-slate-800">
             <summary className="cursor-pointer text-sm font-semibold text-gray-700 dark:text-slate-200">
               {t("cleanup.archiveResults", { count: blockResults.length - 1 })}
             </summary>
@@ -1753,7 +1774,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
       {showLoading ? (
         <div className="mx-auto max-w-5xl space-y-4 p-4">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm animate-pulse dark:border-slate-700 dark:bg-slate-800">
+          <div className="rounded-2xl border border-gray-200 bg-sky-50/70 backdrop-blur-sm p-6 shadow-sm animate-pulse dark:border-slate-700 dark:bg-slate-800">
             <div className="h-5 w-40 rounded bg-gray-200 dark:bg-slate-700" />
             <div className="mt-3 h-4 w-64 rounded bg-gray-200 dark:bg-slate-700" />
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -1771,7 +1792,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
           </div>
 
           {canManageCleanup && (
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4 dark:border-slate-700 dark:bg-slate-800">
+            <div className="rounded-2xl border border-gray-200 bg-sky-50/70 backdrop-blur-sm p-5 shadow-sm space-y-4 dark:border-slate-700 dark:bg-slate-800">
             <div className="flex items-center gap-2">
               <CalendarIcon className="w-5 h-5 text-blue-600" />
               <h3 className="text-lg font-bold text-gray-900">{t("cleanup.publish.title")}</h3>
@@ -1810,7 +1831,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   type="date"
                   value={weekStart}
                   onChange={(e) => setWeekStart(e.target.value)}
-                  className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
+                  className="w-full rounded-lg border-2 border-gray-200 bg-white/60 p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 />
               </div>
               <div>
@@ -1819,7 +1840,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   value={selectedBlock}
                   onChange={(e) => setSelectedBlock(e.target.value as Block)}
                   disabled={!isSuperAdmin && !!adminBlock}
-                  className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-gray-900 disabled:bg-gray-100 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100 dark:disabled:bg-slate-800"
+                  className="w-full rounded-lg border-2 border-gray-200 bg-white/60 p-2 text-gray-900 disabled:bg-gray-100 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100 dark:disabled:bg-slate-800"
                 >
                   <option value="A">{t("cleanup.blockOption", { block: "A" })}</option>
                   <option value="B">{t("cleanup.blockOption", { block: "B" })}</option>
@@ -1830,7 +1851,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 <select
                   value={selectedApartment}
                   onChange={(e) => setSelectedApartment(e.target.value)}
-                  className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
+                  className="w-full rounded-lg border-2 border-gray-200 bg-white/60 p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 >
                   <option value="">{t("cleanup.selectApartment")}</option>
                   {apartments
@@ -1862,7 +1883,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                           [apt.id]: e.target.value,
                         }))
                       }
-                      className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-sm text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
+                      className="w-full rounded-lg border-2 border-gray-200 bg-white/60 p-2 text-sm text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                       placeholder={t("cleanup.pointsPlaceholder")}
                     />
                     <span className="text-xs text-gray-400">{t("cleanup.pointsSuffix")}</span>
@@ -1873,7 +1894,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 <select
                   value={scoreCaptionKey}
                   onChange={(e) => setScoreCaptionKey(e.target.value)}
-                  className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-sm text-gray-900 md:w-auto dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
+                  className="w-full rounded-lg border-2 border-gray-200 bg-white/60 p-2 text-sm text-gray-900 md:w-auto dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 >
                   {SCORE_CAPTIONS.map((caption) => (
                     <option key={caption.key} value={caption.key}>
@@ -1910,7 +1931,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   setAnnouncementMode("manual");
                 }}
                 rows={4}
-                className="w-full rounded-lg border-2 border-gray-200 bg-white p-3 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
+                className="w-full rounded-lg border-2 border-gray-200 bg-white/60 p-3 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 placeholder={t("cleanup.messagePlaceholder")}
               />
             </div>
@@ -1934,7 +1955,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
         {user && (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-3 dark:border-slate-700 dark:bg-slate-800">
+            <div className="rounded-2xl border border-gray-200 bg-sky-50/70 backdrop-blur-sm p-5 shadow-sm space-y-3 dark:border-slate-700 dark:bg-slate-800">
               <div className="flex items-center gap-2">
                 <TicketIcon className="w-5 h-5 text-purple-600" />
                 <h3 className="text-lg font-bold text-gray-900">{t("cleanup.coupons.title")}</h3>
@@ -2020,7 +2041,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               )}
             </div>
 
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4 dark:border-slate-700 dark:bg-slate-800">
+            <div className="rounded-2xl border border-gray-200 bg-sky-50/70 backdrop-blur-sm p-5 shadow-sm space-y-4 dark:border-slate-700 dark:bg-slate-800">
               <div className="flex items-center gap-2">
                 <MoneyIcon className="w-5 h-5 text-green-600" />
                 <h3 className="text-lg font-bold text-gray-900">{t("cleanup.transfer.title")}</h3>
@@ -2035,7 +2056,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                     <select
                       value={transferCouponId}
                       onChange={(e) => setTransferCouponId(e.target.value)}
-                      className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
+                      className="w-full rounded-lg border-2 border-gray-200 bg-white/60 p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                     >
                       <option value="">{t("cleanup.transfer.selectCoupon")}</option>
                       {transferableCoupons.map((coupon) => (
@@ -2050,7 +2071,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                     <select
                       value={transferRecipientId}
                       onChange={(e) => setTransferRecipientId(e.target.value)}
-                      className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
+                      className="w-full rounded-lg border-2 border-gray-200 bg-white/60 p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                     >
                       <option value="">{t("cleanup.transfer.selectStudent")}</option>
                       {recipients.map((student) => (
@@ -2079,7 +2100,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         )}
 
         {showTransfers && (
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-3 dark:border-slate-700 dark:bg-slate-800">
+          <div className="rounded-2xl border border-gray-200 bg-sky-50/70 backdrop-blur-sm p-5 shadow-sm space-y-3 dark:border-slate-700 dark:bg-slate-800">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <CheckIcon className="w-5 h-5 text-emerald-600" />
@@ -2121,7 +2142,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         )}
 
         {isSuperAdmin && (
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4 dark:border-slate-700 dark:bg-slate-800">
+          <div className="rounded-2xl border border-gray-200 bg-sky-50/70 backdrop-blur-sm p-5 shadow-sm space-y-4 dark:border-slate-700 dark:bg-slate-800">
             <div className="flex items-center gap-2">
               <TicketIcon className="w-5 h-5 text-purple-600" />
               <h3 className="text-lg font-bold text-gray-900">{t("cleanup.grant.title")}</h3>
@@ -2132,7 +2153,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 <select
                   value={grantStudentId}
                   onChange={(e) => setGrantStudentId(e.target.value)}
-                  className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
+                  className="w-full rounded-lg border-2 border-gray-200 bg-white/60 p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 >
                   <option value="">{t("cleanup.grant.selectStudentOption")}</option>
                   {grantStudents.map((student) => (
@@ -2149,7 +2170,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   min={1}
                   value={grantCount}
                   onChange={(e) => setGrantCount(Number(e.target.value))}
-                  className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
+                  className="w-full rounded-lg border-2 border-gray-200 bg-white/60 p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 />
               </div>
               <div>
@@ -2163,7 +2184,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                       setGrantExpiresAt("");
                     }
                   }}
-                  className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
+                  className="w-full rounded-lg border-2 border-gray-200 bg-white/60 p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 >
                   <option value="default">{t("cleanup.grant.expiryDefault")}</option>
                   <option value="custom">{t("cleanup.grant.expiryCustom")}</option>
@@ -2177,7 +2198,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                     type="datetime-local"
                     value={grantExpiresAt}
                     onChange={(e) => setGrantExpiresAt(e.target.value)}
-                    className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
+                    className="w-full rounded-lg border-2 border-gray-200 bg-white/60 p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                   />
                 </div>
               )}
@@ -2188,7 +2209,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 type="text"
                 value={grantNote}
                 onChange={(e) => setGrantNote(e.target.value)}
-                className="w-full rounded-lg border-2 border-gray-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
+                className="w-full rounded-lg border-2 border-gray-200 bg-white/60 p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 placeholder={t("cleanup.grant.notePlaceholder")}
               />
             </div>

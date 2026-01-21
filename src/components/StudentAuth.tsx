@@ -14,6 +14,7 @@ export default function StudentAuth() {
   const [step, setStep] = useState<"select" | "auth">("select");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
@@ -74,6 +75,7 @@ export default function StudentAuth() {
     setStep("auth");
     setError("");
     setPassword("");
+    setConfirmPassword("");
     setShowPassword(false);
     setBanNotice("");
   };
@@ -95,6 +97,17 @@ export default function StudentAuth() {
     if (!selectedStudent.is_registered && password.length < 6) {
       setError(t("auth.passwordMin"));
       return;
+    }
+
+    if (!selectedStudent.is_registered) {
+      if (!confirmPassword) {
+        setError(t("auth.confirmPasswordRequired"));
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError(t("auth.passwordsDontMatch"));
+        return;
+      }
     }
 
     setLoading(true);
@@ -138,7 +151,7 @@ export default function StudentAuth() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t("auth.searchPlaceholder")}
-          className="w-full p-4 rounded-lg border-2 border-blue-400 bg-white text-gray-900 text-xl font-semibold mb-4 focus:border-blue-600 focus:ring-2 focus:ring-blue-300 placeholder:text-gray-600 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
+          className="w-full p-4 rounded-lg border-2 border-blue-400 bg-white/60 backdrop-blur-sm text-gray-900 text-xl font-semibold mb-4 focus:border-blue-600 focus:ring-2 focus:ring-blue-300 placeholder:text-gray-600 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
         />
 
         <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -151,7 +164,7 @@ export default function StudentAuth() {
               <button
                 key={student.id}
                 onClick={() => handleStudentSelect(student)}
-                className="w-full bg-white hover:bg-blue-100 border-3 border-gray-400 hover:border-blue-600 rounded-lg p-4 text-left transition-all shadow-md hover:shadow-xl dark:bg-slate-900 dark:hover:bg-slate-800 dark:border-slate-700 dark:hover:border-sky-500"
+                className="w-full bg-sky-50/70 backdrop-blur-sm hover:bg-blue-100 border-3 border-gray-400 hover:border-blue-600 rounded-lg p-4 text-left transition-all shadow-md hover:shadow-xl dark:bg-slate-900 dark:hover:bg-slate-800 dark:border-slate-700 dark:hover:border-sky-500"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -197,12 +210,13 @@ export default function StudentAuth() {
   // STEP 2: AUTH PAGE
   // -------------------------------
   return (
-    <div className="bg-white p-6 rounded-lg shadow-xl border-2 border-gray-200 dark:bg-slate-900 dark:border-slate-700">
+    <div className="bg-sky-50/70 backdrop-blur-sm p-6 rounded-lg shadow-xl border-2 border-gray-200 dark:bg-slate-900 dark:border-slate-700">
       {banNoticeBanner}
       <button
         onClick={() => {
           setStep("select");
           setPassword("");
+          setConfirmPassword("");
           setError("");
           setBanNotice("");
         }}
@@ -259,7 +273,7 @@ export default function StudentAuth() {
                 setError("");
               }}
               onKeyDown={(e) => e.key === "Enter" && handleAuth()}
-              className="w-full rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-4 pr-20 text-lg font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
+              className="w-full rounded-lg border-2 border-gray-400 bg-white/60 backdrop-blur-sm text-gray-900 p-4 pr-20 text-lg font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
               placeholder={t("auth.password")}
               autoFocus
             />
@@ -280,6 +294,29 @@ export default function StudentAuth() {
           )}
         </div>
 
+        {!selectedStudent?.is_registered && (
+          <div>
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-bold mb-2 text-gray-900 dark:text-slate-200"
+            >
+              {t("auth.confirmPassword")}
+            </label>
+            <input
+              id="confirmPassword"
+              type={showPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                setError("");
+              }}
+              onKeyDown={(e) => e.key === "Enter" && handleAuth()}
+              className="w-full rounded-lg border-2 border-gray-400 bg-white/60 backdrop-blur-sm text-gray-900 p-4 text-lg font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
+              placeholder={t("auth.confirmPassword")}
+            />
+          </div>
+        )}
+
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg dark:bg-rose-950/40 dark:border-rose-900/40 dark:text-rose-200">
             <CloseIcon className="w-5 h-5 inline-block mr-1" />
@@ -289,7 +326,11 @@ export default function StudentAuth() {
 
         <button
           onClick={handleAuth}
-          disabled={loading || !password}
+          disabled={
+            loading ||
+            !password ||
+            (!selectedStudent?.is_registered && (!confirmPassword || password !== confirmPassword))
+          }
           className="w-full btn btn-primary btn-lg btn-glow text-lg"
         >
           {loading ? (

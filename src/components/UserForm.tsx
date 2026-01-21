@@ -258,7 +258,7 @@ export default function UserForm() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+      <div className="bg-sky-50/70 backdrop-blur-sm p-6 rounded-lg shadow-lg border border-gray-200">
         <h2 className="text-2xl font-bold mb-4 text-gray-800">{t('queue.joinTitle')}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="mb-4">
@@ -344,7 +344,7 @@ export default function UserForm() {
                       return (
                         <label
                           key={coupon.id}
-                          className="flex items-center justify-between gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+                          className="flex items-center justify-between gap-2 rounded-md border border-gray-200 bg-sky-50/70 backdrop-blur-sm px-3 py-2 text-sm text-gray-700"
                         >
                           <span className="flex items-center gap-2">
                             <input

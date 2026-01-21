@@ -11,6 +11,7 @@ export type Student = {
   registered_at?: string;
   telegram_chat_id?: string;
   ui_language?: "ru" | "en" | "ko" | "ky";
+  stay_type?: "unknown" | "5days" | "weekends";
   created_at: string;
   is_banned?: boolean;
   banned_at?: string | null;
@@ -33,6 +34,7 @@ export type StudentLoginList = {
   full_name: string;
   room: string | null;
   is_registered: boolean;
+  stay_type?: "unknown" | "5days" | "weekends";
   is_banned?: boolean;
   ban_reason?: string | null;
   key_issued?: boolean;
@@ -59,6 +61,7 @@ export type User = {
   is_admin?: boolean;
   telegram_chat_id?: string;
   ui_language?: "ru" | "en" | "ko" | "ky";
+  stay_type?: "unknown" | "5days" | "weekends";
   is_super_admin?: boolean;
   is_cleanup_admin?: boolean;
   can_view_students?: boolean; // Может ли студент видеть список студентов

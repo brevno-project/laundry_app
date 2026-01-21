@@ -28,10 +28,14 @@ export default function StudentsList() {
   const [editMiddleName, setEditMiddleName] = useState("");
   const [editCanViewStudents, setEditCanViewStudents] = useState(false);
   const [editCleanupAdmin, setEditCleanupAdmin] = useState(false);
+  const [editStayType, setEditStayType] = useState<"unknown" | "5days" | "weekends">("unknown");
   const [editKeyIssued, setEditKeyIssued] = useState(false);
   const [editKeyLost, setEditKeyLost] = useState(false);
   const [notice, setNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+
+  const [stayFilter, setStayFilter] = useState<"all" | "weekends" | "5days" | "unknown">("all");
+  const [registrationFilter, setRegistrationFilter] = useState<"all" | "registered" | "unregistered">("all");
 
   useEffect(() => {
     if (!notice) return;
@@ -48,7 +52,7 @@ export default function StudentsList() {
 
   if (!students || students.length === 0) {
     return (
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
+      <div className="bg-sky-50/70 backdrop-blur-sm dark:bg-slate-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
         <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
           <ListIcon className="w-8 h-8" />{t("students.title")}
         </h2>
@@ -75,8 +79,20 @@ export default function StudentsList() {
     return lastNameA.localeCompare(lastNameB);
   });
 
-  const blockA = sortedStudents.filter((s) => s.room?.startsWith("A"));
-  const blockB = sortedStudents.filter((s) => s.room?.startsWith("B"));
+  const filteredStudents = sortedStudents.filter((student) => {
+    if (stayFilter !== "all") {
+      const stay = (student.stay_type || "unknown") as "unknown" | "5days" | "weekends";
+      if (stay !== stayFilter) return false;
+    }
+
+    if (registrationFilter === "registered" && !student.is_registered) return false;
+    if (registrationFilter === "unregistered" && student.is_registered) return false;
+
+    return true;
+  });
+
+  const blockA = filteredStudents.filter((s) => s.room?.startsWith("A"));
+  const blockB = filteredStudents.filter((s) => s.room?.startsWith("B"));
 
   const openEditModal = (student: Student) => {
     setEditingStudent(student);
@@ -86,6 +102,7 @@ export default function StudentsList() {
     setEditMiddleName(student.middle_name || "");
     setEditCanViewStudents(!!student.can_view_students);
     setEditCleanupAdmin(!!student.is_cleanup_admin);
+    setEditStayType((student.stay_type as any) || "unknown");
     setEditKeyIssued(!!student.key_issued);
     setEditKeyLost(!!student.key_lost);
     setNotice(null);
@@ -102,6 +119,7 @@ export default function StudentsList() {
         middle_name: editMiddleName || undefined,
         can_view_students: isSuperAdmin ? editCanViewStudents : undefined,
         is_cleanup_admin: isSuperAdmin ? editCleanupAdmin : undefined,
+        stay_type: editStayType,
         key_issued: editKeyIssued,
         key_lost: editKeyLost,
       });
@@ -152,11 +170,19 @@ export default function StudentsList() {
       student.full_name ||
       "-";
 
+    const stayType = (student.stay_type || "unknown") as "unknown" | "5days" | "weekends";
+    const stayLabel =
+      stayType === "weekends"
+        ? t("students.stay.weekends")
+        : stayType === "5days"
+          ? t("students.stay.5days")
+          : t("students.stay.unknown");
+
     return (
       <React.Fragment key={student.id}>
         {showDivider && (
           <tr className="bg-gradient-to-r from-transparent via-gray-300 to-transparent">
-            <td colSpan={5} className="h-1"></td>
+            <td colSpan={canManageStudents ? 5 : 4} className="h-1"></td>
           </tr>
         )}
         <tr className="border-b border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/70 transition-colors">
@@ -168,6 +194,28 @@ export default function StudentsList() {
                 <span>{displayName}</span>
                 {canManageStudents && (
                   <span className="mt-1 flex flex-wrap gap-1 text-[11px] font-semibold text-gray-600 dark:text-slate-300">
+                    <span
+                      className={`rounded-full px-2 py-0.5 ${
+                        student.is_registered
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "bg-amber-100 text-amber-800"
+                      }`}
+                    >
+                      {student.is_registered
+                        ? t("students.badge.registered")
+                        : t("students.badge.unregistered")}
+                    </span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 ${
+                        stayType === "weekends"
+                          ? "bg-sky-100 text-sky-800"
+                          : stayType === "5days"
+                            ? "bg-indigo-100 text-indigo-800"
+                            : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {stayLabel}
+                    </span>
                     <span className={`rounded-full px-2 py-0.5 ${student.key_issued ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}>
                       {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
                     </span>
@@ -244,6 +292,14 @@ export default function StudentsList() {
       student.full_name ||
       "-";
 
+    const stayType = (student.stay_type || "unknown") as "unknown" | "5days" | "weekends";
+    const stayLabel =
+      stayType === "weekends"
+        ? t("students.stay.weekends")
+        : stayType === "5days"
+          ? t("students.stay.5days")
+          : t("students.stay.unknown");
+
     return (
       <React.Fragment key={student.id}>
         {showDivider && (
@@ -262,6 +318,28 @@ export default function StudentsList() {
                 <span className="text-xs">{displayName}</span>
                 {canManageStudents && (
                   <span className="mt-1 flex flex-wrap gap-1 text-[10px] font-semibold text-gray-600">
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 ${
+                        student.is_registered
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "bg-amber-100 text-amber-800"
+                      }`}
+                    >
+                      {student.is_registered
+                        ? t("students.badge.registered")
+                        : t("students.badge.unregistered")}
+                    </span>
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 ${
+                        stayType === "weekends"
+                          ? "bg-sky-100 text-sky-800"
+                          : stayType === "5days"
+                            ? "bg-indigo-100 text-indigo-800"
+                            : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {stayLabel}
+                    </span>
                     <span className={`rounded-full px-1.5 py-0.5 ${student.key_issued ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}>
                       {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
                     </span>
@@ -323,10 +401,10 @@ export default function StudentsList() {
 
   return (
     <>
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
+      <div className="bg-sky-50/70 backdrop-blur-sm dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
         <div className="flex items-center justify-between mb-4 px-4 pt-4 pb-2">
           <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-100 flex items-center gap-2">
-            <ListIcon className="w-8 h-8" />{t("students.title")} ({students.length})
+            <ListIcon className="w-8 h-8" />{t("students.title")} ({filteredStudents.length}/{students.length})
           </h2>
           {canManageStudents && (
             <button
@@ -351,6 +429,76 @@ export default function StudentsList() {
             {notice.message}
           </button>
         )}
+
+        <div className="px-4 pb-2">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-900/40">
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap gap-2">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{t("students.filter.stay")}</span>
+                <button
+                  type="button"
+                  onClick={() => setStayFilter("all")}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold border ${stayFilter === "all" ? "bg-blue-600 text-white border-blue-600" : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"}`}
+                  aria-pressed={stayFilter === "all"}
+                >
+                  {t("students.filter.all")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStayFilter("weekends")}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold border ${stayFilter === "weekends" ? "bg-blue-600 text-white border-blue-600" : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"}`}
+                  aria-pressed={stayFilter === "weekends"}
+                >
+                  {t("students.stay.weekends")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStayFilter("5days")}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold border ${stayFilter === "5days" ? "bg-blue-600 text-white border-blue-600" : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"}`}
+                  aria-pressed={stayFilter === "5days"}
+                >
+                  {t("students.stay.5days")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStayFilter("unknown")}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold border ${stayFilter === "unknown" ? "bg-blue-600 text-white border-blue-600" : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"}`}
+                  aria-pressed={stayFilter === "unknown"}
+                >
+                  {t("students.stay.unknown")}
+                </button>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{t("students.filter.registration")}</span>
+                <button
+                  type="button"
+                  onClick={() => setRegistrationFilter("all")}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold border ${registrationFilter === "all" ? "bg-blue-600 text-white border-blue-600" : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"}`}
+                  aria-pressed={registrationFilter === "all"}
+                >
+                  {t("students.filter.all")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRegistrationFilter("registered")}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold border ${registrationFilter === "registered" ? "bg-blue-600 text-white border-blue-600" : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"}`}
+                  aria-pressed={registrationFilter === "registered"}
+                >
+                  {t("students.badge.registered")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRegistrationFilter("unregistered")}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold border ${registrationFilter === "unregistered" ? "bg-blue-600 text-white border-blue-600" : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"}`}
+                  aria-pressed={registrationFilter === "unregistered"}
+                >
+                  {t("students.badge.unregistered")}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div className="mb-6 px-4">
           <h3 className="text-xl font-bold mb-3 text-slate-800 dark:text-slate-100 flex items-center gap-2 px-4">
@@ -457,7 +605,7 @@ export default function StudentsList() {
 
       {editingStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-md w-full">
+          <div className="bg-sky-50/70 backdrop-blur-sm dark:bg-slate-800 rounded-lg p-6 max-w-md w-full">
             <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-4 flex items-center gap-2">
               <EditIcon className="w-5 h-5" />{t("students.editTitle")}
             </h3>
@@ -508,6 +656,20 @@ export default function StudentsList() {
 
               {canManageStudents && (
                 <div className="flex flex-wrap gap-3 rounded-lg border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 p-3">
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-semibold text-gray-800 dark:text-slate-100">
+                      {t("students.stay.label")}
+                    </label>
+                    <select
+                      value={editStayType}
+                      onChange={(e) => setEditStayType(e.target.value as any)}
+                      className="rounded-lg border-2 border-gray-300 bg-white/60 px-2 py-1 text-sm font-semibold text-gray-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
+                    >
+                      <option value="unknown">{t("students.stay.unknown")}</option>
+                      <option value="5days">{t("students.stay.5days")}</option>
+                      <option value="weekends">{t("students.stay.weekends")}</option>
+                    </select>
+                  </div>
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-slate-100">
                     <input
                       type="checkbox"

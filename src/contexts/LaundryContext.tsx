@@ -246,6 +246,8 @@ type LaundryContextType = {
       can_view_students?: boolean;
       is_cleanup_admin?: boolean;
 
+      stay_type?: "unknown" | "5days" | "weekends";
+
       key_issued?: boolean;
 
       key_lost?: boolean;
@@ -1018,7 +1020,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
             .select(
 
-              "id, first_name, last_name, middle_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, is_cleanup_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, key_issued, key_lost, avatar_style, avatar_seed"
+              "id, first_name, last_name, middle_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, is_cleanup_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, key_issued, key_lost, stay_type, avatar_style, avatar_seed"
 
             )
 
@@ -1078,6 +1080,8 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
               key_issued: !!item.key_issued,
 
               key_lost: !!item.key_lost,
+
+              stay_type: item.stay_type || "unknown",
 
               avatar_style: item.avatar_style || "bottts",
 
@@ -1242,6 +1246,8 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
                 key_issued: !!item.key_issued,
 
                 key_lost: !!item.key_lost,
+
+                stay_type: item.stay_type || "unknown",
 
                 avatar_style: item.avatar_style || item.avatar_type || "bottts",
 
@@ -4336,6 +4342,8 @@ const startWashing = async (queueItemId: string) => {
 
       avatar_style?: string;
 
+      stay_type?: "unknown" | "5days" | "weekends";
+
       key_issued?: boolean;
 
       key_lost?: boolean;
@@ -4417,6 +4425,8 @@ const startWashing = async (queueItemId: string) => {
 
           can_view_students: updatedStudent.can_view_students ?? false,
           is_cleanup_admin: updatedStudent.is_cleanup_admin ?? user.is_cleanup_admin ?? false,
+
+          stay_type: updatedStudent.stay_type ?? user.stay_type,
 
         };
 
