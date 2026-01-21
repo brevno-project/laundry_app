@@ -74,11 +74,6 @@ export default function HistoryList() {
   const { t, language } = useUi();
   const locale = language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : language === 'ko' ? 'ko-KR' : 'ky-KG';
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [showClearTools, setShowClearTools] = useState(false);
-  const [clearFrom, setClearFrom] = useState('');
-  const [clearTo, setClearTo] = useState('');
-  const [clearRoom, setClearRoom] = useState('');
-  const [clearNotice, setClearNotice] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
 
   const alertWithCheck = (message: string) => {
@@ -120,54 +115,6 @@ export default function HistoryList() {
     });
   };
 
-  const clearHistory = async (mode: 'all' | 'range') => {
-    if (clearing) return;
-    setClearNotice(null);
-
-    const payload =
-      mode === 'all'
-        ? { mode }
-        : {
-            mode,
-            from: clearFrom || null,
-            to: clearTo || null,
-            room: clearRoom.trim() || null,
-          };
-
-    if (mode === 'range' && !payload.from && !payload.to && !payload.room) {
-      setClearNotice(t("history.clearRangeMissing"));
-      return;
-    }
-
-    const confirmText =
-      mode === 'all'
-        ? t("history.clearConfirmAll")
-        : t("history.clearConfirmRange");
-    if (!confirm(confirmText)) return;
-
-    setClearing(true);
-    try {
-      const response = await authedFetch('/api/admin/history/clear', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || t("history.clearError"));
-      }
-      await fetchHistory();
-      setClearNotice(t("history.clearDeleted", { count: result.count ?? 0 }));
-      setClearFrom('');
-      setClearTo('');
-      setClearRoom('');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : t("history.clearError");
-      setClearNotice(message);
-    } finally {
-      setClearing(false);
-    }
-  };
-
   const clearHistoryItem = async (historyId: string) => {
     if (clearing) return;
     const confirmed = confirm(t("history.deleteConfirm"));
@@ -197,7 +144,7 @@ export default function HistoryList() {
     return (
       <div className="bg-slate-50 rounded-2xl shadow-sm border border-slate-200 p-12 dark:bg-slate-800 dark:border-slate-700">
         <div className="flex flex-col items-center justify-center text-center space-y-4">
-          <div className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center shadow-md">
+          <div className="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center shadow-md">
             <HistoryIcon className="w-10 h-10 text-white" />
           </div>
           <h3 className="text-2xl font-bold text-gray-800">{t("history.emptyTitle")}</h3>
@@ -209,82 +156,19 @@ export default function HistoryList() {
 
   return (
     <div className="space-y-4">
-      <div className="relative overflow-hidden rounded-2xl shadow-md p-5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 dark:from-slate-700 dark:via-slate-800 dark:to-slate-900">
-        <div className="pointer-events-none absolute inset-0 opacity-15" style={{ backgroundImage: 'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.45), transparent 35%), radial-gradient(circle at 80% 0%, rgba(255,255,255,0.35), transparent 40%)' }} />
+      <div className="relative overflow-hidden rounded-2xl shadow-sm p-5 border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white/15 rounded-xl flex items-center justify-center">
-              <HistoryIcon className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center dark:bg-slate-700">
+              <HistoryIcon className="w-6 h-6 text-slate-700 dark:text-slate-100" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">{t("history.title")}</h2>
-              <p className="text-blue-100 text-sm">{t("history.total", { count: historyTotalCount })}</p>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t("history.title")}</h2>
+              <p className="text-slate-600 text-sm dark:text-slate-300">{t("history.total", { count: historyTotalCount })}</p>
             </div>
           </div>
-          {isSuperAdmin && (
-            <button
-              onClick={() => {
-                setShowClearTools((prev) => !prev);
-                setClearNotice(null);
-              }}
-              className="btn btn-secondary"
-            >
-              {showClearTools ? t("history.clearHide") : t("history.clear")}
-            </button>
-          )}
         </div>
       </div>
-      {isSuperAdmin && showClearTools && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-600">{t("history.from")}</label>
-              <input
-                type="date"
-                value={clearFrom}
-                onChange={(event) => setClearFrom(event.target.value)}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-600">{t("history.to")}</label>
-              <input
-                type="date"
-                value={clearTo}
-                onChange={(event) => setClearTo(event.target.value)}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-600">{t("history.room")}</label>
-              <input
-                type="text"
-                value={clearRoom}
-                onChange={(event) => setClearRoom(event.target.value)}
-                placeholder={t("history.roomPlaceholder")}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
-              />
-            </div>
-            <button
-              onClick={() => clearHistory('range')}
-              disabled={clearing}
-              className="btn btn-primary"
-            >
-              {t("history.clearRange")}
-            </button>
-            <button
-              onClick={() => clearHistory('all')}
-              disabled={clearing}
-              className="btn btn-danger"
-            >
-              {t("history.clearAll")}
-            </button>
-          </div>
-          {clearNotice && (
-            <p className="mt-3 text-sm text-slate-600">{clearNotice}</p>
-          )}
-        </div>
-      )}
 
       <div className="space-y-3">
         {history.map((item) => {

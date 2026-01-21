@@ -101,7 +101,9 @@ async function waitForSession(): Promise<boolean> {
 
   
 
-  console.error('? Session not established after 5 attempts');
+  if (process.env.NODE_ENV !== "production") {
+    console.warn('⚠️ Session not established after 5 attempts');
+  }
 
   return false;
 

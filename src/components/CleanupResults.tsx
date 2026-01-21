@@ -1736,7 +1736,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const showLoading = !hasLoadedOnce || (isLoading && results.length === 0 && schedules.length === 0 && apartments.length === 0);
 
   return (
-    <div className={embedded ? "w-full" : "min-h-screen bg-gray-50"}>
+    <div className={embedded ? "w-full" : "min-h-screen bg-slate-50 dark:bg-slate-950"}>
       {!embedded && (
         <header className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 shadow-lg">
           <div className="mx-auto max-w-5xl flex items-center justify-between">
@@ -1754,11 +1754,11 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       {showLoading ? (
         <div className="mx-auto max-w-5xl space-y-4 p-4">
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm animate-pulse dark:border-slate-700 dark:bg-slate-800">
-            <div className="h-5 w-40 rounded bg-gray-200" />
-            <div className="mt-3 h-4 w-64 rounded bg-gray-200" />
+            <div className="h-5 w-40 rounded bg-gray-200 dark:bg-slate-700" />
+            <div className="mt-3 h-4 w-64 rounded bg-gray-200 dark:bg-slate-700" />
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <div className="h-20 rounded bg-gray-100" />
-              <div className="h-20 rounded bg-gray-100" />
+              <div className="h-20 rounded bg-gray-100 dark:bg-slate-700" />
+              <div className="h-20 rounded bg-gray-100 dark:bg-slate-700" />
             </div>
           </div>
           <p className="text-sm text-gray-500">{t("common.loading")}</p>
