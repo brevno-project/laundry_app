@@ -123,7 +123,7 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
         </div>
       )}
 
-      <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900 rounded-lg text-center border border-blue-200 dark:border-slate-700">
+      <div className="mb-6 p-4 bg-white dark:from-slate-800 dark:to-slate-900 rounded-lg text-center border border-slate-200 dark:border-slate-700 dark:bg-slate-800">
         <p className="text-sm text-gray-700 font-semibold mb-3 dark:text-slate-200">{t('avatar.previewLabel')}</p>
         <div className="flex justify-center mb-4">
           <Avatar
@@ -169,8 +169,8 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
               onClick={() => setSelectedStyle(style.id)}
               className={`p-2 rounded-lg border-2 transition-all text-left text-xs ${
                 selectedStyle === style.id
-                  ? 'border-blue-600 bg-white dark:border-sky-400 dark:bg-slate-800/60'
-                  : 'border-gray-200 bg-slate-50 hover:bg-white dark:border-slate-700 dark:bg-slate-900/40 dark:hover:bg-slate-900/60'
+                  ? 'border-blue-600 bg-blue-50 dark:border-sky-400 dark:bg-slate-800/60'
+                  : 'border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:bg-slate-900/60'
               }`}
             >
               <div className="flex items-center justify-between mb-1">

@@ -180,7 +180,7 @@ export default function ActionMenu({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex w-full items-center justify-center gap-2 rounded-md border border-gray-300 dark:border-slate-600 bg-white/70 backdrop-blur-sm dark:bg-slate-700 px-3 py-2 text-sm font-semibold text-gray-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 active:bg-slate-100 dark:active:bg-slate-500"
+        className="flex w-full items-center justify-center gap-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm font-semibold text-gray-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 active:bg-slate-100 dark:active:bg-slate-500"
       >
         <PeopleIcon className="h-4 w-4" />
         <span>{t("admin.actions.manage")}</span>
@@ -194,7 +194,7 @@ export default function ActionMenu({
       )}
 
       {open && (
-        <div className="fixed inset-x-0 bottom-0 z-[100] rounded-t-2xl border-t border-gray-200 dark:border-slate-600 bg-white/80 backdrop-blur-sm dark:bg-slate-800 px-4 pb-5 pt-3 shadow-2xl">
+        <div className="fixed inset-x-0 bottom-0 z-[100] rounded-t-2xl border-t border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 pb-5 pt-3 shadow-2xl">
           <div className="mb-3 flex items-start justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
@@ -347,7 +347,7 @@ function Section({
       <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
         {title}
       </div>
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-slate-700 dark:bg-slate-900/40">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40">
         {children}
       </div>
     </div>
@@ -369,10 +369,10 @@ function SheetButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center gap-2 border-b border-gray-200 px-4 py-2.5 text-left text-sm transition-colors last:border-b-0 ${
+      className={`flex w-full items-center gap-2 border-b border-slate-200 px-4 py-2.5 text-left text-sm transition-colors last:border-b-0 ${
         danger
-          ? "bg-white/70 backdrop-blur-sm text-rose-600 hover:bg-rose-50 dark:bg-slate-800 dark:text-rose-300 dark:hover:bg-rose-900/20"
-          : "bg-white/70 backdrop-blur-sm text-gray-800 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+          ? "bg-white text-rose-600 hover:bg-rose-50 dark:bg-slate-800 dark:text-rose-300 dark:hover:bg-rose-900/20"
+          : "bg-white text-gray-800 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
       }`}
     >
       <span className={danger ? "text-rose-500 dark:text-rose-300" : "text-gray-500 dark:text-slate-400"}>

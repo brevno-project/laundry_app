@@ -751,7 +751,7 @@ export async function POST(request: NextRequest) {
       console.log('📤 Sending to ALL admins from DB:', adminRecipients.length);
 
       for (const recipient of adminRecipients) {
-        const adminMessage = await formatMessage(notification, "ru", true);
+        const adminMessage = await formatMessage(notification, recipient.ui_language, true);
         const adminSuccess = await sendTelegramMessage(recipient.telegram_chat_id, adminMessage);
         if (adminSuccess) console.log('✅ Sent to admin:', recipient.telegram_chat_id);
         success = success || adminSuccess;

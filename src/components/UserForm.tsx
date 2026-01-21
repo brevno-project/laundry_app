@@ -258,7 +258,7 @@ export default function UserForm() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white/70 backdrop-blur-sm p-6 rounded-lg shadow-lg border border-gray-200 dark:bg-slate-800 dark:border-slate-700">
+      <div className="bg-white p-6 rounded-lg shadow-lg border border-slate-200 dark:bg-slate-800 dark:border-slate-700">
         <h2 className="text-2xl font-bold mb-4 text-gray-800">{t('queue.joinTitle')}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="mb-4">
@@ -270,7 +270,7 @@ export default function UserForm() {
               type="text"
               value={user?.full_name || ''}
               readOnly
-              className="mt-1 block w-full rounded-md border-2 border-gray-200 bg-gray-50 shadow-sm p-3 text-gray-700 cursor-not-allowed"
+              className="mt-1 block w-full rounded-md border-2 border-slate-200 bg-slate-50 shadow-sm p-3 text-gray-700 cursor-not-allowed dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
             />
           </div>
           <div className="mb-4">
@@ -282,7 +282,7 @@ export default function UserForm() {
               type="text"
               value={user?.room || t('queue.roomUnknown')}
               readOnly
-              className="mt-1 block w-full rounded-md border-2 border-gray-200 bg-gray-50 shadow-sm p-3 text-gray-700 cursor-not-allowed"
+              className="mt-1 block w-full rounded-md border-2 border-slate-200 bg-slate-50 shadow-sm p-3 text-gray-700 cursor-not-allowed dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
             />
           </div>
 

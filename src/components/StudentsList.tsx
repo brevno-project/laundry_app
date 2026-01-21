@@ -15,8 +15,6 @@ import {
   EyeIcon,
   DeleteIcon,
   KeyIcon,
-  WarningIcon,
-  FlagIcon,
   WashingSpinner,
 } from "@/components/Icons";
 import Avatar from "@/components/Avatar";
@@ -59,7 +57,7 @@ export default function StudentsList() {
 
   if (!students || students.length === 0) {
     return (
-      <div className="bg-white/70 backdrop-blur-sm dark:bg-slate-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700">
         <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
           <ListIcon className="w-8 h-8" />{t("students.title")}
         </h2>
@@ -313,7 +311,7 @@ export default function StudentsList() {
     );
   };
 
-  const renderMobileRow = (student: Student, index: number, list: Student[], tone: "blue" | "green") => {
+  const renderMobileRow = (student: Student, index: number, list: Student[], _tone: "blue" | "green") => {
     const prevStudent = index > 0 ? list[index - 1] : null;
     const showDivider = prevStudent && prevStudent.room !== student.room;
     const rowBorder = "border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800";
@@ -322,21 +320,13 @@ export default function StudentsList() {
       student.full_name ||
       "-";
 
-    const stayType = (student.stay_type || "unknown") as "unknown" | "5days" | "weekends";
-    const stayLabel =
-      stayType === "weekends"
-        ? t("students.stay.weekends")
-        : stayType === "5days"
-          ? t("students.stay.5days")
-          : t("students.stay.unknown");
-
     return (
       <React.Fragment key={student.id}>
         {showDivider && (
           <tr
             className="bg-gradient-to-r from-transparent via-slate-300 to-transparent dark:via-slate-700"
           >
-            <td colSpan={canManageStudents ? 5 : 4} className="h-0.5"></td>
+            <td colSpan={canManageStudents ? 6 : 5} className="h-0.5"></td>
           </tr>
         )}
         <tr className={`border-b ${rowBorder}`}>
@@ -347,35 +337,26 @@ export default function StudentsList() {
               <div className="flex flex-col">
                 <span className="text-xs">{displayName}</span>
                 {canManageStudents && (
-                  <div className="mt-1 grid grid-cols-2 gap-1 text-[10px] font-semibold text-gray-600 dark:text-slate-300">
-                    <span
-                      className={`${badgeBase} px-1 py-0.5 text-center leading-tight ${
-                        student.is_registered
-                          ? "bg-emerald-100 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/25 dark:text-emerald-200"
-                          : "bg-amber-100 text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/25 dark:text-amber-200"
-                      }`}
-                    >
-                      {student.is_registered
-                        ? t("students.badge.registered")
-                        : t("students.badge.unregistered")}
-                    </span>
+                  <div className="mt-1 flex flex-col gap-1 text-[10px] font-semibold text-gray-600 dark:text-slate-300">
+                    {(student.key_lost || (isSuperAdmin && student.is_cleanup_admin)) && (
+                      <div className="flex flex-wrap gap-1">
+                        {student.key_lost && (
+                          <span className={`${badgeBase} bg-red-100 px-1.5 py-0.5 text-red-700 dark:border-rose-800/40 dark:bg-rose-900/30 dark:text-rose-200`}>
+                            {t("students.keyLost")}
+                          </span>
+                        )}
+                        {isSuperAdmin && student.is_cleanup_admin && (
+                          <span className={`${badgeBase} bg-indigo-100 px-1.5 py-0.5 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200`}>
+                            {t("header.leader")}
+                          </span>
+                        )}
+                      </div>
+                    )}
 
-                    <span
-                      className={`${badgeBase} px-1 py-0.5 text-center leading-tight ${
-                        stayType === "weekends"
-                          ? "bg-sky-100 text-sky-800 dark:border-sky-800/40 dark:bg-sky-900/25 dark:text-sky-200"
-                          : stayType === "5days"
-                            ? "bg-indigo-100 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200"
-                            : "bg-gray-100 text-gray-600 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-100"
-                      }`}
-                    >
-                      {stayLabel}
-                    </span>
-
-                    <div className="col-span-2 grid grid-cols-4 gap-1">
+                    <div className="flex items-center gap-1">
                       <span
                         title={student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
-                        className={`${badgeBase} flex items-center justify-center px-1 py-0.5 ${
+                        className={`${badgeBase} flex items-center justify-center px-1.5 py-0.5 ${
                           student.key_issued
                             ? "bg-blue-100 text-blue-700 dark:border-blue-800/40 dark:bg-blue-900/25 dark:text-blue-200"
                             : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
@@ -384,40 +365,18 @@ export default function StudentsList() {
                         <KeyIcon className="w-3 h-3" />
                       </span>
 
-                      <span
-                        title={t("students.keyLost")}
-                        className={`${badgeBase} flex items-center justify-center px-1 py-0.5 ${
-                          student.key_lost
-                            ? "bg-red-100 text-red-700 dark:border-rose-800/40 dark:bg-rose-900/30 dark:text-rose-200"
-                            : "bg-gray-100 text-gray-300 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-700"
-                        }`}
-                      >
-                        <WarningIcon className="w-3 h-3" />
-                      </span>
-
-                      <span
-                        title={t("header.leader")}
-                        className={`${badgeBase} flex items-center justify-center px-1 py-0.5 ${
-                          isSuperAdmin && student.is_cleanup_admin
-                            ? "bg-indigo-100 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200"
-                            : "bg-gray-100 text-gray-300 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-700"
-                        }`}
-                      >
-                        <FlagIcon className="w-3 h-3" />
-                      </span>
-
-                      <span
-                        title={student.can_view_students ? t("students.listOpen") : t("students.listClosed")}
-                        className={`${badgeBase} flex items-center justify-center px-1 py-0.5 ${
-                          isSuperAdmin
-                            ? student.can_view_students
+                      {isSuperAdmin && (
+                        <span
+                          title={student.can_view_students ? t("students.listOpen") : t("students.listClosed")}
+                          className={`${badgeBase} flex items-center justify-center px-1.5 py-0.5 ${
+                            student.can_view_students
                               ? "bg-indigo-100 text-indigo-700 dark:border-violet-800/40 dark:bg-violet-900/25 dark:text-violet-200"
                               : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
-                            : "bg-gray-100 text-gray-300 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-700"
-                        }`}
-                      >
-                        <EyeIcon className="w-3 h-3" />
-                      </span>
+                          }`}
+                        >
+                          <EyeIcon className="w-3 h-3" />
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}
@@ -425,6 +384,13 @@ export default function StudentsList() {
             </div>
           </td>
           <td className="p-1 text-center text-gray-700 whitespace-nowrap">{student.room || "-"}</td>
+          <td className="p-1 text-center">
+            {student.is_registered ? (
+              <CheckIcon className="w-5 h-5 text-emerald-600" />
+            ) : (
+              <CloseIcon className="w-5 h-5 text-amber-500" />
+            )}
+          </td>
           <td className="p-1 text-center">
             {hasTelegram(student) ? (
               <TelegramIcon className="w-5 h-5 text-blue-500" />
@@ -461,7 +427,7 @@ export default function StudentsList() {
 
   return (
     <>
-      <div className="bg-white/70 backdrop-blur-sm dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700">
         <div className="flex items-center justify-between mb-4 px-4 pt-4 pb-2">
           <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-100 flex items-center gap-2">
             <ListIcon className="w-8 h-8" />{t("students.title")} ({filteredStudents.length}/{students.length})
@@ -635,6 +601,9 @@ export default function StudentsList() {
                     <DoorIcon className="w-5 h-5 inline-block" />
                   </th>
                   <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
+                    <CheckIcon className="w-5 h-5 inline-block" />
+                  </th>
+                  <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
                     <TelegramIcon className="w-5 h-5 inline-block" />
                   </th>
                   {canManageStudents && <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">{t("students.actions")}</th>}
@@ -684,6 +653,9 @@ export default function StudentsList() {
                   <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">{t("students.name")}</th>
                   <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
                     <DoorIcon className="w-5 h-5 inline-block" />
+                  </th>
+                  <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
+                    <CheckIcon className="w-5 h-5 inline-block" />
                   </th>
                   <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
                     <TelegramIcon className="w-5 h-5 inline-block" />
