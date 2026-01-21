@@ -229,11 +229,12 @@ export default function Home() {
               {machineState.status === 'idle' ? (
                 <div className="relative overflow-hidden rounded-xl shadow-lg min-h-[120px]">
                   {/* Базовый фон */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-green-600"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-emerald-800"></div>
+                  <div className="absolute inset-0 bg-black/10"></div>
                   
                   {/* Тонкая сетка (паттерн) */}
                   <div 
-                    className="absolute inset-0 opacity-10"
+                    className="absolute inset-0 opacity-[0.06]"
                     style={{
                       backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, white 2px, white 3px), repeating-linear-gradient(90deg, transparent, transparent 2px, white 2px, white 3px)',
                       backgroundSize: '30px 30px',
@@ -242,7 +243,7 @@ export default function Home() {
                   
                   {/* Волна с блеском */}
                   <div 
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
                     style={{
                       animation: 'wave 6s ease-in-out infinite',
                       width: '200%',
@@ -267,11 +268,12 @@ export default function Home() {
               ) : (
                 <div className="relative overflow-hidden rounded-xl shadow-lg min-h-[120px]">
                   {/* Базовый фон */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-600"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-rose-600 to-rose-800"></div>
+                  <div className="absolute inset-0 bg-black/10"></div>
                   
                   {/* Тонкая сетка (паттерн) */}
                   <div 
-                    className="absolute inset-0 opacity-10"
+                    className="absolute inset-0 opacity-[0.06]"
                     style={{
                       backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, white 2px, white 3px), repeating-linear-gradient(90deg, transparent, transparent 2px, white 2px, white 3px)',
                       backgroundSize: '30px 30px',
@@ -280,7 +282,7 @@ export default function Home() {
                   
                   {/* Волна с блеском */}
                   <div 
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
                     style={{
                       animation: 'wave 6s ease-in-out infinite',
                       width: '200%',

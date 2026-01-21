@@ -285,7 +285,7 @@ export default function AdminPanel() {
   return (
     <>
       <div className="space-y-4">
-      <div className="bg-violet-900 dark:bg-violet-950 p-4 rounded-lg shadow-lg mb-4">
+      <div className="bg-slate-900 dark:bg-slate-950 p-4 rounded-lg shadow-lg mb-4">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold text-white">{t("admin.panelTitle")}</h2>
@@ -300,7 +300,7 @@ export default function AdminPanel() {
         <button
           type="button"
           onClick={() => setShowStudents((v) => !v)}
-          className="w-full flex items-center justify-center gap-2 rounded-md bg-violet-800 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-violet-900 dark:bg-violet-900/70 dark:hover:bg-violet-900/85"
+          className="w-full flex items-center justify-center gap-2 rounded-md bg-slate-800 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700"
         >
           <PeopleIcon className="h-5 w-5" />
           {showStudents ? t("admin.studentsToggleHide") : t("admin.studentsToggleShow")}
@@ -328,7 +328,7 @@ export default function AdminPanel() {
                 <button
                   type="button"
                   onClick={() => setShowAddStudent(true)}
-                  className="flex flex-1 items-center justify-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+                  className="flex flex-1 items-center justify-center rounded-md bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700"
                 >
                   {t("admin.addStudent")}
                 </button>
@@ -537,7 +537,7 @@ export default function AdminPanel() {
             <button
               type="button"
               onClick={handleEditStudent}
-              className="flex-1 rounded-lg bg-violet-700 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-800"
+              className="flex-1 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700"
             >
               {t("common.save")}
             </button>
@@ -701,7 +701,7 @@ export default function AdminPanel() {
             <button
               type="button"
               onClick={handleAddToQueue}
-              className="flex-1 rounded-lg bg-violet-700 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-800"
+              className="flex-1 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700"
             >
               {t("admin.addQueueAction")}
             </button>
@@ -728,7 +728,7 @@ function FilterButton({
       onClick={onClick}
       className={`rounded-md px-2 py-2 text-center ${
         active
-          ? "bg-violet-800 text-white"
+          ? "bg-slate-800 text-white dark:bg-slate-700"
           : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
       }`}
     >

@@ -238,10 +238,7 @@ export default function StudentsList() {
   const renderMobileRow = (student: Student, index: number, list: Student[], tone: "blue" | "green") => {
     const prevStudent = index > 0 ? list[index - 1] : null;
     const showDivider = prevStudent && prevStudent.room !== student.room;
-    const rowBorder =
-      tone === "blue"
-        ? "border-blue-200 hover:bg-blue-50 dark:border-slate-700 dark:hover:bg-slate-800"
-        : "border-green-200 hover:bg-green-50 dark:border-slate-700 dark:hover:bg-slate-800";
+    const rowBorder = "border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800";
     const displayName =
       [student.first_name, student.last_name, student.middle_name].filter(Boolean).join(" ") ||
       student.full_name ||
@@ -251,11 +248,7 @@ export default function StudentsList() {
       <React.Fragment key={student.id}>
         {showDivider && (
           <tr
-            className={
-              tone === "blue"
-                ? "bg-gradient-to-r from-transparent via-blue-300 to-transparent"
-                : "bg-gradient-to-r from-transparent via-green-300 to-transparent"
-            }
+            className="bg-gradient-to-r from-transparent via-slate-300 to-transparent dark:via-slate-700"
           >
             <td colSpan={canManageStudents ? 5 : 4} className="h-0.5"></td>
           </tr>
@@ -360,7 +353,7 @@ export default function StudentsList() {
         )}
 
         <div className="mb-6 px-4">
-          <h3 className="text-xl font-bold mb-3 text-blue-700 dark:text-sky-200 flex items-center gap-2 px-4">
+          <h3 className="text-xl font-bold mb-3 text-slate-800 dark:text-slate-100 flex items-center gap-2 px-4">
             <RoomIcon className="w-5 h-5" />{t("students.blockA")} ({blockA.length})
           </h3>
 
@@ -374,7 +367,7 @@ export default function StudentsList() {
                 {canManageStudents && <col className="w-72" />}
               </colgroup>
               <thead>
-                <tr className="bg-blue-100 border-b-2 border-blue-300 dark:bg-slate-900/40 dark:border-slate-700">
+                <tr className="bg-slate-100 border-b-2 border-slate-200 dark:bg-slate-900/40 dark:border-slate-700">
                   <th className="text-left p-3 font-bold text-gray-900 dark:text-slate-100">#</th>
                   <th className="text-left p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.name")}</th>
                   <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.room")}</th>
@@ -391,7 +384,7 @@ export default function StudentsList() {
           <div className="md:hidden overflow-x-auto">
             <table className="w-full border-collapse text-xs">
               <thead>
-                <tr className="bg-blue-100 border-b-2 border-blue-300 dark:bg-slate-900/40 dark:border-slate-700">
+                <tr className="bg-slate-100 border-b-2 border-slate-200 dark:bg-slate-900/40 dark:border-slate-700">
                   <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">#</th>
                   <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">{t("students.name")}</th>
                   <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
@@ -411,7 +404,7 @@ export default function StudentsList() {
         </div>
 
         <div className="pb-4 px-4">
-          <h3 className="text-xl font-bold mb-3 text-green-700 dark:text-emerald-200 flex items-center gap-2 px-4">
+          <h3 className="text-xl font-bold mb-3 text-slate-800 dark:text-slate-100 flex items-center gap-2 px-4">
             <RoomIcon className="w-5 h-5" />{t("students.blockB")} ({blockB.length})
           </h3>
 
@@ -425,7 +418,7 @@ export default function StudentsList() {
                 {canManageStudents && <col className="w-72" />}
               </colgroup>
               <thead>
-                <tr className="bg-green-100 dark:bg-green-900/20 border-b-2 border-green-300 dark:border-green-700">
+                <tr className="bg-slate-100 border-b-2 border-slate-200 dark:bg-slate-900/40 dark:border-slate-700">
                   <th className="text-left p-3 font-bold text-gray-900 dark:text-slate-100">#</th>
                   <th className="text-left p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.name")}</th>
                   <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.room")}</th>
@@ -442,7 +435,7 @@ export default function StudentsList() {
           <div className="md:hidden overflow-x-auto">
             <table className="w-full border-collapse text-xs">
               <thead>
-                <tr className="bg-green-100 dark:bg-green-900/20 border-b-2 border-green-300 dark:border-green-700">
+                <tr className="bg-slate-100 border-b-2 border-slate-200 dark:bg-slate-900/40 dark:border-slate-700">
                   <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">#</th>
                   <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">{t("students.name")}</th>
                   <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">

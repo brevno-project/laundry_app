@@ -12,6 +12,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const { data: student, error: studentError } = await admin
+      .from("students")
+      .select("id, is_banned, ban_reason")
+      .eq("id", student_id)
+      .single();
+
+    if (studentError || !student) {
+      return NextResponse.json({ error: "Студент не найден" }, { status: 404 });
+    }
+
+    if (student.is_banned) {
+      return NextResponse.json(
+        { error: `Студент забанен${student.ban_reason ? `: ${student.ban_reason}` : ""}` },
+        { status: 403 }
+      );
+    }
+
     // 🔥 service-role обновляет запись, RLS не мешает
     const { error } = await admin
       .from("students")
@@ -20,9 +37,6 @@ export async function POST(req: NextRequest) {
         last_user_id: auth_user_id, // Сохраняем последний auth user ID
         is_registered: true,
         registered_at: new Date().toISOString(),
-        is_banned: false,
-        ban_reason: null,
-        banned_at: null,
       })
       .eq("id", student_id);
 

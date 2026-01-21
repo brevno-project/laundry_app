@@ -170,7 +170,7 @@ export default function StudentActions() {
 
   return (
     <div id="student-action-button" className="mb-6 w-full animate-slideDown">
-      <div className="bg-gradient-to-r from-violet-800 to-indigo-950 rounded-2xl shadow-xl p-6 border-2 border-violet-500/70 dark:from-slate-900 dark:to-black dark:border-violet-900/40">
+      <div className="rounded-2xl shadow-xl p-6 border border-slate-700 bg-slate-900/70 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-950/70">
         {myQueueItem.status === QueueStatus.KEY_ISSUED && (
           <>
             {startSent ? (
@@ -187,8 +187,8 @@ export default function StudentActions() {
                     <KeyIcon className="w-7 h-7 text-white flex-shrink-0" />
                     <h3 className="text-2xl font-bold text-white dark:text-slate-100">{t("studentActions.startTitle")}</h3>
                   </div>
-                  <p className="text-violet-100 dark:text-slate-300">{t("studentActions.startHint")}</p>
-                  <div className="flex items-center justify-center gap-1 text-violet-200 text-sm mt-2 dark:text-slate-400">
+                  <p className="text-slate-200 dark:text-slate-300">{t("studentActions.startHint")}</p>
+                  <div className="flex items-center justify-center gap-1 text-slate-300 text-sm mt-2 dark:text-slate-400">
                     <InfoIcon className="w-4 h-4 flex-shrink-0" />
                     <span>{t("studentActions.startInfo")}</span>
                   </div>
@@ -197,7 +197,7 @@ export default function StudentActions() {
                 <button
                   onClick={handleStartWashing}
                   disabled={sending === "start"}
-                  className="w-full bg-slate-50 text-violet-800 font-bold py-4 px-6 rounded-xl text-xl hover:bg-white transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-100"
+                  className="w-full bg-emerald-600 text-white font-bold py-4 px-6 rounded-xl text-xl hover:bg-emerald-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {sending === "start" ? (
                     <div className="flex items-center justify-center gap-2">
@@ -227,11 +227,11 @@ export default function StudentActions() {
                 <div className="text-center mb-4">
                   <h3 className="text-2xl font-bold text-white mb-2 dark:text-slate-100">{t("studentActions.washingTitle")}</h3>
                   <div className="bg-black/20 rounded-xl py-3 px-6 mb-3 dark:bg-slate-950/30">
-                    <div className="text-violet-100 text-sm mb-1 dark:text-slate-300">{t("studentActions.elapsedLabel")}</div>
+                    <div className="text-slate-200 text-sm mb-1 dark:text-slate-300">{t("studentActions.elapsedLabel")}</div>
                     <div className="text-4xl font-black text-white dark:text-slate-100">{washingTime}</div>
                   </div>
-                  <p className="text-violet-100 text-sm dark:text-slate-300">{t("studentActions.finishHint")}</p>
-                  <div className="flex items-center justify-center gap-1 text-violet-200 text-sm mt-2 dark:text-slate-400">
+                  <p className="text-slate-200 text-sm dark:text-slate-300">{t("studentActions.finishHint")}</p>
+                  <div className="flex items-center justify-center gap-1 text-slate-300 text-sm mt-2 dark:text-slate-400">
                     <InfoIcon className="w-4 h-4 flex-shrink-0" />
                     <span>{t("studentActions.startInfo")}</span>
                   </div>
@@ -240,7 +240,7 @@ export default function StudentActions() {
                 <button
                   onClick={handleFinishWashing}
                   disabled={sending === "finish"}
-                  className="w-full bg-rose-600 text-white font-bold py-4 px-6 rounded-xl text-xl hover:bg-rose-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed dark:bg-rose-500/30 dark:text-rose-100 dark:hover:bg-rose-500/40"
+                  className="w-full bg-rose-600 text-white font-bold py-4 px-6 rounded-xl text-xl hover:bg-rose-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center justify-center gap-2">
                     {sending === "finish" ? (

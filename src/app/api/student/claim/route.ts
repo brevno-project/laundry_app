@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     // 1) Получаем студента по student_id
     const { data: student, error: studentError } = await admin
       .from("students")
-      .select("id, user_id, claim_code_hash, claim_code_issued_at")
+      .select("id, user_id, is_banned, ban_reason, claim_code_hash, claim_code_issued_at")
       .eq("id", student_id)
       .single();
 
@@ -24,6 +24,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Студент не найден" },
         { status: 404 }
+      );
+    }
+
+    if (student.is_banned) {
+      return NextResponse.json(
+        { error: `Студент забанен${student.ban_reason ? `: ${student.ban_reason}` : ""}` },
+        { status: 403 }
       );
     }
 

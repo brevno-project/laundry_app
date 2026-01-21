@@ -2027,6 +2027,9 @@ const loginStudent = async (
 
         localStorage.removeItem('laundryIsNewUser');
 
+        localStorage.removeItem('banReason');
+        localStorage.removeItem('banNotice');
+
       } catch (error) {
 
         console.warn('?? Storage cleanup error:', error);

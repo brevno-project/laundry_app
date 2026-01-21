@@ -75,6 +75,7 @@ export default function StudentAuth() {
     setError("");
     setPassword("");
     setShowPassword(false);
+    setBanNotice("");
     if (student.is_banned) {
       const reason = student.ban_reason || t("ban.reasonUnknown");
       setBanNotice(t("ban.notice", { reason }));
@@ -207,6 +208,7 @@ export default function StudentAuth() {
           setStep("select");
           setPassword("");
           setError("");
+          setBanNotice("");
         }}
         className="text-blue-600 hover:text-blue-800 font-bold mb-4 flex items-center gap-2 dark:text-sky-300 dark:hover:text-sky-200"
       >
