@@ -63,7 +63,8 @@ export async function POST(req: NextRequest) {
     let deleteQuery = supabaseAdmin.from("history").delete();
 
     if (mode === "all") {
-      // no filters
+      // PostgREST может отклонять delete без WHERE, поэтому добавляем безопасный фильтр
+      deleteQuery = deleteQuery.neq("id", "");
     } else if (mode === "single") {
       if (!id) {
         return NextResponse.json(
@@ -82,7 +83,7 @@ export async function POST(req: NextRequest) {
       if (student_id) deleteQuery = deleteQuery.eq("student_id", student_id);
     }
 
-    const { data, error: deleteError } = await deleteQuery.select();
+    const { data, error: deleteError } = await deleteQuery.select("id");
 
     if (deleteError) {
       return NextResponse.json(

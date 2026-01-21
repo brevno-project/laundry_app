@@ -76,10 +76,6 @@ export default function StudentAuth() {
     setPassword("");
     setShowPassword(false);
     setBanNotice("");
-    if (student.is_banned) {
-      const reason = student.ban_reason || t("ban.reasonUnknown");
-      setBanNotice(t("ban.notice", { reason }));
-    }
   };
 
   const handleAuth = async () => {

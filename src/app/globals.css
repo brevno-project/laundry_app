@@ -343,13 +343,13 @@ html.dark {
     background-color: rgb(241, 245, 249);
   }
   .btn-danger {
-    color: rgb(190, 18, 60);
-    background-color: rgb(255, 241, 242);
-    border: 1px solid rgb(254, 202, 202);
+    color: white;
+    background-color: rgb(225, 29, 72);
+    border: 1px solid rgb(190, 18, 60);
     will-change: transform;
   }
   .btn-danger:hover {
-    background-color: rgb(254, 226, 226);
+    background-color: rgb(190, 18, 60);
     transform: translateY(-1px);
   }
   .btn-danger:active {

@@ -285,7 +285,7 @@ export default function AdminPanel() {
   return (
     <>
       <div className="space-y-4">
-      <div className="bg-slate-900 dark:bg-slate-950 p-4 rounded-lg shadow-lg mb-4">
+      <div className="rounded-lg border border-slate-200 bg-slate-800 p-4 shadow-lg mb-4 dark:border-slate-800 dark:bg-slate-950">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold text-white">{t("admin.panelTitle")}</h2>
