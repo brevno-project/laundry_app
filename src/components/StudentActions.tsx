@@ -5,7 +5,7 @@ import { useLaundry } from "@/contexts/LaundryContext";
 import { useUi } from "@/contexts/UiContext";
 import { supabase } from "@/lib/supabase";
 import { QueueStatus } from "@/types";
-import { KeyIcon, WashingIcon, CheckIcon, InfoIcon } from "@/components/Icons";
+import { KeyIcon, WashingIcon, CheckIcon, InfoIcon, WashingSpinner } from "@/components/Icons";
 
 const getStoredFlag = (key: string) => {
   if (typeof window === "undefined") return false;
@@ -170,7 +170,7 @@ export default function StudentActions() {
 
   return (
     <div id="student-action-button" className="mb-6 w-full animate-slideDown">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-xl p-6 border-2 border-blue-400 dark:from-slate-800 dark:to-slate-900 dark:border-slate-700">
+      <div className="bg-gradient-to-r from-violet-800 to-indigo-950 rounded-2xl shadow-xl p-6 border-2 border-violet-500/70 dark:from-slate-900 dark:to-black dark:border-violet-900/40">
         {myQueueItem.status === QueueStatus.KEY_ISSUED && (
           <>
             {startSent ? (
@@ -187,8 +187,8 @@ export default function StudentActions() {
                     <KeyIcon className="w-7 h-7 text-white flex-shrink-0" />
                     <h3 className="text-2xl font-bold text-white dark:text-slate-100">{t("studentActions.startTitle")}</h3>
                   </div>
-                  <p className="text-blue-100 dark:text-slate-300">{t("studentActions.startHint")}</p>
-                  <div className="flex items-center justify-center gap-1 text-blue-200 text-sm mt-2 dark:text-slate-400">
+                  <p className="text-violet-100 dark:text-slate-300">{t("studentActions.startHint")}</p>
+                  <div className="flex items-center justify-center gap-1 text-violet-200 text-sm mt-2 dark:text-slate-400">
                     <InfoIcon className="w-4 h-4 flex-shrink-0" />
                     <span>{t("studentActions.startInfo")}</span>
                   </div>
@@ -197,9 +197,16 @@ export default function StudentActions() {
                 <button
                   onClick={handleStartWashing}
                   disabled={sending === "start"}
-                  className="w-full bg-white text-blue-700 font-bold py-4 px-6 rounded-xl text-xl hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl disabled:opacity-70 btn-attn dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-100"
+                  className="w-full bg-slate-50 text-violet-800 font-bold py-4 px-6 rounded-xl text-xl hover:bg-white transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-100"
                 >
-                  {t("studentActions.startButton")}
+                  {sending === "start" ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <WashingSpinner className="w-5 h-5" />
+                      <span>{t("studentActions.startButton")}...</span>
+                    </div>
+                  ) : (
+                    t("studentActions.startButton")
+                  )}
                 </button>
               </>
             )}
@@ -219,12 +226,12 @@ export default function StudentActions() {
               <>
                 <div className="text-center mb-4">
                   <h3 className="text-2xl font-bold text-white mb-2 dark:text-slate-100">{t("studentActions.washingTitle")}</h3>
-                  <div className="bg-white/20 rounded-xl py-3 px-6 mb-3 dark:bg-slate-950/30">
-                    <div className="text-blue-100 text-sm mb-1 dark:text-slate-300">{t("studentActions.elapsedLabel")}</div>
+                  <div className="bg-black/20 rounded-xl py-3 px-6 mb-3 dark:bg-slate-950/30">
+                    <div className="text-violet-100 text-sm mb-1 dark:text-slate-300">{t("studentActions.elapsedLabel")}</div>
                     <div className="text-4xl font-black text-white dark:text-slate-100">{washingTime}</div>
                   </div>
-                  <p className="text-blue-100 text-sm dark:text-slate-300">{t("studentActions.finishHint")}</p>
-                  <div className="flex items-center justify-center gap-1 text-blue-200 text-sm mt-2 dark:text-slate-400">
+                  <p className="text-violet-100 text-sm dark:text-slate-300">{t("studentActions.finishHint")}</p>
+                  <div className="flex items-center justify-center gap-1 text-violet-200 text-sm mt-2 dark:text-slate-400">
                     <InfoIcon className="w-4 h-4 flex-shrink-0" />
                     <span>{t("studentActions.startInfo")}</span>
                   </div>
@@ -233,11 +240,19 @@ export default function StudentActions() {
                 <button
                   onClick={handleFinishWashing}
                   disabled={sending === "finish"}
-                  className="w-full bg-red-600 text-white font-bold py-4 px-6 rounded-xl text-xl hover:bg-red-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-70 btn-attn dark:bg-rose-500/30 dark:text-rose-100 dark:hover:bg-rose-500/40"
+                  className="w-full bg-rose-600 text-white font-bold py-4 px-6 rounded-xl text-xl hover:bg-rose-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed dark:bg-rose-500/30 dark:text-rose-100 dark:hover:bg-rose-500/40"
                 >
                   <div className="flex items-center justify-center gap-2">
-                    <WashingIcon className="w-5 h-5" />
-                    {t("studentActions.finishButton")}
+                    {sending === "finish" ? (
+                      <WashingSpinner className="w-5 h-5" />
+                    ) : (
+                      <WashingIcon className="w-5 h-5" />
+                    )}
+                    <span>
+                      {sending === "finish"
+                        ? `${t("studentActions.finishButton")}...`
+                        : t("studentActions.finishButton")}
+                    </span>
                   </div>
                 </button>
               </>

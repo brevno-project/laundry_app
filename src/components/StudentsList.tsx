@@ -332,13 +332,13 @@ export default function StudentsList() {
     <>
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
         <div className="flex items-center justify-between mb-4 px-4 pt-4 pb-2">
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-100 flex items-center gap-2">
             <ListIcon className="w-8 h-8" />{t("students.title")} ({students.length})
           </h2>
           {canManageStudents && (
             <button
               onClick={() => setShowAddModal(true)}
-              className="btn btn-primary btn-glow"
+              className="btn btn-primary"
             >
               + {t("students.add")}
             </button>
@@ -360,7 +360,7 @@ export default function StudentsList() {
         )}
 
         <div className="mb-6 px-4">
-          <h3 className="text-xl font-bold mb-3 text-blue-700 flex items-center gap-2 px-4">
+          <h3 className="text-xl font-bold mb-3 text-blue-700 dark:text-sky-200 flex items-center gap-2 px-4">
             <RoomIcon className="w-5 h-5" />{t("students.blockA")} ({blockA.length})
           </h3>
 
@@ -374,12 +374,12 @@ export default function StudentsList() {
                 {canManageStudents && <col className="w-72" />}
               </colgroup>
               <thead>
-                <tr className="bg-blue-100 border-b-2 border-blue-300">
-                  <th className="text-left p-3 font-bold text-gray-900">#</th>
-                  <th className="text-left p-3 font-bold text-gray-900">{t("students.name")}</th>
-                  <th className="text-center p-3 font-bold text-gray-900">{t("students.room")}</th>
-                  <th className="text-center p-3 font-bold text-gray-900">{t("students.telegram")}</th>
-                  {canManageStudents && <th className="text-center p-3 font-bold text-gray-900">{t("students.actions")}</th>}
+                <tr className="bg-blue-100 border-b-2 border-blue-300 dark:bg-slate-900/40 dark:border-slate-700">
+                  <th className="text-left p-3 font-bold text-gray-900 dark:text-slate-100">#</th>
+                  <th className="text-left p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.name")}</th>
+                  <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.room")}</th>
+                  <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.telegram")}</th>
+                  {canManageStudents && <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.actions")}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -391,16 +391,16 @@ export default function StudentsList() {
           <div className="md:hidden overflow-x-auto">
             <table className="w-full border-collapse text-xs">
               <thead>
-                <tr className="bg-blue-100 border-b-2 border-blue-300">
-                  <th className="text-left p-1 font-bold text-gray-900">#</th>
-                  <th className="text-left p-1 font-bold text-gray-900">{t("students.name")}</th>
-                  <th className="text-center p-1 font-bold text-gray-900">
+                <tr className="bg-blue-100 border-b-2 border-blue-300 dark:bg-slate-900/40 dark:border-slate-700">
+                  <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">#</th>
+                  <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">{t("students.name")}</th>
+                  <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
                     <DoorIcon className="w-5 h-5 inline-block" />
                   </th>
-                  <th className="text-center p-1 font-bold text-gray-900">
+                  <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
                     <TelegramIcon className="w-5 h-5 inline-block" />
                   </th>
-                  {canManageStudents && <th className="text-left p-1 font-bold text-gray-900">{t("students.actions")}</th>}
+                  {canManageStudents && <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">{t("students.actions")}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -411,7 +411,7 @@ export default function StudentsList() {
         </div>
 
         <div className="pb-4 px-4">
-          <h3 className="text-xl font-bold mb-3 text-green-700 flex items-center gap-2 px-4">
+          <h3 className="text-xl font-bold mb-3 text-green-700 dark:text-emerald-200 flex items-center gap-2 px-4">
             <RoomIcon className="w-5 h-5" />{t("students.blockB")} ({blockB.length})
           </h3>
 
@@ -426,11 +426,11 @@ export default function StudentsList() {
               </colgroup>
               <thead>
                 <tr className="bg-green-100 dark:bg-green-900/20 border-b-2 border-green-300 dark:border-green-700">
-                  <th className="text-left p-3 font-bold text-gray-900">#</th>
-                  <th className="text-left p-3 font-bold text-gray-900">{t("students.name")}</th>
-                  <th className="text-center p-3 font-bold text-gray-900">{t("students.room")}</th>
-                  <th className="text-center p-3 font-bold text-gray-900">{t("students.telegram")}</th>
-                  {canManageStudents && <th className="text-center p-3 font-bold text-gray-900">{t("students.actions")}</th>}
+                  <th className="text-left p-3 font-bold text-gray-900 dark:text-slate-100">#</th>
+                  <th className="text-left p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.name")}</th>
+                  <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.room")}</th>
+                  <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.telegram")}</th>
+                  {canManageStudents && <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.actions")}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -443,15 +443,15 @@ export default function StudentsList() {
             <table className="w-full border-collapse text-xs">
               <thead>
                 <tr className="bg-green-100 dark:bg-green-900/20 border-b-2 border-green-300 dark:border-green-700">
-                  <th className="text-left p-1 font-bold text-gray-900">#</th>
-                  <th className="text-left p-1 font-bold text-gray-900">{t("students.name")}</th>
-                  <th className="text-center p-1 font-bold text-gray-900">
+                  <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">#</th>
+                  <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">{t("students.name")}</th>
+                  <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
                     <DoorIcon className="w-5 h-5 inline-block" />
                   </th>
-                  <th className="text-center p-1 font-bold text-gray-900">
+                  <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
                     <TelegramIcon className="w-5 h-5 inline-block" />
                   </th>
-                  {canManageStudents && <th className="text-left p-1 font-bold text-gray-900">{t("students.actions")}</th>}
+                  {canManageStudents && <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">{t("students.actions")}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -465,57 +465,57 @@ export default function StudentsList() {
       {editingStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-4 flex items-center gap-2">
               <EditIcon className="w-5 h-5" />{t("students.editTitle")}
             </h3>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-bold mb-2 text-gray-900">{t("students.field.lastName")}</label>
+                <label className="block text-sm font-bold mb-2 text-gray-900 dark:text-slate-200">{t("students.field.lastName")}</label>
                 <input
                   type="text"
                   value={editLastName}
                   onChange={(e) => setEditLastName(e.target.value)}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold mb-2 text-gray-900">{t("students.field.firstName")}</label>
+                <label className="block text-sm font-bold mb-2 text-gray-900 dark:text-slate-200">{t("students.field.firstName")}</label>
                 <input
                   type="text"
                   value={editFirstName}
                   onChange={(e) => setEditFirstName(e.target.value)}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold mb-2 text-gray-900">{t("students.field.middleName")}</label>
+                <label className="block text-sm font-bold mb-2 text-gray-900 dark:text-slate-200">{t("students.field.middleName")}</label>
                 <input
                   type="text"
                   value={editMiddleName}
                   onChange={(e) => setEditMiddleName(e.target.value)}
                   placeholder={t("students.field.middleNamePlaceholder")}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold mb-2 text-gray-900">{t("students.field.room")}</label>
+                <label className="block text-sm font-bold mb-2 text-gray-900 dark:text-slate-200">{t("students.field.room")}</label>
                 <input
                   type="text"
                   value={editRoom}
                   onChange={(e) => setEditRoom(e.target.value)}
                   placeholder={t("students.field.roomPlaceholder")}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
                 />
               </div>
 
               {canManageStudents && (
                 <div className="flex flex-wrap gap-3 rounded-lg border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 p-3">
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-slate-100">
                     <input
                       type="checkbox"
                       checked={editKeyIssued}
@@ -524,7 +524,7 @@ export default function StudentsList() {
                     />
                     {t("students.keyIssued")}
                   </label>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-slate-100">
                     <input
                       type="checkbox"
                       checked={editKeyLost}
@@ -582,7 +582,7 @@ export default function StudentsList() {
               </button>
               <button
                 onClick={handleSaveEdit}
-                className="flex-1 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2"
+                className="flex-1 bg-violet-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-violet-800 flex items-center justify-center gap-2"
               >
                 <CheckIcon className="w-5 h-5" />
                 {t("common.save")}

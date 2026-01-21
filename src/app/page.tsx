@@ -225,7 +225,7 @@ export default function Home() {
             
             {/* Статус машины */}
             <div className="mb-6 max-w-3xl mx-auto px-3">
-              <h3 className="text-lg font-semibold mb-3 text-gray-700">{t("machine.status")}</h3>
+              <h3 className="text-lg font-semibold mb-3 text-gray-700 dark:text-slate-200">{t("machine.status")}</h3>
               {machineState.status === 'idle' ? (
                 <div className="relative overflow-hidden rounded-xl shadow-lg min-h-[120px]">
                   {/* Базовый фон */}
@@ -305,7 +305,7 @@ export default function Home() {
                     
                     {/* Полупрозрачная карточка с информацией */}
                     {(machineState.current_queue_item_id || machineState.expected_finish_at) && (
-                      <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 space-y-3">
+                      <div className="bg-black/15 backdrop-blur-sm rounded-lg p-4 space-y-3 border border-white/10">
                         {machineState.current_queue_item_id && (() => {
                           const currentItem = queue.find(item => item.id === machineState.current_queue_item_id);
                           if (currentItem) {
@@ -321,7 +321,7 @@ export default function Home() {
                           return null;
                         })()}
                         {machineState.expected_finish_at && (
-                          <div className="pt-3 border-t border-white/20">
+                          <div className="pt-3 border-t border-white/10">
                             <div className="text-xs text-white/70 font-medium uppercase tracking-wider mb-1">{t("machine.ends")}</div>
                             <div className="text-xl font-bold text-white">
                               {new Date(machineState.expected_finish_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
