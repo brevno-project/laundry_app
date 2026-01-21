@@ -400,15 +400,15 @@ export default function UserForm() {
               </button>
             </>
           ) : (
-            <div className="bg-slate-50 border-2 border-slate-200 rounded-md p-4 dark:bg-slate-900/40 dark:border-slate-700">
-              <p className="text-slate-800 font-bold text-center text-lg dark:text-slate-100">
+            <div className="bg-blue-50 border-2 border-blue-300 rounded-md p-4 dark:bg-slate-900/40 dark:border-slate-700">
+              <p className="text-blue-800 font-bold text-center text-lg dark:text-slate-100">
                 {t('queue.inQueue')}
               </p>
-              <p className="text-blue-700 font-black text-center mt-2 text-3xl dark:text-sky-200">
+              <p className="text-blue-600 font-black text-center mt-2 text-3xl dark:text-sky-200">
                 {t('queue.position', { position: queuePosition })}
               </p>
               {existingQueueItem?.scheduled_for_date && (
-                <p className="text-slate-600 text-center mt-2 dark:text-slate-300">
+                <p className="text-blue-600 text-center mt-2 dark:text-slate-300">
                   {t('queue.scheduledFor', {
                     date: new Date(existingQueueItem.scheduled_for_date).toLocaleDateString(locale, {
                       weekday: 'short',
@@ -419,7 +419,7 @@ export default function UserForm() {
                 </p>
               )}
               {(existingQueueItem?.coupons_used ?? 0) > 0 && (
-                <div className="text-slate-600 text-center mt-2 text-sm dark:text-slate-300">
+                <div className="text-blue-600 text-center mt-2 text-sm dark:text-slate-300">
                   <span className="font-semibold">{t('queue.couponsUsedLabel')}</span>{' '}
                   {reservedCoupons.length > 0
                     ? reservedCoupons.map((coupon) => formatCouponLabel(coupon)).join(', ')

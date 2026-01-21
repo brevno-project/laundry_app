@@ -212,15 +212,15 @@ export default function QueueList() {
           };
         case QueueStatus.WASHING:
           return { 
-            bg: 'bg-green-50 dark:bg-slate-700', 
-            text: 'text-green-900 dark:text-green-300', 
+            bg: 'bg-white dark:bg-slate-800', 
+            text: 'text-slate-900 dark:text-slate-100', 
             badge: (
               <span className="flex items-center gap-1.5">
                 <WashingIcon className="w-4 h-4" />
                 {t("queue.status.washing").toUpperCase()}
               </span>
             ), 
-            badgeColor: 'bg-gradient-to-r from-green-400 to-green-500 text-white font-bold shadow-md dark:from-emerald-600/40 dark:to-emerald-500/20 dark:text-emerald-200' 
+            badgeColor: 'bg-emerald-100 text-emerald-900 font-bold shadow-sm border border-emerald-200 dark:bg-emerald-900/25 dark:text-emerald-200 dark:border-emerald-500/30'
           };
         case QueueStatus.RETURNING_KEY:
           return { 
@@ -236,19 +236,19 @@ export default function QueueList() {
           };
         case QueueStatus.DONE:
           return { 
-            bg: 'bg-emerald-50 dark:bg-slate-700', 
-            text: 'text-emerald-900 dark:text-emerald-300', 
+            bg: 'bg-white dark:bg-slate-800', 
+            text: 'text-slate-900 dark:text-slate-100', 
             badge: (
               <span className="flex items-center gap-1.5">
                 <CheckIcon className="w-4 h-4" />
                 {t("queue.status.done").toUpperCase()}
               </span>
             ), 
-            badgeColor: 'bg-gradient-to-r from-emerald-400 to-emerald-500 text-white font-bold shadow-md dark:from-emerald-600/40 dark:to-emerald-500/20 dark:text-emerald-200' 
+            badgeColor: 'bg-emerald-100 text-emerald-900 font-bold shadow-sm border border-emerald-200 dark:bg-emerald-900/25 dark:text-emerald-200 dark:border-emerald-500/30'
           };
         default:
           return { 
-            bg: 'bg-white/70 backdrop-blur-sm dark:bg-slate-800', 
+            bg: 'bg-white dark:bg-slate-800', 
             text: 'text-gray-700 dark:text-slate-200', 
             badge: status, 
             badgeColor: 'bg-gray-200' 
@@ -272,7 +272,7 @@ export default function QueueList() {
 
   if (queuedItems.length === 0) {
     return (
-      <div className="bg-white/70 backdrop-blur-sm dark:bg-slate-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
+      <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
         <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><CalendarIcon className="w-6 h-6" />{t("queue.title")}</h2>
         </div>
@@ -282,7 +282,7 @@ export default function QueueList() {
   }
 
   return (
-    <div className="bg-white/70 backdrop-blur-sm dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
+    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
       {/* Header */}
       <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700 rounded-t-lg">
         <h2 className="text-xl font-bold text-gray-800 dark:text-slate-100">
@@ -384,18 +384,20 @@ export default function QueueList() {
                 const couponsUsed = item.coupons_used || 0;
 
                 // ✅ Определяем цвет рамки по активному таймеру
-                let borderColor = 'border-gray-300';
+                let borderColor = 'border-slate-300 dark:border-slate-600';
                 if (item.return_requested_at && !item.finished_at) {
-                  borderColor = 'border-orange-400';
+                  borderColor = 'border-orange-400 dark:border-orange-500/50';
                 } else if (item.washing_started_at && !item.washing_finished_at && !item.return_requested_at) {
-                  borderColor = 'border-green-400';
+                  borderColor = 'border-emerald-500 dark:border-emerald-500/50';
                 } else if (item.key_issued_at && !item.washing_started_at) {
-                  borderColor = 'border-blue-400';
+                  borderColor = 'border-blue-400 dark:border-sky-400/60';
                 } else if (item.ready_at && !item.key_issued_at) {
-                  borderColor = 'border-yellow-400';
+                  borderColor = 'border-yellow-400 dark:border-amber-500/50';
+                } else if (item.status === QueueStatus.DONE) {
+                  borderColor = 'border-emerald-600 dark:border-emerald-500/60';
                 }
                 
-                if (isCurrentUser) borderColor = 'border-blue-600';
+                if (isCurrentUser) borderColor = 'border-blue-600 dark:border-sky-400';
                 
                 return (
                   <div key={item.id} className={`${statusDisplay.bg} border-l-4 ${borderColor} rounded-lg p-3 shadow-sm`}>
@@ -426,7 +428,7 @@ export default function QueueList() {
                           <button
                             onClick={() => changeQueuePosition(item.id, 'up')}
                             disabled={index === 0}
-                            className="w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-600 rounded hover:bg-blue-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                            className="w-6 h-6 flex items-center justify-center bg-white border border-slate-200 text-slate-600 rounded hover:bg-slate-50 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed transition-colors dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-700"
                             title={t("queue.action.moveUp")}
                           >
                             <ChevronUpIcon className="w-4 h-4" />
@@ -434,7 +436,7 @@ export default function QueueList() {
                           <button
                             onClick={() => changeQueuePosition(item.id, 'down')}
                             disabled={index === groupedQueue[dateKey].length - 1}
-                            className="w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-600 rounded hover:bg-blue-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                            className="w-6 h-6 flex items-center justify-center bg-white border border-slate-200 text-slate-600 rounded hover:bg-slate-50 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed transition-colors dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-700"
                             title={t("queue.action.moveDown")}
                           >
                             <ChevronDownIcon className="w-4 h-4" />
@@ -680,7 +682,7 @@ export default function QueueList() {
 
                           {/* Стирать */}
                           <button
-                            className="w-full btn bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed dark:bg-emerald-500/20 dark:text-emerald-200 dark:hover:bg-emerald-500/30 dark:border dark:border-emerald-500/40"
+                            className="w-full btn bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed dark:bg-emerald-500/20 dark:text-emerald-200 dark:hover:bg-emerald-500/30 dark:border dark:border-emerald-500/40"
                             onClick={async () => {
                               try {
                                 // Запускаем стирку (меняет статус)
@@ -736,7 +738,7 @@ export default function QueueList() {
 
                           {/* Завершить */}
                           <button
-                            className="w-full btn bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200 dark:hover:bg-emerald-500/30 dark:border dark:border-emerald-500/40"
+                            className="w-full btn bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 dark:bg-emerald-500/20 dark:text-emerald-200 dark:hover:bg-emerald-500/30 dark:border dark:border-emerald-500/40"
                             onClick={async () => {
                               try {
                                 await markDone(item.id);
@@ -801,7 +803,7 @@ export default function QueueList() {
       {/* Модальное окно редактирования */}
       {showEditModal && editingItem && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white/80 backdrop-blur-sm dark:bg-slate-800 rounded-lg p-6 max-w-md w-full">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-md w-full">
             <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><EditIcon className="w-5 h-5" />{t("queue.action.editTitle")}</h3>
             <p className="text-gray-700 mb-3">
               {t("queue.action.editStudent")}: <span className="font-bold">{editingItem.full_name}</span>
@@ -817,7 +819,7 @@ export default function QueueList() {
           <select
             value={editDate}
             onChange={(e) => setEditDate(e.target.value)}
-            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
           >
             {getAvailableDates().map(date => (
               <option key={date.value} value={date.value}>
@@ -833,7 +835,7 @@ export default function QueueList() {
           <select
             value={editWashCount}
             onChange={(e) => setEditWashCount(Number(e.target.value))}
-            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 font-semibold"
+            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 font-semibold bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
           >
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
               <option key={num} value={num}>{num}</option>
@@ -847,7 +849,7 @@ export default function QueueList() {
           <select
             value={editCouponsUsed}
             onChange={(e) => setEditCouponsUsed(Number(e.target.value))}
-            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900"
+            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
           >
             {Array.from({ length: editWashCount + 1 }, (_, i) => i).map((num) => (
               <option key={num} value={num}>{num}</option>
@@ -877,7 +879,7 @@ export default function QueueList() {
 {/* Модальное окно подтверждения очистки очереди */}
 {showClearConfirm && (
   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white/80 backdrop-blur-sm dark:bg-slate-800 rounded-lg p-6 max-w-md w-full shadow-2xl">
+    <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-md w-full shadow-2xl">
       <h3 className="text-xl font-bold text-gray-900 mb-4">{t("queue.clearTitle")}</h3>
       <p className="text-gray-700 mb-6">{t("queue.clearConfirm")}</p>
       <div className="flex gap-3">
