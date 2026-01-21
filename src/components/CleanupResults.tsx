@@ -21,427 +21,76 @@ import {
   TicketIcon,
 } from "@/components/Icons";
 
-const SCORE_CAPTIONS = [
-  {
-    key: "thanks-team",
-    label: "Спасибо всем за старание — вы большие молодцы!",
-  },
-  {
-    key: "keep-going",
-    label: "Так держать! На следующей неделе ждём ещё лучше.",
-  },
-  {
-    key: "clean-and-cozy",
-    label: "Было чисто и приятно — благодарим всех.",
-  },
-  {
-    key: "great-teamwork",
-    label: "Отличная работа команды, продолжайте в том же духе.",
-  },
-  {
-    key: "super-result",
-    label: "Супер-результат, спасибо за порядок.",
-  },
-  {
-    key: "everyone-contributed",
-    label: "Каждая квартира внесла вклад — это заметно.",
-  },
-  {
-    key: "top-clean",
-    label: "Сегодня чистота на высоте, гордимся вами.",
-  },
-  {
-    key: "excellent",
-    label: "Уборка прошла на отлично, спасибо!",
-  },
-  {
-    key: "thanks-participation",
-    label: "Всем спасибо за участие и аккуратность.",
-  },
-  {
-    key: "clean-is-ours",
-    label: "Чистота — наше всё. Хороший результат!",
-  },
-  {
-    key: "together-strong",
-    label: "Дружно поработали — молодцы!",
-  },
-  {
-    key: "responsibility",
-    label: "Спасибо за ответственность и дисциплину.",
-  },
-  {
-    key: "keep-bar",
-    label: "Продолжайте держать планку.",
-  },
-  {
-    key: "order-pleases",
-    label: "Порядок радует глаз — благодарим!",
-  },
-  {
-    key: "week-results",
-    label: "Отличные итоги недели, так держать!",
-  },
-  {
-    key: "extra-01",
-    label: "Отличный результат, спасибо за заботу о порядке.",
-  },
-  {
-    key: "extra-02",
-    label: "Команда сработала слаженно — благодарим!",
-  },
-  {
-    key: "extra-03",
-    label: "Видно старание каждой комнаты, молодцы.",
-  },
-  {
-    key: "extra-04",
-    label: "Чисто и уютно — так держать.",
-  },
-  {
-    key: "extra-05",
-    label: "Спасибо за ответственность, вы лучшие.",
-  },
-  {
-    key: "extra-06",
-    label: "Порядок впечатляет — продолжайте.",
-  },
-  {
-    key: "extra-07",
-    label: "На этой неделе всё на высоте.",
-  },
-  {
-    key: "extra-08",
-    label: "Дружная работа дала отличный результат.",
-  },
-  {
-    key: "extra-09",
-    label: "Чистота радует — спасибо всем.",
-  },
-  {
-    key: "extra-10",
-    label: "Спасибо за дисциплину и аккуратность.",
-  },
-  {
-    key: "extra-11",
-    label: "Отличная неделя, молодцы.",
-  },
-  {
-    key: "extra-12",
-    label: "С каждым разом всё лучше — супер.",
-  },
-  {
-    key: "extra-13",
-    label: "Спасибо за труд и участие.",
-  },
-  {
-    key: "extra-14",
-    label: "Результат сильный, так держать.",
-  },
-  {
-    key: "extra-15",
-    label: "Аккуратно и спокойно — спасибо.",
-  },
-  {
-    key: "extra-16",
-    label: "Чистота заметна сразу — отлично.",
-  },
-  {
-    key: "extra-17",
-    label: "Выдержали стандарт — молодцы.",
-  },
-  {
-    key: "extra-18",
-    label: "Спасибо за заботу об общих зонах.",
-  },
-  {
-    key: "extra-19",
-    label: "Порядок в деталях — круто.",
-  },
-  {
-    key: "extra-20",
-    label: "Ваша работа видна — благодарим.",
-  },
-  {
-    key: "extra-21",
-    label: "Держим темп, всё отлично.",
-  },
-  {
-    key: "extra-22",
-    label: "Супер-организация, спасибо.",
-  },
-  {
-    key: "extra-23",
-    label: "Отличный баланс качества и скорости.",
-  },
-  {
-    key: "extra-24",
-    label: "Никаких замечаний — молодцы.",
-  },
-  {
-    key: "extra-25",
-    label: "Чистота на уровне — благодарим.",
-  },
-  {
-    key: "extra-26",
-    label: "Спасибо за аккуратность и внимание.",
-  },
-  {
-    key: "extra-27",
-    label: "Всё чисто и приятно — отлично.",
-  },
-  {
-    key: "extra-28",
-    label: "Командная работа — ваш сильный стиль.",
-  },
-  {
-    key: "extra-29",
-    label: "Итог радует — спасибо.",
-  },
-  {
-    key: "extra-30",
-    label: "Вы большие молодцы, гордимся.",
-  },
-  {
-    key: "extra-31",
-    label: "Планка высоко — и вы её держите.",
-  },
-  {
-    key: "extra-32",
-    label: "Порядок и уют — так и нужно.",
-  },
-  {
-    key: "extra-33",
-    label: "Спасибо за вклад каждого.",
-  },
-  {
-    key: "extra-34",
-    label: "Слаженность и чистота — супер.",
-  },
-  {
-    key: "extra-35",
-    label: "Всё выполнено качественно — молодцы.",
-  },
-  {
-    key: "extra-36",
-    label: "Спасибо за стабильный результат.",
-  },
-  {
-    key: "extra-37",
-    label: "Такой порядок — пример для всех.",
-  },
-  {
-    key: "extra-38",
-    label: "Прекрасная работа, спасибо.",
-  },
-  {
-    key: "extra-39",
-    label: "Чисто и ясно — результат отличный.",
-  },
-  {
-    key: "extra-40",
-    label: "Выдержали уровень — благодарим.",
-  },
-  {
-    key: "extra-41",
-    label: "Результат ровный и сильный — супер.",
-  },
-  {
-    key: "extra-42",
-    label: "Спасибо за аккуратную уборку.",
-  },
-  {
-    key: "extra-43",
-    label: "Хорошая неделя, молодцы.",
-  },
-  {
-    key: "extra-44",
-    label: "Работа на совесть — благодарим.",
-  },
-  {
-    key: "extra-45",
-    label: "Отличная дисциплина — спасибо.",
-  },
-  {
-    key: "extra-46",
-    label: "Порядок держится — молодцы.",
-  },
-  {
-    key: "extra-47",
-    label: "Всё чисто, всё на месте — супер.",
-  },
-  {
-    key: "extra-48",
-    label: "Спасибо за инициативу и порядок.",
-  },
-  {
-    key: "extra-49",
-    label: "Качество работы радует — так держать.",
-  },
-  {
-    key: "extra-50",
-    label: "Стабильно хорошо — молодцы.",
-  },
-  {
-    key: "extra-51",
-    label: "Отличный коллективный результат.",
-  },
-  {
-    key: "extra-52",
-    label: "Чисто и спокойно — спасибо.",
-  },
-  {
-    key: "extra-53",
-    label: "Спасибо за участие всей команды.",
-  },
-  {
-    key: "extra-54",
-    label: "Выше ожиданий — молодцы.",
-  },
-  {
-    key: "extra-55",
-    label: "Супер-итоги, спасибо.",
-  },
-  {
-    key: "extra-56",
-    label: "Работа выполнена аккуратно — отлично.",
-  },
-  {
-    key: "extra-57",
-    label: "Чистота как дома — благодарим.",
-  },
-  {
-    key: "extra-58",
-    label: "Порядок без лишних слов — молодцы.",
-  },
-  {
-    key: "extra-59",
-    label: "Команда справилась отлично — спасибо.",
-  },
-  {
-    key: "extra-60",
-    label: "Спасибо за внимательность к деталям.",
-  },
-  {
-    key: "extra-61",
-    label: "Результат вдохновляет — молодцы.",
-  },
-  {
-    key: "extra-62",
-    label: "Так держать, чистота на высоте.",
-  },
-  {
-    key: "extra-63",
-    label: "Спасибо за чистые общие зоны.",
-  },
-  {
-    key: "extra-64",
-    label: "Порядок держится уверенно — супер.",
-  },
-  {
-    key: "extra-65",
-    label: "Всё аккуратно и чисто — спасибо.",
-  },
-  {
-    key: "extra-66",
-    label: "Ваши усилия заметны — молодцы.",
-  },
-  {
-    key: "extra-67",
-    label: "Отличный вклад в общий порядок.",
-  },
-  {
-    key: "extra-68",
-    label: "Порядок и дисциплина — отлично.",
-  },
-  {
-    key: "extra-69",
-    label: "Работа сделана качественно — благодарим.",
-  },
-  {
-    key: "extra-70",
-    label: "Отличные итоги, продолжайте.",
-  },
-  {
-    key: "extra-71",
-    label: "Чистота и порядок — на пять.",
-  },
-  {
-    key: "extra-72",
-    label: "Хороший результат, спасибо.",
-  },
-  {
-    key: "extra-73",
-    label: "Команда на высоте — молодцы.",
-  },
-  {
-    key: "extra-74",
-    label: "Порядок стабильно высокий — супер.",
-  },
-  {
-    key: "extra-75",
-    label: "Спасибо за честную работу.",
-  },
-  {
-    key: "extra-76",
-    label: "Отличная организованность — благодарим.",
-  },
-  {
-    key: "extra-77",
-    label: "Приятно видеть такой порядок — спасибо.",
-  },
-  {
-    key: "extra-78",
-    label: "Результат отличный, так держать.",
-  },
-  {
-    key: "extra-79",
-    label: "Чистота сохраняется — молодцы.",
-  },
-  {
-    key: "extra-80",
-    label: "Спасибо за упорство и аккуратность.",
-  },
-  {
-    key: "extra-81",
-    label: "Команда сработала идеально — благодарим.",
-  },
-  {
-    key: "extra-82",
-    label: "Уровень отличный — продолжайте.",
-  },
-  {
-    key: "extra-83",
-    label: "Спасибо за качественную уборку.",
-  },
-  {
-    key: "extra-84",
-    label: "Отличная неделя, спасибо.",
-  },
-  {
-    key: "extra-85",
-    label: "Чистота и порядок — класс.",
-  },
-  {
-    key: "extra-86",
-    label: "Сделано на отлично — молодцы.",
-  },
-  {
-    key: "extra-87",
-    label: "Вы держите уровень — спасибо.",
-  },
-  {
-    key: "extra-88",
-    label: "Результат высокий — супер.",
-  },
-  {
-    key: "extra-89",
-    label: "Отличный пример для всех — молодцы.",
-  },
-  {
-    key: "extra-90",
-    label: "Спасибо за порядок и ответственность.",
-  },
+const SCORE_CAPTIONS_RU = [
+  { key: "thanks-team", label: "Спасибо всем за старание — вы большие молодцы!" },
+  { key: "keep-going", label: "Так держать! На следующей неделе ждём ещё лучше." },
+  { key: "clean-and-cozy", label: "Было чисто и приятно — благодарим всех." },
+  { key: "great-teamwork", label: "Отличная работа команды, продолжайте в том же духе." },
+  { key: "super-result", label: "Супер-результат, спасибо за порядок." },
+  { key: "everyone-contributed", label: "Каждая квартира внесла вклад — это заметно." },
+  { key: "top-clean", label: "Сегодня чистота на высоте, гордимся вами." },
+  { key: "excellent", label: "Уборка прошла на отлично, спасибо!" },
+  { key: "thanks-participation", label: "Всем спасибо за участие и аккуратность." },
+  { key: "clean-is-ours", label: "Чистота — наше всё. Хороший результат!" },
+  { key: "together-strong", label: "Дружно поработали — молодцы!" },
+  { key: "responsibility", label: "Спасибо за ответственность и дисциплину." },
+  { key: "keep-bar", label: "Продолжайте держать планку." },
+  { key: "order-pleases", label: "Порядок радует глаз — благодарим!" },
+  { key: "week-results", label: "Отличные итоги недели, так держать!" },
+];
+
+const SCORE_CAPTIONS_EN = [
+  { key: "thanks-team", label: "Thanks everyone for the effort — you did great!" },
+  { key: "keep-going", label: "Keep it up! Let’s do even better next week." },
+  { key: "clean-and-cozy", label: "It was clean and pleasant — thank you all." },
+  { key: "great-teamwork", label: "Great teamwork — keep it up." },
+  { key: "super-result", label: "Super result — thanks for keeping it tidy." },
+  { key: "everyone-contributed", label: "Every apartment contributed — it shows." },
+  { key: "top-clean", label: "Cleanliness is top-notch today — proud of you." },
+  { key: "excellent", label: "Excellent cleanup — thank you!" },
+  { key: "thanks-participation", label: "Thanks everyone for participating and being careful." },
+  { key: "clean-is-ours", label: "Cleanliness is our thing — great result!" },
+  { key: "together-strong", label: "Worked together well — great job!" },
+  { key: "responsibility", label: "Thanks for responsibility and discipline." },
+  { key: "keep-bar", label: "Keep the bar high." },
+  { key: "order-pleases", label: "Order is pleasing — thank you!" },
+  { key: "week-results", label: "Great weekly results — keep it up!" },
+];
+
+const SCORE_CAPTIONS_KY = [
+  { key: "thanks-team", label: "Баарыңарга аракет үчүн рахмат — чоң молодецсиңер!" },
+  { key: "keep-going", label: "Ушундай уланткыла! Кийинки жумада дагы жакшыраак болсун." },
+  { key: "clean-and-cozy", label: "Таза жана жагымдуу болду — баарыңа рахмат." },
+  { key: "great-teamwork", label: "Команда болуп жакшы иштедиңер — ошол темпте уланталы." },
+  { key: "super-result", label: "Супер жыйынтык, тартип үчүн рахмат." },
+  { key: "everyone-contributed", label: "Ар бир квартира салым кошту — байкалат." },
+  { key: "top-clean", label: "Бүгүн тазалык эң жогорку деңгээлде, сыймыктанабыз." },
+  { key: "excellent", label: "Тазалоо эң сонун өттү, рахмат!" },
+  { key: "thanks-participation", label: "Катышканыңар жана тактыгыңар үчүн рахмат." },
+  { key: "clean-is-ours", label: "Тазалык — биздин баалуулук. Жакшы жыйынтык!" },
+  { key: "together-strong", label: "Бирге иштеп — молодец!" },
+  { key: "responsibility", label: "Жоопкерчилик жана тартип үчүн рахмат." },
+  { key: "keep-bar", label: "Планканы түшүрбөй уланталы." },
+  { key: "order-pleases", label: "Тартип көзгө жагат — рахмат!" },
+  { key: "week-results", label: "Жуманын жыйынтыгы мыкты, ушундай уланткыла!" },
+];
+
+const SCORE_CAPTIONS_KO = [
+  { key: "thanks-team", label: "모두 수고했어요 — 정말 잘했어요!" },
+  { key: "keep-going", label: "계속 이렇게 해요! 다음 주엔 더 잘해봅시다." },
+  { key: "clean-and-cozy", label: "깨끗하고 기분 좋았습니다 — 감사합니다." },
+  { key: "great-teamwork", label: "팀워크가 훌륭했어요 — 계속 유지해요." },
+  { key: "super-result", label: "훌륭한 결과입니다 — 정리해줘서 고마워요." },
+  { key: "everyone-contributed", label: "모든 아파트가 기여한 게 보여요." },
+  { key: "top-clean", label: "오늘은 정말 깨끗해요 — 자랑스럽습니다." },
+  { key: "excellent", label: "청소가 아주 잘 됐어요 — 감사합니다!" },
+  { key: "thanks-participation", label: "참여해주고 깔끔하게 해줘서 감사합니다." },
+  { key: "clean-is-ours", label: "청결은 우리의 자랑입니다. 좋은 결과예요!" },
+  { key: "together-strong", label: "함께 잘했어요 — 최고!" },
+  { key: "responsibility", label: "책임감과 규율을 지켜줘서 감사합니다." },
+  { key: "keep-bar", label: "높은 기준을 유지해요." },
+  { key: "order-pleases", label: "정돈된 모습이 보기 좋아요 — 감사합니다!" },
+  { key: "week-results", label: "이번 주 결과가 훌륭해요 — 계속 이렇게 해요!" },
 ];
 
 const formatLocalDate = (date: Date) => {
@@ -717,6 +366,12 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const { t, language } = useUi();
   const locale = language === "ru" ? "ru-RU" : language === "en" ? "en-US" : language === "ko" ? "ko-KR" : "ky-KG";
   const canManageCleanup = isAdmin || isSuperAdmin || isCleanupAdmin;
+  const scoreCaptions = useMemo(() => {
+    if (language === "en") return SCORE_CAPTIONS_EN;
+    if (language === "ky") return SCORE_CAPTIONS_KY;
+    if (language === "ko") return SCORE_CAPTIONS_KO;
+    return SCORE_CAPTIONS_RU;
+  }, [language]);
   const [results, setResults] = useState<CleanupResult[]>([]);
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [schedules, setSchedules] = useState<CleanupSchedule[]>([]);
@@ -752,7 +407,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [couponTtlSeconds, setCouponTtlSeconds] = useState<number | null>(null);
   const [scoreInputs, setScoreInputs] = useState<Record<string, string>>({});
   const [scoreCaptionKey, setScoreCaptionKey] = useState(
-    SCORE_CAPTIONS[0]?.key || ""
+    SCORE_CAPTIONS_RU[0]?.key || ""
   );
   const [scheduleDrafts, setScheduleDrafts] = useState<Record<Block, ScheduleDraft>>(() => ({
     A: { date: getNextWednesdayISO(), time: "19:00" },
@@ -862,8 +517,14 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     return apartments.filter((apt) => !apt.block || apt.block === selectedBlock);
   }, [apartments, selectedBlock]);
 
+  useEffect(() => {
+    if (!scoreCaptions.some((caption) => caption.key === scoreCaptionKey)) {
+      setScoreCaptionKey(scoreCaptions[0]?.key || "");
+    }
+  }, [scoreCaptions, scoreCaptionKey]);
+
   const selectedScoreCaption =
-    SCORE_CAPTIONS.find((caption) => caption.key === scoreCaptionKey)?.label || "";
+    scoreCaptions.find((caption) => caption.key === scoreCaptionKey)?.label || "";
 
   const loadApartments = async () => {
     if (!supabase) return;
@@ -1375,7 +1036,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   };
 
   const handleRandomScoreCaption = () => {
-    const random = SCORE_CAPTIONS[Math.floor(Math.random() * SCORE_CAPTIONS.length)];
+    const random = scoreCaptions[Math.floor(Math.random() * scoreCaptions.length)];
     setScoreCaptionKey(random.key);
   };
 
@@ -1896,7 +1557,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   onChange={(e) => setScoreCaptionKey(e.target.value)}
                   className="w-full rounded-lg border-2 border-gray-200 bg-white/60 p-2 text-sm text-gray-900 md:w-auto dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 >
-                  {SCORE_CAPTIONS.map((caption) => (
+                  {scoreCaptions.map((caption) => (
                     <option key={caption.key} value={caption.key}>
                       {caption.label}
                     </option>

@@ -126,8 +126,9 @@ export default function StudentsList() {
 
       setEditingStudent(null);
       setNotice({ type: "success", message: t("students.updateSuccess") });
-    } catch {
-      setNotice({ type: "error", message: t("students.updateError") });
+    } catch (error: any) {
+      const message = typeof error?.message === "string" && error.message.trim() ? error.message.trim() : t("students.updateError");
+      setNotice({ type: "error", message });
     }
   };
 

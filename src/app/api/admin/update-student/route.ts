@@ -66,6 +66,13 @@ export async function POST(req: NextRequest) {
       updateData.key_lost = updates.key_lost;
     }
     if (updates.stay_type !== undefined) {
+      const allowedStayTypes = ["unknown", "5days", "weekends"] as const;
+      if (!allowedStayTypes.includes(updates.stay_type)) {
+        return NextResponse.json(
+          { error: "Invalid stay_type" },
+          { status: 400 }
+        );
+      }
       updateData.stay_type = updates.stay_type;
     }
     if (updates.is_cleanup_admin !== undefined) {
@@ -81,6 +88,13 @@ export async function POST(req: NextRequest) {
       updateData.avatar_style = updates.avatar_style;
     }
 
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json(
+        { error: "No valid fields to update" },
+        { status: 400 }
+      );
+    }
+
     // ✅ Обновляем студента
     const { data, error: updateError } = await supabaseAdmin
       .from("students")
@@ -89,8 +103,15 @@ export async function POST(req: NextRequest) {
       .select();
 
     if (updateError) {
+      const msg = updateError.message || "Update failed";
+      if (msg.toLowerCase().includes("stay_type") && msg.toLowerCase().includes("does not exist")) {
+        return NextResponse.json(
+          { error: "Database schema is missing stay_type column. Apply migration 20260126_add_students_stay_type.sql" },
+          { status: 409 }
+        );
+      }
       return NextResponse.json(
-        { error: updateError.message },
+        { error: msg },
         { status: 500 }
       );
     }
