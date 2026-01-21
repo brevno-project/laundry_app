@@ -90,7 +90,7 @@ export default function PasswordChanger() {
 
   return (
     <div className="bg-white/70 backdrop-blur-sm dark:bg-slate-800 p-4 rounded-lg shadow-sm">
-      <h3 className="font-bold text-lg text-gray-800 mb-3">{t("password.title")}</h3>
+      <h3 className="font-bold text-lg text-gray-800 mb-3 dark:text-slate-100">{t("password.title")}</h3>
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded-lg mb-3">
@@ -106,7 +106,7 @@ export default function PasswordChanger() {
 
       <div className="space-y-3">
         <div>
-          <label className="block text-sm font-bold mb-1 text-gray-900">{t("password.current")}</label>
+          <label className="block text-sm font-bold mb-1 text-gray-900 dark:text-slate-200">{t("password.current")}</label>
           <div className="flex items-stretch gap-2">
             <input
               type={showCurrent ? "text" : "password"}
@@ -116,13 +116,13 @@ export default function PasswordChanger() {
                 setError("");
                 setSuccess("");
               }}
-              className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white/60 text-gray-900 p-3 text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white/60 text-gray-900 p-3 text-sm font-bold placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
               placeholder={t("password.placeholderCurrent")}
             />
             <button
               type="button"
               onClick={() => setShowCurrent(!showCurrent)}
-              className="shrink-0 px-3 rounded-lg border border-gray-300 text-xs font-semibold text-gray-700 hover:text-gray-900 hover:border-gray-400"
+              className="shrink-0 px-3 rounded-lg border border-gray-300 text-xs font-semibold text-gray-700 hover:text-gray-900 hover:border-gray-400 dark:border-slate-600 dark:text-slate-300 dark:hover:text-slate-100 dark:hover:border-slate-500"
             >
               {showCurrent ? t("auth.hide") : t("auth.show")}
             </button>
@@ -130,7 +130,7 @@ export default function PasswordChanger() {
         </div>
 
         <div>
-          <label className="block text-sm font-bold mb-1 text-gray-900">{t("password.new")}</label>
+          <label className="block text-sm font-bold mb-1 text-gray-900 dark:text-slate-200">{t("password.new")}</label>
           <div className="flex items-stretch gap-2">
             <input
               type={showNew ? "text" : "password"}
@@ -140,22 +140,22 @@ export default function PasswordChanger() {
                 setError("");
                 setSuccess("");
               }}
-              className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white/60 text-gray-900 p-3 text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white/60 text-gray-900 p-3 text-sm font-bold placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
               placeholder={t("password.placeholderNew")}
             />
             <button
               type="button"
               onClick={() => setShowNew(!showNew)}
-              className="shrink-0 px-3 rounded-lg border border-gray-300 text-xs font-semibold text-gray-700 hover:text-gray-900 hover:border-gray-400"
+              className="shrink-0 px-3 rounded-lg border border-gray-300 text-xs font-semibold text-gray-700 hover:text-gray-900 hover:border-gray-400 dark:border-slate-600 dark:text-slate-300 dark:hover:text-slate-100 dark:hover:border-slate-500"
             >
               {showNew ? t("auth.hide") : t("auth.show")}
             </button>
           </div>
-          <p className="mt-1 text-xs text-gray-500">{t("password.minHint")}</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">{t("password.minHint")}</p>
         </div>
 
         <div>
-          <label className="block text-sm font-bold mb-1 text-gray-900">{t("password.confirm")}</label>
+          <label className="block text-sm font-bold mb-1 text-gray-900 dark:text-slate-200">{t("password.confirm")}</label>
           <div className="flex items-stretch gap-2">
             <input
               type={showConfirm ? "text" : "password"}
@@ -165,13 +165,13 @@ export default function PasswordChanger() {
                 setError("");
                 setSuccess("");
               }}
-              className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white/60 text-gray-900 p-3 text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white/60 text-gray-900 p-3 text-sm font-bold placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
               placeholder={t("password.placeholderConfirm")}
             />
             <button
               type="button"
               onClick={() => setShowConfirm(!showConfirm)}
-              className="shrink-0 px-3 rounded-lg border border-gray-300 text-xs font-semibold text-gray-700 hover:text-gray-900 hover:border-gray-400"
+              className="shrink-0 px-3 rounded-lg border border-gray-300 text-xs font-semibold text-gray-700 hover:text-gray-900 hover:border-gray-400 dark:border-slate-600 dark:text-slate-300 dark:hover:text-slate-100 dark:hover:border-slate-500"
             >
               {showConfirm ? t("auth.hide") : t("auth.show")}
             </button>

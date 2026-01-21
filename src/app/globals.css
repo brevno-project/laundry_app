@@ -370,4 +370,9 @@ html.dark {
     outline: none;
     box-shadow: 0 0 0 2px rgb(191, 219, 254), 0 0 0 4px white;
   }
+
+  .dark .btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.35), 0 0 0 4px rgba(11, 14, 21, 1);
+  }
 }

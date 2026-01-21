@@ -14,6 +14,7 @@ import {
   EditIcon,
   EyeIcon,
   DeleteIcon,
+  WashingSpinner,
 } from "@/components/Icons";
 import Avatar from "@/components/Avatar";
 import AddStudentModal from "@/components/AddStudentModal";
@@ -22,6 +23,7 @@ export default function StudentsList() {
   const { students, isAdmin, isSuperAdmin, isCleanupAdmin, user, updateStudent, deleteStudent } = useLaundry();
   const { t } = useUi();
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [editRoom, setEditRoom] = useState("");
   const [editFirstName, setEditFirstName] = useState("");
   const [editLastName, setEditLastName] = useState("");
@@ -47,8 +49,7 @@ export default function StudentsList() {
   const canManageStudents = isAdmin || isSuperAdmin || isCleanupAdmin;
   const canDeleteStudents = isAdmin || isSuperAdmin;
 
-  const badgeBase =
-    "rounded-full border border-slate-200/60 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-100";
+  const badgeBase = "rounded-full border border-slate-200/60 dark:border-slate-700";
 
   const canManageStudent = (student: Student) =>
     canManageStudents && (!student.is_super_admin || student.id === user?.student_id);
@@ -99,6 +100,7 @@ export default function StudentsList() {
 
   const openEditModal = (student: Student) => {
     setEditingStudent(student);
+    setIsSavingEdit(false);
     setEditRoom(student.room || "");
     setEditFirstName(student.first_name || "");
     setEditLastName(student.last_name || "");
@@ -113,7 +115,9 @@ export default function StudentsList() {
 
   const handleSaveEdit = async () => {
     if (!editingStudent) return;
+    if (isSavingEdit) return;
 
+    setIsSavingEdit(true);
     try {
       await updateStudent(editingStudent.id, {
         room: editRoom,
@@ -132,6 +136,8 @@ export default function StudentsList() {
     } catch (error: any) {
       const message = typeof error?.message === "string" && error.message.trim() ? error.message.trim() : t("students.updateError");
       setNotice({ type: "error", message });
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -201,8 +207,8 @@ export default function StudentsList() {
                     <span
                       className={`${badgeBase} px-2 py-0.5 ${
                         student.is_registered
-                          ? "bg-emerald-100 text-emerald-800 dark:bg-slate-700/45 dark:text-slate-100"
-                          : "bg-amber-100 text-amber-800 dark:bg-slate-700/45 dark:text-slate-100"
+                          ? "bg-emerald-100 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/25 dark:text-emerald-200"
+                          : "bg-amber-100 text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/25 dark:text-amber-200"
                       }`}
                     >
                       {student.is_registered
@@ -212,19 +218,25 @@ export default function StudentsList() {
                     <span
                       className={`${badgeBase} px-2 py-0.5 ${
                         stayType === "weekends"
-                          ? "bg-sky-100 text-sky-800 dark:bg-slate-700/45 dark:text-slate-100"
+                          ? "bg-sky-100 text-sky-800 dark:border-sky-800/40 dark:bg-sky-900/25 dark:text-sky-200"
                           : stayType === "5days"
-                            ? "bg-indigo-100 text-indigo-800 dark:bg-slate-700/45 dark:text-slate-100"
-                            : "bg-gray-100 text-gray-600 dark:bg-slate-700/45 dark:text-slate-100"
+                            ? "bg-indigo-100 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200"
+                            : "bg-gray-100 text-gray-600 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-100"
                       }`}
                     >
                       {stayLabel}
                     </span>
-                    <span className={`${badgeBase} px-2 py-0.5 ${student.key_issued ? "bg-blue-100 text-blue-700 dark:bg-slate-700/45 dark:text-slate-100" : "bg-gray-100 text-gray-500 dark:bg-slate-700/45 dark:text-slate-100"}`}>
+                    <span
+                      className={`${badgeBase} px-2 py-0.5 ${
+                        student.key_issued
+                          ? "bg-blue-100 text-blue-700 dark:border-blue-800/40 dark:bg-blue-900/25 dark:text-blue-200"
+                          : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
+                      }`}
+                    >
                       {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
                     </span>
                     {student.key_lost && (
-                      <span className={`${badgeBase} bg-red-100 px-2 py-0.5 text-red-700 dark:bg-slate-700/45 dark:text-slate-100`}>
+                      <span className={`${badgeBase} bg-red-100 px-2 py-0.5 text-red-700 dark:border-rose-800/40 dark:bg-rose-900/30 dark:text-rose-200`}>
                         {t("students.keyLost")}
                       </span>
                     )}
@@ -234,7 +246,13 @@ export default function StudentsList() {
                       </span>
                     )}
                     {isSuperAdmin && (
-                      <span className={`${badgeBase} px-2 py-0.5 ${student.can_view_students ? "bg-indigo-100 text-indigo-700 dark:bg-slate-700/45 dark:text-slate-100" : "bg-gray-100 text-gray-500 dark:bg-slate-700/45 dark:text-slate-100"}`}>
+                      <span
+                        className={`${badgeBase} px-2 py-0.5 ${
+                          student.can_view_students
+                            ? "bg-indigo-100 text-indigo-700 dark:border-violet-800/40 dark:bg-violet-900/25 dark:text-violet-200"
+                            : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
+                        }`}
+                      >
                         <EyeIcon className="w-3 h-3 inline-block mr-1" />
                         {student.can_view_students ? t("students.listOpen") : t("students.listClosed")}
                       </span>
@@ -325,8 +343,8 @@ export default function StudentsList() {
                     <span
                       className={`${badgeBase} px-1.5 py-0.5 ${
                         student.is_registered
-                          ? "bg-emerald-100 text-emerald-800 dark:bg-slate-700/45 dark:text-slate-100"
-                          : "bg-amber-100 text-amber-800 dark:bg-slate-700/45 dark:text-slate-100"
+                          ? "bg-emerald-100 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/25 dark:text-emerald-200"
+                          : "bg-amber-100 text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/25 dark:text-amber-200"
                       }`}
                     >
                       {student.is_registered
@@ -336,19 +354,25 @@ export default function StudentsList() {
                     <span
                       className={`${badgeBase} px-1.5 py-0.5 ${
                         stayType === "weekends"
-                          ? "bg-sky-100 text-sky-800 dark:bg-slate-700/45 dark:text-slate-100"
+                          ? "bg-sky-100 text-sky-800 dark:border-sky-800/40 dark:bg-sky-900/25 dark:text-sky-200"
                           : stayType === "5days"
-                            ? "bg-indigo-100 text-indigo-800 dark:bg-slate-700/45 dark:text-slate-100"
-                            : "bg-gray-100 text-gray-600 dark:bg-slate-700/45 dark:text-slate-100"
+                            ? "bg-indigo-100 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200"
+                            : "bg-gray-100 text-gray-600 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-100"
                       }`}
                     >
                       {stayLabel}
                     </span>
-                    <span className={`${badgeBase} px-1.5 py-0.5 ${student.key_issued ? "bg-blue-100 text-blue-700 dark:bg-slate-700/45 dark:text-slate-100" : "bg-gray-100 text-gray-500 dark:bg-slate-700/45 dark:text-slate-100"}`}>
+                    <span
+                      className={`${badgeBase} px-1.5 py-0.5 ${
+                        student.key_issued
+                          ? "bg-blue-100 text-blue-700 dark:border-blue-800/40 dark:bg-blue-900/25 dark:text-blue-200"
+                          : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
+                      }`}
+                    >
                       {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
                     </span>
                     {student.key_lost && (
-                      <span className={`${badgeBase} bg-red-100 px-1.5 py-0.5 text-red-700 dark:bg-slate-700/45 dark:text-slate-100`}>
+                      <span className={`${badgeBase} bg-red-100 px-1.5 py-0.5 text-red-700 dark:border-rose-800/40 dark:bg-rose-900/30 dark:text-rose-200`}>
                         {t("students.keyLost")}
                       </span>
                     )}
@@ -358,7 +382,13 @@ export default function StudentsList() {
                       </span>
                     )}
                     {isSuperAdmin && (
-                      <span className={`${badgeBase} px-1.5 py-0.5 ${student.can_view_students ? "bg-indigo-100 text-indigo-700 dark:bg-slate-700/45 dark:text-slate-100" : "bg-gray-100 text-gray-500 dark:bg-slate-700/45 dark:text-slate-100"}`}>
+                      <span
+                        className={`${badgeBase} px-1.5 py-0.5 ${
+                          student.can_view_students
+                            ? "bg-indigo-100 text-indigo-700 dark:border-violet-800/40 dark:bg-violet-900/25 dark:text-violet-200"
+                            : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
+                        }`}
+                      >
                         <EyeIcon className="w-3 h-3 inline-block mr-1" />
                         {student.can_view_students ? t("students.listOpenShort") : t("students.listClosedShort")}
                       </span>
@@ -437,68 +467,104 @@ export default function StudentsList() {
         <div className="px-4 pb-2">
           <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-900/40">
             <div className="flex flex-col gap-2">
-              <div className="flex flex-wrap gap-2">
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{t("students.filter.stay")}</span>
-                <button
-                  type="button"
-                  onClick={() => setStayFilter("all")}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold border ${stayFilter === "all" ? "bg-blue-600 text-white border-blue-600" : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"}`}
-                  aria-pressed={stayFilter === "all"}
-                >
-                  {t("students.filter.all")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStayFilter("weekends")}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold border ${stayFilter === "weekends" ? "bg-blue-600 text-white border-blue-600" : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"}`}
-                  aria-pressed={stayFilter === "weekends"}
-                >
-                  {t("students.stay.weekends")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStayFilter("5days")}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold border ${stayFilter === "5days" ? "bg-blue-600 text-white border-blue-600" : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"}`}
-                  aria-pressed={stayFilter === "5days"}
-                >
-                  {t("students.stay.5days")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStayFilter("unknown")}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold border ${stayFilter === "unknown" ? "bg-blue-600 text-white border-blue-600" : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"}`}
-                  aria-pressed={stayFilter === "unknown"}
-                >
-                  {t("students.stay.unknown")}
-                </button>
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+                <span className="col-span-2 text-xs font-bold text-slate-700 dark:text-slate-200 sm:col-auto">
+                  {t("students.filter.stay")}
+                </span>
+                <div className="col-span-2 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setStayFilter("all")}
+                    className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
+                      stayFilter === "all"
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+                    }`}
+                    aria-pressed={stayFilter === "all"}
+                  >
+                    {t("students.filter.all")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStayFilter("weekends")}
+                    className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
+                      stayFilter === "weekends"
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+                    }`}
+                    aria-pressed={stayFilter === "weekends"}
+                  >
+                    {t("students.stay.weekends")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStayFilter("5days")}
+                    className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
+                      stayFilter === "5days"
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+                    }`}
+                    aria-pressed={stayFilter === "5days"}
+                  >
+                    {t("students.stay.5days")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStayFilter("unknown")}
+                    className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
+                      stayFilter === "unknown"
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+                    }`}
+                    aria-pressed={stayFilter === "unknown"}
+                  >
+                    {t("students.stay.unknown")}
+                  </button>
+                </div>
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{t("students.filter.registration")}</span>
-                <button
-                  type="button"
-                  onClick={() => setRegistrationFilter("all")}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold border ${registrationFilter === "all" ? "bg-blue-600 text-white border-blue-600" : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"}`}
-                  aria-pressed={registrationFilter === "all"}
-                >
-                  {t("students.filter.all")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRegistrationFilter("registered")}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold border ${registrationFilter === "registered" ? "bg-blue-600 text-white border-blue-600" : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"}`}
-                  aria-pressed={registrationFilter === "registered"}
-                >
-                  {t("students.badge.registered")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRegistrationFilter("unregistered")}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold border ${registrationFilter === "unregistered" ? "bg-blue-600 text-white border-blue-600" : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"}`}
-                  aria-pressed={registrationFilter === "unregistered"}
-                >
-                  {t("students.badge.unregistered")}
-                </button>
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+                <span className="col-span-2 text-xs font-bold text-slate-700 dark:text-slate-200 sm:col-auto">
+                  {t("students.filter.registration")}
+                </span>
+                <div className="col-span-2 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setRegistrationFilter("all")}
+                    className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
+                      registrationFilter === "all"
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+                    }`}
+                    aria-pressed={registrationFilter === "all"}
+                  >
+                    {t("students.filter.all")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRegistrationFilter("registered")}
+                    className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
+                      registrationFilter === "registered"
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+                    }`}
+                    aria-pressed={registrationFilter === "registered"}
+                  >
+                    {t("students.badge.registered")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRegistrationFilter("unregistered")}
+                    className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
+                      registrationFilter === "unregistered"
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+                    }`}
+                    aria-pressed={registrationFilter === "unregistered"}
+                  >
+                    {t("students.badge.unregistered")}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -735,16 +801,27 @@ export default function StudentsList() {
             <div className="flex gap-2 mt-6">
               <button
                 onClick={() => setEditingStudent(null)}
-                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700"
+                disabled={isSavingEdit}
+                className="flex-1 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {t("common.cancel")}
               </button>
               <button
                 onClick={handleSaveEdit}
-                className="flex-1 bg-violet-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-violet-800 flex items-center justify-center gap-2"
+                disabled={isSavingEdit}
+                className="flex-1 bg-violet-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-violet-800 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                <CheckIcon className="w-5 h-5" />
-                {t("common.save")}
+                {isSavingEdit ? (
+                  <>
+                    <WashingSpinner className="w-5 h-5" />
+                    {t("common.saving")}
+                  </>
+                ) : (
+                  <>
+                    <CheckIcon className="w-5 h-5" />
+                    {t("common.save")}
+                  </>
+                )}
               </button>
             </div>
           </div>

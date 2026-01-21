@@ -123,8 +123,8 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
         </div>
       )}
 
-      <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-700 dark:to-slate-800 rounded-lg text-center border border-blue-200 dark:border-slate-600">
-        <p className="text-sm text-gray-700 font-semibold mb-3">{t('avatar.previewLabel')}</p>
+      <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900 rounded-lg text-center border border-blue-200 dark:border-slate-700">
+        <p className="text-sm text-gray-700 font-semibold mb-3 dark:text-slate-200">{t('avatar.previewLabel')}</p>
         <div className="flex justify-center mb-4">
           <Avatar
             name={previewSeed || user?.full_name || 'default'}
@@ -132,7 +132,7 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
             className="w-32 h-32"
           />
         </div>
-        <p className="text-xs text-gray-600 mb-4">
+        <p className="text-xs text-gray-600 mb-4 dark:text-slate-300">
           {t('avatar.currentStyleLabel')}{' '}
           <span className="font-semibold">{AVATAR_STYLES.find(s => s.id === selectedStyle)?.name}</span>
         </p>
