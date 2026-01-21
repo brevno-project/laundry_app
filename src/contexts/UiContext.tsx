@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState, useLayoutEffect } from "react";
 
@@ -1878,6 +1878,7 @@ const getInitialTheme = (): UiTheme => {
 export const UiProvider = ({ children }: { children: React.ReactNode }) => {
   const [language, setLanguage] = useState<UiLanguage>(getInitialLanguage);
   const [theme, setTheme] = useState<UiTheme>(getInitialTheme);
+  const [themeHydrated, setThemeHydrated] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1885,11 +1886,15 @@ export const UiProvider = ({ children }: { children: React.ReactNode }) => {
     if (storedLanguage === "ru" || storedLanguage === "en" || storedLanguage === "ko" || storedLanguage === "ky") {
       setLanguage(storedLanguage);
     }
+  }, []);
 
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
     const storedTheme = localStorage.getItem("appTheme") as UiTheme | null;
     if (storedTheme === "light" || storedTheme === "dark") {
       setTheme(storedTheme);
     }
+    setThemeHydrated(true);
   }, []);
 
   useEffect(() => {
@@ -1906,8 +1911,10 @@ export const UiProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       html.classList.remove("dark");
     }
-    localStorage.setItem("appTheme", theme);
-  }, [theme]);
+    if (themeHydrated) {
+      localStorage.setItem("appTheme", theme);
+    }
+  }, [theme, themeHydrated]);
 
   const t = useCallback(
     (key: string, vars?: Record<string, string | number>) => {

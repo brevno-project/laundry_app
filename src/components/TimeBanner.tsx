@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect } from 'react';
-import { getLaundryTimeStatus, LAUNDRY_CLOSE_HOUR, LAUNDRY_OPEN_HOUR, LAUNDRY_OPEN_MINUTE, TimeStatus } from '@/lib/timeHelper';
+import { getLaundryTimeStatus, LAUNDRY_CLOSE_HOUR, TimeStatus } from '@/lib/timeHelper';
 import { EditIcon, ClockIcon, WarningIcon } from '@/components/Icons';
 import { UiLanguage, useUi } from '@/contexts/UiContext';
 
@@ -47,7 +47,7 @@ export default function TimeBanner() {
 
   const Icon = timeStatus.isClosed ? ClockIcon : WarningIcon;
   const message = timeStatus.isClosed
-    ? t('time.closed', { openHour: LAUNDRY_OPEN_HOUR, openMinute: LAUNDRY_OPEN_MINUTE })
+    ? t('time.closed', { closeHour: LAUNDRY_CLOSE_HOUR })
     : t('time.warning', {
         time: formatRemaining(timeStatus.minutesUntilClose, language),
         closeHour: LAUNDRY_CLOSE_HOUR,

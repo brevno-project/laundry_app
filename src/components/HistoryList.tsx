@@ -340,7 +340,7 @@ export default function HistoryList() {
                         const student = students.find(s => s.id === item.student_id);
                         return student?.avatar_seed || item.avatar_seed;
                       })()}
-                      className="w-12 h-12 ring-4 ring-white dark:ring-slate-600 shadow-md"
+                      className="w-12 h-12 rounded-xl shadow-md"
                     />
                   </div>
                   <div>

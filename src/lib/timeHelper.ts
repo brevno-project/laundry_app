@@ -1,5 +1,5 @@
-﻿export const LAUNDRY_OPEN_HOUR = 15; // Информативно: до этого времени стирка недоступна
-export const LAUNDRY_OPEN_MINUTE = 30;
+﻿export const LAUNDRY_OPEN_HOUR = 9;
+export const LAUNDRY_OPEN_MINUTE = 0;
 export const LAUNDRY_CLOSE_HOUR = 22;
 export const WARNING_HOUR = 21;
 
@@ -13,22 +13,20 @@ export interface TimeStatus {
 
 export function getLaundryTimeStatus(): TimeStatus {
   const now = new Date();
-  const openTime = new Date();
-  openTime.setHours(LAUNDRY_OPEN_HOUR, LAUNDRY_OPEN_MINUTE, 0, 0);
-
-  // Информативный статус: считаем "закрыто", если сейчас раньше времени открытия
-  const isWashingClosed = now.getTime() < openTime.getTime();
+  const hour = now.getHours();
+  const minute = now.getMinutes();
+  const isClosedNow = hour >= LAUNDRY_CLOSE_HOUR || hour < LAUNDRY_OPEN_HOUR || (hour === LAUNDRY_OPEN_HOUR && minute < LAUNDRY_OPEN_MINUTE);
 
   const minutesUntilClose = 0;
   const isWarningTime = false;
-  const warningLevel: 'none' | 'warning' | 'danger' = isWashingClosed ? 'danger' : 'none';
+  const warningLevel: 'none' | 'warning' | 'danger' = isClosedNow ? 'danger' : 'none';
 
   const isQueueOpen = true;
 
   return {
     isOpen: isQueueOpen,
     isWarningTime,
-    isClosed: isWashingClosed,
+    isClosed: isClosedNow,
     minutesUntilClose,
     warningLevel,
   };

@@ -330,6 +330,15 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
   const [needsClaim, setNeedsClaim] = useState<boolean>(false);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.removeItem('laundryIsAdmin');
+      localStorage.removeItem('laundryIsSuperAdmin');
+      localStorage.removeItem('laundryIsCleanupAdmin');
+    } catch {}
+  }, []);
+
   const queueFetchStateRef = useRef({ inFlight: false, lastRunAt: 0 });
 
   const historyLimitRef = useRef(HISTORY_PAGE_SIZE);
@@ -773,7 +782,15 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
       const { data: { session } } = await supabase.auth.getSession();
 
-      const uid = session?.user?.id;
+      let uid = session?.user?.id;
+
+      if (!uid) {
+        const ok = await waitForSession();
+        if (ok) {
+          const { data: { session: retrySession } } = await supabase.auth.getSession();
+          uid = retrySession?.user?.id;
+        }
+      }
 
 
 
@@ -787,6 +804,8 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
         setIsSuperAdmin(false);
         setIsCleanupAdmin(false);
+
+        setAuthReady(true);
 
         return;
 
