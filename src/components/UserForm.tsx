@@ -297,7 +297,7 @@ export default function UserForm() {
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
                   required
-                  className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  className="mt-1 block w-full rounded-md border-2 border-gray-300 bg-white shadow-sm p-3 text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
                 >
                   {getAvailableDates().map(date => (
                     <option key={date.value} value={date.value}>
@@ -316,7 +316,7 @@ export default function UserForm() {
                   id="washCount"
                   value={washCount}
                   onChange={(e) => setWashCount(Number(e.target.value))}
-                  className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm p-3 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 font-semibold"
+                  className="mt-1 block w-full rounded-md border-2 border-gray-300 bg-white shadow-sm p-3 text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 font-semibold dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
                 >
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
                     <option key={num} value={num}>{num}</option>
@@ -400,15 +400,15 @@ export default function UserForm() {
               </button>
             </>
           ) : (
-            <div className="bg-blue-50 border-2 border-blue-300 rounded-md p-4">
-              <p className="text-blue-800 font-bold text-center text-lg">
+            <div className="bg-slate-50 border-2 border-slate-200 rounded-md p-4 dark:bg-slate-900/40 dark:border-slate-700">
+              <p className="text-slate-800 font-bold text-center text-lg dark:text-slate-100">
                 {t('queue.inQueue')}
               </p>
-              <p className="text-blue-600 font-black text-center mt-2 text-3xl">
+              <p className="text-blue-700 font-black text-center mt-2 text-3xl dark:text-sky-200">
                 {t('queue.position', { position: queuePosition })}
               </p>
               {existingQueueItem?.scheduled_for_date && (
-                <p className="text-blue-600 text-center mt-2">
+                <p className="text-slate-600 text-center mt-2 dark:text-slate-300">
                   {t('queue.scheduledFor', {
                     date: new Date(existingQueueItem.scheduled_for_date).toLocaleDateString(locale, {
                       weekday: 'short',
@@ -419,7 +419,7 @@ export default function UserForm() {
                 </p>
               )}
               {(existingQueueItem?.coupons_used ?? 0) > 0 && (
-                <div className="text-blue-600 text-center mt-2 text-sm">
+                <div className="text-slate-600 text-center mt-2 text-sm dark:text-slate-300">
                   <span className="font-semibold">{t('queue.couponsUsedLabel')}</span>{' '}
                   {reservedCoupons.length > 0
                     ? reservedCoupons.map((coupon) => formatCouponLabel(coupon)).join(', ')

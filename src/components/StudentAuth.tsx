@@ -136,7 +136,7 @@ export default function StudentAuth() {
   // -------------------------------
   if (step === "select") {
     return (
-      <div className="bg-white/80 backdrop-blur-sm p-6 rounded-lg shadow-xl border-2 border-gray-200 relative dark:bg-slate-900/60 dark:border-slate-700">
+      <div className="bg-white p-6 rounded-lg shadow-xl border-2 border-gray-200 relative dark:bg-slate-900 dark:border-slate-700">
         {banNoticeBanner}
 
         <h2 className="text-2xl font-bold mb-4 text-gray-900 text-center dark:text-slate-100">
@@ -151,7 +151,7 @@ export default function StudentAuth() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t("auth.searchPlaceholder")}
-          className="w-full p-4 rounded-lg border-2 border-blue-400 bg-white/60 backdrop-blur-sm text-gray-900 text-xl font-semibold mb-4 focus:border-blue-600 focus:ring-2 focus:ring-blue-300 placeholder:text-gray-600 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
+          className="w-full p-4 rounded-lg border-2 border-gray-300 bg-white text-gray-900 text-xl font-semibold mb-4 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-300 placeholder:text-gray-600 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
         />
 
         <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -164,7 +164,7 @@ export default function StudentAuth() {
               <button
                 key={student.id}
                 onClick={() => handleStudentSelect(student)}
-                className="w-full bg-white/70 backdrop-blur-sm hover:bg-slate-50 border-3 border-gray-400 hover:border-slate-500 rounded-lg p-4 text-left transition-all shadow-md hover:shadow-xl dark:bg-slate-900 dark:hover:bg-slate-800 dark:border-slate-700 dark:hover:border-sky-500"
+                className="w-full bg-white hover:bg-slate-50 border-3 border-gray-400 hover:border-slate-500 rounded-lg p-4 text-left transition-all shadow-md hover:shadow-xl dark:bg-slate-900 dark:hover:bg-slate-800 dark:border-slate-700 dark:hover:border-sky-500"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -205,12 +205,10 @@ export default function StudentAuth() {
       </div>
     );
   }
-
-  // -------------------------------
   // STEP 2: AUTH PAGE
   // -------------------------------
   return (
-    <div className="bg-white/70 backdrop-blur-sm p-6 rounded-lg shadow-xl border-2 border-gray-200 dark:bg-slate-900 dark:border-slate-700">
+    <div className="bg-white p-6 rounded-lg shadow-xl border-2 border-gray-200 dark:bg-slate-900 dark:border-slate-700">
       {banNoticeBanner}
       <button
         onClick={() => {
@@ -225,7 +223,7 @@ export default function StudentAuth() {
         <BackIcon className="w-5 h-5" /> {t("auth.back")}
       </button>
 
-      <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6 flex items-center gap-3 dark:bg-slate-950/60 dark:border-slate-700">
+      <div className="bg-slate-50 border-2 border-slate-200 rounded-lg p-4 mb-6 flex items-center gap-3 dark:bg-slate-950/60 dark:border-slate-700">
         <Avatar
           name={selectedStudent?.full_name}
           style={selectedStudent?.avatar_style}

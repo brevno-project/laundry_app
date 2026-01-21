@@ -161,7 +161,7 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
       </div>
 
       <div className="mb-6">
-        <label className="block text-sm font-semibold text-gray-900 mb-3">{t('avatar.chooseStyle')}</label>
+        <label className="block text-sm font-semibold text-gray-900 mb-3 dark:text-slate-200">{t('avatar.chooseStyle')}</label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
           {AVATAR_STYLES.map((style) => (
             <button
@@ -169,17 +169,17 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
               onClick={() => setSelectedStyle(style.id)}
               className={`p-2 rounded-lg border-2 transition-all text-left text-xs ${
                 selectedStyle === style.id
-                  ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-500'
-                  : 'border-gray-200 dark:border-slate-600 bg-white/70 backdrop-blur-sm dark:bg-slate-700 hover:border-blue-300 dark:hover:border-blue-500'
+                  ? 'border-blue-600 bg-white dark:border-sky-400 dark:bg-slate-800/60'
+                  : 'border-gray-200 bg-slate-50 hover:bg-white dark:border-slate-700 dark:bg-slate-900/40 dark:hover:bg-slate-900/60'
               }`}
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="font-semibold text-gray-900">{style.name}</span>
+                <span className="font-semibold text-gray-900 dark:text-slate-100">{style.name}</span>
                 {selectedStyle === style.id && (
-                  <CheckIcon className="w-3 h-3 text-blue-600" />
+                  <CheckIcon className="w-3 h-3 text-blue-600 dark:text-sky-300" />
                 )}
               </div>
-              <p className="text-gray-600 text-xs">{t(style.descKey)}</p>
+              <p className="text-gray-600 text-xs dark:text-slate-300">{t(style.descKey)}</p>
               <div className="mt-1 flex justify-center">
                 <Avatar
                   name={previewSeed || user?.full_name || 'default'}

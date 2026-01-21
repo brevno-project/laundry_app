@@ -189,7 +189,7 @@ export default function Home() {
 
       {/* Табы */}
       {user && (
-        <nav className="bg-white/70 backdrop-blur-sm border-b shadow-sm sticky top-14 z-10 dark:bg-slate-900/60">
+        <nav className="bg-white border-b shadow-sm sticky top-14 z-10 dark:bg-slate-900">
           <div className="mx-auto max-w-5xl">
             <div className="flex gap-1 overflow-x-auto px-2 md:justify-center md:gap-3 md:overflow-visible md:px-4">
             <button

@@ -203,61 +203,66 @@ export default function StudentsList() {
               <div className="flex flex-col">
                 <span>{displayName}</span>
                 {canManageStudents && (
-                  <span className="mt-1 flex flex-wrap gap-1 text-[11px] font-semibold text-gray-600 dark:text-slate-300">
-                    <span
-                      className={`${badgeBase} px-2 py-0.5 ${
-                        student.is_registered
-                          ? "bg-emerald-100 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/25 dark:text-emerald-200"
-                          : "bg-amber-100 text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/25 dark:text-amber-200"
-                      }`}
-                    >
-                      {student.is_registered
-                        ? t("students.badge.registered")
-                        : t("students.badge.unregistered")}
-                    </span>
-                    <span
-                      className={`${badgeBase} px-2 py-0.5 ${
-                        stayType === "weekends"
-                          ? "bg-sky-100 text-sky-800 dark:border-sky-800/40 dark:bg-sky-900/25 dark:text-sky-200"
-                          : stayType === "5days"
-                            ? "bg-indigo-100 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200"
-                            : "bg-gray-100 text-gray-600 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-100"
-                      }`}
-                    >
-                      {stayLabel}
-                    </span>
-                    <span
-                      className={`${badgeBase} px-2 py-0.5 ${
-                        student.key_issued
-                          ? "bg-blue-100 text-blue-700 dark:border-blue-800/40 dark:bg-blue-900/25 dark:text-blue-200"
-                          : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
-                      }`}
-                    >
-                      {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
-                    </span>
-                    {student.key_lost && (
-                      <span className={`${badgeBase} bg-red-100 px-2 py-0.5 text-red-700 dark:border-rose-800/40 dark:bg-rose-900/30 dark:text-rose-200`}>
-                        {t("students.keyLost")}
-                      </span>
-                    )}
-                    {isSuperAdmin && student.is_cleanup_admin && (
-                      <span className="rounded-full border border-indigo-200 bg-indigo-100 px-2 py-0.5 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200">
-                        {t("header.leader")}
-                      </span>
-                    )}
-                    {isSuperAdmin && (
+                  <div className="mt-1 flex flex-col gap-1 text-[11px] font-semibold text-gray-600 dark:text-slate-300">
+                    <div className="flex flex-wrap gap-1">
                       <span
                         className={`${badgeBase} px-2 py-0.5 ${
-                          student.can_view_students
-                            ? "bg-indigo-100 text-indigo-700 dark:border-violet-800/40 dark:bg-violet-900/25 dark:text-violet-200"
+                          student.is_registered
+                            ? "bg-emerald-100 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/25 dark:text-emerald-200"
+                            : "bg-amber-100 text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/25 dark:text-amber-200"
+                        }`}
+                      >
+                        {student.is_registered
+                          ? t("students.badge.registered")
+                          : t("students.badge.unregistered")}
+                      </span>
+                      <span
+                        className={`${badgeBase} px-2 py-0.5 ${
+                          stayType === "weekends"
+                            ? "bg-sky-100 text-sky-800 dark:border-sky-800/40 dark:bg-sky-900/25 dark:text-sky-200"
+                            : stayType === "5days"
+                              ? "bg-indigo-100 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200"
+                              : "bg-gray-100 text-gray-600 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-100"
+                        }`}
+                      >
+                        {stayLabel}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1">
+                      <span
+                        className={`${badgeBase} px-2 py-0.5 ${
+                          student.key_issued
+                            ? "bg-blue-100 text-blue-700 dark:border-blue-800/40 dark:bg-blue-900/25 dark:text-blue-200"
                             : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
                         }`}
                       >
-                        <EyeIcon className="w-3 h-3 inline-block mr-1" />
-                        {student.can_view_students ? t("students.listOpen") : t("students.listClosed")}
+                        {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
                       </span>
-                    )}
-                  </span>
+                      {student.key_lost && (
+                        <span className={`${badgeBase} bg-red-100 px-2 py-0.5 text-red-700 dark:border-rose-800/40 dark:bg-rose-900/30 dark:text-rose-200`}>
+                          {t("students.keyLost")}
+                        </span>
+                      )}
+                      {isSuperAdmin && student.is_cleanup_admin && (
+                        <span className="rounded-full border border-indigo-200 bg-indigo-100 px-2 py-0.5 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200">
+                          {t("header.leader")}
+                        </span>
+                      )}
+                      {isSuperAdmin && (
+                        <span
+                          className={`${badgeBase} px-2 py-0.5 ${
+                            student.can_view_students
+                              ? "bg-indigo-100 text-indigo-700 dark:border-violet-800/40 dark:bg-violet-900/25 dark:text-violet-200"
+                              : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
+                          }`}
+                        >
+                          <EyeIcon className="w-3 h-3 inline-block mr-1" />
+                          {student.can_view_students ? t("students.listOpen") : t("students.listClosed")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -339,61 +344,66 @@ export default function StudentsList() {
               <div className="flex flex-col">
                 <span className="text-xs">{displayName}</span>
                 {canManageStudents && (
-                  <span className="mt-1 flex flex-wrap gap-1 text-[10px] font-semibold text-gray-600 dark:text-slate-300">
-                    <span
-                      className={`${badgeBase} px-1.5 py-0.5 ${
-                        student.is_registered
-                          ? "bg-emerald-100 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/25 dark:text-emerald-200"
-                          : "bg-amber-100 text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/25 dark:text-amber-200"
-                      }`}
-                    >
-                      {student.is_registered
-                        ? t("students.badge.registered")
-                        : t("students.badge.unregistered")}
-                    </span>
-                    <span
-                      className={`${badgeBase} px-1.5 py-0.5 ${
-                        stayType === "weekends"
-                          ? "bg-sky-100 text-sky-800 dark:border-sky-800/40 dark:bg-sky-900/25 dark:text-sky-200"
-                          : stayType === "5days"
-                            ? "bg-indigo-100 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200"
-                            : "bg-gray-100 text-gray-600 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-100"
-                      }`}
-                    >
-                      {stayLabel}
-                    </span>
-                    <span
-                      className={`${badgeBase} px-1.5 py-0.5 ${
-                        student.key_issued
-                          ? "bg-blue-100 text-blue-700 dark:border-blue-800/40 dark:bg-blue-900/25 dark:text-blue-200"
-                          : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
-                      }`}
-                    >
-                      {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
-                    </span>
-                    {student.key_lost && (
-                      <span className={`${badgeBase} bg-red-100 px-1.5 py-0.5 text-red-700 dark:border-rose-800/40 dark:bg-rose-900/30 dark:text-rose-200`}>
-                        {t("students.keyLost")}
-                      </span>
-                    )}
-                    {isSuperAdmin && student.is_cleanup_admin && (
-                      <span className="rounded-full border border-indigo-200 bg-indigo-100 px-1.5 py-0.5 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200">
-                        {t("header.leader")}
-                      </span>
-                    )}
-                    {isSuperAdmin && (
+                  <div className="mt-1 flex flex-col gap-1 text-[10px] font-semibold text-gray-600 dark:text-slate-300">
+                    <div className="flex flex-wrap gap-1">
                       <span
                         className={`${badgeBase} px-1.5 py-0.5 ${
-                          student.can_view_students
-                            ? "bg-indigo-100 text-indigo-700 dark:border-violet-800/40 dark:bg-violet-900/25 dark:text-violet-200"
+                          student.is_registered
+                            ? "bg-emerald-100 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/25 dark:text-emerald-200"
+                            : "bg-amber-100 text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/25 dark:text-amber-200"
+                        }`}
+                      >
+                        {student.is_registered
+                          ? t("students.badge.registered")
+                          : t("students.badge.unregistered")}
+                      </span>
+                      <span
+                        className={`${badgeBase} px-1.5 py-0.5 ${
+                          stayType === "weekends"
+                            ? "bg-sky-100 text-sky-800 dark:border-sky-800/40 dark:bg-sky-900/25 dark:text-sky-200"
+                            : stayType === "5days"
+                              ? "bg-indigo-100 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200"
+                              : "bg-gray-100 text-gray-600 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-100"
+                        }`}
+                      >
+                        {stayLabel}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1">
+                      <span
+                        className={`${badgeBase} px-1.5 py-0.5 ${
+                          student.key_issued
+                            ? "bg-blue-100 text-blue-700 dark:border-blue-800/40 dark:bg-blue-900/25 dark:text-blue-200"
                             : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
                         }`}
                       >
-                        <EyeIcon className="w-3 h-3 inline-block mr-1" />
-                        {student.can_view_students ? t("students.listOpenShort") : t("students.listClosedShort")}
+                        {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
                       </span>
-                    )}
-                  </span>
+                      {student.key_lost && (
+                        <span className={`${badgeBase} bg-red-100 px-1.5 py-0.5 text-red-700 dark:border-rose-800/40 dark:bg-rose-900/30 dark:text-rose-200`}>
+                          {t("students.keyLost")}
+                        </span>
+                      )}
+                      {isSuperAdmin && student.is_cleanup_admin && (
+                        <span className="rounded-full border border-indigo-200 bg-indigo-100 px-1.5 py-0.5 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200">
+                          {t("header.leader")}
+                        </span>
+                      )}
+                      {isSuperAdmin && (
+                        <span
+                          className={`${badgeBase} px-1.5 py-0.5 ${
+                            student.can_view_students
+                              ? "bg-indigo-100 text-indigo-700 dark:border-violet-800/40 dark:bg-violet-900/25 dark:text-violet-200"
+                              : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
+                          }`}
+                        >
+                          <EyeIcon className="w-3 h-3 inline-block mr-1" />
+                          {student.can_view_students ? t("students.listOpenShort") : t("students.listClosedShort")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -675,7 +685,7 @@ export default function StudentsList() {
 
       {editingStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white/80 backdrop-blur-sm dark:bg-slate-800 rounded-lg p-6 max-w-md w-full">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-md w-full">
             <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-4 flex items-center gap-2">
               <EditIcon className="w-5 h-5" />{t("students.editTitle")}
             </h3>
@@ -687,7 +697,7 @@ export default function StudentsList() {
                   type="text"
                   value={editLastName}
                   onChange={(e) => setEditLastName(e.target.value)}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
                 />
               </div>
 
@@ -697,7 +707,7 @@ export default function StudentsList() {
                   type="text"
                   value={editFirstName}
                   onChange={(e) => setEditFirstName(e.target.value)}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
                   required
                 />
               </div>
@@ -709,7 +719,7 @@ export default function StudentsList() {
                   value={editMiddleName}
                   onChange={(e) => setEditMiddleName(e.target.value)}
                   placeholder={t("students.field.middleNamePlaceholder")}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
                 />
               </div>
 
@@ -720,20 +730,20 @@ export default function StudentsList() {
                   value={editRoom}
                   onChange={(e) => setEditRoom(e.target.value)}
                   placeholder={t("students.field.roomPlaceholder")}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
                 />
               </div>
 
               {canManageStudents && (
-                <div className="flex flex-wrap gap-3 rounded-lg border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 p-3">
-                  <div className="flex items-center gap-2">
+                <div className="grid grid-cols-2 gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-600 dark:bg-slate-900/40">
+                  <div className="col-span-2 flex items-center gap-2">
                     <label className="text-sm font-semibold text-gray-800 dark:text-slate-100">
                       {t("students.stay.label")}
                     </label>
                     <select
                       value={editStayType}
                       onChange={(e) => setEditStayType(e.target.value as any)}
-                      className="rounded-lg border-2 border-gray-300 bg-white/60 px-2 py-1 text-sm font-semibold text-gray-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
+                      className="flex-1 rounded-lg border-2 border-gray-300 bg-white px-2 py-1 text-sm font-semibold text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
                     >
                       <option value="unknown">{t("students.stay.unknown")}</option>
                       <option value="5days">{t("students.stay.5days")}</option>

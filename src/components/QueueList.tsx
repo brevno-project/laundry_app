@@ -303,8 +303,8 @@ export default function QueueList() {
       {/* ✅ Кнопки переноса для админа - вынесены из header */}
       {/* DEBUG: isAdmin={String(isAdmin)}, selectedItems.length={selectedItems.length} */}
       {isAdmin && selectedItems.length > 0 && (
-        <div className="bg-blue-50 border-2 border-blue-500 rounded-lg p-3 m-3 dark:bg-blue-950/30 dark:border-blue-500/30">
-          <h4 className="font-bold text-blue-900 mb-2 text-sm dark:text-blue-200">
+        <div className="bg-slate-50 border-2 border-slate-200 rounded-lg p-3 m-3 dark:bg-blue-950/30 dark:border-blue-500/30">
+          <h4 className="font-bold text-slate-900 mb-2 text-sm dark:text-blue-200">
             <CalendarIcon className="w-4 h-4 inline-block mr-1" />
             {t("queue.moveSelected", { count: selectedItems.length })}
           </h4>
@@ -363,9 +363,9 @@ export default function QueueList() {
       
       <div className="space-y-4">
         {sortedDates.map(dateKey => (
-          <div key={dateKey} className="border-t-4 border-blue-200 pt-2 px-2 dark:border-blue-500/30">
+          <div key={dateKey} className="border-t-4 border-slate-200 pt-2 px-2 dark:border-slate-700">
             {/* ✅ Заголовок даты */}
-            <h3 className="text-lg font-bold text-blue-900 dark:text-blue-300 mb-2 sticky top-0 bg-white/70 backdrop-blur-sm dark:bg-slate-800 z-10 py-1">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2 sticky top-0 bg-white dark:bg-slate-800 z-10 py-1">
               {formatDateHeader(dateKey)}
             </h3>
             
