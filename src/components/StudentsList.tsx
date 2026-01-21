@@ -47,12 +47,15 @@ export default function StudentsList() {
   const canManageStudents = isAdmin || isSuperAdmin || isCleanupAdmin;
   const canDeleteStudents = isAdmin || isSuperAdmin;
 
+  const badgeBase =
+    "rounded-full border border-slate-200/60 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-100";
+
   const canManageStudent = (student: Student) =>
     canManageStudents && (!student.is_super_admin || student.id === user?.student_id);
 
   if (!students || students.length === 0) {
     return (
-      <div className="bg-sky-50/70 backdrop-blur-sm dark:bg-slate-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
+      <div className="bg-white/70 backdrop-blur-sm dark:bg-slate-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
         <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
           <ListIcon className="w-8 h-8" />{t("students.title")}
         </h2>
@@ -196,10 +199,10 @@ export default function StudentsList() {
                 {canManageStudents && (
                   <span className="mt-1 flex flex-wrap gap-1 text-[11px] font-semibold text-gray-600 dark:text-slate-300">
                     <span
-                      className={`rounded-full px-2 py-0.5 ${
+                      className={`${badgeBase} px-2 py-0.5 ${
                         student.is_registered
-                          ? "bg-emerald-100 text-emerald-800"
-                          : "bg-amber-100 text-amber-800"
+                          ? "bg-emerald-100 text-emerald-800 dark:bg-slate-700/45 dark:text-slate-100"
+                          : "bg-amber-100 text-amber-800 dark:bg-slate-700/45 dark:text-slate-100"
                       }`}
                     >
                       {student.is_registered
@@ -207,21 +210,21 @@ export default function StudentsList() {
                         : t("students.badge.unregistered")}
                     </span>
                     <span
-                      className={`rounded-full px-2 py-0.5 ${
+                      className={`${badgeBase} px-2 py-0.5 ${
                         stayType === "weekends"
-                          ? "bg-sky-100 text-sky-800"
+                          ? "bg-sky-100 text-sky-800 dark:bg-slate-700/45 dark:text-slate-100"
                           : stayType === "5days"
-                            ? "bg-indigo-100 text-indigo-800"
-                            : "bg-gray-100 text-gray-600"
+                            ? "bg-indigo-100 text-indigo-800 dark:bg-slate-700/45 dark:text-slate-100"
+                            : "bg-gray-100 text-gray-600 dark:bg-slate-700/45 dark:text-slate-100"
                       }`}
                     >
                       {stayLabel}
                     </span>
-                    <span className={`rounded-full px-2 py-0.5 ${student.key_issued ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}>
+                    <span className={`${badgeBase} px-2 py-0.5 ${student.key_issued ? "bg-blue-100 text-blue-700 dark:bg-slate-700/45 dark:text-slate-100" : "bg-gray-100 text-gray-500 dark:bg-slate-700/45 dark:text-slate-100"}`}>
                       {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
                     </span>
                     {student.key_lost && (
-                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-red-700">
+                      <span className={`${badgeBase} bg-red-100 px-2 py-0.5 text-red-700 dark:bg-slate-700/45 dark:text-slate-100`}>
                         {t("students.keyLost")}
                       </span>
                     )}
@@ -231,7 +234,7 @@ export default function StudentsList() {
                       </span>
                     )}
                     {isSuperAdmin && (
-                      <span className={`rounded-full px-2 py-0.5 ${student.can_view_students ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-500"}`}>
+                      <span className={`${badgeBase} px-2 py-0.5 ${student.can_view_students ? "bg-indigo-100 text-indigo-700 dark:bg-slate-700/45 dark:text-slate-100" : "bg-gray-100 text-gray-500 dark:bg-slate-700/45 dark:text-slate-100"}`}>
                         <EyeIcon className="w-3 h-3 inline-block mr-1" />
                         {student.can_view_students ? t("students.listOpen") : t("students.listClosed")}
                       </span>
@@ -243,7 +246,7 @@ export default function StudentsList() {
           </td>
           <td className="p-3 text-center text-gray-900">
             {student.room ? (
-              <span className="bg-blue-100 text-blue-900 px-2 py-1 rounded font-semibold">{student.room}</span>
+              <span className="rounded border border-slate-200/60 bg-blue-100 px-2 py-1 font-semibold text-blue-900 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-100">{student.room}</span>
             ) : (
               <span className="text-gray-400">-</span>
             )}
@@ -318,12 +321,12 @@ export default function StudentsList() {
               <div className="flex flex-col">
                 <span className="text-xs">{displayName}</span>
                 {canManageStudents && (
-                  <span className="mt-1 flex flex-wrap gap-1 text-[10px] font-semibold text-gray-600">
+                  <span className="mt-1 flex flex-wrap gap-1 text-[10px] font-semibold text-gray-600 dark:text-slate-300">
                     <span
-                      className={`rounded-full px-1.5 py-0.5 ${
+                      className={`${badgeBase} px-1.5 py-0.5 ${
                         student.is_registered
-                          ? "bg-emerald-100 text-emerald-800"
-                          : "bg-amber-100 text-amber-800"
+                          ? "bg-emerald-100 text-emerald-800 dark:bg-slate-700/45 dark:text-slate-100"
+                          : "bg-amber-100 text-amber-800 dark:bg-slate-700/45 dark:text-slate-100"
                       }`}
                     >
                       {student.is_registered
@@ -331,21 +334,21 @@ export default function StudentsList() {
                         : t("students.badge.unregistered")}
                     </span>
                     <span
-                      className={`rounded-full px-1.5 py-0.5 ${
+                      className={`${badgeBase} px-1.5 py-0.5 ${
                         stayType === "weekends"
-                          ? "bg-sky-100 text-sky-800"
+                          ? "bg-sky-100 text-sky-800 dark:bg-slate-700/45 dark:text-slate-100"
                           : stayType === "5days"
-                            ? "bg-indigo-100 text-indigo-800"
-                            : "bg-gray-100 text-gray-600"
+                            ? "bg-indigo-100 text-indigo-800 dark:bg-slate-700/45 dark:text-slate-100"
+                            : "bg-gray-100 text-gray-600 dark:bg-slate-700/45 dark:text-slate-100"
                       }`}
                     >
                       {stayLabel}
                     </span>
-                    <span className={`rounded-full px-1.5 py-0.5 ${student.key_issued ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}>
+                    <span className={`${badgeBase} px-1.5 py-0.5 ${student.key_issued ? "bg-blue-100 text-blue-700 dark:bg-slate-700/45 dark:text-slate-100" : "bg-gray-100 text-gray-500 dark:bg-slate-700/45 dark:text-slate-100"}`}>
                       {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
                     </span>
                     {student.key_lost && (
-                      <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-red-700">
+                      <span className={`${badgeBase} bg-red-100 px-1.5 py-0.5 text-red-700 dark:bg-slate-700/45 dark:text-slate-100`}>
                         {t("students.keyLost")}
                       </span>
                     )}
@@ -355,7 +358,7 @@ export default function StudentsList() {
                       </span>
                     )}
                     {isSuperAdmin && (
-                      <span className={`rounded-full px-1.5 py-0.5 ${student.can_view_students ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-500"}`}>
+                      <span className={`${badgeBase} px-1.5 py-0.5 ${student.can_view_students ? "bg-indigo-100 text-indigo-700 dark:bg-slate-700/45 dark:text-slate-100" : "bg-gray-100 text-gray-500 dark:bg-slate-700/45 dark:text-slate-100"}`}>
                         <EyeIcon className="w-3 h-3 inline-block mr-1" />
                         {student.can_view_students ? t("students.listOpenShort") : t("students.listClosedShort")}
                       </span>
@@ -402,7 +405,7 @@ export default function StudentsList() {
 
   return (
     <>
-      <div className="bg-sky-50/70 backdrop-blur-sm dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
+      <div className="bg-white/70 backdrop-blur-sm dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
         <div className="flex items-center justify-between mb-4 px-4 pt-4 pb-2">
           <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-100 flex items-center gap-2">
             <ListIcon className="w-8 h-8" />{t("students.title")} ({filteredStudents.length}/{students.length})
@@ -606,7 +609,7 @@ export default function StudentsList() {
 
       {editingStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-sky-50/70 backdrop-blur-sm dark:bg-slate-800 rounded-lg p-6 max-w-md w-full">
+          <div className="bg-white/80 backdrop-blur-sm dark:bg-slate-800 rounded-lg p-6 max-w-md w-full">
             <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-4 flex items-center gap-2">
               <EditIcon className="w-5 h-5" />{t("students.editTitle")}
             </h3>

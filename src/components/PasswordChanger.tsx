@@ -89,7 +89,7 @@ export default function PasswordChanger() {
   };
 
   return (
-    <div className="bg-sky-50/70 backdrop-blur-sm dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+    <div className="bg-white/70 backdrop-blur-sm dark:bg-slate-800 p-4 rounded-lg shadow-sm">
       <h3 className="font-bold text-lg text-gray-800 mb-3">{t("password.title")}</h3>
 
       {error && (

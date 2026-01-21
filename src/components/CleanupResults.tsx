@@ -1097,7 +1097,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       : t("cleanup.reminders.notSent");
 
     return (
-      <div className="rounded-xl border border-gray-200 bg-sky-50/70 backdrop-blur-sm p-4 space-y-2 dark:border-slate-700 dark:bg-slate-800">
+      <div className="rounded-xl border border-gray-200 bg-white/70 backdrop-blur-sm p-4 space-y-2 dark:border-slate-700 dark:bg-slate-800">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h4 className="text-sm font-semibold text-gray-900">{t("cleanup.block", { block })}</h4>
           <span className={`rounded-lg px-2 py-1 text-xs font-semibold ${statusClass}`}>
@@ -1279,7 +1279,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const announcer = item.announced_by ? announcers[item.announced_by] : null;
 
     return (
-      <div className="rounded-xl border border-gray-200 bg-sky-50/70 backdrop-blur-sm p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+      <div className="rounded-xl border border-gray-200 bg-white/70 backdrop-blur-sm p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h4 className="text-lg font-bold text-gray-900 dark:text-slate-100">
@@ -1363,7 +1363,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         )}
 
         {blockResults.length > 1 && (
-          <details className="rounded-xl border border-gray-200 bg-sky-50/70 backdrop-blur-sm p-4 dark:border-slate-700 dark:bg-slate-800">
+          <details className="rounded-xl border border-gray-200 bg-white/70 backdrop-blur-sm p-4 dark:border-slate-700 dark:bg-slate-800">
             <summary className="cursor-pointer text-sm font-semibold text-gray-700 dark:text-slate-200">
               {t("cleanup.archiveResults", { count: blockResults.length - 1 })}
             </summary>
@@ -1435,7 +1435,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
       {showLoading ? (
         <div className="mx-auto max-w-5xl space-y-4 p-4">
-          <div className="rounded-2xl border border-gray-200 bg-sky-50/70 backdrop-blur-sm p-6 shadow-sm animate-pulse dark:border-slate-700 dark:bg-slate-800">
+          <div className="rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-sm p-6 shadow-sm animate-pulse dark:border-slate-700 dark:bg-slate-800">
             <div className="h-5 w-40 rounded bg-gray-200 dark:bg-slate-700" />
             <div className="mt-3 h-4 w-64 rounded bg-gray-200 dark:bg-slate-700" />
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -1453,7 +1453,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
           </div>
 
           {canManageCleanup && (
-            <div className="rounded-2xl border border-gray-200 bg-sky-50/70 backdrop-blur-sm p-5 shadow-sm space-y-4 dark:border-slate-700 dark:bg-slate-800">
+            <div className="rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-sm p-5 shadow-sm space-y-4 dark:border-slate-700 dark:bg-slate-800">
             <div className="flex items-center gap-2">
               <CalendarIcon className="w-5 h-5 text-blue-600" />
               <h3 className="text-lg font-bold text-gray-900">{t("cleanup.publish.title")}</h3>
@@ -1616,7 +1616,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
         {user && (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="rounded-2xl border border-gray-200 bg-sky-50/70 backdrop-blur-sm p-5 shadow-sm space-y-3 dark:border-slate-700 dark:bg-slate-800">
+            <div className="rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-sm p-5 shadow-sm space-y-3 dark:border-slate-700 dark:bg-slate-800">
               <div className="flex items-center gap-2">
                 <TicketIcon className="w-5 h-5 text-purple-600" />
                 <h3 className="text-lg font-bold text-gray-900">{t("cleanup.coupons.title")}</h3>
@@ -1702,7 +1702,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               )}
             </div>
 
-            <div className="rounded-2xl border border-gray-200 bg-sky-50/70 backdrop-blur-sm p-5 shadow-sm space-y-4 dark:border-slate-700 dark:bg-slate-800">
+            <div className="rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-sm p-5 shadow-sm space-y-4 dark:border-slate-700 dark:bg-slate-800">
               <div className="flex items-center gap-2">
                 <MoneyIcon className="w-5 h-5 text-green-600" />
                 <h3 className="text-lg font-bold text-gray-900">{t("cleanup.transfer.title")}</h3>
@@ -1761,7 +1761,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         )}
 
         {showTransfers && (
-          <div className="rounded-2xl border border-gray-200 bg-sky-50/70 backdrop-blur-sm p-5 shadow-sm space-y-3 dark:border-slate-700 dark:bg-slate-800">
+          <div className="rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-sm p-5 shadow-sm space-y-3 dark:border-slate-700 dark:bg-slate-800">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <CheckIcon className="w-5 h-5 text-emerald-600" />
@@ -1803,7 +1803,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         )}
 
         {isSuperAdmin && (
-          <div className="rounded-2xl border border-gray-200 bg-sky-50/70 backdrop-blur-sm p-5 shadow-sm space-y-4 dark:border-slate-700 dark:bg-slate-800">
+          <div className="rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-sm p-5 shadow-sm space-y-4 dark:border-slate-700 dark:bg-slate-800">
             <div className="flex items-center gap-2">
               <TicketIcon className="w-5 h-5 text-purple-600" />
               <h3 className="text-lg font-bold text-gray-900">{t("cleanup.grant.title")}</h3>

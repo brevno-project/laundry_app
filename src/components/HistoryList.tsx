@@ -51,7 +51,7 @@ const formatDuration = (start: string | null | undefined, end: string | null | u
 };
 
 const getCardTone = (_totalMinutes: number) => {
-  return { border: 'border-slate-200', bg: 'bg-sky-50/70 backdrop-blur-sm' };
+  return { border: 'border-slate-200', bg: 'bg-white/70 backdrop-blur-sm' };
 };
 
 const labelIconClass = "w-5 h-5 text-slate-600 dark:text-slate-300";
@@ -156,7 +156,7 @@ export default function HistoryList() {
 
   return (
     <div className="space-y-4">
-      <div className="relative overflow-hidden rounded-2xl shadow-sm p-5 border border-slate-200 bg-sky-50/70 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800">
+      <div className="relative overflow-hidden rounded-2xl shadow-sm p-5 border border-slate-200 bg-white/70 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center dark:bg-slate-700">
@@ -182,7 +182,7 @@ export default function HistoryList() {
           const hasCycleTimes = Boolean(cycleStart && cycleEnd);
           const totalMinutes = hasCycleTimes ? getDurationMinutes(cycleStart, cycleEnd) : 0;
           const totalDuration = hasCycleTimes ? formatDuration(cycleStart, cycleEnd, language) : '-';
-          const cardTone = hasCycleTimes ? getCardTone(totalMinutes) : { border: 'border-slate-200', bg: 'bg-sky-50/70 backdrop-blur-sm' };
+          const cardTone = hasCycleTimes ? getCardTone(totalMinutes) : { border: 'border-slate-200', bg: 'bg-white/70 backdrop-blur-sm' };
 
           const washStart = item.washing_started_at ?? null;
           const washEnd = item.washing_finished_at ?? null;
@@ -246,7 +246,7 @@ export default function HistoryList() {
               </div>
 
               <div className="space-y-3">
-                <div className="rounded-xl border border-slate-200 bg-sky-50/70 backdrop-blur-sm p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
+                <div className="rounded-xl border border-slate-200 bg-white/70 backdrop-blur-sm p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="flex items-center justify-between gap-2">
                       <div className={`flex items-center gap-2 ${labelTextClass}`}>
@@ -264,23 +264,23 @@ export default function HistoryList() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <div className="bg-sky-50/70 backdrop-blur-sm rounded-xl p-3 border border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
+                  <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 border border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("history.totalTime")}</span>
                       </div>
-                      <span className="text-lg font-bold text-slate-900">{totalDuration}</span>
+                      <span className="text-lg font-bold text-slate-900 dark:text-slate-100">{totalDuration}</span>
                     </div>
                   </div>
 
-                  <div className="bg-sky-50/70 backdrop-blur-sm rounded-xl p-3 border border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
+                  <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 border border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("history.washCount")}</span>
                       <span className="text-lg font-bold text-slate-900 dark:text-slate-100">{washCount}</span>
                     </div>
                   </div>
 
-                  <div className="bg-sky-50/70 backdrop-blur-sm rounded-xl p-3 border border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
+                  <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 border border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("history.payment")}</span>
                       <span className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1">

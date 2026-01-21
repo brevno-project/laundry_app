@@ -136,7 +136,7 @@ export default function StudentAuth() {
   // -------------------------------
   if (step === "select") {
     return (
-      <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg shadow-xl border-2 border-blue-200 relative dark:from-slate-900 dark:to-slate-900/60 dark:border-slate-700">
+      <div className="bg-white/80 backdrop-blur-sm p-6 rounded-lg shadow-xl border-2 border-gray-200 relative dark:bg-slate-900/60 dark:border-slate-700">
         {banNoticeBanner}
 
         <h2 className="text-2xl font-bold mb-4 text-gray-900 text-center dark:text-slate-100">
@@ -164,7 +164,7 @@ export default function StudentAuth() {
               <button
                 key={student.id}
                 onClick={() => handleStudentSelect(student)}
-                className="w-full bg-sky-50/70 backdrop-blur-sm hover:bg-blue-100 border-3 border-gray-400 hover:border-blue-600 rounded-lg p-4 text-left transition-all shadow-md hover:shadow-xl dark:bg-slate-900 dark:hover:bg-slate-800 dark:border-slate-700 dark:hover:border-sky-500"
+                className="w-full bg-white/70 backdrop-blur-sm hover:bg-slate-50 border-3 border-gray-400 hover:border-slate-500 rounded-lg p-4 text-left transition-all shadow-md hover:shadow-xl dark:bg-slate-900 dark:hover:bg-slate-800 dark:border-slate-700 dark:hover:border-sky-500"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -210,7 +210,7 @@ export default function StudentAuth() {
   // STEP 2: AUTH PAGE
   // -------------------------------
   return (
-    <div className="bg-sky-50/70 backdrop-blur-sm p-6 rounded-lg shadow-xl border-2 border-gray-200 dark:bg-slate-900 dark:border-slate-700">
+    <div className="bg-white/70 backdrop-blur-sm p-6 rounded-lg shadow-xl border-2 border-gray-200 dark:bg-slate-900 dark:border-slate-700">
       {banNoticeBanner}
       <button
         onClick={() => {

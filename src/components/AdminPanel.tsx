@@ -275,7 +275,7 @@ export default function AdminPanel() {
 
   if (!isAdmin) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-sky-50/70 backdrop-blur-sm p-6 shadow-sm dark:bg-slate-800 dark:border-slate-700">
+      <div className="rounded-lg border border-gray-200 bg-white/70 backdrop-blur-sm p-6 shadow-sm dark:bg-slate-800 dark:border-slate-700">
         <h2 className="mb-4 text-2xl font-bold text-gray-900">{t("admin.loginPromptTitle")}</h2>
         <p className="text-sm text-gray-700">{t("admin.loginPromptBody")}</p>
       </div>
@@ -307,7 +307,7 @@ export default function AdminPanel() {
         </button>
 
         {showStudents && (
-          <div className="space-y-4 rounded-lg border border-slate-200 bg-sky-50/70 backdrop-blur-sm p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900/50">
+          <div className="space-y-4 rounded-lg border border-slate-200 bg-white/70 backdrop-blur-sm p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900/50">
             {notice && (
               <div
                 className={`rounded-lg border px-3 py-2 text-sm ${
@@ -747,7 +747,7 @@ function Modal({
   const { t } = useUi();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-lg bg-sky-50/70 backdrop-blur-sm dark:bg-slate-800 p-6 shadow-xl">
+      <div className="w-full max-w-md rounded-lg bg-white/80 backdrop-blur-sm dark:bg-slate-800 p-6 shadow-xl">
         {children}
         <button
           type="button"
