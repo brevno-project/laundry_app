@@ -169,14 +169,14 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
               onClick={() => setSelectedStyle(style.id)}
               className={`p-2 rounded-lg border-2 transition-all text-left text-xs ${
                 selectedStyle === style.id
-                  ? 'border-blue-600 bg-blue-50 dark:border-sky-400 dark:bg-slate-800/60'
+                  ? 'border-blue-600 bg-blue-50 dark:border-blue-600 dark:bg-slate-800/60'
                   : 'border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:bg-slate-900/60'
               }`}
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="font-semibold text-gray-900 dark:text-slate-100">{style.name}</span>
                 {selectedStyle === style.id && (
-                  <CheckIcon className="w-3 h-3 text-blue-600 dark:text-sky-300" />
+                  <CheckIcon className="w-3 h-3 text-blue-600 dark:text-blue-300" />
                 )}
               </div>
               <p className="text-gray-600 text-xs dark:text-slate-300">{t(style.descKey)}</p>

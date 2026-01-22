@@ -297,7 +297,7 @@ export default function UserForm() {
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
                   required
-                  className="mt-1 block w-full rounded-md border-2 border-gray-300 bg-white shadow-sm p-3 text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
+                  className="mt-1 block w-full rounded-md border-2 border-gray-300 bg-white shadow-sm p-3 text-gray-900 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/10 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-white dark:focus:ring-white/10"
                 >
                   {getAvailableDates().map(date => (
                     <option key={date.value} value={date.value}>
@@ -316,7 +316,7 @@ export default function UserForm() {
                   id="washCount"
                   value={washCount}
                   onChange={(e) => setWashCount(Number(e.target.value))}
-                  className="mt-1 block w-full rounded-md border-2 border-gray-300 bg-white shadow-sm p-3 text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 font-semibold dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
+                  className="mt-1 block w-full rounded-md border-2 border-gray-300 bg-white shadow-sm p-3 text-gray-900 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/10 font-semibold dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-white dark:focus:ring-white/10"
                 >
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
                     <option key={num} value={num}>{num}</option>

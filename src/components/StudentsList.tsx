@@ -38,7 +38,6 @@ export default function StudentsList() {
   const [showAddModal, setShowAddModal] = useState(false);
 
   const [stayFilter, setStayFilter] = useState<"all" | "weekends" | "5days" | "unknown">("all");
-  const [registrationFilter, setRegistrationFilter] = useState<"all" | "registered" | "unregistered">("all");
 
   useEffect(() => {
     if (!notice) return;
@@ -49,6 +48,7 @@ export default function StudentsList() {
 
   const canManageStudents = isAdmin || isSuperAdmin || isCleanupAdmin;
   const canDeleteStudents = isAdmin || isSuperAdmin;
+  const showTelegramColumn = !isCleanupAdmin || isAdmin || isSuperAdmin;
 
   const badgeBase = "rounded-full border border-slate-200/60 dark:border-slate-700";
 
@@ -89,9 +89,6 @@ export default function StudentsList() {
       const stay = (student.stay_type || "unknown") as "unknown" | "5days" | "weekends";
       if (stay !== stayFilter) return false;
     }
-
-    if (registrationFilter === "registered" && !student.is_registered) return false;
-    if (registrationFilter === "unregistered" && student.is_registered) return false;
 
     return true;
   });
@@ -275,17 +272,19 @@ export default function StudentsList() {
               <span className="text-gray-400">-</span>
             )}
           </td>
-          <td className="p-3 text-center">
-            {hasTelegram(student) ? (
-              <span className="text-green-600 font-semibold flex items-center justify-center gap-1">
-                <CheckIcon className="w-4 h-4" />{t("students.connected")}
-              </span>
-            ) : (
-              <span className="text-gray-400 flex items-center justify-center gap-1">
-                <CloseIcon className="w-4 h-4" />{t("students.notConnected")}
-              </span>
-            )}
-          </td>
+          {showTelegramColumn && (
+            <td className="p-3 text-center">
+              {hasTelegram(student) ? (
+                <span className="text-green-600 font-semibold flex items-center justify-center gap-1">
+                  <CheckIcon className="w-4 h-4" />{t("students.connected")}
+                </span>
+              ) : (
+                <span className="text-gray-400 flex items-center justify-center gap-1">
+                  <CloseIcon className="w-4 h-4" />{t("students.notConnected")}
+                </span>
+              )}
+            </td>
+          )}
           <td className="p-3">
             {canManageStudent(student) && (
               <div className="flex items-center justify-center gap-2">
@@ -320,13 +319,25 @@ export default function StudentsList() {
       student.full_name ||
       "-";
 
+    const mobileColSpan = canManageStudents
+      ? showTelegramColumn
+        ? 6
+        : 5
+      : showTelegramColumn
+        ? 5
+        : 4;
+
+    const registrationLabel = student.is_registered
+      ? t("students.badge.registeredShort")
+      : t("students.badge.unregisteredShort");
+
     return (
       <React.Fragment key={student.id}>
         {showDivider && (
           <tr
             className="bg-gradient-to-r from-transparent via-slate-300 to-transparent dark:via-slate-700"
           >
-            <td colSpan={canManageStudents ? 6 : 5} className="h-0.5"></td>
+            <td colSpan={mobileColSpan} className="h-0.5"></td>
           </tr>
         )}
         <tr className={`border-b ${rowBorder}`}>
@@ -356,13 +367,13 @@ export default function StudentsList() {
                     <div className="flex items-center gap-1">
                       <span
                         title={student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
-                        className={`${badgeBase} flex items-center justify-center px-1.5 py-0.5 ${
+                        className={`${badgeBase} px-1.5 py-0.5 ${
                           student.key_issued
                             ? "bg-blue-100 text-blue-700 dark:border-blue-800/40 dark:bg-blue-900/25 dark:text-blue-200"
                             : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
                         }`}
                       >
-                        <KeyIcon className="w-3 h-3" />
+                        {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
                       </span>
 
                       {isSuperAdmin && (
@@ -385,19 +396,25 @@ export default function StudentsList() {
           </td>
           <td className="p-1 text-center text-gray-700 whitespace-nowrap">{student.room || "-"}</td>
           <td className="p-1 text-center">
-            {student.is_registered ? (
-              <CheckIcon className="w-5 h-5 text-emerald-600" />
-            ) : (
-              <CloseIcon className="w-5 h-5 text-amber-500" />
-            )}
+            <span
+              className={`inline-flex min-w-[2.5rem] justify-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                student.is_registered
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-900/25 dark:text-emerald-200"
+                  : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/40 dark:bg-amber-900/25 dark:text-amber-200"
+              }`}
+            >
+              {registrationLabel}
+            </span>
           </td>
-          <td className="p-1 text-center">
-            {hasTelegram(student) ? (
-              <TelegramIcon className="w-5 h-5 text-blue-500" />
-            ) : (
-              <CloseIcon className="w-5 h-5 text-gray-400" />
-            )}
-          </td>
+          {showTelegramColumn && (
+            <td className="p-1 text-center">
+              {hasTelegram(student) ? (
+                <TelegramIcon className="w-5 h-5 text-blue-500" />
+              ) : (
+                <CloseIcon className="w-5 h-5 text-gray-400" />
+              )}
+            </td>
+          )}
           {canManageStudents && (
             <td className="p-1">
               {canManageStudent(student) && (
@@ -478,15 +495,15 @@ export default function StudentsList() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setStayFilter("weekends")}
+                    onClick={() => setStayFilter("unknown")}
                     className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
-                      stayFilter === "weekends"
+                      stayFilter === "unknown"
                         ? "bg-blue-50 text-blue-700 border-blue-600 dark:bg-slate-900/60 dark:text-sky-200 dark:border-sky-400"
                         : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
                     }`}
-                    aria-pressed={stayFilter === "weekends"}
+                    aria-pressed={stayFilter === "unknown"}
                   >
-                    {t("students.stay.weekends")}
+                    {t("students.stay.unknown")}
                   </button>
                   <button
                     type="button"
@@ -502,59 +519,15 @@ export default function StudentsList() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setStayFilter("unknown")}
+                    onClick={() => setStayFilter("weekends")}
                     className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
-                      stayFilter === "unknown"
+                      stayFilter === "weekends"
                         ? "bg-blue-50 text-blue-700 border-blue-600 dark:bg-slate-900/60 dark:text-sky-200 dark:border-sky-400"
                         : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
                     }`}
-                    aria-pressed={stayFilter === "unknown"}
+                    aria-pressed={stayFilter === "weekends"}
                   >
-                    {t("students.stay.unknown")}
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
-                <span className="col-span-2 text-xs font-bold text-slate-700 dark:text-slate-200 sm:col-auto">
-                  {t("students.filter.registration")}
-                </span>
-                <div className="col-span-2 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setRegistrationFilter("all")}
-                    className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
-                      registrationFilter === "all"
-                        ? "bg-blue-50 text-blue-700 border-blue-600 dark:bg-slate-900/60 dark:text-sky-200 dark:border-sky-400"
-                        : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-                    }`}
-                    aria-pressed={registrationFilter === "all"}
-                  >
-                    {t("students.filter.all")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRegistrationFilter("registered")}
-                    className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
-                      registrationFilter === "registered"
-                        ? "bg-blue-50 text-blue-700 border-blue-600 dark:bg-slate-900/60 dark:text-sky-200 dark:border-sky-400"
-                        : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-                    }`}
-                    aria-pressed={registrationFilter === "registered"}
-                  >
-                    {t("students.badge.registered")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRegistrationFilter("unregistered")}
-                    className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
-                      registrationFilter === "unregistered"
-                        ? "bg-blue-50 text-blue-700 border-blue-600 dark:bg-slate-900/60 dark:text-sky-200 dark:border-sky-400"
-                        : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-                    }`}
-                    aria-pressed={registrationFilter === "unregistered"}
-                  >
-                    {t("students.badge.unregistered")}
+                    {t("students.stay.weekends")}
                   </button>
                 </div>
               </div>
@@ -573,7 +546,7 @@ export default function StudentsList() {
                 <col className="w-16" />
                 <col className="w-auto" />
                 <col className="w-28" />
-                <col className="w-36" />
+                {showTelegramColumn && <col className="w-36" />}
                 {canManageStudents && <col className="w-72" />}
               </colgroup>
               <thead>
@@ -581,7 +554,9 @@ export default function StudentsList() {
                   <th className="text-left p-3 font-bold text-gray-900 dark:text-slate-100">#</th>
                   <th className="text-left p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.name")}</th>
                   <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.room")}</th>
-                  <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.telegram")}</th>
+                  {showTelegramColumn && (
+                    <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.telegram")}</th>
+                  )}
                   {canManageStudents && <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.actions")}</th>}
                 </tr>
               </thead>
@@ -601,11 +576,13 @@ export default function StudentsList() {
                     <DoorIcon className="w-5 h-5 inline-block" />
                   </th>
                   <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
-                    <CheckIcon className="w-5 h-5 inline-block" />
+                    {t("students.header.registrationShort")}
                   </th>
-                  <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
-                    <TelegramIcon className="w-5 h-5 inline-block" />
-                  </th>
+                  {showTelegramColumn && (
+                    <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
+                      <TelegramIcon className="w-5 h-5 inline-block" />
+                    </th>
+                  )}
                   {canManageStudents && <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">{t("students.actions")}</th>}
                 </tr>
               </thead>
@@ -627,7 +604,7 @@ export default function StudentsList() {
                 <col className="w-16" />
                 <col className="w-auto" />
                 <col className="w-28" />
-                <col className="w-36" />
+                {showTelegramColumn && <col className="w-36" />}
                 {canManageStudents && <col className="w-72" />}
               </colgroup>
               <thead>
@@ -635,7 +612,9 @@ export default function StudentsList() {
                   <th className="text-left p-3 font-bold text-gray-900 dark:text-slate-100">#</th>
                   <th className="text-left p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.name")}</th>
                   <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.room")}</th>
-                  <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.telegram")}</th>
+                  {showTelegramColumn && (
+                    <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.telegram")}</th>
+                  )}
                   {canManageStudents && <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.actions")}</th>}
                 </tr>
               </thead>
@@ -655,11 +634,13 @@ export default function StudentsList() {
                     <DoorIcon className="w-5 h-5 inline-block" />
                   </th>
                   <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
-                    <CheckIcon className="w-5 h-5 inline-block" />
+                    {t("students.header.registrationShort")}
                   </th>
-                  <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
-                    <TelegramIcon className="w-5 h-5 inline-block" />
-                  </th>
+                  {showTelegramColumn && (
+                    <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
+                      <TelegramIcon className="w-5 h-5 inline-block" />
+                    </th>
+                  )}
                   {canManageStudents && <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">{t("students.actions")}</th>}
                 </tr>
               </thead>

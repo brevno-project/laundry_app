@@ -116,7 +116,7 @@ export default function PasswordChanger() {
                 setError("");
                 setSuccess("");
               }}
-              className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white/60 text-gray-900 p-3 text-sm font-bold placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
+              className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white/60 text-gray-900 p-3 text-sm font-bold placeholder:text-gray-500 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/10 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-white dark:focus:ring-white/10"
               placeholder={t("password.placeholderCurrent")}
             />
             <button
@@ -140,7 +140,7 @@ export default function PasswordChanger() {
                 setError("");
                 setSuccess("");
               }}
-              className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white/60 text-gray-900 p-3 text-sm font-bold placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
+              className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white/60 text-gray-900 p-3 text-sm font-bold placeholder:text-gray-500 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/10 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-white dark:focus:ring-white/10"
               placeholder={t("password.placeholderNew")}
             />
             <button
@@ -165,7 +165,7 @@ export default function PasswordChanger() {
                 setError("");
                 setSuccess("");
               }}
-              className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white/60 text-gray-900 p-3 text-sm font-bold placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
+              className="flex-1 min-w-0 rounded-lg border-2 border-gray-400 bg-white/60 text-gray-900 p-3 text-sm font-bold placeholder:text-gray-500 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/10 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-white dark:focus:ring-white/10"
               placeholder={t("password.placeholderConfirm")}
             />
             <button

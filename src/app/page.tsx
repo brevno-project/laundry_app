@@ -429,9 +429,9 @@ export default function Home() {
         {/* Настройки */}
         {activeTab === 'settings' && user && (
           <div className="w-full space-y-4 px-3">
-            <div className="bg-white/70 backdrop-blur-sm p-4 rounded-lg shadow-sm dark:bg-slate-800">
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 dark:bg-slate-800 dark:border-slate-700">
               <h3 className="font-bold text-lg text-gray-800 mb-3">{t("settings.language")}</h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                 <button
                   type="button"
                   onClick={() => handleLanguageChange("ru")}
@@ -466,7 +466,7 @@ export default function Home() {
                 </button>
               </div>
             </div>
-            <div className="bg-white/70 backdrop-blur-sm p-4 rounded-lg shadow-sm dark:bg-slate-800">
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 dark:bg-slate-800 dark:border-slate-700">
               <h3 className="font-bold text-lg text-gray-800 mb-3">{t("settings.theme")}</h3>
               <div className="inline-flex overflow-hidden rounded-full border border-gray-200 bg-gray-50 p-1 dark:border-slate-700 dark:bg-slate-900/40">
                 <button
@@ -501,7 +501,7 @@ export default function Home() {
             <PasswordChanger />
             <TelegramSetup />
             
-            <div className="bg-white/70 backdrop-blur-sm p-4 rounded-lg shadow-sm dark:bg-slate-800">
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 dark:bg-slate-800 dark:border-slate-700">
               <h3 className="font-bold text-lg text-gray-800 mb-3">{t("settings.account")}</h3>
               <button
                 onClick={async () => {
