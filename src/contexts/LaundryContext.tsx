@@ -547,8 +547,12 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   };
 
   const updateStudent = async (studentId: string, updates: any) => {
-    if (!isAdmin && !isSuperAdmin) return;
-    if (!supabase || !isSupabaseConfigured) return;
+    if (!isAdmin && !isSuperAdmin && !isCleanupAdmin) {
+      throw new Error("Insufficient permissions");
+    }
+    if (!supabase || !isSupabaseConfigured) {
+      throw new Error("Supabase is not configured");
+    }
 
     const token = await getFreshToken();
     const response = await fetch('/api/admin/update-student', {
@@ -562,6 +566,9 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     const result = await response.json();
     if (!response.ok) {
       throw new Error(result.error || 'Ошибка обновления студента');
+    }
+    if (!result?.success) {
+      throw new Error(result?.error || "Update failed");
     }
     await loadStudents();
   };

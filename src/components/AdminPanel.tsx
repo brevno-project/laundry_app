@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useLaundry } from "@/contexts/LaundryContext";
 import { useUi } from "@/contexts/UiContext";
 import { Student } from "@/types";
-import { EditIcon, PeopleIcon, EyeIcon } from "@/components/Icons";
+import { EditIcon, PeopleIcon, EyeIcon, WashingSpinner } from "@/components/Icons";
 import ActionMenu from "@/components/ActionMenu";
 import Avatar from "@/components/Avatar";
 import AddStudentModal from "@/components/AddStudentModal";
@@ -38,6 +38,7 @@ export default function AdminPanel() {
   // Modal state
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [showEditStudent, setShowEditStudent] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [showBanStudent, setShowBanStudent] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -190,7 +191,9 @@ export default function AdminPanel() {
 
   const handleEditStudent = async () => {
     if (!selectedStudent) return;
+    if (isSavingEdit) return;
 
+    setIsSavingEdit(true);
     try {
       await updateStudent(selectedStudent.id, {
         first_name: editFirstname || undefined,
@@ -203,7 +206,13 @@ export default function AdminPanel() {
       setSelectedStudent(null);
       setNotice({ type: "success", message: t("students.updateSuccess") });
     } catch (err: any) {
-      setNotice({ type: "error", message: t("students.updateError") });
+      const message =
+        typeof err?.message === "string" && err.message.trim()
+          ? err.message.trim()
+          : t("students.updateError");
+      setNotice({ type: "error", message });
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -290,6 +299,7 @@ export default function AdminPanel() {
     setEditRoom(student.room || "");
     setEditCanViewStudents(student.can_view_students || false);
     setEditCleanupAdmin(!!student.is_cleanup_admin);
+    setIsSavingEdit(false);
     setShowEditStudent(true);
   };
 
@@ -577,16 +587,25 @@ export default function AdminPanel() {
             <button
               type="button"
               onClick={() => setShowEditStudent(false)}
-              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
+              disabled={isSavingEdit}
+              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {t("common.cancel")}
             </button>
             <button
               type="button"
               onClick={handleEditStudent}
-              className="flex-1 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700"
+              disabled={isSavingEdit}
+              className="flex-1 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {t("common.save")}
+              {isSavingEdit ? (
+                <>
+                  <WashingSpinner className="w-4 h-4" />
+                  {t("common.saving")}
+                </>
+              ) : (
+                t("common.save")
+              )}
             </button>
           </div>
         </Modal>

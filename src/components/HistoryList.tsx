@@ -139,8 +139,6 @@ export default function HistoryList() {
 
   const clearHistoryItem = async (historyId: string) => {
     if (clearing) return;
-    const confirmed = confirm(t("history.deleteConfirm"));
-    if (!confirmed) return;
     setClearing(true);
     try {
       const response = await authedFetch('/api/admin/history/clear', {
@@ -261,6 +259,8 @@ export default function HistoryList() {
                     onClick={() => {
                       if (clearing) return;
                       if (!item.student_id) {
+                        const confirmed = confirm(t("history.deleteConfirm"));
+                        if (!confirmed) return;
                         void clearHistoryItem(item.id);
                         return;
                       }

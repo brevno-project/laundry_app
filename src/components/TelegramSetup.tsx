@@ -53,15 +53,13 @@ export default function TelegramSetup() {
       </div>
 
       <div className="relative">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -inset-4 rounded-2xl bg-blue-500/40 blur-2xl animate-pulse"
-        />
+        <div aria-hidden className="telegram-aura" />
+        <div aria-hidden className="telegram-aura telegram-aura-secondary" />
         <a
           href={link}
           target="_blank"
           data-focus-target="telegram"
-          className="relative block rounded-xl bg-blue-600 text-white font-bold text-center py-3 shadow-sm hover:bg-blue-700 ring-2 ring-blue-500/40 dark:ring-blue-400/40"
+          className="relative block rounded-xl bg-gradient-to-r from-blue-600 via-sky-500 to-blue-600 text-white font-bold text-center py-3 shadow-lg shadow-blue-500/25 hover:from-blue-700 hover:via-sky-600 hover:to-blue-700 ring-1 ring-blue-500/40 dark:ring-blue-400/40"
         >
           {t("telegram.connectButton")}
         </a>
