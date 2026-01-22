@@ -693,16 +693,8 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const currentItem = queue.find((item) => item.id === queueItemId);
       const { error } = await supabase.from('queue').delete().eq('id', queueItemId);
       if (error) throw error;
-
-      void sendTelegramNotification({
-        type: 'left',
-        student_id: currentItem?.student_id,
-        full_name: currentItem?.full_name,
-        room: currentItem?.room,
-      }).catch((err) => console.error('sendTelegramNotification(left) error:', err));
 
       await fetchQueue();
     } catch (err) {
