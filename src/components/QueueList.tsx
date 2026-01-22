@@ -631,18 +631,12 @@ export default function QueueList() {
                                   alertWithCheck(t("queue.error.callSelf"));
                                   return;
                                 }
-                                setOpenActionFor(null);
                                 const now = new Date().toISOString();
-                                optimisticUpdateQueueItem(item.id, {
-                                  admin_room: user?.room,
-                                  ready_at: now,
-                                  status: QueueStatus.READY,
-                                });
                                 await updateQueueItem(
                                   item.id,
                                   {
-                                    admin_room: user?.room,
-                                    ready_at: now,
+                                  admin_room: user?.room,
+                                  ready_at: now,
                                   },
                                   { skipFetch: true }
                                 );
@@ -654,10 +648,10 @@ export default function QueueList() {
                                   admin_student_id: user?.student_id,
                                   expected_finish_at: item.expected_finish_at,
                                 }).catch((err) => console.error('sendTelegramNotification(admin_call_for_key) error:', err));
+                                await fetchQueue();
                               } catch (error) {
                                 showActionError(error, t("queue.error.callFail"));
                                 console.error('❌ Error in Позвать:', error);
-                                await fetchQueue();
                               }
                             }}
                             disabled={isSelfQueueItem}
@@ -670,12 +664,7 @@ export default function QueueList() {
                             className="w-full btn bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-700"
                             onClick={async () => {
                               try {
-                                setOpenActionFor(null);
                                 const now = new Date().toISOString();
-                                optimisticUpdateQueueItem(item.id, {
-                                  key_issued_at: now,
-                                  status: QueueStatus.KEY_ISSUED,
-                                });
                                 await updateQueueItem(item.id, { key_issued_at: now }, { skipFetch: true });
                                 await setQueueStatus(item.id, QueueStatus.KEY_ISSUED, { skipFetch: true });
                                 void sendTelegramNotification({
@@ -684,10 +673,10 @@ export default function QueueList() {
                                   room: item.room,
                                   student_id: item.student_id,
                                 }).catch((err) => console.error('sendTelegramNotification(admin_key_issued) error:', err));
+                                await fetchQueue();
                               } catch (error) {
                                 showActionError(error, t("queue.error.issueFail"));
                                 console.error('❌ Error in Выдать ключ:', error);
-                                await fetchQueue();
                               }
                             }}
                           >
@@ -699,7 +688,6 @@ export default function QueueList() {
                             className="w-full btn bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed dark:bg-emerald-600 dark:text-white dark:hover:bg-emerald-700"
                             onClick={async () => {
                               try {
-                                setOpenActionFor(null);
                                 // Запускаем стирку (меняет статус)
                                 await startWashing(item.id);
                                 
@@ -729,20 +717,13 @@ export default function QueueList() {
                                   alertWithCheck(t("queue.error.returnSelf"));
                                   return;
                                 }
-                                setOpenActionFor(null);
                                 const now = new Date().toISOString();
-                                optimisticUpdateQueueItem(item.id, {
-                                  return_key_alert: true,
-                                  admin_room: user?.room,
-                                  return_requested_at: now,
-                                  status: QueueStatus.RETURNING_KEY,
-                                });
                                 await updateQueueItem(
                                   item.id,
                                   {
-                                    return_key_alert: true,
-                                    admin_room: user?.room,
-                                    return_requested_at: now,
+                                  return_key_alert: true,
+                                  admin_room: user?.room,
+                                  return_requested_at: now,
                                   },
                                   { skipFetch: true }
                                 );
@@ -753,10 +734,10 @@ export default function QueueList() {
                                   student_id: item.student_id,
                                   admin_student_id: user?.student_id,
                                 }).catch((err) => console.error('sendTelegramNotification(admin_return_key) error:', err));
+                                await fetchQueue();
                               } catch (error) {
                                 showActionError(error, t("queue.error.returnFail"));
                                 console.error('? Error in Вернуть ключ:', error);
-                                await fetchQueue();
                               }
                             }}
                             disabled={isSelfQueueItem}
@@ -769,7 +750,6 @@ export default function QueueList() {
                             className="w-full btn bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:text-white dark:hover:bg-emerald-700"
                             onClick={async () => {
                               try {
-                                setOpenActionFor(null);
                                 await markDone(item.id);
                               } catch (error) {
                                 showActionError(error, t("queue.error.finishFail"));
@@ -784,16 +764,6 @@ export default function QueueList() {
                           <button
                             className="w-full btn bg-purple-600 text-white hover:bg-purple-700 dark:bg-purple-500/20 dark:text-purple-200 dark:hover:bg-purple-500/30 dark:border dark:border-purple-500/40"
                             onClick={async () => {
-                              setOpenActionFor(null);
-                              optimisticUpdateQueueItem(item.id, {
-                                ready_at: null,
-                                key_issued_at: null,
-                                washing_started_at: null,
-                                return_requested_at: null,
-                                admin_room: null,
-                                return_key_alert: false,
-                                status: QueueStatus.WAITING,
-                              });
                               await updateQueueItem(
                                 item.id,
                                 {
@@ -807,6 +777,7 @@ export default function QueueList() {
                                 { skipFetch: true }
                               );
                               await setQueueStatus(item.id, QueueStatus.WAITING, { skipFetch: true });
+                              await fetchQueue();
                             }}
                           >
                             <WaitIcon className="w-4 h-4" /> {t("queue.action.reset")}

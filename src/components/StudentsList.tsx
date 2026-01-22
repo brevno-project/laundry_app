@@ -1,13 +1,12 @@
 ﻿"use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLaundry } from "@/contexts/LaundryContext";
 import { useUi } from "@/contexts/UiContext";
 import { Student } from "@/types";
 import {
   ListIcon,
   RoomIcon,
-  DoorIcon,
   TelegramIcon,
   CheckIcon,
   CloseIcon,
@@ -170,9 +169,7 @@ export default function StudentsList() {
     return !!chat && !student.is_banned;
   };
 
-  const renderStudentRow = (student: Student, index: number, list: Student[]) => {
-    const prevStudent = index > 0 ? list[index - 1] : null;
-    const showDivider = prevStudent && prevStudent.room !== student.room;
+  const renderStudentCard = (student: Student, index: number) => {
     const displayName =
       [student.first_name, student.last_name, student.middle_name].filter(Boolean).join(" ") ||
       student.full_name ||
@@ -187,250 +184,124 @@ export default function StudentsList() {
           : t("students.stay.unknown");
 
     return (
-      <React.Fragment key={student.id}>
-        {showDivider && (
-          <tr className="bg-gradient-to-r from-transparent via-gray-300 to-transparent">
-            <td colSpan={canManageStudents ? 5 : 4} className="h-1"></td>
-          </tr>
-        )}
-        <tr className="border-b border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/70 transition-colors">
-          <td className="p-3 text-gray-700 dark:text-slate-300">{index + 1}</td>
-          <td className="p-3 text-gray-900 dark:text-slate-100">
-            <div className="flex items-center gap-3">
-              <Avatar name={student.full_name} style={student.avatar_style} seed={student.avatar_seed} className="w-12 h-12" />
-              <div className="flex flex-col">
-                <span>{displayName}</span>
-                {canManageStudents && (
-                  <div className="mt-1 flex flex-col gap-1 text-[11px] font-semibold text-gray-600 dark:text-slate-300">
-                    <div className="flex flex-wrap gap-1">
-                      <span
-                        className={`${badgeBase} px-2 py-0.5 ${
-                          student.is_registered
-                            ? "bg-emerald-100 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/25 dark:text-emerald-200"
-                            : "bg-amber-100 text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/25 dark:text-amber-200"
-                        }`}
-                      >
-                        {student.is_registered
-                          ? t("students.badge.registered")
-                          : t("students.badge.unregistered")}
-                      </span>
-                      <span
-                        className={`${badgeBase} px-2 py-0.5 ${
-                          stayType === "weekends"
-                            ? "bg-blue-100 text-blue-800 dark:border-blue-500/50 dark:bg-blue-900/35 dark:text-blue-200"
-                            : stayType === "5days"
-                              ? "bg-indigo-100 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200"
-                              : "bg-gray-100 text-gray-600 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-100"
-                        }`}
-                      >
-                        {stayLabel}
-                      </span>
-                    </div>
+      <div
+        key={student.id}
+        className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-700 dark:bg-slate-900/40"
+      >
+        <div className="w-7 text-[11px] font-semibold text-slate-500 dark:text-slate-400">{index + 1}</div>
+        <Avatar
+          name={student.full_name}
+          style={student.avatar_style}
+          seed={student.avatar_seed}
+          className="w-10 h-10"
+        />
 
-                    <div className="flex flex-wrap gap-1">
-                      <span
-                        className={`${badgeBase} px-2 py-0.5 ${
-                          student.key_issued
-                            ? "bg-blue-100 text-blue-700 dark:border-blue-400/50 dark:bg-blue-500/15 dark:text-blue-100"
-                            : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
-                        }`}
-                      >
-                        {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
-                      </span>
-                      {student.key_lost && (
-                        <span className={`${badgeBase} bg-red-100 px-2 py-0.5 text-red-700 dark:border-rose-800/40 dark:bg-rose-900/30 dark:text-rose-200`}>
-                          {t("students.keyLost")}
-                        </span>
-                      )}
-                      {isSuperAdmin && student.is_cleanup_admin && (
-                        <span className={`${badgeBase} border border-indigo-200 bg-indigo-100 px-2 py-0.5 text-indigo-800 dark:border-indigo-500/40 dark:bg-indigo-900/35 dark:text-indigo-200`}>
-                          {t("header.leader")}
-                        </span>
-                      )}
-                      {isSuperAdmin && (
-                        <span
-                          className={`${badgeBase} px-2 py-0.5 ${
-                            student.can_view_students
-                              ? "bg-indigo-100 text-indigo-700 dark:border-violet-800/40 dark:bg-violet-900/25 dark:text-violet-200"
-                              : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
-                          }`}
-                        >
-                          <EyeIcon className="w-3 h-3 inline-block mr-1" />
-                          {student.can_view_students ? t("students.listOpen") : t("students.listClosed")}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </td>
-          <td className="p-3 text-center text-gray-900">
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{displayName}</div>
+          <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
             {student.room ? (
-              <span className="rounded border border-slate-200/60 bg-blue-100 px-2 py-1 font-semibold text-blue-900 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-100">{student.room}</span>
-            ) : (
-              <span className="text-gray-400">-</span>
+              <span className="rounded-md border border-slate-200/70 bg-slate-50 px-2 py-0.5 text-slate-700 dark:border-slate-700 dark:bg-slate-950/40 dark:text-slate-200">
+                {student.room}
+              </span>
+            ) : null}
+
+            <span className={`${badgeBase} px-2 py-0.5 ${
+              student.is_registered
+                ? "bg-emerald-100 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/25 dark:text-emerald-200"
+                : "bg-amber-100 text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/25 dark:text-amber-200"
+            }`}
+            >
+              {student.is_registered ? t("students.badge.registered") : t("students.badge.unregistered")}
+            </span>
+
+            <span className={`${badgeBase} px-2 py-0.5 ${
+              stayType === "weekends"
+                ? "bg-blue-100 text-blue-800 dark:border-blue-500/50 dark:bg-blue-900/35 dark:text-blue-200"
+                : stayType === "5days"
+                  ? "bg-indigo-100 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200"
+                  : "bg-gray-100 text-gray-600 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-100"
+            }`}
+            >
+              {stayLabel}
+            </span>
+
+            <span className={`${badgeBase} flex items-center gap-1 px-2 py-0.5 ${
+              student.key_issued
+                ? "bg-blue-100 text-blue-700 dark:border-blue-400/50 dark:bg-blue-500/15 dark:text-blue-100"
+                : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
+            }`}
+            >
+              <KeyIcon className="h-3.5 w-3.5" />
+              {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
+            </span>
+
+            {student.key_lost && (
+              <span className={`${badgeBase} bg-red-100 px-2 py-0.5 text-red-700 dark:border-rose-800/40 dark:bg-rose-900/30 dark:text-rose-200`}>
+                {t("students.keyLost")}
+              </span>
             )}
-          </td>
+
+            {isSuperAdmin && student.is_cleanup_admin && (
+              <span className={`${badgeBase} border border-indigo-200 bg-indigo-100 px-2 py-0.5 text-indigo-800 dark:border-indigo-500/40 dark:bg-indigo-900/35 dark:text-indigo-200`}>
+                {t("header.leader")}
+              </span>
+            )}
+
+            {isSuperAdmin && (
+              <span className={`${badgeBase} flex items-center gap-1 px-2 py-0.5 ${
+                student.can_view_students
+                  ? "bg-indigo-100 text-indigo-700 dark:border-violet-800/40 dark:bg-violet-900/25 dark:text-violet-200"
+                  : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
+              }`}
+              >
+                <EyeIcon className="h-3.5 w-3.5" />
+                {student.can_view_students ? t("students.listOpen") : t("students.listClosed")}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
           {showTelegramColumn && (
-            <td className="p-3 text-center">
+            <div title={hasTelegram(student) ? t("students.connected") : t("students.notConnected")}>
               {hasTelegram(student) ? (
-                <span className="text-green-600 font-semibold flex items-center justify-center gap-1">
-                  <CheckIcon className="w-4 h-4" />{t("students.connected")}
-                </span>
+                <TelegramIcon className="h-5 w-5 text-blue-500" />
               ) : (
-                <span className="text-gray-400 flex items-center justify-center gap-1">
-                  <CloseIcon className="w-4 h-4" />{t("students.notConnected")}
-                </span>
+                <CloseIcon className="h-5 w-5 text-slate-300 dark:text-slate-600" />
               )}
-            </td>
-          )}
-          <td className="p-3">
-            {canManageStudent(student) && (
-              <div className="flex items-center justify-center gap-2">
-                <button
-                  onClick={() => openEditModal(student)}
-                  className="btn btn-primary px-3 py-1 text-sm"
-                >
-                  <EditIcon className="w-4 h-4 inline-block mr-1" />{t("students.edit")}
-                </button>
-                    {canDeleteStudents && (
-                      <button
-                        onClick={() => handleDeleteStudent(student)}
-                        className="btn btn-danger px-3 py-1 text-sm transition-transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
-                      >
-                        <DeleteIcon className="w-4 h-4 inline-block mr-1" />{t("students.delete")}
-                      </button>
-                    )}
-              </div>
-            )}
-          </td>
-        </tr>
-      </React.Fragment>
-    );
-  };
-
-  const renderMobileRow = (student: Student, index: number, list: Student[], _tone: "blue" | "green") => {
-    const prevStudent = index > 0 ? list[index - 1] : null;
-    const showDivider = prevStudent && prevStudent.room !== student.room;
-    const rowBorder = "border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800";
-    const displayName =
-      [student.first_name, student.last_name, student.middle_name].filter(Boolean).join(" ") ||
-      student.full_name ||
-      "-";
-
-    const mobileColSpan = canManageStudents
-      ? showTelegramColumn
-        ? 6
-        : 5
-      : showTelegramColumn
-        ? 5
-        : 4;
-
-    return (
-      <React.Fragment key={student.id}>
-        {showDivider && (
-          <tr
-            className="bg-gradient-to-r from-transparent via-slate-300 to-transparent dark:via-slate-700"
-          >
-            <td colSpan={mobileColSpan} className="h-0.5"></td>
-          </tr>
-        )}
-        <tr className={`border-b ${rowBorder}`}>
-          <td className="p-1 text-gray-900 font-semibold">{index + 1}</td>
-          <td className="p-1 text-gray-900 overflow-hidden">
-            <div className="flex items-center gap-2 min-w-0">
-              <Avatar name={student.full_name} style={student.avatar_style} seed={student.avatar_seed} className="w-10 h-10" />
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs truncate">{displayName}</span>
-                {canManageStudents && (
-                  <div className="mt-1 flex flex-col gap-1 text-[10px] font-semibold text-gray-600 dark:text-slate-300">
-                    {(student.key_lost || (isSuperAdmin && student.is_cleanup_admin)) && (
-                      <div className="flex flex-wrap gap-1">
-                        {student.key_lost && (
-                          <span className={`${badgeBase} bg-red-100 px-1.5 py-0.5 text-red-700 dark:border-rose-800/40 dark:bg-rose-900/30 dark:text-rose-200`}>
-                            {t("students.keyLost")}
-                          </span>
-                        )}
-                        {isSuperAdmin && student.is_cleanup_admin && (
-                          <span className={`${badgeBase} bg-indigo-100 px-1.5 py-0.5 text-indigo-800 dark:border-indigo-500/40 dark:bg-indigo-900/35 dark:text-indigo-200`}>
-                            {t("header.leader")}
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-1">
-                      <span
-                        title={student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
-                        className={`${badgeBase} px-1.5 py-0.5 ${
-                          student.key_issued
-                            ? "bg-blue-100 text-blue-700 dark:border-blue-400/70 dark:bg-blue-600/30 dark:text-blue-100"
-                            : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
-                        }`}
-                      >
-                        {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
-                      </span>
-
-                      {isSuperAdmin && (
-                        <span
-                          title={student.can_view_students ? t("students.listOpen") : t("students.listClosed")}
-                          className={`${badgeBase} flex items-center justify-center px-1.5 py-0.5 ${
-                            student.can_view_students
-                              ? "bg-indigo-100 text-indigo-700 dark:border-violet-800/40 dark:bg-violet-900/25 dark:text-violet-200"
-                              : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
-                          }`}
-                        >
-                          <EyeIcon className="w-3 h-3" />
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
-          </td>
-          <td className="p-1 text-center text-gray-700 whitespace-nowrap border-l border-slate-200 dark:border-slate-700">{student.room || "-"}</td>
-          <td className="p-1 text-center border-l border-slate-200 dark:border-slate-700">
+          )}
+
+          <div title={student.is_registered ? t("students.badge.registered") : t("students.badge.unregistered")}>
             {student.is_registered ? (
-              <CheckIcon className="mx-auto h-5 w-5 text-emerald-600 dark:text-emerald-300" />
+              <CheckIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-300" />
             ) : (
-              <CloseIcon className="mx-auto h-5 w-5 text-rose-500 dark:text-rose-300" />
+              <CloseIcon className="h-5 w-5 text-rose-500 dark:text-rose-300" />
             )}
-          </td>
-          {showTelegramColumn && (
-            <td className="p-1 text-center border-l border-slate-200 dark:border-slate-700">
-              {hasTelegram(student) ? (
-                <TelegramIcon className="w-5 h-5 text-blue-500" />
-              ) : (
-                <CloseIcon className="w-5 h-5 text-gray-400" />
+          </div>
+
+          {canManageStudent(student) && (
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => openEditModal(student)}
+                className="btn btn-primary px-2 py-1"
+              >
+                <EditIcon className="h-4 w-4" />
+              </button>
+              {canDeleteStudents && (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteStudent(student)}
+                  className="btn btn-danger px-2 py-1"
+                >
+                  <DeleteIcon className="h-4 w-4" />
+                </button>
               )}
-            </td>
+            </div>
           )}
-          {canManageStudents && (
-            <td className="p-1 border-l border-slate-200 dark:border-slate-700">
-              {canManageStudent(student) && (
-                <div className="flex items-center justify-center gap-1">
-                  <button
-                    onClick={() => openEditModal(student)}
-                    className="btn btn-primary px-2 py-1 text-xs"
-                  >
-                    <EditIcon className="w-3 h-3" />
-                  </button>
-                  {canDeleteStudents && (
-                    <button
-                      onClick={() => handleDeleteStudent(student)}
-                      className="btn btn-danger px-2 py-1 text-xs transition-transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
-                    >
-                      <DeleteIcon className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-              )}
-            </td>
-          )}
-        </tr>
-      </React.Fragment>
+        </div>
+      </div>
     );
   };
 
@@ -527,119 +398,23 @@ export default function StudentsList() {
           </div>
         </div>
 
-        <div className="mb-6 px-4">
-          <h3 className="text-xl font-bold mb-3 text-slate-800 dark:text-slate-100 flex items-center gap-2 px-4">
-            <RoomIcon className="w-5 h-5" />{t("students.blockA")} ({blockA.length})
-          </h3>
-
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full border-collapse">
-              <colgroup>
-                <col className="w-16" />
-                <col className="w-auto" />
-                <col className="w-28" />
-                {showTelegramColumn && <col className="w-36" />}
-                {canManageStudents && <col className="w-72" />}
-              </colgroup>
-              <thead>
-                <tr className="bg-slate-100 border-b-2 border-slate-200 dark:bg-slate-900/40 dark:border-slate-700">
-                  <th className="text-left p-3 font-bold text-gray-900 dark:text-slate-100">#</th>
-                  <th className="text-left p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.name")}</th>
-                  <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.room")}</th>
-                  {showTelegramColumn && (
-                    <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.telegram")}</th>
-                  )}
-                  {canManageStudents && <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.actions")}</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {blockA.map((student, index) => renderStudentRow(student, index, blockA))}
-              </tbody>
-            </table>
+        <div className="space-y-6 px-4 pb-4">
+          <div>
+            <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 px-1">
+              <RoomIcon className="w-5 h-5" />{t("students.blockA")} ({blockA.length})
+            </h3>
+            <div className="mt-2 space-y-2">
+              {blockA.map((student, index) => renderStudentCard(student, index))}
+            </div>
           </div>
 
-          <div className="md:hidden overflow-x-auto">
-            <table className="min-w-[560px] w-full border-collapse text-xs table-fixed">
-              <thead>
-                <tr className="bg-slate-100 border-b-2 border-slate-200 dark:bg-slate-900/40 dark:border-slate-700">
-                  <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100 w-8">#</th>
-                  <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">{t("students.name")}</th>
-                  <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100 w-14 border-l border-slate-200 dark:border-slate-700">
-                    <DoorIcon className="w-5 h-5 inline-block" />
-                  </th>
-                  <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100 w-20 border-l border-slate-200 dark:border-slate-700">
-                    {t("students.filter.registration")}
-                  </th>
-                  {showTelegramColumn && (
-                    <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100 w-12 border-l border-slate-200 dark:border-slate-700">
-                      <TelegramIcon className="w-5 h-5 inline-block" />
-                    </th>
-                  )}
-                  {canManageStudents && <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100 w-20 border-l border-slate-200 dark:border-slate-700">{t("students.actions")}</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {blockA.map((student, index) => renderMobileRow(student, index, blockA, "blue"))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="pb-4 px-4">
-          <h3 className="text-xl font-bold mb-3 text-slate-800 dark:text-slate-100 flex items-center gap-2 px-4">
-            <RoomIcon className="w-5 h-5" />{t("students.blockB")} ({blockB.length})
-          </h3>
-
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full border-collapse">
-              <colgroup>
-                <col className="w-16" />
-                <col className="w-auto" />
-                <col className="w-28" />
-                {showTelegramColumn && <col className="w-36" />}
-                {canManageStudents && <col className="w-72" />}
-              </colgroup>
-              <thead>
-                <tr className="bg-slate-100 border-b-2 border-slate-200 dark:bg-slate-900/40 dark:border-slate-700">
-                  <th className="text-left p-3 font-bold text-gray-900 dark:text-slate-100">#</th>
-                  <th className="text-left p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.name")}</th>
-                  <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.room")}</th>
-                  {showTelegramColumn && (
-                    <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.telegram")}</th>
-                  )}
-                  {canManageStudents && <th className="text-center p-3 font-bold text-gray-900 dark:text-slate-100">{t("students.actions")}</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {blockB.map((student, index) => renderStudentRow(student, index, blockB))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="md:hidden overflow-x-auto">
-            <table className="w-full border-collapse text-xs">
-              <thead>
-                <tr className="bg-slate-100 border-b-2 border-slate-200 dark:bg-slate-900/40 dark:border-slate-700">
-                  <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">#</th>
-                  <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">{t("students.name")}</th>
-                  <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
-                    <DoorIcon className="w-5 h-5 inline-block" />
-                  </th>
-                  <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
-                    {t("students.filter.registration")}
-                  </th>
-                  {showTelegramColumn && (
-                    <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
-                      <TelegramIcon className="w-5 h-5 inline-block" />
-                    </th>
-                  )}
-                  {canManageStudents && <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">{t("students.actions")}</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {blockB.map((student, index) => renderMobileRow(student, index, blockB, "green"))}
-              </tbody>
-            </table>
+          <div>
+            <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 px-1">
+              <RoomIcon className="w-5 h-5" />{t("students.blockB")} ({blockB.length})
+            </h3>
+            <div className="mt-2 space-y-2">
+              {blockB.map((student, index) => renderStudentCard(student, index))}
+            </div>
           </div>
         </div>
       </div>

@@ -2900,7 +2900,6 @@ const resetStudentRegistration = async (studentId: string) => {
         setHistory(localHistory);
         setHistoryTotalCount(localHistory.length);
         setHistoryHasMore(false);
-        setHistoryHasMore(false);
         return;
       }
       
