@@ -13,6 +13,7 @@ import {
   CloseIcon,
   EditIcon,
   EyeIcon,
+  KeyIcon,
   DeleteIcon,
   WashingSpinner,
 } from "@/components/Icons";
@@ -48,6 +49,7 @@ export default function StudentsList() {
 
   const canManageStudents = isAdmin || isSuperAdmin || isCleanupAdmin;
   const canDeleteStudents = isAdmin || isSuperAdmin;
+  const canViewRegistration = isAdmin || isSuperAdmin;
 
   const badgeBase = "rounded-full border border-slate-200/60 dark:border-slate-700";
 
@@ -89,8 +91,10 @@ export default function StudentsList() {
       if (stay !== stayFilter) return false;
     }
 
-    if (registrationFilter === "registered" && !student.is_registered) return false;
-    if (registrationFilter === "unregistered" && student.is_registered) return false;
+    if (canViewRegistration) {
+      if (registrationFilter === "registered" && !student.is_registered) return false;
+      if (registrationFilter === "unregistered" && student.is_registered) return false;
+    }
 
     return true;
   });
@@ -191,7 +195,7 @@ export default function StudentsList() {
     return (
       <React.Fragment key={student.id}>
         {showDivider && (
-          <tr className="bg-gradient-to-r from-transparent via-gray-300 to-transparent">
+          <tr className="bg-gradient-to-r from-transparent via-gray-400 to-transparent dark:via-slate-600">
             <td colSpan={canManageStudents ? 5 : 4} className="h-1"></td>
           </tr>
         )}
@@ -204,17 +208,19 @@ export default function StudentsList() {
                 <span>{displayName}</span>
                 {canManageStudents && (
                   <span className="mt-1 flex flex-wrap gap-1 text-[11px] font-semibold text-gray-600 dark:text-slate-300">
-                    <span
-                      className={`${badgeBase} px-2 py-0.5 ${
-                        student.is_registered
-                          ? "bg-emerald-100 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/25 dark:text-emerald-200"
-                          : "bg-amber-100 text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/25 dark:text-amber-200"
-                      }`}
-                    >
-                      {student.is_registered
-                        ? t("students.badge.registered")
-                        : t("students.badge.unregistered")}
-                    </span>
+                    {canViewRegistration && (
+                      <span
+                        className={`${badgeBase} px-2 py-0.5 ${
+                          student.is_registered
+                            ? "bg-emerald-100 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/25 dark:text-emerald-200"
+                            : "bg-amber-100 text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/25 dark:text-amber-200"
+                        }`}
+                      >
+                        {student.is_registered
+                          ? t("students.badge.registered")
+                          : t("students.badge.unregistered")}
+                      </span>
+                    )}
                     <span
                       className={`${badgeBase} px-2 py-0.5 ${
                         stayType === "weekends"
@@ -227,16 +233,18 @@ export default function StudentsList() {
                       {stayLabel}
                     </span>
                     <span
-                      className={`${badgeBase} px-2 py-0.5 ${
+                      className={`${badgeBase} inline-flex items-center gap-1 px-2 py-0.5 ${
                         student.key_issued
                           ? "bg-blue-100 text-blue-700 dark:border-blue-800/40 dark:bg-blue-900/25 dark:text-blue-200"
                           : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
                       }`}
                     >
+                      <KeyIcon className="w-3 h-3" />
                       {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
                     </span>
                     {student.key_lost && (
-                      <span className={`${badgeBase} bg-red-100 px-2 py-0.5 text-red-700 dark:border-rose-800/40 dark:bg-rose-900/30 dark:text-rose-200`}>
+                      <span className={`${badgeBase} inline-flex items-center gap-1 bg-red-100 px-2 py-0.5 text-red-700 dark:border-rose-800/40 dark:bg-rose-900/30 dark:text-rose-200`}>
+                        <KeyIcon className="w-3 h-3" />
                         {t("students.keyLost")}
                       </span>
                     )}
@@ -326,7 +334,7 @@ export default function StudentsList() {
       <React.Fragment key={student.id}>
         {showDivider && (
           <tr
-            className="bg-gradient-to-r from-transparent via-slate-300 to-transparent dark:via-slate-700"
+            className="bg-gradient-to-r from-transparent via-slate-400 to-transparent dark:via-slate-600"
           >
             <td colSpan={canManageStudents ? 5 : 4} className="h-0.5"></td>
           </tr>
@@ -340,17 +348,19 @@ export default function StudentsList() {
                 <span className="text-xs">{displayName}</span>
                 {canManageStudents && (
                   <span className="mt-1 flex flex-wrap gap-1 text-[10px] font-semibold text-gray-600 dark:text-slate-300">
-                    <span
-                      className={`${badgeBase} px-1.5 py-0.5 ${
-                        student.is_registered
-                          ? "bg-emerald-100 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/25 dark:text-emerald-200"
-                          : "bg-amber-100 text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/25 dark:text-amber-200"
-                      }`}
-                    >
-                      {student.is_registered
-                        ? t("students.badge.registered")
-                        : t("students.badge.unregistered")}
-                    </span>
+                    {canViewRegistration && (
+                      <span
+                        className={`${badgeBase} px-1.5 py-0.5 ${
+                          student.is_registered
+                            ? "bg-emerald-100 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/25 dark:text-emerald-200"
+                            : "bg-amber-100 text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/25 dark:text-amber-200"
+                        }`}
+                      >
+                        {student.is_registered
+                          ? t("students.badge.registered")
+                          : t("students.badge.unregistered")}
+                      </span>
+                    )}
                     <span
                       className={`${badgeBase} px-1.5 py-0.5 ${
                         stayType === "weekends"
@@ -363,16 +373,18 @@ export default function StudentsList() {
                       {stayLabel}
                     </span>
                     <span
-                      className={`${badgeBase} px-1.5 py-0.5 ${
+                      className={`${badgeBase} inline-flex items-center gap-1 px-1.5 py-0.5 ${
                         student.key_issued
                           ? "bg-blue-100 text-blue-700 dark:border-blue-800/40 dark:bg-blue-900/25 dark:text-blue-200"
                           : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
                       }`}
                     >
+                      <KeyIcon className="w-3 h-3" />
                       {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
                     </span>
                     {student.key_lost && (
-                      <span className={`${badgeBase} bg-red-100 px-1.5 py-0.5 text-red-700 dark:border-rose-800/40 dark:bg-rose-900/30 dark:text-rose-200`}>
+                      <span className={`${badgeBase} inline-flex items-center gap-1 bg-red-100 px-1.5 py-0.5 text-red-700 dark:border-rose-800/40 dark:bg-rose-900/30 dark:text-rose-200`}>
+                        <KeyIcon className="w-3 h-3" />
                         {t("students.keyLost")}
                       </span>
                     )}
@@ -523,49 +535,51 @@ export default function StudentsList() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
-                <span className="col-span-2 text-xs font-bold text-slate-700 dark:text-slate-200 sm:col-auto">
-                  {t("students.filter.registration")}
-                </span>
-                <div className="col-span-2 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setRegistrationFilter("all")}
-                    className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
-                      registrationFilter === "all"
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-                    }`}
-                    aria-pressed={registrationFilter === "all"}
-                  >
-                    {t("students.filter.all")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRegistrationFilter("registered")}
-                    className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
-                      registrationFilter === "registered"
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-                    }`}
-                    aria-pressed={registrationFilter === "registered"}
-                  >
-                    {t("students.badge.registered")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRegistrationFilter("unregistered")}
-                    className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
-                      registrationFilter === "unregistered"
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-                    }`}
-                    aria-pressed={registrationFilter === "unregistered"}
-                  >
-                    {t("students.badge.unregistered")}
-                  </button>
+              {canViewRegistration && (
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+                  <span className="col-span-2 text-xs font-bold text-slate-700 dark:text-slate-200 sm:col-auto">
+                    {t("students.filter.registration")}
+                  </span>
+                  <div className="col-span-2 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setRegistrationFilter("all")}
+                      className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
+                        registrationFilter === "all"
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+                      }`}
+                      aria-pressed={registrationFilter === "all"}
+                    >
+                      {t("students.filter.all")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRegistrationFilter("registered")}
+                      className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
+                        registrationFilter === "registered"
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+                      }`}
+                      aria-pressed={registrationFilter === "registered"}
+                    >
+                      {t("students.badge.registered")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRegistrationFilter("unregistered")}
+                      className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
+                        registrationFilter === "unregistered"
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+                      }`}
+                      aria-pressed={registrationFilter === "unregistered"}
+                    >
+                      {t("students.badge.unregistered")}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -675,7 +689,7 @@ export default function StudentsList() {
 
       {editingStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white/80 backdrop-blur-sm dark:bg-slate-800 rounded-lg p-6 max-w-md w-full">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-md w-full">
             <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-4 flex items-center gap-2">
               <EditIcon className="w-5 h-5" />{t("students.editTitle")}
             </h3>
@@ -733,7 +747,7 @@ export default function StudentsList() {
                     <select
                       value={editStayType}
                       onChange={(e) => setEditStayType(e.target.value as any)}
-                      className="rounded-lg border-2 border-gray-300 bg-white/60 px-2 py-1 text-sm font-semibold text-gray-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
+                      className="rounded-lg border-2 border-gray-300 bg-white px-2 py-1 text-sm font-semibold text-gray-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
                     >
                       <option value="unknown">{t("students.stay.unknown")}</option>
                       <option value="5days">{t("students.stay.5days")}</option>

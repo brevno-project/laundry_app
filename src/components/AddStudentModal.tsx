@@ -101,6 +101,12 @@ export default function AddStudentModal({ onClose }: AddStudentModalProps) {
         <h3 className="text-xl font-bold text-gray-900 mb-4 dark:text-slate-100">
           {t("students.addTitle")}
         </h3>
+        {isSubmitting && (
+          <div className="mb-4 flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 dark:bg-blue-900/20 dark:text-blue-200">
+            <WashingSpinner className="w-5 h-5" />
+            <span>{t("students.addSubmitting")}</span>
+          </div>
+        )}
 
         <div className="space-y-4">
           <div>
