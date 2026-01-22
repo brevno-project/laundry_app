@@ -128,7 +128,7 @@ export default function AddStudentModal({ onClose }: AddStudentModalProps) {
               value={room}
               onChange={(event) => handleRoomChange(event.target.value)}
               placeholder={t("students.field.roomPlaceholder")}
-              className="w-full border-2 border-slate-900 rounded-lg p-3 text-gray-900 uppercase bg-white placeholder:text-gray-500 focus:outline-none focus:border-slate-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-slate-400"
+              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900 uppercase bg-white placeholder:text-gray-500 focus:outline-none focus:border-blue-600 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-blue-600"
               maxLength={4}
               disabled={isSubmitting}
             />
@@ -145,7 +145,7 @@ export default function AddStudentModal({ onClose }: AddStudentModalProps) {
               type="text"
               value={lastName}
               onChange={(event) => setLastName(event.target.value)}
-              className="w-full border-2 border-slate-900 rounded-lg p-3 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-slate-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-slate-400"
+              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-blue-600 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-blue-600"
               placeholder={t("students.field.lastNamePlaceholder")}
               disabled={isSubmitting}
             />
@@ -159,7 +159,7 @@ export default function AddStudentModal({ onClose }: AddStudentModalProps) {
               type="text"
               value={firstName}
               onChange={(event) => setFirstName(event.target.value)}
-              className="w-full border-2 border-slate-900 rounded-lg p-3 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-slate-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-slate-400"
+              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-blue-600 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-blue-600"
               placeholder={t("students.field.firstNamePlaceholder")}
               disabled={isSubmitting}
             />
@@ -173,7 +173,7 @@ export default function AddStudentModal({ onClose }: AddStudentModalProps) {
               type="text"
               value={middleName}
               onChange={(event) => setMiddleName(event.target.value)}
-              className="w-full border-2 border-slate-900 rounded-lg p-3 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-slate-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-slate-400"
+              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-blue-600 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-blue-600"
               placeholder={t("students.field.middleNamePlaceholder")}
               disabled={isSubmitting}
             />

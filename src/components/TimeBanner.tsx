@@ -37,11 +37,11 @@ export default function TimeBanner() {
   const getBannerStyle = () => {
     switch (timeStatus.warningLevel) {
       case 'danger':
-        return 'bg-red-600 border-red-700';
+        return 'bg-red-600';
       case 'warning':
-        return 'bg-yellow-500 border-yellow-600';
+        return 'bg-yellow-500';
       default:
-        return 'bg-green-600 border-green-700';
+        return 'bg-green-600';
     }
   };
 
@@ -54,7 +54,7 @@ export default function TimeBanner() {
       });
 
   return (
-    <div className={`${getBannerStyle()} border-2 p-4 rounded-lg shadow-lg mb-6`}>
+    <div className={`${getBannerStyle()} p-4 rounded-lg shadow-lg mb-6`}>
       <div className="flex items-center justify-center gap-2">
         <Icon className="w-6 h-6 text-white" />
         <p className="text-white font-bold text-lg text-center">{message}</p>
