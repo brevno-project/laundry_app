@@ -18,7 +18,7 @@ export default function TelegramSetup() {
     return (
       <div
         id="telegram-setup"
-        className="rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/40"
+        className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/40"
       >
         <div className="flex items-center gap-2 mb-2">
           <CheckIcon className="w-6 h-6 text-emerald-600 dark:text-emerald-300" />
@@ -55,7 +55,7 @@ export default function TelegramSetup() {
       <div className="relative">
         <div
           aria-hidden
-          className="pointer-events-none absolute -inset-2 rounded-xl bg-blue-500/25 blur-lg animate-pulse"
+          className="pointer-events-none absolute -inset-4 rounded-2xl bg-blue-500/40 blur-2xl animate-pulse"
         />
         <a
           href={link}

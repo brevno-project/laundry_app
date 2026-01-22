@@ -338,11 +338,11 @@ export default function StudentsList() {
         )}
         <tr className={`border-b ${rowBorder}`}>
           <td className="p-1 text-gray-900 font-semibold">{index + 1}</td>
-          <td className="p-1 text-gray-900">
-            <div className="flex items-center gap-2">
-              <Avatar name={student.full_name} style={student.avatar_style} seed={student.avatar_seed} className="w-12 h-12" />
-              <div className="flex flex-col">
-                <span className="text-xs">{displayName}</span>
+          <td className="p-1 text-gray-900 overflow-hidden">
+            <div className="flex items-center gap-2 min-w-0">
+              <Avatar name={student.full_name} style={student.avatar_style} seed={student.avatar_seed} className="w-10 h-10" />
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs truncate">{displayName}</span>
                 {canManageStudents && (
                   <div className="mt-1 flex flex-col gap-1 text-[10px] font-semibold text-gray-600 dark:text-slate-300">
                     {(student.key_lost || (isSuperAdmin && student.is_cleanup_admin)) && (
@@ -365,7 +365,7 @@ export default function StudentsList() {
                         title={student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
                         className={`${badgeBase} px-1.5 py-0.5 ${
                           student.key_issued
-                            ? "bg-blue-100 text-blue-700 dark:border-blue-400/50 dark:bg-blue-500/15 dark:text-blue-100"
+                            ? "bg-blue-100 text-blue-700 dark:border-blue-400/70 dark:bg-blue-600/30 dark:text-blue-100"
                             : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
                         }`}
                       >
@@ -559,7 +559,7 @@ export default function StudentsList() {
           </div>
 
           <div className="md:hidden overflow-x-auto">
-            <table className="w-full border-collapse text-xs table-fixed">
+            <table className="min-w-[560px] w-full border-collapse text-xs table-fixed">
               <thead>
                 <tr className="bg-slate-100 border-b-2 border-slate-200 dark:bg-slate-900/40 dark:border-slate-700">
                   <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100 w-8">#</th>

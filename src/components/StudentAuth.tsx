@@ -271,7 +271,7 @@ export default function StudentAuth() {
                 setError("");
               }}
               onKeyDown={(e) => e.key === "Enter" && handleAuth()}
-              className="w-full rounded-lg border-2 border-gray-400 bg-white/60 backdrop-blur-sm text-gray-900 p-4 pr-20 text-lg font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
+              className="w-full rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-4 pr-20 text-lg font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
               placeholder={t("auth.password")}
               autoFocus
             />
@@ -310,7 +310,7 @@ export default function StudentAuth() {
                   setError("");
                 }}
                 onKeyDown={(e) => e.key === "Enter" && handleAuth()}
-                className="w-full rounded-lg border-2 border-gray-400 bg-white/60 backdrop-blur-sm text-gray-900 p-4 pr-20 text-lg font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
+                className="w-full rounded-lg border-2 border-gray-400 bg-white text-gray-900 p-4 pr-20 text-lg font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
                 placeholder={t("auth.confirmPassword")}
               />
               <button

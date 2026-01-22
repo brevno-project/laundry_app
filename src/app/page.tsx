@@ -350,7 +350,7 @@ export default function Home() {
                     
                     {/* Полупрозрачная карточка с информацией */}
                     {(machineState.current_queue_item_id || machineState.expected_finish_at) && (
-                      <div className="bg-black/15 backdrop-blur-sm rounded-lg p-4 space-y-3 border border-white/10">
+                      <div className="bg-white rounded-lg p-4 space-y-3 border border-slate-200/80 shadow-sm dark:bg-black/15 dark:border-white/10">
                         {machineState.current_queue_item_id && (() => {
                           const currentItem = queue.find(item => item.id === machineState.current_queue_item_id);
                           if (currentItem) {

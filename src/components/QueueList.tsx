@@ -200,15 +200,15 @@ export default function QueueList() {
           };
         case QueueStatus.KEY_ISSUED:
           return {
-            bg: 'bg-blue-50 dark:bg-blue-900/20',
-            text: 'text-blue-900 dark:text-blue-200',
+            bg: 'bg-blue-50 dark:bg-blue-950/40',
+            text: 'text-blue-900 dark:text-blue-100',
             badge: (
               <span className="flex items-center gap-1.5">
                 <KeyIcon className="w-4 h-4" />
                 {t("queue.status.keyIssued")}
               </span>
             ),
-            badgeColor: 'bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold shadow-md dark:from-blue-600/50 dark:to-blue-500/30 dark:text-blue-200'
+            badgeColor: 'bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold shadow-md dark:from-blue-500/70 dark:to-blue-400/40 dark:text-blue-100'
           };
         case QueueStatus.WASHING:
           return { 
@@ -561,7 +561,10 @@ export default function QueueList() {
                         )}
                         
                         {/* Кнопки пользователя */}
-                        {isCurrentUser && item.status === QueueStatus.WAITING && (
+                        {isCurrentUser &&
+                          (item.status === QueueStatus.WAITING ||
+                            item.status === QueueStatus.READY ||
+                            item.status === QueueStatus.KEY_ISSUED) && (
                           <button
                             onClick={async () => {
                               if (leavingQueueId) return;
@@ -621,26 +624,37 @@ export default function QueueList() {
 
                           {/* Позвать */}
                           <button
-                            className="w-full btn bg-orange-500 text-white hover:bg-orange-600 dark:bg-orange-500/20 dark:text-orange-200 dark:hover:bg-orange-500/30 dark:border dark:border-orange-500/40"
+                            className="w-full btn bg-orange-500 text-white hover:bg-orange-600 dark:bg-orange-600 dark:text-white dark:hover:bg-orange-700"
                             onClick={async () => {
                               try {
                                 if (isSelfQueueItem) {
                                   alertWithCheck(t("queue.error.callSelf"));
                                   return;
                                 }
-                                await updateQueueItem(item.id, { 
+                                setOpenActionFor(null);
+                                const now = new Date().toISOString();
+                                optimisticUpdateQueueItem(item.id, {
                                   admin_room: user?.room,
-                                  ready_at: new Date().toISOString()
+                                  ready_at: now,
+                                  status: QueueStatus.READY,
                                 });
-                                await setQueueStatus(item.id, QueueStatus.READY);
-
-                                await sendTelegramNotification({
+                                await updateQueueItem(
+                                  item.id,
+                                  {
+                                    admin_room: user?.room,
+                                    ready_at: now,
+                                  },
+                                  { skipFetch: true }
+                                );
+                                await setQueueStatus(item.id, QueueStatus.READY, { skipFetch: true });
+                                void sendTelegramNotification({
                                   type: 'admin_call_for_key',
                                   full_name: item.full_name,
                                   student_id: item.student_id,
                                   expected_finish_at: item.expected_finish_at,
                                   admin_student_id: user?.student_id,
-                                });
+                                }).catch((err) => console.error('sendTelegramNotification(admin_call_for_key) error:', err));
+                                await fetchQueue();
                               } catch (error) {
                                 showActionError(error, t("queue.error.callFail"));
                                 console.error('❌ Error in Позвать:', error);
@@ -653,24 +667,24 @@ export default function QueueList() {
 
                           {/* Выдать ключ */}
                           <button
-                            className="w-full btn bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500/20 dark:text-blue-200 dark:hover:bg-blue-500/30 dark:border dark:border-blue-500/40"
+                            className="w-full btn bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-700"
                             onClick={async () => {
                               try {
+                                setOpenActionFor(null);
                                 const now = new Date().toISOString();
-                                // Сначала устанавливаем timestamp
-                                await updateQueueItem(item.id, { 
-                                  key_issued_at: now
+                                optimisticUpdateQueueItem(item.id, {
+                                  key_issued_at: now,
+                                  status: QueueStatus.KEY_ISSUED,
                                 });
-                                // Потом меняем статус
-                                await setQueueStatus(item.id, QueueStatus.KEY_ISSUED);
-                                
-                                // Отправляем уведомление студенту
-                                await sendTelegramNotification({
+                                await updateQueueItem(item.id, { key_issued_at: now }, { skipFetch: true });
+                                await setQueueStatus(item.id, QueueStatus.KEY_ISSUED, { skipFetch: true });
+                                void sendTelegramNotification({
                                   type: 'admin_key_issued',
                                   full_name: item.full_name,
                                   room: item.room,
                                   student_id: item.student_id,
-                                });
+                                }).catch((err) => console.error('sendTelegramNotification(admin_key_issued) error:', err));
+                                await fetchQueue();
                               } catch (error) {
                                 showActionError(error, t("queue.error.issueFail"));
                                 console.error('❌ Error in Выдать ключ:', error);
@@ -682,20 +696,21 @@ export default function QueueList() {
 
                           {/* Стирать */}
                           <button
-                            className="w-full btn bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed dark:bg-emerald-500/20 dark:text-emerald-200 dark:hover:bg-emerald-500/30 dark:border dark:border-emerald-500/40"
+                            className="w-full btn bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed dark:bg-emerald-600 dark:text-white dark:hover:bg-emerald-700"
                             onClick={async () => {
                               try {
+                                setOpenActionFor(null);
                                 // Запускаем стирку (меняет статус)
                                 await startWashing(item.id);
                                 
                                 // ✅ Отправляем уведомление студенту что админ запустил стирку
-                                await sendTelegramNotification({
+                                void sendTelegramNotification({
                                   type: 'washing_started',
                                   full_name: item.full_name,
                                   room: item.room,
                                   student_id: item.student_id,
                                   wash_count: item.wash_count,
-                                });
+                                }).catch((err) => console.error('sendTelegramNotification(washing_started) error:', err));
                               } catch (error) {
                                 showActionError(error, t("queue.error.startFail"));
                                 console.error('❌ Error in Стирать:', error);
@@ -707,25 +722,38 @@ export default function QueueList() {
 
                           {/* Вернуть ключ */}
                           <button
-                            className="w-full btn bg-orange-600 text-white hover:bg-orange-700 dark:bg-orange-500/20 dark:text-orange-200 dark:hover:bg-orange-500/30 dark:border dark:border-orange-500/40"
+                            className="w-full btn bg-orange-600 text-white hover:bg-orange-700 dark:bg-orange-600 dark:text-white dark:hover:bg-orange-700"
                             onClick={async () => {
                               try {
                                 if (isSelfQueueItem) {
                                   alertWithCheck(t("queue.error.returnSelf"));
                                   return;
                                 }
-                                await updateQueueItem(item.id, { 
+                                setOpenActionFor(null);
+                                const now = new Date().toISOString();
+                                optimisticUpdateQueueItem(item.id, {
                                   return_key_alert: true,
                                   admin_room: user?.room,
-                                  return_requested_at: new Date().toISOString()
+                                  return_requested_at: now,
+                                  status: QueueStatus.RETURNING_KEY,
                                 });
-                                await setQueueStatus(item.id, QueueStatus.RETURNING_KEY);
-                                await sendTelegramNotification({
+                                await updateQueueItem(
+                                  item.id,
+                                  {
+                                    return_key_alert: true,
+                                    admin_room: user?.room,
+                                    return_requested_at: now,
+                                  },
+                                  { skipFetch: true }
+                                );
+                                await setQueueStatus(item.id, QueueStatus.RETURNING_KEY, { skipFetch: true });
+                                void sendTelegramNotification({
                                   type: "admin_return_key",
                                   full_name: item.full_name,
                                   student_id: item.student_id,
-                                  admin_student_id: user?.student_id
-                                });
+                                  admin_student_id: user?.student_id,
+                                }).catch((err) => console.error('sendTelegramNotification(admin_return_key) error:', err));
+                                await fetchQueue();
                               } catch (error) {
                                 showActionError(error, t("queue.error.returnFail"));
                                 console.error('? Error in Вернуть ключ:', error);
@@ -738,9 +766,10 @@ export default function QueueList() {
 
                           {/* Завершить */}
                           <button
-                            className="w-full btn bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 dark:bg-emerald-500/20 dark:text-emerald-200 dark:hover:bg-emerald-500/30 dark:border dark:border-emerald-500/40"
+                            className="w-full btn bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:text-white dark:hover:bg-emerald-700"
                             onClick={async () => {
                               try {
+                                setOpenActionFor(null);
                                 await markDone(item.id);
                               } catch (error) {
                                 showActionError(error, t("queue.error.finishFail"));
@@ -755,17 +784,30 @@ export default function QueueList() {
                           <button
                             className="w-full btn bg-purple-600 text-white hover:bg-purple-700 dark:bg-purple-500/20 dark:text-purple-200 dark:hover:bg-purple-500/30 dark:border dark:border-purple-500/40"
                             onClick={async () => {
-                              // Сначала сбрасываем все timestamps
-                              await updateQueueItem(item.id, { 
+                              setOpenActionFor(null);
+                              optimisticUpdateQueueItem(item.id, {
                                 ready_at: null,
                                 key_issued_at: null,
                                 washing_started_at: null,
                                 return_requested_at: null,
                                 admin_room: null,
-                                return_key_alert: false
+                                return_key_alert: false,
+                                status: QueueStatus.WAITING,
                               });
-                              // Потом меняем статус
-                              await setQueueStatus(item.id, QueueStatus.WAITING);
+                              await updateQueueItem(
+                                item.id,
+                                {
+                                  ready_at: null,
+                                  key_issued_at: null,
+                                  washing_started_at: null,
+                                  return_requested_at: null,
+                                  admin_room: null,
+                                  return_key_alert: false,
+                                },
+                                { skipFetch: true }
+                              );
+                              await setQueueStatus(item.id, QueueStatus.WAITING, { skipFetch: true });
+                              await fetchQueue();
                             }}
                           >
                             <WaitIcon className="w-4 h-4" /> {t("queue.action.reset")}

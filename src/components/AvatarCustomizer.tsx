@@ -103,7 +103,7 @@ export default function AvatarCustomizer({ onSave }: AvatarCustomizerProps) {
   };
 
   return (
-    <div className="bg-white/70 backdrop-blur-sm dark:bg-slate-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-slate-700">
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-slate-700">
       <h3 className="font-bold text-lg text-gray-900 mb-4">{t('avatar.title')}</h3>
 
       {notice && (

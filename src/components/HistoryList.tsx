@@ -82,6 +82,28 @@ export default function HistoryList() {
     alert(`${message}${suffix}`);
   };
 
+  const clearHistoryForStudent = async (studentId: string) => {
+    if (clearing) return;
+    setClearing(true);
+    try {
+      const response = await authedFetch('/api/admin/history/clear', {
+        method: 'POST',
+        body: JSON.stringify({ mode: 'range', student_id: studentId }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || t("history.clearError"));
+      }
+      await fetchHistory();
+      alertWithCheck(t("history.deleteSuccess"));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t("history.clearError");
+      alertWithCheck(t("history.deleteErrorAlert", { message }));
+    } finally {
+      setClearing(false);
+    }
+  };
+
   const getPaymentLabel = (paymentType?: string | null, couponsUsed?: number | null) => {
     const couponCount = couponsUsed || 0;
     if (couponCount > 0) {
@@ -224,7 +246,7 @@ export default function HistoryList() {
                         const student = students.find(s => s.id === item.student_id);
                         return student?.avatar_seed || item.avatar_seed;
                       })()}
-                      className="w-12 h-12 rounded-xl shadow-md"
+                      className="w-12 h-12 rounded-full"
                     />
                   </div>
                   <div>
@@ -236,11 +258,23 @@ export default function HistoryList() {
                 </div>
                 {isSuperAdmin && (
                   <button
-                    onClick={() => clearHistoryItem(item.id)}
-                    className="btn btn-danger px-3 py-1.5 text-xs"
+                    onClick={() => {
+                      if (clearing) return;
+                      if (!item.student_id) {
+                        void clearHistoryItem(item.id);
+                        return;
+                      }
+                      const askAll = confirm(t("history.deleteAllUserQuestion"));
+                      if (askAll) {
+                        void clearHistoryForStudent(item.student_id);
+                      } else {
+                        void clearHistoryItem(item.id);
+                      }
+                    }}
+                    disabled={clearing}
+                    className="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 disabled:opacity-60 disabled:cursor-not-allowed dark:border-rose-500/30 dark:bg-rose-500/15 dark:text-rose-200 dark:hover:bg-rose-500/25"
                   >
                     <DeleteIcon className="w-4 h-4" />
-                    {t("history.delete")}
                   </button>
                 )}
               </div>

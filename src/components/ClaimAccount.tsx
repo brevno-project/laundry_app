@@ -102,7 +102,7 @@ export default function ClaimAccount() {
             value={pin}
             onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
             placeholder="123456"
-            className="w-full rounded-md border-2 border-yellow-300 bg-white/60 backdrop-blur-sm px-3 py-2 text-yellow-900 placeholder-yellow-400 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200"
+            className="w-full rounded-md border-2 border-yellow-300 bg-white px-3 py-2 text-yellow-900 placeholder-yellow-400 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200"
             disabled={loading}
             maxLength={6}
           />

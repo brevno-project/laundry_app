@@ -128,8 +128,8 @@ export type MachineState = {
 
 export type HistoryItem = {
   id: string;
-  user_id: string;
-  student_id: string;
+  user_id: string | null;
+  student_id: string | null;
   full_name: string;
   room?: string;
   started_at: string;

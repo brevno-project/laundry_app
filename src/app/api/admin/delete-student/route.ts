@@ -69,7 +69,12 @@ export async function POST(req: NextRequest) {
       await supabaseAdmin
         .from("history")
         .delete()
-        .eq("user_id", userId);
+        .or(`user_id.eq.${userId},student_id.eq.${studentId}`);
+    } else {
+      await supabaseAdmin
+        .from("history")
+        .delete()
+        .eq("student_id", studentId);
     }
 
     // --- 5. Удаляем auth user ---

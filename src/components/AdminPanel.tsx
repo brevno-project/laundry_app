@@ -9,6 +9,7 @@ import { CloseIcon, EditIcon, PeopleIcon, EyeIcon } from "@/components/Icons";
 import ActionMenu from "@/components/ActionMenu";
 import Avatar from "@/components/Avatar";
 import AddStudentModal from "@/components/AddStudentModal";
+import { supabase } from "@/lib/supabase";
 
 type Notice = { type: "success" | "error"; message: string } | null;
 
@@ -47,10 +48,56 @@ export default function AdminPanel() {
   const [queueWashCount, setQueueWashCount] = useState(1);
   const [queueCouponsUsed, setQueueCouponsUsed] = useState(0);
   const [queueDate, setQueueDate] = useState("");
+  const [eligibleCouponCount, setEligibleCouponCount] = useState<number>(0);
 
   useEffect(() => {
     setQueueCouponsUsed((prev) => Math.min(prev, queueWashCount));
   }, [queueWashCount]);
+
+  useEffect(() => {
+    const loadEligibleCoupons = async () => {
+      if (!supabase || !showAddToQueue || !selectedStudent?.id || !queueDate) {
+        setEligibleCouponCount(0);
+        return;
+      }
+
+      const now = new Date();
+      const todayStr = now.toISOString().slice(0, 10);
+
+      const { data, error } = await supabase
+        .from("coupons")
+        .select("id, issued_at, expires_at")
+        .eq("owner_student_id", selectedStudent.id)
+        .is("reserved_queue_id", null)
+        .is("used_at", null)
+        .is("used_in_queue_id", null)
+        .gt("expires_at", now.toISOString());
+
+      if (error) {
+        setEligibleCouponCount(0);
+        return;
+      }
+
+      const rows = (data as any[]) || [];
+      const eligible = rows.filter((coupon) => {
+        const issuedAt = new Date(coupon.issued_at).getTime();
+        const expiresAt = new Date(coupon.expires_at).getTime();
+        const ttlMs = expiresAt - issuedAt;
+        const expiresDateStr = new Date(coupon.expires_at).toISOString().slice(0, 10);
+
+        if (ttlMs >= 24 * 60 * 60 * 1000) {
+          return queueDate < expiresDateStr;
+        }
+
+        return queueDate === todayStr && expiresAt > now.getTime();
+      });
+
+      setEligibleCouponCount(eligible.length);
+      setQueueCouponsUsed((prev) => Math.min(prev, Math.min(queueWashCount, eligible.length)));
+    };
+
+    void loadEligibleCoupons();
+  }, [showAddToQueue, selectedStudent?.id, queueDate, queueWashCount]);
 
   // Edit student form
   const [editFirstname, setEditFirstname] = useState("");
@@ -275,7 +322,7 @@ export default function AdminPanel() {
 
   if (!isAdmin) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white/70 backdrop-blur-sm p-6 shadow-sm dark:bg-slate-800 dark:border-slate-700">
+      <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:bg-slate-800 dark:border-slate-700">
         <h2 className="mb-4 text-2xl font-bold text-gray-900">{t("admin.loginPromptTitle")}</h2>
         <p className="text-sm text-gray-700">{t("admin.loginPromptBody")}</p>
       </div>
@@ -307,7 +354,7 @@ export default function AdminPanel() {
         </button>
 
         {showStudents && (
-          <div className="space-y-4 rounded-lg border border-slate-200 bg-white/70 backdrop-blur-sm p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900/50">
+          <div className="space-y-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900/50">
             {notice && (
               <div
                 className={`rounded-lg border px-3 py-2 text-sm ${
@@ -673,20 +720,24 @@ export default function AdminPanel() {
 
             <div>
               <label className="mb-1 block font-semibold text-gray-900 dark:text-slate-100">{t("admin.addQueueCoupons")}</label>
-              <select
-                value={queueCouponsUsed}
-                onChange={(e) => setQueueCouponsUsed(Number(e.target.value))}
-                className="w-full rounded-lg border-2 border-gray-300 p-2 text-gray-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
-              >
-                {Array.from({ length: queueWashCount + 1 }, (_, i) => i).map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
-                {t("admin.addQueueHint")}
-              </p>
+              {eligibleCouponCount > 0 ? (
+                <>
+                  <select
+                    value={queueCouponsUsed}
+                    onChange={(e) => setQueueCouponsUsed(Number(e.target.value))}
+                    className="w-full rounded-lg border-2 border-gray-300 p-2 text-gray-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
+                  >
+                    {Array.from({ length: Math.min(queueWashCount, eligibleCouponCount) + 1 }, (_, i) => i).map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
+                    {t("admin.addQueueHint")}
+                  </p>
+                </>
+              ) : null}
             </div>
           </div>
 

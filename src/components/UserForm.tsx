@@ -297,7 +297,7 @@ export default function UserForm() {
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
                   required
-                  className="mt-1 block w-full rounded-md border-2 border-gray-300 bg-white shadow-sm p-3 text-gray-900 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/10 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-white dark:focus:ring-white/10"
+                  className="mt-1 block w-full rounded-md border-2 border-gray-300 bg-white shadow-sm p-3 text-gray-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
                 >
                   {getAvailableDates().map(date => (
                     <option key={date.value} value={date.value}>
@@ -316,7 +316,7 @@ export default function UserForm() {
                   id="washCount"
                   value={washCount}
                   onChange={(e) => setWashCount(Number(e.target.value))}
-                  className="mt-1 block w-full rounded-md border-2 border-gray-300 bg-white shadow-sm p-3 text-gray-900 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/10 font-semibold dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-white dark:focus:ring-white/10"
+                  className="mt-1 block w-full rounded-md border-2 border-gray-300 bg-white shadow-sm p-3 text-gray-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200 font-semibold dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
                 >
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
                     <option key={num} value={num}>{num}</option>
@@ -344,7 +344,7 @@ export default function UserForm() {
                       return (
                         <label
                           key={coupon.id}
-                          className="flex items-center justify-between gap-2 rounded-md border border-gray-200 bg-white/70 backdrop-blur-sm px-3 py-2 text-sm text-gray-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200"
+                          className="flex items-center justify-between gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200"
                         >
                           <span className="flex items-center gap-2">
                             <input

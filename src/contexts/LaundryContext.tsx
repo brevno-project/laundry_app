@@ -170,25 +170,29 @@ type LaundryContextType = {
     couponIds?: string[]
   ) => Promise<void>;
 
-  leaveQueue: (queueItemId: string) => void;
+  leaveQueue: (queueItemId: string) => Promise<void>;
 
-  updateQueueItem: (queueItemId: string, updates: Partial<QueueItem>) => void;
+  updateQueueItem: (
+    queueItemId: string,
+    updates: Partial<QueueItem>,
+    options?: { skipFetch?: boolean }
+  ) => Promise<void>;
 
   sendAdminMessage: (queueItemId: string, message: string) => Promise<void>;
 
-  setQueueStatus: (queueItemId: string, status: QueueStatus) => Promise<void>;
+  setQueueStatus: (queueItemId: string, status: QueueStatus, options?: { skipFetch?: boolean }) => Promise<void>;
 
   setReturnKeyAlert: (queueItemId: string, alert: boolean) => Promise<void>;
 
-  startWashing: (queueItemId: string) => void;
+  startWashing: (queueItemId: string) => Promise<void>;
 
-  cancelWashing: (queueItemId: string) => void;
+  cancelWashing: (queueItemId: string) => Promise<void>;
 
-  markDone: (queueItemId: string) => void;
+  markDone: (queueItemId: string) => Promise<void>;
 
-  startNext: () => void;
+  startNext: () => Promise<void>;
 
-  clearQueue: () => void;
+  clearQueue: () => Promise<void>;
 
   removeFromQueue: (queueItemId: string) => Promise<void>;
 
@@ -398,6 +402,442 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     };
 
   }, [isSupabaseConfigured, supabase]);
+
+
+
+  const optimisticUpdateQueueItem = (queueItemId: string, updates: Partial<QueueItem>) => {
+    setQueue((prev) => prev.map((item) => (item.id === queueItemId ? { ...item, ...updates } : item)));
+    try {
+      const localQueue = get_local_queue();
+      const idx = localQueue.findIndex((item) => item.id === queueItemId);
+      if (idx !== -1) {
+        localQueue[idx] = { ...localQueue[idx], ...updates };
+        save_local_queue(localQueue);
+      }
+    } catch {}
+  };
+
+
+
+  const getUserQueueItem = () => {
+    if (!user?.student_id) return undefined;
+    return queue.find((item) => item.student_id === user.student_id);
+  };
+
+
+
+  const setReturnKeyAlert = async (queueItemId: string, alert: boolean) => {
+    if (!isAdmin && !isSuperAdmin) return;
+    if (!supabase || !isSupabaseConfigured) return;
+
+    const token = await getFreshToken();
+    const response = await fetch('/api/admin/queue/set-return-key-alert', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ queue_item_id: queueItemId, alert }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'Ошибка обновления алерта возврата ключа');
+    }
+
+    await fetchQueue();
+  };
+
+
+
+  const removeFromQueue = async (queueItemId: string) => {
+    if (!isAdmin && !isSuperAdmin) return;
+    if (!supabase || !isSupabaseConfigured) return;
+
+    const token = await getFreshToken();
+    const response = await fetch('/api/admin/queue/remove', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ queue_item_id: queueItemId }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'Ошибка удаления из очереди');
+    }
+    await fetchQueue();
+    await fetchMachineState();
+  };
+
+
+
+  const clearQueueByMode = async (mode: 'all' | 'completed' | 'old' | 'stuck') => {
+    if (!isAdmin && !isSuperAdmin) return;
+    if (!supabase || !isSupabaseConfigured) {
+      if (mode === 'all') {
+        clear_local_queue();
+        fetchQueue();
+        fetchMachineState();
+      }
+      return;
+    }
+
+    const token = await getFreshToken();
+    const response = await fetch('/api/admin/queue/clear', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ mode }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'Ошибка очистки очереди');
+    }
+    await fetchQueue();
+    await fetchMachineState();
+  };
+
+  const clearQueue = async () => clearQueueByMode('all');
+  const clearCompletedQueue = async () => clearQueueByMode('completed');
+  const clearOldQueues = async () => clearQueueByMode('old');
+  const clearStuckQueues = async () => clearQueueByMode('stuck');
+
+
+
+  const startNext = async () => {
+    if (!isAdmin && !isSuperAdmin) return;
+    if (!isSupabaseConfigured || !supabase) {
+      start_local_next();
+      fetchQueue();
+      fetchMachineState();
+      return;
+    }
+
+    const next = queue
+      .filter((item) => item.status === QueueStatus.WAITING || item.status === QueueStatus.READY)
+      .sort((a, b) => a.queue_position - b.queue_position)[0];
+    if (!next) return;
+    await startWashing(next.id);
+  };
+
+
+
+  const addStudent = async (firstName: string, lastName: string, room?: string, middleName?: string) => {
+    if (!isAdmin && !isSuperAdmin) return;
+    if (!supabase || !isSupabaseConfigured) return;
+
+    const token = await getFreshToken();
+    const response = await fetch('/api/admin/add-student', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ first_name: firstName, last_name: lastName, middle_name: middleName, room }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'Ошибка добавления студента');
+    }
+    await loadStudents();
+  };
+
+  const updateStudent = async (studentId: string, updates: any) => {
+    if (!isAdmin && !isSuperAdmin) return;
+    if (!supabase || !isSupabaseConfigured) return;
+
+    const token = await getFreshToken();
+    const response = await fetch('/api/admin/update-student', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ student_id: studentId, updates }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'Ошибка обновления студента');
+    }
+    await loadStudents();
+  };
+
+  const deleteStudent = async (studentId: string) => {
+    if (!isAdmin && !isSuperAdmin) return;
+    if (!supabase || !isSupabaseConfigured) return;
+    if (!user?.student_id) return;
+
+    const token = await getFreshToken();
+    const response = await fetch('/api/admin/delete-student', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ studentId, adminStudentId: user.student_id }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'Ошибка удаления студента');
+    }
+    await loadStudents();
+    await fetchQueue();
+    await fetchHistory();
+  };
+
+  const adminAddToQueue = async (
+    studentRoom?: string,
+    washCount?: number,
+    couponsUsed?: number,
+    expectedFinishAt?: string,
+    chosenDate?: string,
+    studentId?: string
+  ) => {
+    if (!isAdmin && !isSuperAdmin) return;
+    if (!supabase || !isSupabaseConfigured) return;
+    if (!user?.student_id) return;
+    if (!studentId || !chosenDate) return;
+
+    const token = await getFreshToken();
+    const response = await fetch('/api/admin/add-to-queue', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        student_id: studentId,
+        wash_count: washCount,
+        coupons_used: couponsUsed,
+        expected_finish_at: expectedFinishAt,
+        scheduled_for_date: chosenDate,
+        admin_student_id: user.student_id,
+        student_room: studentRoom,
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'Ошибка добавления в очередь');
+    }
+    await fetchQueue();
+  };
+
+  const banStudent = async (studentId: string, reason?: string) => {
+    if (!isAdmin && !isSuperAdmin) return;
+    if (!supabase || !isSupabaseConfigured) return;
+
+    const token = await getFreshToken();
+    const response = await fetch('/api/admin/ban-student', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ student_id: studentId, reason, ban: true }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'Ошибка бана');
+    }
+    await loadStudents();
+    await fetchQueue();
+  };
+
+  const unbanStudent = async (studentId: string) => {
+    if (!isAdmin && !isSuperAdmin) return;
+    if (!supabase || !isSupabaseConfigured) return;
+
+    const token = await getFreshToken();
+    const response = await fetch('/api/admin/ban-student', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ student_id: studentId, ban: false }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'Ошибка разбана');
+    }
+    await loadStudents();
+  };
+
+
+
+  // Пользователь: покинуть очередь
+  const leaveQueue = async (queueItemId: string) => {
+    if (!supabase) return;
+
+    if (!isSupabaseConfigured) {
+      if (user?.id) {
+        remove_from_local_queue(queueItemId, user.id);
+      } else {
+        const localQueue = get_local_queue();
+        const nextQueue = localQueue.filter((item) => item.id !== queueItemId);
+        save_local_queue(nextQueue);
+      }
+      fetchQueue();
+      return;
+    }
+
+    try {
+      const currentItem = queue.find((item) => item.id === queueItemId);
+      const { error } = await supabase.from('queue').delete().eq('id', queueItemId);
+      if (error) throw error;
+
+      void sendTelegramNotification({
+        type: 'left',
+        student_id: currentItem?.student_id,
+        full_name: currentItem?.full_name,
+        room: currentItem?.room,
+      }).catch((err) => console.error('sendTelegramNotification(left) error:', err));
+
+      await fetchQueue();
+    } catch (err) {
+      await fetchQueue();
+      throw err;
+    }
+  };
+
+
+
+  // Admin: Start washing for a queue item
+  const startWashing = async (queueItemId: string) => {
+    if (!isAdmin) return;
+
+    if (!isSupabaseConfigured || !supabase) {
+      start_local_washing(queueItemId);
+      fetchQueue();
+      fetchMachineState();
+      return;
+    }
+
+    try {
+      const token = await getFreshToken();
+      const response = await fetch('/api/admin/queue/start-washing', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ queue_item_id: queueItemId }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (result?.removed) {
+          await fetchQueue();
+          await fetchMachineState();
+        }
+        throw new Error(result.error || 'Ошибка запуска стирки');
+      }
+
+      await fetchQueue();
+      await fetchMachineState();
+    } catch (error) {
+      await fetchQueue();
+      await fetchMachineState();
+      throw error;
+    }
+  };
+
+
+
+  // Admin: Cancel washing (return to queue)
+  const cancelWashing = async (queueItemId: string) => {
+    if (!isAdmin) return;
+
+    const queueItem = queue.find((item) => item.id === queueItemId);
+    if (!queueItem || queueItem.status !== QueueStatus.WASHING) return;
+
+    if (!isSupabaseConfigured || !supabase) {
+      const localQueue = get_local_queue();
+      const item = localQueue.find((i) => i.id === queueItemId);
+      if (item) {
+        item.status = QueueStatus.WAITING;
+        save_local_queue(localQueue);
+      }
+      save_local_machine_state({ status: MachineStatus.IDLE });
+      fetchQueue();
+      fetchMachineState();
+      return;
+    }
+
+    try {
+      const token = await getFreshToken();
+      const response = await fetch('/api/admin/queue/cancel-washing', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ queue_item_id: queueItemId }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка отмены стирки');
+      }
+
+      await fetchQueue();
+      await fetchMachineState();
+    } catch (error) {
+      throw error;
+    }
+  };
+
+
+
+  // Admin: Mark washing as done (moves to history + removes from queue)
+  const markDone = async (queueItemId: string) => {
+    if (!isAdmin) return;
+
+    const queueItem = queue.find((item) => item.id === queueItemId);
+    if (!queueItem) return;
+
+    if (!isSupabaseConfigured || !supabase) {
+      mark_local_done();
+      fetchQueue();
+      fetchMachineState();
+      fetchHistory();
+      return;
+    }
+
+    try {
+      const token = await getFreshToken();
+      const response = await fetch('/api/admin/queue/mark-done', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ queue_item_id: queueItemId }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка завершения стирки');
+      }
+
+      void sendTelegramNotification({
+        type: 'washing_done',
+        full_name: queueItem.full_name,
+        room: queueItem.room,
+        student_id: queueItem.student_id,
+        queue_item_id: queueItemId,
+      }).catch((err) => console.error('sendTelegramNotification(washing_done) error:', err));
+
+      await fetchQueue();
+      await fetchMachineState();
+      await fetchHistory();
+    } catch (error) {
+      throw error;
+    }
+  };
 
 
 
@@ -2994,31 +3434,23 @@ const joinQueue = async (
 
     
 
-    const notificationResult = await sendTelegramNotification({
-
+    void sendTelegramNotification({
       type: 'joined',
-
       student_id: user.student_id,
-
       full_name: name,
-
       room,
-
       wash_count: washCount,
-
       payment_type: derivedPaymentType,
-
       queue_length: queue.length + 1,
-
       expected_finish_at: expectedFinishAt,
-
       queue_item_id: newItem.id,
-
-    });
-
-    
-
-    console.log('?? "joined" notification result:', notificationResult);
+    })
+      .then((notificationResult) => {
+        console.log('?? "joined" notification result:', notificationResult);
+      })
+      .catch((err) => {
+        console.error('sendTelegramNotification(joined) error:', err);
+      });
 
 
 
@@ -3082,7 +3514,7 @@ const joinQueue = async (
 
   // Admin: Изменить статус записи в очереди
 
-  const setQueueStatus = async (queueItemId: string, status: QueueStatus) => {
+  const setQueueStatus = async (queueItemId: string, status: QueueStatus, options?: { skipFetch?: boolean }) => {
 
     if (!isAdmin && !isSuperAdmin) return;
 
@@ -3155,362 +3587,9 @@ const joinQueue = async (
 
 
 
-      await fetchQueue();
-
-    } catch (error) {
-
-      throw error;
-
-    }
-
-  };
-
-
-
-
-
-  const adminAddToQueue = async (
-
-    studentRoom?: string,
-
-    washCount: number = 1,
-
-    couponsUsed: number = 0,
-
-    expectedFinishAt?: string,
-
-    chosenDate?: string,
-
-    studentId?: string
-
-  ) => {
-
-    const student = students.find(s => s.id === studentId);
-
-    if (!student) {
-
-      return;
-
-    }
-
-  
-
-    if (!isAdmin) {
-
-      return;
-
-    }
-
-  
-
-    const todayISO = new Date().toISOString().slice(0, 10);
-
-    const targetDate = chosenDate || todayISO;
-
-  
-
-    const response = await fetch("/api/admin/add-to-queue", {
-
-      method: "POST",
-
-      headers: { "Content-Type": "application/json" },
-
-      body: JSON.stringify({
-
-        student_id: student.id,
-
-        admin_student_id: user?.student_id,
-
-        full_name: student.full_name,
-
-        room: studentRoom || student.room,
-
-        wash_count: washCount,
-
-        coupons_used: couponsUsed,
-
-        expected_finish_at: expectedFinishAt,
-
-        scheduled_for_date: targetDate,
-
-      }),
-
-    });
-
-  
-
-    const res = await response.json();
-
-  
-
-    if (!response.ok) {
-      return;
-
-    }
-
-  
-
-    await fetchQueue();
-
-  };
-
-  
-
-
-
-  // Admin: Set return key alert
-
-  const setReturnKeyAlert = async (queueItemId: string, alert: boolean) => {
-
-    if (!isAdmin) return;
-
-    
-
-    if (!isSupabaseConfigured || !supabase) {
-
-      return;
-
-    }
-
-
-
-    try {
-
-      // ? Получаем JWT
-
-      const token = await getFreshToken();
-
-
-
-      // ? Вызываем API route с JWT
-
-      const response = await fetch('/api/admin/queue/set-return-key-alert', {
-
-        method: 'POST',
-
-        headers: {
-
-          'Content-Type': 'application/json',
-
-          'Authorization': `Bearer ${token}`,
-
-        },
-
-        body: JSON.stringify({ queue_item_id: queueItemId, alert }),
-
-      });
-
-
-
-      const result = await response.json();
-
-
-
-      if (!response.ok) {
-
-        throw new Error(result.error || 'Ошибка установки алерта');
-
-      }
-
-
-
-      // ? Уведомление отправляется в QueueList.tsx с полными данными, не дублируем
-
-    } catch (error) {
-
-      throw error;
-
-    }
-
-  };
-
-
-
- // Admin: Start washing for a queue item
-
-const startWashing = async (queueItemId: string) => {
-
-  if (!isAdmin) {
-
-    return;
-
-  }
-
-  
-
-  if (!isSupabaseConfigured || !supabase) {
-
-    // Use local storage fallback
-
-    start_local_washing(queueItemId);
-
-    fetchQueue();
-
-    fetchMachineState();
-
-    return;
-
-  }
-
-  
-
-  try {
-
-    // ? Получаем свежий JWT
-
-    const token = await getFreshToken();
-
-
-
-    // ? Вызываем API route с JWT
-
-    const response = await fetch('/api/admin/queue/start-washing', {
-
-      method: 'POST',
-
-      headers: {
-
-        'Content-Type': 'application/json',
-
-        'Authorization': `Bearer ${token}`,
-
-      },
-
-      body: JSON.stringify({ queue_item_id: queueItemId }),
-
-    });
-
-
-
-    const result = await response.json();
-
-
-
-    if (!response.ok) {
-      if (result?.removed) {
+      if (!options?.skipFetch) {
         await fetchQueue();
-        await fetchMachineState();
       }
-
-      throw new Error(result.error || 'Ошибка запуска стирки');
-
-    }
-
-
-
-    await fetchQueue();
-
-    await fetchMachineState();
-
-  } catch (error) {
-
-    await fetchQueue();
-
-    await fetchMachineState();
-
-    throw error;
-
-  }
-
-};
-
-  // Admin: Mark washing as done
-
-  const markDone = async (queueItemId: string) => {
-
-    if (!isAdmin) return;
-
-    
-
-    const queueItem = queue.find(item => item.id === queueItemId);
-
-    if (!queueItem) return;
-
-    
-
-    // ? УБРАНА проверка статуса - можно завершить любого
-
-    
-
-    if (!isSupabaseConfigured || !supabase) {
-
-      mark_local_done();
-
-      fetchQueue();
-
-      fetchMachineState();
-
-      fetchHistory();
-
-      return;
-
-    }
-
-    
-
-    try {
-
-      // ? Получаем JWT
-
-      const token = await getFreshToken();
-
-
-
-      // ? Вызываем API route с JWT
-
-      const response = await fetch('/api/admin/queue/mark-done', {
-
-        method: 'POST',
-
-        headers: {
-
-          'Content-Type': 'application/json',
-
-          'Authorization': `Bearer ${token}`,
-
-        },
-
-        body: JSON.stringify({ queue_item_id: queueItemId }),
-
-      });
-
-
-
-      const result = await response.json();
-
-
-
-      if (!response.ok) {
-
-        throw new Error(result.error || 'Ошибка завершения стирки');
-
-      }
-
-
-
-      // ? Отправляем уведомление студенту о завершении стирки админом
-
-      await sendTelegramNotification({
-
-        type: 'washing_done',
-
-        full_name: queueItem.full_name,
-
-        room: queueItem.room,
-
-        student_id: queueItem.student_id,
-
-        queue_item_id: queueItemId,
-
-      });
-
-
-
-      await fetchQueue();
-
-      await fetchMachineState();
-
-      await fetchHistory();
 
     } catch (error) {
 
@@ -3522,1100 +3601,11 @@ const startWashing = async (queueItemId: string) => {
 
 
 
-  // Admin: Cancel washing (return to queue)
 
-  const cancelWashing = async (queueItemId: string) => {
 
-    if (!isAdmin) return;
+  // Update queue item details (для timestamps и других полей без проверки статуса)
 
-    
-
-    const queueItem = queue.find(item => item.id === queueItemId);
-
-    if (!queueItem || queueItem.status !== QueueStatus.WASHING) return;
-
-    
-
-    if (!isSupabaseConfigured || !supabase) {
-
-      // Use local storage fallback
-
-      const queue = get_local_queue();
-
-      const item = queue.find(i => i.id === queueItemId);
-
-      if (item) {
-
-        item.status = QueueStatus.WAITING;
-
-        save_local_queue(queue);
-
-      }
-
-      save_local_machine_state({ status: MachineStatus.IDLE });
-
-      fetchQueue();
-
-      fetchMachineState();
-
-      return;
-
-    }
-
-    
-
-    try {
-
-      // ? Получаем JWT
-
-      const token = await getFreshToken();
-
-
-
-      // ? Вызываем API route с JWT
-
-      const response = await fetch('/api/admin/queue/cancel-washing', {
-
-        method: 'POST',
-
-        headers: {
-
-          'Content-Type': 'application/json',
-
-          'Authorization': `Bearer ${token}`,
-
-        },
-
-        body: JSON.stringify({ queue_item_id: queueItemId }),
-
-      });
-
-
-
-      const result = await response.json();
-
-
-
-      if (!response.ok) {
-
-        throw new Error(result.error || 'Ошибка отмены стирки');
-
-      }
-
-
-
-      await fetchQueue();
-
-      await fetchMachineState();
-
-    } catch (error) {
-
-      throw error;
-
-    }
-
-  };
-
-
-
-  // Admin: Start next in queue
-
-  const startNext = async () => {
-
-    if (!isAdmin) return;
-
-    
-
-    if (!isSupabaseConfigured || !supabase) {
-
-      // Use local storage fallback
-
-      start_local_next();
-
-      fetchQueue(); // Refresh queue from local storage
-
-      fetchMachineState(); // Refresh machine state from local storage
-
-      return;
-
-    }
-
-    
-
-    const nextItem = queue.find(item => item.status === QueueStatus.WAITING || item.status === QueueStatus.READY);
-
-    if (nextItem) {
-
-      await startWashing(nextItem.id);
-
-    } else if (!isSupabaseConfigured || !supabase) {
-
-      // Fallback to local storage on error
-
-      start_local_next();
-
-      fetchQueue(); // Refresh queue from local storage
-
-      fetchMachineState(); // Refresh machine state from local storage
-
-    }
-
-  };
-
-
-
-  // Admin: Clear queue
-
-  const clearQueue = async () => {
-
-    if (!isAdmin) return;
-
-    
-
-    if (!isSupabaseConfigured || !supabase) {
-
-      clear_local_queue();
-
-      fetchQueue();
-
-      fetchMachineState();
-
-      return;
-
-    }
-
-    
-
-    try {
-
-      // ? Получаем JWT
-
-      const token = await getFreshToken();
-
-
-
-      // ? Вызываем API route с JWT
-
-      const response = await fetch('/api/admin/queue/clear', {
-
-        method: 'POST',
-
-        headers: {
-
-          'Content-Type': 'application/json',
-
-          'Authorization': `Bearer ${token}`,
-
-        },
-
-        body: JSON.stringify({ mode: 'all' }),
-
-      });
-
-
-
-      const result = await response.json();
-
-
-
-      if (!response.ok) {
-
-        throw new Error(result.error || 'Ошибка очистки очереди');
-
-      }
-
-
-
-      await fetchQueue();
-
-      await fetchMachineState();
-
-    } catch (error) {
-
-      clear_local_queue();
-
-      fetchQueue();
-
-      fetchMachineState();
-
-    }
-
-  };
-
-
-
-  // Удалить конкретного человека из очереди
-
-  const removeFromQueue = async (queueItemId: string) => {
-
-    if (!isAdmin) return;
-
-
-
-    if (!isSupabaseConfigured || !supabase) {
-
-      // Local storage fallback
-
-      const localQueue = get_local_queue();
-
-      const updatedQueue = localQueue.filter(item => item.id !== queueItemId);
-
-      save_local_queue(updatedQueue);
-
-      fetchQueue();
-
-      return;
-
-    }
-
-
-
-    try {
-
-      // ? Получаем JWT
-
-      const token = await getFreshToken();
-
-
-
-      // ? Вызываем API route с JWT
-
-      const response = await fetch('/api/admin/queue/remove', {
-
-        method: 'POST',
-
-        headers: {
-
-          'Content-Type': 'application/json',
-
-          'Authorization': `Bearer ${token}`,
-
-        },
-
-        body: JSON.stringify({ queue_item_id: queueItemId }),
-
-      });
-
-
-
-      const result = await response.json();
-
-
-
-      if (!response.ok) {
-
-        throw new Error(result.error || 'Ошибка удаления из очереди');
-
-      }
-
-
-
-      await fetchQueue();
-
-    } catch (error) {
-
-      throw error;
-
-    }
-
-  };
-
-
-
-  // Очистить завершенных из очереди
-
-  const clearCompletedQueue = async () => {
-
-    if (!isAdmin) return;
-
-
-
-    if (!isSupabaseConfigured || !supabase) {
-
-      // Local storage fallback
-
-      const localQueue = get_local_queue();
-
-      const updatedQueue = localQueue.filter(item => item.status !== QueueStatus.DONE);
-
-      save_local_queue(updatedQueue);
-
-      fetchQueue();
-
-      return;
-
-    }
-
-
-
-    try {
-
-      // ? Получаем JWT
-
-      const token = await getFreshToken();
-
-
-
-      // ? Вызываем API route с JWT
-
-      const response = await fetch('/api/admin/queue/clear', {
-
-        method: 'POST',
-
-        headers: {
-
-          'Content-Type': 'application/json',
-
-          'Authorization': `Bearer ${token}`,
-
-        },
-
-        body: JSON.stringify({ mode: 'completed' }),
-
-      });
-
-
-
-      const result = await response.json();
-
-
-
-      if (!response.ok) {
-
-        throw new Error(result.error || 'Ошибка очистки завершенных');
-
-      }
-
-
-
-      await fetchQueue();
-
-    } catch (error) {
-
-      throw error;
-
-    }
-
-  };
-
-
-
-  // Очистить старую очередь (за предыдущие дни)
-
-  const clearOldQueues = async () => {
-
-    
-
-    
-
-    if (!isAdmin) {
-
-      return;
-
-    }
-
-
-
-    if (!isSupabaseConfigured || !supabase) {
-
-      // Local storage fallback
-
-      const today = new Date().toISOString().split('T')[0];
-
-      const localQueue = get_local_queue();
-
-      const updatedQueue = localQueue.filter(item => item.scheduled_for_date >= today);
-
-      save_local_queue(updatedQueue);
-
-      fetchQueue();
-
-      return;
-
-    }
-
-
-
-    try {
-
-      // ? Получаем JWT
-
-      const token = await getFreshToken();
-
-
-
-      // ? Вызываем API route с JWT
-
-      const response = await fetch('/api/admin/queue/clear', {
-
-        method: 'POST',
-
-        headers: {
-
-          'Content-Type': 'application/json',
-
-          'Authorization': `Bearer ${token}`,
-
-        },
-
-        body: JSON.stringify({ mode: 'old' }),
-
-      });
-
-
-
-      const result = await response.json();
-
-
-
-      if (!response.ok) {
-
-        throw new Error(result.error || 'Ошибка очистки старой очереди');
-
-      }
-
-
-
-      await fetchQueue();
-
-    } catch (error) {
-
-      throw error;
-
-    }
-
-  };
-
-
-
-  // Очистить зависшие записи (старше 2 дней, не DONE)
-
-  const clearStuckQueues = async () => {
-
-    if (!isSuperAdmin) return;
-
-
-
-    if (!isSupabaseConfigured || !supabase) {
-
-      // Local storage fallback
-
-      const twoDaysAgo = new Date();
-
-      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-
-      const cutoffDate = twoDaysAgo.toISOString().split('T')[0];
-
-      
-
-      const localQueue = get_local_queue();
-
-      const updatedQueue = localQueue.filter(item => 
-
-        item.status === QueueStatus.DONE || item.scheduled_for_date >= cutoffDate
-
-      );
-
-      save_local_queue(updatedQueue);
-
-      fetchQueue();
-
-      return;
-
-    }
-
-
-
-    try {
-
-      // ? Получаем JWT
-
-      const token = await getFreshToken();
-
-
-
-      // ? Вызываем API route с JWT
-
-      const response = await fetch('/api/admin/queue/clear', {
-
-        method: 'POST',
-
-        headers: {
-
-          'Content-Type': 'application/json',
-
-          'Authorization': `Bearer ${token}`,
-
-        },
-
-        body: JSON.stringify({ mode: 'stuck' }),
-
-      });
-
-
-
-      const result = await response.json();
-
-
-
-      if (!response.ok) {
-
-        throw new Error(result.error || 'Ошибка очистки зависших');
-
-      }
-
-
-
-      await fetchQueue();
-
-    } catch (error) {
-
-      throw error;
-
-    }
-
-  };
-
-
-
-  // Забанить студента
-
-  const banStudent = async (studentId: string, reason?: string) => {
-
-    if (!isAdmin) return;
-
-    if (!isSupabaseConfigured || !supabase) {
-
-      throw new Error('Supabase не настроен');
-
-    }
-
-  
-
-    try {
-
-      // ? Получаем JWT
-
-      const token = await getFreshToken();
-
-
-
-      // ? Вызываем API route с JWT
-
-      const response = await fetch('/api/admin/ban-student', {
-
-        method: 'POST',
-
-        headers: {
-
-          'Content-Type': 'application/json',
-
-          'Authorization': `Bearer ${token}`,
-
-        },
-
-        body: JSON.stringify({ student_id: studentId, reason, ban: true }),
-
-      });
-
-
-
-      const result = await response.json();
-
-
-
-      if (!response.ok) {
-
-        throw new Error(result.error || 'Ошибка бана');
-
-      }
-
-
-
-      // Если забанили текущего пользователя - принудительно разлогинить
-
-      if (user && user.student_id === studentId) {
-
-        await logoutStudent();
-
-        return;
-
-      }
-
-
-
-      await loadStudents();
-
-      await fetchQueue();
-
-    } catch (error) {
-
-      throw error;
-
-    }
-
-  };
-
-
-
-  // Разбанить студента
-
-  const unbanStudent = async (studentId: string) => {
-
-    if (!isAdmin) return;
-
-    
-
-    if (!isSupabaseConfigured || !supabase) {
-
-      return;
-
-    }
-
-
-
-    try {
-
-      // ? Получаем JWT
-
-      const token = await getFreshToken();
-
-
-
-      // ? Вызываем API route с JWT
-
-      const response = await fetch('/api/admin/ban-student', {
-
-        method: 'POST',
-
-        headers: {
-
-          'Content-Type': 'application/json',
-
-          'Authorization': `Bearer ${token}`,
-
-        },
-
-        body: JSON.stringify({ student_id: studentId, ban: false }),
-
-      });
-
-
-
-      const result = await response.json();
-
-
-
-      if (!response.ok) {
-
-        throw new Error(result.error || 'Ошибка разбана');
-
-      }
-
-
-
-      await loadStudents();
-
-    } catch (error) {
-
-      throw error;
-
-    }
-
-  };
-
-
-
-  // Добавить нового студента
-
-  const addStudent = async (
-
-    firstName: string,
-
-    lastName: string,
-
-    room?: string,
-
-    middleName?: string
-
-  ) => {
-
-    if (!isAdmin && !isSuperAdmin && !isCleanupAdmin) {
-
-      throw new Error("Недостаточно прав");
-
-    }
-
-
-    if (!isSupabaseConfigured || !supabase) {
-
-      throw new Error("Supabase не настроен");
-
-    }
-
-  
-
-    try {
-
-      // ? Получаем JWT
-
-      const token = await getFreshToken();
-
-
-
-      // ? Вызываем API route с JWT
-
-      const response = await fetch('/api/admin/add-student', {
-
-        method: 'POST',
-
-        headers: {
-
-          'Content-Type': 'application/json',
-
-          'Authorization': `Bearer ${token}`,
-
-        },
-
-        body: JSON.stringify({ 
-
-          first_name: firstName,
-
-          last_name: lastName || "",
-
-          middle_name: middleName || null,
-
-          room: room || null
-
-        }),
-
-      });
-
-
-
-      const result = await response.json();
-
-
-
-      if (!response.ok) {
-
-        throw new Error(result.error || 'Ошибка добавления студента');
-
-      }
-
-  
-
-      await loadStudents();
-
-    } catch (error: any) {
-
-      console.error("Error adding student:", error);
-
-      throw error;
-
-    }
-
-  };
-
-  
-
-
-
-  // Обновить данные студента
-
-  const updateStudent = async (
-
-    studentId: string,
-
-    updates: {
-
-      first_name?: string;
-
-      last_name?: string;
-
-      middle_name?: string;
-
-      room?: string;
-
-      can_view_students?: boolean;
-      is_cleanup_admin?: boolean;
-
-      avatar_style?: string;
-
-      stay_type?: "unknown" | "5days" | "weekends";
-
-      key_issued?: boolean;
-
-      key_lost?: boolean;
-
-    }
-
-  ) => {
-
-    if (!isAdmin && !isSuperAdmin && !isCleanupAdmin) return;
-
-
-  
-
-    if (!isSupabaseConfigured || !supabase) {
-
-      return;
-
-    }
-
-  
-
-    try {
-
-      // ? Получаем JWT
-
-      const token = await getFreshToken();
-
-
-
-      // ? Вызываем API route с JWT
-
-      const response = await fetch('/api/admin/update-student', {
-
-        method: 'POST',
-
-        headers: {
-
-          'Content-Type': 'application/json',
-
-          'Authorization': `Bearer ${token}`,
-
-        },
-
-        body: JSON.stringify({ student_id: studentId, updates }),
-
-      });
-
-
-
-      const result = await response.json();
-
-
-
-      if (!response.ok) {
-
-        throw new Error(result.error || 'Ошибка обновления');
-
-      }
-
-
-
-      await loadStudents();
-
-
-
-      // ?? Если обновлённый студент — это текущий пользователь, обновляем его сессию
-
-      if (user && user.student_id === studentId && result.student) {
-
-        const updatedStudent = result.student;
-
-        const updatedUser: User = {
-
-          ...user,
-
-          full_name: updatedStudent.full_name,
-
-          room: updatedStudent.room,
-
-          can_view_students: updatedStudent.can_view_students ?? false,
-          is_cleanup_admin: updatedStudent.is_cleanup_admin ?? user.is_cleanup_admin ?? false,
-
-          stay_type: updatedStudent.stay_type ?? user.stay_type,
-
-        };
-
-
-
-        setUser(updatedUser);
-        setIsCleanupAdmin(!!updatedStudent.is_cleanup_admin);
-
-        if (typeof window !== "undefined") {
-
-          localStorage.setItem("laundryUser", JSON.stringify(updatedUser));
-
-        }
-
-      }
-
-    } catch (error: any) {
-
-      throw error;
-
-    }
-
-  };
-
-  
-
-
-
-const deleteStudent = async (studentId: string) => {
-
-  if (!isAdmin && !isSuperAdmin) throw new Error("Недостаточно прав");
-
-
-
-  try {
-
-    const response = await fetch("/api/admin/delete-student", {
-
-      method: "POST",
-
-      headers: { "Content-Type": "application/json" },
-
-      body: JSON.stringify({
-
-        studentId,
-
-        adminStudentId: user?.student_id
-
-      })
-
-    });
-
-
-
-    const result = await response.json();
-
-
-
-    if (!response.ok) {
-
-      return;
-
-    }
-
-
-
-    await loadStudents();
-
-    await fetchQueue();
-
-  } catch (err) {
-
-    console.error(err);
-
-    return;
-
-  }
-
-};
-
-
-
-
-
-
-
-
-
-  // Get current user's queue item if it exists
-
-  const getUserQueueItem = (): QueueItem | undefined => {
-
-    if (!user) return undefined;
-
-    return queue.find(item => item.student_id === user.student_id && 
-
-                     (item.status === QueueStatus.WAITING || item.status === QueueStatus.READY || item.status === QueueStatus.KEY_ISSUED || item.status === QueueStatus.WASHING || item.status === QueueStatus.RETURNING_KEY));
-
-  };
-
-
-
-  // Leave the queue
-
-  const leaveQueue = async (queueItemId: string) => {
-
-    if (!user) return;
-
-    
-
-    if (!isSupabaseConfigured || !supabase) {
-
-      remove_from_local_queue(queueItemId, user.id);
-
-      fetchQueue();
-
-      return;
-
-    }
-
-    
-
-    try {
-
-      // ? RLS сам проверит через is_queue_owner()
-
-      await supabase.rpc('release_coupons_for_queue', { p_queue_id: queueItemId });
-
-      const { error } = await supabase
-
-        .from('queue')
-
-        .delete()
-
-        .eq('id', queueItemId);
-
-
-
-      if (error) {
-
-        console.error('leaveQueue error:', error);
-
-        // Показываем ошибку пользователю
-
-        throw new Error(error.message || 'Не удалось выйти из очереди');
-
-      }
-
-
-
-      await fetchQueue();
-
-    } catch (error: any) {
-
-      console.error('leaveQueue error:', error);
-
-      // Можно выбросить ошибку наверх для UI или показать alert
-
-      throw error;
-
-    }
-
-  };
-
-
-
-  // ? Оптимистичное обновление для мгновенного UI обновления
-
-  const optimisticUpdateQueueItem = (queueItemId: string, updates: Partial<QueueItem>) => {
-
-    setQueue(prev => {
-
-      const newQueue = prev.map(item => 
-
-        item.id === queueItemId ? { ...item, ...updates } : item
-
-      );
-
-      return newQueue;
-
-    });
-
-  };
-
-
-
-// Update queue item details (для timestamps и других полей без проверки статуса)
-
-const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>) => {
+const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>, options?: { skipFetch?: boolean }) => {
 
   console.log('updateQueueItem called:', { queueItemId, updates });
 
@@ -4633,7 +3623,9 @@ const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>)
 
     }
 
-    fetchQueue();
+    if (!options?.skipFetch) {
+      fetchQueue();
+    }
 
     return;
 
@@ -4689,7 +3681,9 @@ const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>)
 
     console.log('updateQueueItem: Success, fetching queue...');
 
-    await fetchQueue();
+    if (!options?.skipFetch) {
+      await fetchQueue();
+    }
 
   } catch (error) {
 

@@ -64,7 +64,7 @@ export default function MachineStatus() {
         </h2>
         
         {/* ✅ Карточка с именем и комнатой */}
-        <div className="relative bg-gradient-to-br from-red-800/90 to-red-900/90 backdrop-blur-sm rounded-2xl p-8 mb-6 shadow-2xl border border-red-400/30">
+        <div className="relative bg-gradient-to-br from-red-800 to-red-900 rounded-2xl p-8 mb-6 shadow-2xl border border-red-400/30">
           <div className="flex flex-col items-center justify-center space-y-4">
             <div className="flex items-center space-x-4">
               <div className="text-5xl animate-pulse">🧑‍🦼</div>
@@ -141,7 +141,7 @@ export default function MachineStatus() {
       <h2 className="relative text-5xl font-black text-white text-center mb-4 drop-shadow-2xl tracking-wide">
         🎉 МАШИНА СВОБОДНА
       </h2>
-      <div className="relative bg-green-700/50 backdrop-blur-sm rounded-xl p-6 border border-green-300/30">
+      <div className="relative bg-green-700 rounded-xl p-6 border border-green-300/30">
         <p className="text-green-50 text-2xl text-center font-bold drop-shadow-lg">
           🧴 Стиральная машина сейчас доступна!
         </p>
