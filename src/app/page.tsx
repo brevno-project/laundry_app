@@ -272,7 +272,7 @@ export default function Home() {
               {machineState.status === 'idle' ? (
                 <div className="relative overflow-hidden rounded-xl shadow-lg min-h-[120px]">
                   {/* Базовый фон */}
-                  <div className="absolute inset-0 bg-emerald-700"></div>
+                  <div className="absolute inset-0 bg-emerald-600 dark:bg-emerald-700"></div>
                   <div className="absolute inset-0 dark:bg-black/10"></div>
                   
                   {/* Тонкая сетка (паттерн) */}
@@ -311,7 +311,7 @@ export default function Home() {
               ) : (
                 <div className="relative overflow-hidden rounded-xl shadow-lg min-h-[120px]">
                   {/* Базовый фон */}
-                  <div className="absolute inset-0 bg-rose-700"></div>
+                  <div className="absolute inset-0 bg-rose-600 dark:bg-rose-700"></div>
                   <div className="absolute inset-0 dark:bg-black/10"></div>
                   
                   {/* Тонкая сетка (паттерн) */}
