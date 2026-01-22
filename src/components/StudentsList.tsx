@@ -701,7 +701,7 @@ export default function StudentsList() {
                   type="text"
                   value={editLastName}
                   onChange={(e) => setEditLastName(e.target.value)}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 focus:outline-none focus:border-slate-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-slate-400"
                 />
               </div>
 
@@ -711,7 +711,7 @@ export default function StudentsList() {
                   type="text"
                   value={editFirstName}
                   onChange={(e) => setEditFirstName(e.target.value)}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 focus:outline-none focus:border-slate-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-slate-400"
                   required
                 />
               </div>
@@ -723,7 +723,7 @@ export default function StudentsList() {
                   value={editMiddleName}
                   onChange={(e) => setEditMiddleName(e.target.value)}
                   placeholder={t("students.field.middleNamePlaceholder")}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 focus:outline-none focus:border-slate-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-slate-400"
                 />
               </div>
 
@@ -734,7 +734,7 @@ export default function StudentsList() {
                   value={editRoom}
                   onChange={(e) => setEditRoom(e.target.value)}
                   placeholder={t("students.field.roomPlaceholder")}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 focus:outline-none focus:border-slate-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-slate-400"
                 />
               </div>
 
@@ -747,7 +747,7 @@ export default function StudentsList() {
                     <select
                       value={editStayType}
                       onChange={(e) => setEditStayType(e.target.value as any)}
-                      className="rounded-lg border-2 border-gray-300 bg-white px-2 py-1 text-sm font-semibold text-gray-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
+                      className="rounded-lg border-2 border-gray-300 bg-white px-2 py-1 text-sm font-semibold text-gray-900 focus:outline-none focus:border-slate-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-slate-400"
                     >
                       <option value="unknown">{t("students.stay.unknown")}</option>
                       <option value="5days">{t("students.stay.5days")}</option>

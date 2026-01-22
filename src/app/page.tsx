@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
-import TimeBanner from '@/components/TimeBanner';
 import StudentAuth from '@/components/StudentAuth';
 import UserForm from '@/components/UserForm';
 import QueueList from '@/components/QueueList';
@@ -264,8 +263,6 @@ export default function Home() {
       <div className="w-full">
         {activeTab === 'main' && (
           <div className="w-full space-y-4">
-            <TimeBanner />
-            
             {/* Статус машины */}
             <div className="mb-6 max-w-3xl mx-auto px-3">
               <h3 className="text-lg font-semibold mb-3 text-gray-700 dark:text-slate-200">{t("machine.status")}</h3>

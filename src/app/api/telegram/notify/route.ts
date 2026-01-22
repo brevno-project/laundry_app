@@ -128,6 +128,10 @@ async function formatMessage(notification: TelegramNotification, ui_language: Ui
   const { type, full_name, room, wash_count, payment_type, queue_length, expected_finish_at, admin_student_id } = notification;
   
   const roomInfo = room ? ` (${room})` : '';
+  const queueCount =
+    typeof queue_length === 'number' && Number.isFinite(queue_length) ? queue_length : null;
+  const queueLine = (line: string) =>
+    queueCount === null ? '' : `\n\n${line.replace('{count}', String(queueCount))}`;
   
   let timeInfo = '';
   if (expected_finish_at) {
@@ -160,63 +164,47 @@ async function formatMessage(notification: TelegramNotification, ui_language: Ui
 
 👤 ${full_name}${roomInfo}
 🔢 Washes: ${wash_count || 1}
-💰 Payment: ${paymentLabel}${timeInfo}
-
-📊 Total in queue: ${queue_length} ppl.`;
+💰 Payment: ${paymentLabel}${timeInfo}${queueLine('📊 Total in queue: {count} ppl.')}`;
       }
       if (ui_language === "ko") {
         return `🧺 *대기열에 새로 추가!*
 
 👤 ${full_name}${roomInfo}
 🔢 세탁 횟수: ${wash_count || 1}
-💰 결제: ${paymentLabel}${timeInfo}
-
-📊 대기열 총원: ${queue_length}명`;
+💰 결제: ${paymentLabel}${timeInfo}${queueLine('📊 대기열 총원: {count}명')}`;
       }
       if (ui_language === "ky") {
         return `🧺 *Кезекке жаңы кошулду!*
 
 👤 ${full_name}${roomInfo}
 🔢 Жуу саны: ${wash_count || 1}
-💰 Төлөм: ${paymentLabel}${timeInfo}
-
-📊 Кезекте жалпы: ${queue_length} адам`;
+💰 Төлөм: ${paymentLabel}${timeInfo}${queueLine('📊 Кезекте жалпы: {count} адам')}`;
       }
       return `🧺 *Новый в очереди!*
 
 👤 ${full_name}${roomInfo}
 🔢 Стирок: ${wash_count || 1}
-💰 Оплата: ${paymentLabel}${timeInfo}
-
-📊 Всего в очереди: ${queue_length} чел.`;
+💰 Оплата: ${paymentLabel}${timeInfo}${queueLine('📊 Всего в очереди: {count} чел.')}`;
     
     case 'left':
       if (ui_language === "en") {
         return `❌ *Left the queue*
 
-👤 ${full_name}${roomInfo}
-
-📊 Remaining: ${queue_length} ppl.`;
+👤 ${full_name}${roomInfo}${queueLine('📊 Remaining: {count} ppl.')}`;
       }
       if (ui_language === "ko") {
         return `❌ *대기열에서 나감*
 
-👤 ${full_name}${roomInfo}
-
-📊 남은 인원: ${queue_length}명`;
+👤 ${full_name}${roomInfo}${queueLine('📊 남은 인원: {count}명')}`;
       }
       if (ui_language === "ky") {
         return `❌ *Кезектен чыкты*
 
-👤 ${full_name}${roomInfo}
-
-📊 Калганы: ${queue_length} адам`;
+👤 ${full_name}${roomInfo}${queueLine('📊 Калганы: {count} адам')}`;
       }
       return `❌ *Покинул очередь*
 
-👤 ${full_name}${roomInfo}
-
-📊 Осталось: ${queue_length} чел.`;
+👤 ${full_name}${roomInfo}${queueLine('📊 Осталось: {count} чел.')}`;
     
     case 'washing_started':
       if (ui_language === "en") {
