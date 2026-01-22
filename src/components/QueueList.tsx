@@ -651,13 +651,13 @@ export default function QueueList() {
                                   type: 'admin_call_for_key',
                                   full_name: item.full_name,
                                   student_id: item.student_id,
-                                  expected_finish_at: item.expected_finish_at,
                                   admin_student_id: user?.student_id,
+                                  expected_finish_at: item.expected_finish_at,
                                 }).catch((err) => console.error('sendTelegramNotification(admin_call_for_key) error:', err));
-                                await fetchQueue();
                               } catch (error) {
                                 showActionError(error, t("queue.error.callFail"));
                                 console.error('❌ Error in Позвать:', error);
+                                await fetchQueue();
                               }
                             }}
                             disabled={isSelfQueueItem}
@@ -684,10 +684,10 @@ export default function QueueList() {
                                   room: item.room,
                                   student_id: item.student_id,
                                 }).catch((err) => console.error('sendTelegramNotification(admin_key_issued) error:', err));
-                                await fetchQueue();
                               } catch (error) {
                                 showActionError(error, t("queue.error.issueFail"));
                                 console.error('❌ Error in Выдать ключ:', error);
+                                await fetchQueue();
                               }
                             }}
                           >
@@ -753,10 +753,10 @@ export default function QueueList() {
                                   student_id: item.student_id,
                                   admin_student_id: user?.student_id,
                                 }).catch((err) => console.error('sendTelegramNotification(admin_return_key) error:', err));
-                                await fetchQueue();
                               } catch (error) {
                                 showActionError(error, t("queue.error.returnFail"));
                                 console.error('? Error in Вернуть ключ:', error);
+                                await fetchQueue();
                               }
                             }}
                             disabled={isSelfQueueItem}
@@ -807,7 +807,6 @@ export default function QueueList() {
                                 { skipFetch: true }
                               );
                               await setQueueStatus(item.id, QueueStatus.WAITING, { skipFetch: true });
-                              await fetchQueue();
                             }}
                           >
                             <WaitIcon className="w-4 h-4" /> {t("queue.action.reset")}

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useLaundry } from "@/contexts/LaundryContext";
 import { useUi } from "@/contexts/UiContext";
 import { Student } from "@/types";
-import { CloseIcon, EditIcon, PeopleIcon, EyeIcon } from "@/components/Icons";
+import { EditIcon, PeopleIcon, EyeIcon } from "@/components/Icons";
 import ActionMenu from "@/components/ActionMenu";
 import Avatar from "@/components/Avatar";
 import AddStudentModal from "@/components/AddStudentModal";
@@ -797,17 +797,15 @@ function Modal({
 }) {
   const { t } = useUi();
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-lg bg-white/80 backdrop-blur-sm dark:bg-slate-800 p-6 shadow-xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-lg bg-white dark:bg-slate-800 p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         {children}
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-gray-800 dark:text-slate-300 dark:hover:text-slate-100"
-        >
-          <CloseIcon className="h-4 w-4" />
-          {t("admin.close")}
-        </button>
       </div>
     </div>
   );
