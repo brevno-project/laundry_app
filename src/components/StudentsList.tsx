@@ -288,7 +288,7 @@ export default function StudentsList() {
               </span>
             )}
           </td>
-          <td className="p-3">
+          <td className="p-3 text-center">
             {canManageStudent(student) && (
               <div className="flex items-center justify-center gap-2">
                 <button

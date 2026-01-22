@@ -77,6 +77,7 @@ export default function HistoryList() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<HistoryItem | null>(null);
+  const [deleteAction, setDeleteAction] = useState<"single" | "all" | null>(null);
 
   const alertWithCheck = (message: string) => {
     const trimmed = message.trim();
@@ -164,19 +165,23 @@ export default function HistoryList() {
 
   const handleDeleteSingle = async () => {
     if (!pendingDelete) return;
+    setDeleteAction("single");
     try {
       await clearHistoryItem(pendingDelete.id);
     } finally {
       setPendingDelete(null);
+      setDeleteAction(null);
     }
   };
 
   const handleDeleteAll = async () => {
     if (!pendingDelete) return;
+    setDeleteAction("all");
     try {
       await clearHistoryForOwner({ studentId: pendingDelete.student_id, userId: pendingDelete.user_id });
     } finally {
       setPendingDelete(null);
+      setDeleteAction(null);
     }
   };
 
@@ -431,7 +436,7 @@ export default function HistoryList() {
                     className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     <span className="inline-flex items-center justify-center gap-2">
-                      {clearing && <WashingSpinner className="w-4 h-4" />}
+                      {clearing && deleteAction === "single" && <WashingSpinner className="w-4 h-4" />}
                       {t("history.deleteOnly")}
                     </span>
                   </button>
@@ -442,7 +447,7 @@ export default function HistoryList() {
                     className="w-full rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     <span className="inline-flex items-center justify-center gap-2">
-                      {clearing && <WashingSpinner className="w-4 h-4" />}
+                      {clearing && deleteAction === "all" && <WashingSpinner className="w-4 h-4" />}
                       {t("history.deleteAllUser")}
                     </span>
                   </button>
