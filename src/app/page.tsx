@@ -274,6 +274,8 @@ export default function Home() {
                   {/* Базовый фон */}
                   <div className="absolute inset-0 bg-emerald-600 dark:bg-emerald-700"></div>
                   <div className="absolute inset-0 dark:bg-black/10"></div>
+                  <div className="absolute inset-0 bg-gradient-to-b from-white/25 via-white/5 to-black/10 dark:from-white/10 dark:via-transparent dark:to-black/20"></div>
+                  <div className="absolute -inset-6 rounded-2xl opacity-35 blur-2xl bg-emerald-300/40 dark:bg-emerald-400/10 animate-pulse-slow"></div>
                   
                   {/* Тонкая сетка (паттерн) */}
                   <div 
@@ -313,6 +315,8 @@ export default function Home() {
                   {/* Базовый фон */}
                   <div className="absolute inset-0 bg-rose-600 dark:bg-rose-700"></div>
                   <div className="absolute inset-0 dark:bg-black/10"></div>
+                  <div className="absolute inset-0 bg-gradient-to-b from-white/25 via-white/5 to-black/10 dark:from-white/10 dark:via-transparent dark:to-black/20"></div>
+                  <div className="absolute -inset-6 rounded-2xl opacity-35 blur-2xl bg-rose-300/35 dark:bg-rose-400/10 animate-pulse-slow"></div>
                   
                   {/* Тонкая сетка (паттерн) */}
                   <div 
