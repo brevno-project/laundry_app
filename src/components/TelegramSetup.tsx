@@ -18,7 +18,7 @@ export default function TelegramSetup() {
     return (
       <div
         id="telegram-setup"
-        className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/40"
+        className="rounded-2xl border border-blue-200 bg-emerald-50/70 p-4 shadow-sm dark:border-blue-500/40 dark:bg-slate-900/40"
       >
         <div className="flex items-center gap-2 mb-2">
           <CheckIcon className="w-6 h-6 text-emerald-600 dark:text-emerald-300" />
@@ -43,10 +43,10 @@ export default function TelegramSetup() {
 
   // --- Не подключено ---
   return (
-    <div
-      id="telegram-setup"
-      className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
-    >
+      <div
+        id="telegram-setup"
+        className="rounded-2xl border border-blue-200 bg-slate-50 p-4 shadow-sm dark:border-blue-500/40 dark:bg-slate-900"
+      >
       <div className="flex items-center gap-2 mb-3">
         <TelegramIcon className="w-8 h-8 text-blue-600 dark:text-blue-300" />
         <h3 className="font-bold text-xl text-slate-900 dark:text-slate-100">{t("telegram.connectTitle")}</h3>

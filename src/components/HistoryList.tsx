@@ -442,7 +442,7 @@ export default function HistoryList() {
                   </button>
                 </>
               )}
-              {!pendingDelete.student_id && (
+              {!pendingDelete.student_id && !pendingDelete.user_id && (
                 <button
                   type="button"
                   onClick={handleDeleteSingle}
