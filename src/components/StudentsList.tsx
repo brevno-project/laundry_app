@@ -49,7 +49,7 @@ export default function StudentsList() {
   const canDeleteStudents = isAdmin || isSuperAdmin;
   const showTelegramColumn = !isCleanupAdmin || isAdmin || isSuperAdmin;
 
-  const badgeBase = "rounded-full border border-slate-200/60 dark:border-slate-700";
+  const badgeBase = "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold";
 
   const canManageStudent = (student: Student) =>
     canManageStudents && (!student.is_super_admin || student.id === user?.student_id);
@@ -169,7 +169,7 @@ export default function StudentsList() {
     return !!chat && !student.is_banned;
   };
 
-  const renderStudentCard = (student: Student, index: number) => {
+  const renderStudentRow = (student: Student, index: number) => {
     const displayName =
       [student.first_name, student.last_name, student.middle_name].filter(Boolean).join(" ") ||
       student.full_name ||
@@ -184,94 +184,111 @@ export default function StudentsList() {
           : t("students.stay.unknown");
 
     return (
-      <div
+      <tr
         key={student.id}
-        className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-700 dark:bg-slate-900/40"
+        className="border-b border-slate-200/70 text-xs last:border-b-0 dark:border-slate-700/60"
       >
-        <div className="w-7 text-[11px] font-semibold text-slate-500 dark:text-slate-400">{index + 1}</div>
-        <Avatar
-          name={student.full_name}
-          style={student.avatar_style}
-          seed={student.avatar_seed}
-          className="w-10 h-10"
-        />
-
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{displayName}</div>
-          <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-            {student.room ? (
-              <span className="rounded-md border border-slate-200/70 bg-slate-50 px-2 py-0.5 text-slate-700 dark:border-slate-700 dark:bg-slate-950/40 dark:text-slate-200">
-                {student.room}
-              </span>
-            ) : null}
-
-            <span className={`${badgeBase} px-2 py-0.5 ${
-              student.is_registered
-                ? "bg-emerald-100 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/25 dark:text-emerald-200"
-                : "bg-amber-100 text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/25 dark:text-amber-200"
-            }`}
-            >
-              {student.is_registered ? t("students.badge.registered") : t("students.badge.unregistered")}
-            </span>
-
-            <span className={`${badgeBase} px-2 py-0.5 ${
-              stayType === "weekends"
-                ? "bg-blue-100 text-blue-800 dark:border-blue-500/50 dark:bg-blue-900/35 dark:text-blue-200"
-                : stayType === "5days"
-                  ? "bg-indigo-100 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200"
-                  : "bg-gray-100 text-gray-600 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-100"
-            }`}
-            >
-              {stayLabel}
-            </span>
-
-            <span className={`${badgeBase} flex items-center gap-1 px-2 py-0.5 ${
-              student.key_issued
-                ? "bg-blue-100 text-blue-700 dark:border-blue-400/50 dark:bg-blue-500/15 dark:text-blue-100"
-                : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
-            }`}
-            >
-              <KeyIcon className="h-3.5 w-3.5" />
-              {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
-            </span>
-
-            {student.key_lost && (
-              <span className={`${badgeBase} bg-red-100 px-2 py-0.5 text-red-700 dark:border-rose-800/40 dark:bg-rose-900/30 dark:text-rose-200`}>
-                {t("students.keyLost")}
-              </span>
-            )}
-
-            {isSuperAdmin && student.is_cleanup_admin && (
-              <span className={`${badgeBase} border border-indigo-200 bg-indigo-100 px-2 py-0.5 text-indigo-800 dark:border-indigo-500/40 dark:bg-indigo-900/35 dark:text-indigo-200`}>
-                {t("header.leader")}
-              </span>
-            )}
-
-            {isSuperAdmin && (
-              <span className={`${badgeBase} flex items-center gap-1 px-2 py-0.5 ${
-                student.can_view_students
-                  ? "bg-indigo-100 text-indigo-700 dark:border-violet-800/40 dark:bg-violet-900/25 dark:text-violet-200"
-                  : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
-              }`}
-              >
-                <EyeIcon className="h-3.5 w-3.5" />
-                {student.can_view_students ? t("students.listOpen") : t("students.listClosed")}
-              </span>
-            )}
+        <td className="px-2 py-2 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+          {index + 1}
+        </td>
+        <td className="px-2 py-2">
+          <div className="flex items-center gap-2">
+            <Avatar
+              name={student.full_name}
+              style={student.avatar_style}
+              seed={student.avatar_seed}
+              className="h-8 w-8"
+            />
+            <div className="min-w-0">
+              <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {displayName}
+              </div>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {student.is_super_admin && (
+                  <span className={`${badgeBase} border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-500/40 dark:bg-amber-900/30 dark:text-amber-200`}>
+                    {t("admin.status.superAdmin")}
+                  </span>
+                )}
+                {!student.is_super_admin && student.is_admin && (
+                  <span className={`${badgeBase} border-violet-200 bg-violet-100 text-violet-800 dark:border-violet-500/40 dark:bg-violet-900/30 dark:text-violet-200`}>
+                    {t("admin.status.admin")}
+                  </span>
+                )}
+                {student.is_cleanup_admin && (
+                  <span className={`${badgeBase} border-indigo-200 bg-indigo-100 text-indigo-800 dark:border-indigo-500/40 dark:bg-indigo-900/35 dark:text-indigo-200`}>
+                    {t("header.leader")}
+                  </span>
+                )}
+                {student.is_banned && (
+                  <span className={`${badgeBase} border-rose-200 bg-rose-100 text-rose-700 dark:border-rose-500/40 dark:bg-rose-900/30 dark:text-rose-200`}>
+                    {t("admin.status.banned")}
+                  </span>
+                )}
+                {isSuperAdmin && (
+                  <span className={`${badgeBase} flex items-center gap-1 ${
+                    student.can_view_students
+                      ? "border-indigo-200 bg-indigo-100 text-indigo-700 dark:border-violet-800/40 dark:bg-violet-900/25 dark:text-violet-200"
+                      : "border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
+                  }`}>
+                    <EyeIcon className="h-3 w-3" />
+                    {student.can_view_students ? t("students.listOpen") : t("students.listClosed")}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {showTelegramColumn && (
+        </td>
+        <td className="px-2 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200">
+          {student.room || "-"}
+        </td>
+        <td className="px-2 py-2">
+          <span
+            className={`${badgeBase} ${
+              stayType === "weekends"
+                ? "border-blue-200 bg-blue-100 text-blue-800 dark:border-blue-500/50 dark:bg-blue-900/35 dark:text-blue-200"
+                : stayType === "5days"
+                  ? "border-indigo-200 bg-indigo-100 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200"
+                  : "border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-100"
+            }`}
+          >
+            {stayLabel}
+          </span>
+        </td>
+        <td className="px-2 py-2">
+          <span
+            className={`${badgeBase} flex items-center gap-1 ${
+              student.key_issued
+                ? "border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-400/50 dark:bg-blue-500/15 dark:text-blue-100"
+                : "border-slate-200 bg-slate-100 text-slate-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
+            }`}
+          >
+            <KeyIcon className="h-3.5 w-3.5" />
+            {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
+          </span>
+        </td>
+        <td className="px-2 py-2">
+          {student.key_lost ? (
+            <span className={`${badgeBase} border-rose-200 bg-rose-100 text-rose-700 dark:border-rose-500/40 dark:bg-rose-900/30 dark:text-rose-200`}>
+              {t("students.keyLost")}
+            </span>
+          ) : (
+            <span className="text-slate-300 dark:text-slate-600">—</span>
+          )}
+        </td>
+        <td className="px-2 py-2">
+          {showTelegramColumn ? (
             <div title={hasTelegram(student) ? t("students.connected") : t("students.notConnected")}>
               {hasTelegram(student) ? (
-                <TelegramIcon className="h-5 w-5 text-blue-500" />
+                <TelegramIcon className="h-5 w-5 text-blue-600 dark:text-blue-300" />
               ) : (
                 <CloseIcon className="h-5 w-5 text-slate-300 dark:text-slate-600" />
               )}
             </div>
+          ) : (
+            <span className="text-slate-300 dark:text-slate-600">—</span>
           )}
-
+        </td>
+        <td className="px-2 py-2">
           <div title={student.is_registered ? t("students.badge.registered") : t("students.badge.unregistered")}>
             {student.is_registered ? (
               <CheckIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-300" />
@@ -279,7 +296,8 @@ export default function StudentsList() {
               <CloseIcon className="h-5 w-5 text-rose-500 dark:text-rose-300" />
             )}
           </div>
-
+        </td>
+        <td className="px-2 py-2">
           {canManageStudent(student) && (
             <div className="flex items-center gap-1">
               <button
@@ -300,8 +318,8 @@ export default function StudentsList() {
               )}
             </div>
           )}
-        </div>
-      </div>
+        </td>
+      </tr>
     );
   };
 
@@ -403,8 +421,33 @@ export default function StudentsList() {
             <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 px-1">
               <RoomIcon className="w-5 h-5" />{t("students.blockA")} ({blockA.length})
             </h3>
-            <div className="mt-2 space-y-2">
-              {blockA.map((student, index) => renderStudentCard(student, index))}
+            <div className="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+              <table className="min-w-[860px] w-full text-xs sm:text-sm">
+                <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-900/40 dark:text-slate-400">
+                  <tr>
+                    <th className="px-2 py-2 text-left">#</th>
+                    <th className="px-2 py-2 text-left">{t("students.title")}</th>
+                    <th className="px-2 py-2 text-left">{t("students.field.room")}</th>
+                    <th className="px-2 py-2 text-left">{t("students.stay.label")}</th>
+                    <th className="px-2 py-2 text-left">{t("students.keyIssued")}</th>
+                    <th className="px-2 py-2 text-left">{t("students.keyLost")}</th>
+                    <th className="px-2 py-2 text-left">{t("students.telegram")}</th>
+                    <th className="px-2 py-2 text-left">{t("students.badge.registered")}</th>
+                    <th className="px-2 py-2 text-left"></th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-slate-900/30">
+                  {blockA.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="px-3 py-4 text-center text-sm text-slate-500 dark:text-slate-400">
+                        {t("students.empty")}
+                      </td>
+                    </tr>
+                  ) : (
+                    blockA.map((student, index) => renderStudentRow(student, index))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
 
@@ -412,8 +455,33 @@ export default function StudentsList() {
             <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 px-1">
               <RoomIcon className="w-5 h-5" />{t("students.blockB")} ({blockB.length})
             </h3>
-            <div className="mt-2 space-y-2">
-              {blockB.map((student, index) => renderStudentCard(student, index))}
+            <div className="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+              <table className="min-w-[860px] w-full text-xs sm:text-sm">
+                <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-900/40 dark:text-slate-400">
+                  <tr>
+                    <th className="px-2 py-2 text-left">#</th>
+                    <th className="px-2 py-2 text-left">{t("students.title")}</th>
+                    <th className="px-2 py-2 text-left">{t("students.field.room")}</th>
+                    <th className="px-2 py-2 text-left">{t("students.stay.label")}</th>
+                    <th className="px-2 py-2 text-left">{t("students.keyIssued")}</th>
+                    <th className="px-2 py-2 text-left">{t("students.keyLost")}</th>
+                    <th className="px-2 py-2 text-left">{t("students.telegram")}</th>
+                    <th className="px-2 py-2 text-left">{t("students.badge.registered")}</th>
+                    <th className="px-2 py-2 text-left"></th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-slate-900/30">
+                  {blockB.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="px-3 py-4 text-center text-sm text-slate-500 dark:text-slate-400">
+                        {t("students.empty")}
+                      </td>
+                    </tr>
+                  ) : (
+                    blockB.map((student, index) => renderStudentRow(student, index))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

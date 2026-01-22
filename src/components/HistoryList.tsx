@@ -7,6 +7,7 @@ import Avatar from '@/components/Avatar';
 import Timer from './Timer';
 import { HistoryIcon, ClockIcon, CheckIcon, MoneyIcon, TicketIcon, WashingIcon, DeleteIcon, WashingSpinner } from './Icons';
 import { supabase } from '@/lib/supabase';
+import { HistoryItem } from '@/types';
 
 const formatTime = (dateStr?: string | null, locale: string = 'ru-RU') => {
   if (!dateStr) return '-';
@@ -75,6 +76,7 @@ export default function HistoryList() {
   const locale = language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : language === 'ko' ? 'ko-KR' : 'ky-KG';
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<HistoryItem | null>(null);
 
   const alertWithCheck = (message: string) => {
     const trimmed = message.trim();
@@ -156,6 +158,24 @@ export default function HistoryList() {
       alertWithCheck(t("history.deleteErrorAlert", { message }));
     } finally {
       setClearing(false);
+    }
+  };
+
+  const handleDeleteSingle = async () => {
+    if (!pendingDelete) return;
+    try {
+      await clearHistoryItem(pendingDelete.id);
+    } finally {
+      setPendingDelete(null);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!pendingDelete?.student_id) return;
+    try {
+      await clearHistoryForStudent(pendingDelete.student_id);
+    } finally {
+      setPendingDelete(null);
     }
   };
 
@@ -258,18 +278,7 @@ export default function HistoryList() {
                   <button
                     onClick={() => {
                       if (clearing) return;
-                      if (!item.student_id) {
-                        const confirmed = confirm(t("history.deleteConfirm"));
-                        if (!confirmed) return;
-                        void clearHistoryItem(item.id);
-                        return;
-                      }
-                      const askAll = confirm(t("history.deleteAllUserQuestion"));
-                      if (askAll) {
-                        void clearHistoryForStudent(item.student_id);
-                      } else {
-                        void clearHistoryItem(item.id);
-                      }
+                      setPendingDelete(item);
                     }}
                     disabled={clearing}
                     className="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 disabled:opacity-60 disabled:cursor-not-allowed dark:border-rose-500/30 dark:bg-rose-500/15 dark:text-rose-200 dark:hover:bg-rose-500/25"
@@ -397,6 +406,62 @@ export default function HistoryList() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
           </svg>
         </button>
+      )}
+
+      {pendingDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl dark:bg-slate-800">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              {pendingDelete.student_id ? t("history.deleteChoiceTitle") : t("history.deleteConfirm")}
+            </h3>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+              {pendingDelete.student_id
+                ? t("history.deleteChoiceBody", { name: pendingDelete.full_name })
+                : t("history.deleteConfirm")}
+            </p>
+
+            <div className="mt-4 flex flex-col gap-2">
+              {pendingDelete.student_id && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleDeleteSingle}
+                    disabled={clearing}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 disabled:opacity-70 disabled:cursor-not-allowed dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100 dark:hover:bg-slate-900/60"
+                  >
+                    {t("history.deleteOnly")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteAll}
+                    disabled={clearing}
+                    className="w-full rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-70 disabled:cursor-not-allowed"
+                  >
+                    {t("history.deleteAllUser")}
+                  </button>
+                </>
+              )}
+              {!pendingDelete.student_id && (
+                <button
+                  type="button"
+                  onClick={handleDeleteSingle}
+                  disabled={clearing}
+                  className="w-full rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {t("history.delete")}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setPendingDelete(null)}
+                disabled={clearing}
+                className="w-full rounded-lg bg-slate-600 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {t("common.cancel")}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

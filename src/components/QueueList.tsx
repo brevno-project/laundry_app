@@ -208,7 +208,7 @@ export default function QueueList() {
                 {t("queue.status.keyIssued")}
               </span>
             ),
-            badgeColor: 'bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold shadow-md dark:from-blue-500/70 dark:to-blue-400/40 dark:text-blue-100'
+            badgeColor: 'bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold shadow-md dark:from-blue-500/70 dark:to-blue-400/40 dark:text-blue-100'
           };
         case QueueStatus.WASHING:
           return { 
