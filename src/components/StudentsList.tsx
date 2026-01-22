@@ -197,7 +197,7 @@ export default function StudentsList() {
           <td className="p-3 text-gray-700 dark:text-slate-300">{index + 1}</td>
           <td className="p-3 text-gray-900 dark:text-slate-100">
             <div className="flex items-center gap-3">
-              <Avatar name={student.full_name} style={student.avatar_style} seed={student.avatar_seed} className="w-10 h-10" />
+              <Avatar name={student.full_name} style={student.avatar_style} seed={student.avatar_seed} className="w-12 h-12" />
               <div className="flex flex-col">
                 <span>{displayName}</span>
                 {canManageStudents && (
@@ -217,7 +217,7 @@ export default function StudentsList() {
                       <span
                         className={`${badgeBase} px-2 py-0.5 ${
                           stayType === "weekends"
-                            ? "bg-sky-100 text-sky-800 dark:border-sky-800/40 dark:bg-sky-900/25 dark:text-sky-200"
+                            ? "bg-blue-100 text-blue-800 dark:border-blue-500/50 dark:bg-blue-900/35 dark:text-blue-200"
                             : stayType === "5days"
                               ? "bg-indigo-100 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200"
                               : "bg-gray-100 text-gray-600 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-100"
@@ -231,7 +231,7 @@ export default function StudentsList() {
                       <span
                         className={`${badgeBase} px-2 py-0.5 ${
                           student.key_issued
-                            ? "bg-blue-100 text-blue-700 dark:border-blue-800/40 dark:bg-blue-900/25 dark:text-blue-200"
+                            ? "bg-blue-100 text-blue-700 dark:border-blue-400/50 dark:bg-blue-500/15 dark:text-blue-100"
                             : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
                         }`}
                       >
@@ -243,7 +243,7 @@ export default function StudentsList() {
                         </span>
                       )}
                       {isSuperAdmin && student.is_cleanup_admin && (
-                        <span className="rounded-full border border-indigo-200 bg-indigo-100 px-2 py-0.5 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200">
+                        <span className={`${badgeBase} border border-indigo-200 bg-indigo-100 px-2 py-0.5 text-indigo-800 dark:border-indigo-500/40 dark:bg-indigo-900/35 dark:text-indigo-200`}>
                           {t("header.leader")}
                         </span>
                       )}
@@ -340,7 +340,7 @@ export default function StudentsList() {
           <td className="p-1 text-gray-900 font-semibold">{index + 1}</td>
           <td className="p-1 text-gray-900">
             <div className="flex items-center gap-2">
-              <Avatar name={student.full_name} style={student.avatar_style} seed={student.avatar_seed} className="w-8 h-8" />
+              <Avatar name={student.full_name} style={student.avatar_style} seed={student.avatar_seed} className="w-12 h-12" />
               <div className="flex flex-col">
                 <span className="text-xs">{displayName}</span>
                 {canManageStudents && (
@@ -353,7 +353,7 @@ export default function StudentsList() {
                           </span>
                         )}
                         {isSuperAdmin && student.is_cleanup_admin && (
-                          <span className={`${badgeBase} bg-indigo-100 px-1.5 py-0.5 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200`}>
+                          <span className={`${badgeBase} bg-indigo-100 px-1.5 py-0.5 text-indigo-800 dark:border-indigo-500/40 dark:bg-indigo-900/35 dark:text-indigo-200`}>
                             {t("header.leader")}
                           </span>
                         )}
@@ -365,7 +365,7 @@ export default function StudentsList() {
                         title={student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
                         className={`${badgeBase} px-1.5 py-0.5 ${
                           student.key_issued
-                            ? "bg-blue-100 text-blue-700 dark:border-blue-800/40 dark:bg-blue-900/25 dark:text-blue-200"
+                            ? "bg-blue-100 text-blue-700 dark:border-blue-400/50 dark:bg-blue-500/15 dark:text-blue-100"
                             : "bg-gray-100 text-gray-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
                         }`}
                       >
@@ -390,8 +390,8 @@ export default function StudentsList() {
               </div>
             </div>
           </td>
-          <td className="p-1 text-center text-gray-700 whitespace-nowrap">{student.room || "-"}</td>
-          <td className="p-1 text-center">
+          <td className="p-1 text-center text-gray-700 whitespace-nowrap border-l border-slate-200 dark:border-slate-700">{student.room || "-"}</td>
+          <td className="p-1 text-center border-l border-slate-200 dark:border-slate-700">
             {student.is_registered ? (
               <CheckIcon className="mx-auto h-5 w-5 text-emerald-600 dark:text-emerald-300" />
             ) : (
@@ -399,7 +399,7 @@ export default function StudentsList() {
             )}
           </td>
           {showTelegramColumn && (
-            <td className="p-1 text-center">
+            <td className="p-1 text-center border-l border-slate-200 dark:border-slate-700">
               {hasTelegram(student) ? (
                 <TelegramIcon className="w-5 h-5 text-blue-500" />
               ) : (
@@ -408,9 +408,9 @@ export default function StudentsList() {
             </td>
           )}
           {canManageStudents && (
-            <td className="p-1">
+            <td className="p-1 border-l border-slate-200 dark:border-slate-700">
               {canManageStudent(student) && (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center justify-center gap-1">
                   <button
                     onClick={() => openEditModal(student)}
                     className="btn btn-primary px-2 py-1 text-xs"
@@ -559,23 +559,23 @@ export default function StudentsList() {
           </div>
 
           <div className="md:hidden overflow-x-auto">
-            <table className="w-full border-collapse text-xs">
+            <table className="w-full border-collapse text-xs table-fixed">
               <thead>
                 <tr className="bg-slate-100 border-b-2 border-slate-200 dark:bg-slate-900/40 dark:border-slate-700">
-                  <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">#</th>
+                  <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100 w-8">#</th>
                   <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">{t("students.name")}</th>
-                  <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
+                  <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100 w-14 border-l border-slate-200 dark:border-slate-700">
                     <DoorIcon className="w-5 h-5 inline-block" />
                   </th>
-                  <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
+                  <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100 w-20 border-l border-slate-200 dark:border-slate-700">
                     {t("students.filter.registration")}
                   </th>
                   {showTelegramColumn && (
-                    <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
+                    <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100 w-12 border-l border-slate-200 dark:border-slate-700">
                       <TelegramIcon className="w-5 h-5 inline-block" />
                     </th>
                   )}
-                  {canManageStudents && <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100">{t("students.actions")}</th>}
+                  {canManageStudents && <th className="text-left p-1 font-bold text-gray-900 dark:text-slate-100 w-20 border-l border-slate-200 dark:border-slate-700">{t("students.actions")}</th>}
                 </tr>
               </thead>
               <tbody>

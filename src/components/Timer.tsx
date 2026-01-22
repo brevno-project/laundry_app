@@ -62,7 +62,7 @@ export default function Timer({ startTime, endTime, label, color = 'blue', multi
   // ✅ Базовые цвета таймеров
   const baseColors = {
     yellow: { bg: 'bg-amber-50 dark:bg-amber-950/25', text: 'text-amber-900 dark:text-amber-200', border: 'border-amber-300 dark:border-amber-500/40' },
-    blue: { bg: 'bg-blue-50 dark:bg-slate-700', text: 'text-slate-900 dark:text-blue-300', border: 'border-blue-300 dark:border-blue-400/60' },
+    blue: { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-900 dark:text-blue-200', border: 'border-blue-300 dark:border-blue-500/50' },
     green: { bg: 'bg-emerald-50 dark:bg-slate-700', text: 'text-emerald-900 dark:text-emerald-300', border: 'border-emerald-300 dark:border-emerald-500/50' },
     orange: { bg: 'bg-orange-50 dark:bg-orange-950/25', text: 'text-orange-900 dark:text-orange-200', border: 'border-orange-300 dark:border-orange-500/40' },
   };

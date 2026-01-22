@@ -218,7 +218,7 @@ export default function StudentAuth() {
           setError("");
           setBanNotice("");
         }}
-        className="text-blue-600 hover:text-blue-800 font-bold mb-4 flex items-center gap-2 dark:text-blue-300 dark:hover:text-blue-200"
+        className="text-blue-600 hover:text-blue-800 font-bold mb-4 flex items-center gap-2 dark:text-blue-400 dark:hover:text-blue-300"
       >
         <BackIcon className="w-5 h-5" /> {t("auth.back")}
       </button>

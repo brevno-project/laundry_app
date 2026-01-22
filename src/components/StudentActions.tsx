@@ -216,7 +216,7 @@ export default function StudentActions() {
         {myQueueItem.status === QueueStatus.WASHING && (
           <>
             {finishSent ? (
-              <div className="w-full rounded-xl bg-emerald-500/20 border border-emerald-200 px-4 py-3 text-emerald-50 text-center dark:border-emerald-500/40 dark:text-emerald-100">
+              <div className="w-full rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-emerald-800 text-center dark:bg-emerald-500/20 dark:border-emerald-500/40 dark:text-emerald-100">
                 <div className="flex items-center justify-center gap-2 font-semibold">
                   <CheckIcon className="w-5 h-5" />
                   {t("studentActions.noticeSent")}

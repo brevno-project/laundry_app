@@ -395,7 +395,7 @@ function Badge({
     indigo: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-200",
     green: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/25 dark:text-emerald-200",
     red: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200",
-    blue: "bg-sky-100 text-sky-800 dark:bg-sky-900/25 dark:text-sky-200",
+    blue: "bg-blue-100 text-blue-800 dark:bg-blue-900/25 dark:text-blue-200",
     amber: "bg-amber-100 text-amber-800 dark:bg-amber-900/25 dark:text-amber-200",
   } as const;
 

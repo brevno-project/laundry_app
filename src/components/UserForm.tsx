@@ -404,7 +404,7 @@ export default function UserForm() {
               <p className="text-blue-800 font-bold text-center text-lg dark:text-slate-100">
                 {t('queue.inQueue')}
               </p>
-              <p className="text-blue-600 font-black text-center mt-2 text-3xl dark:text-sky-200">
+              <p className="text-blue-600 font-black text-center mt-2 text-3xl dark:text-blue-200">
                 {t('queue.position', { position: queuePosition })}
               </p>
               {existingQueueItem?.scheduled_for_date && (

@@ -1453,7 +1453,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               })}
             </p>
           </div>
-          <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-slate-900/40 dark:text-sky-200">
+          <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-slate-900/40 dark:text-blue-200">
             {apartment?.code || t("cleanup.resultCard.apartmentFallback")}
           </span>
         </div>

@@ -200,19 +200,19 @@ export default function QueueList() {
           };
         case QueueStatus.KEY_ISSUED:
           return {
-            bg: 'bg-blue-50 dark:bg-slate-700',
-            text: 'text-blue-900 dark:text-blue-300',
+            bg: 'bg-blue-50 dark:bg-blue-900/20',
+            text: 'text-blue-900 dark:text-blue-200',
             badge: (
               <span className="flex items-center gap-1.5">
                 <KeyIcon className="w-4 h-4" />
                 {t("queue.status.keyIssued")}
               </span>
             ),
-            badgeColor: 'bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold shadow-md dark:from-blue-600/40 dark:to-blue-500/20 dark:text-blue-200'
+            badgeColor: 'bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold shadow-md dark:from-blue-600/50 dark:to-blue-500/30 dark:text-blue-200'
           };
         case QueueStatus.WASHING:
           return { 
-            bg: 'bg-white dark:bg-slate-800', 
+            bg: 'bg-emerald-50 dark:bg-slate-800', 
             text: 'text-slate-900 dark:text-slate-100', 
             badge: (
               <span className="flex items-center gap-1.5">
@@ -383,24 +383,24 @@ export default function QueueList() {
                 const displayRoom = item.room || targetStudent?.room;
                 const couponsUsed = item.coupons_used || 0;
 
-                // ✅ Определяем цвет рамки по активному таймеру
-                let borderColor = 'border-slate-300 dark:border-slate-600';
+                // ✅ Определяем цвет левой рамки по активному таймеру
+                let leftBorderColor = 'border-l-slate-300 dark:border-l-slate-600';
                 if (item.return_requested_at && !item.finished_at) {
-                  borderColor = 'border-orange-400 dark:border-orange-500/50';
+                  leftBorderColor = 'border-l-orange-400 dark:border-l-orange-500/50';
                 } else if (item.washing_started_at && !item.washing_finished_at && !item.return_requested_at) {
-                  borderColor = 'border-emerald-500 dark:border-emerald-500/50';
+                  leftBorderColor = 'border-l-emerald-500 dark:border-l-emerald-500/50';
                 } else if (item.key_issued_at && !item.washing_started_at) {
-                  borderColor = 'border-blue-400 dark:border-sky-400/60';
+                  leftBorderColor = 'border-l-blue-400 dark:border-l-blue-400/60';
                 } else if (item.ready_at && !item.key_issued_at) {
-                  borderColor = 'border-yellow-400 dark:border-amber-500/50';
+                  leftBorderColor = 'border-l-yellow-400 dark:border-l-amber-500/50';
                 } else if (item.status === QueueStatus.DONE) {
-                  borderColor = 'border-emerald-600 dark:border-emerald-500/60';
+                  leftBorderColor = 'border-l-emerald-600 dark:border-l-emerald-500/60';
                 }
                 
-                if (isCurrentUser) borderColor = 'border-blue-600 dark:border-sky-400';
+                if (isCurrentUser) leftBorderColor = 'border-l-blue-600 dark:border-l-blue-400';
                 
                 return (
-                  <div key={item.id} className={`${statusDisplay.bg} border-l-4 ${borderColor} rounded-lg p-3 shadow-sm`}>
+                  <div key={item.id} className={`${statusDisplay.bg} border border-slate-200 dark:border-slate-700 border-l-4 ${leftBorderColor} rounded-lg p-3 shadow-sm`}>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
                         <Avatar name={item.full_name} style={item.avatar_style} seed={item.avatar_seed} className="w-12 h-12" />
@@ -819,7 +819,7 @@ export default function QueueList() {
           <select
             value={editDate}
             onChange={(e) => setEditDate(e.target.value)}
-            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
+            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
           >
             {getAvailableDates().map(date => (
               <option key={date.value} value={date.value}>
@@ -835,7 +835,7 @@ export default function QueueList() {
           <select
             value={editWashCount}
             onChange={(e) => setEditWashCount(Number(e.target.value))}
-            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 font-semibold bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
+            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 font-semibold bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
           >
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
               <option key={num} value={num}>{num}</option>
@@ -849,7 +849,7 @@ export default function QueueList() {
           <select
             value={editCouponsUsed}
             onChange={(e) => setEditCouponsUsed(Number(e.target.value))}
-            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
+            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
           >
             {Array.from({ length: editWashCount + 1 }, (_, i) => i).map((num) => (
               <option key={num} value={num}>{num}</option>

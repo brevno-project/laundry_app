@@ -52,14 +52,20 @@ export default function TelegramSetup() {
         <h3 className="font-bold text-xl text-slate-900 dark:text-slate-100">{t("telegram.connectTitle")}</h3>
       </div>
 
-      <a
-        href={link}
-        target="_blank"
-        data-focus-target="telegram"
-        className="block rounded-xl bg-blue-600 text-white font-bold text-center py-3 shadow-sm hover:bg-blue-700 ring-2 ring-blue-500/40 animate-pulse dark:ring-blue-400/40"
-      >
-        {t("telegram.connectButton")}
-      </a>
+      <div className="relative">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -inset-2 rounded-xl bg-blue-500/25 blur-lg animate-pulse"
+        />
+        <a
+          href={link}
+          target="_blank"
+          data-focus-target="telegram"
+          className="relative block rounded-xl bg-blue-600 text-white font-bold text-center py-3 shadow-sm hover:bg-blue-700 ring-2 ring-blue-500/40 dark:ring-blue-400/40"
+        >
+          {t("telegram.connectButton")}
+        </a>
+      </div>
 
       <p className="text-xs text-gray-600 mt-3 text-center dark:text-slate-400">
         {t("telegram.connectHint")}

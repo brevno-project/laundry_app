@@ -410,7 +410,7 @@ export default function AdminPanel() {
                         )}
 
                         {hasTelegram(student) && (
-                          <span className="rounded-full bg-sky-100 px-2 py-0.5 font-medium text-sky-700 dark:bg-sky-900/25 dark:text-sky-200">
+                          <span className="rounded-full bg-blue-100 px-2 py-0.5 font-medium text-blue-700 dark:bg-blue-900/25 dark:text-blue-200">
                             Telegram
                           </span>
                         )}
