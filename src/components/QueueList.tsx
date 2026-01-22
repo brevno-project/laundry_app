@@ -831,7 +831,7 @@ export default function QueueList() {
           <select
             value={editDate}
             onChange={(e) => setEditDate(e.target.value)}
-            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
+            className="w-full border-2 border-slate-900 rounded-lg p-2 text-gray-900 bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
           >
             {getAvailableDates().map(date => (
               <option key={date.value} value={date.value}>
@@ -847,7 +847,7 @@ export default function QueueList() {
           <select
             value={editWashCount}
             onChange={(e) => setEditWashCount(Number(e.target.value))}
-            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 font-semibold bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
+            className="w-full border-2 border-slate-900 rounded-lg p-2 text-gray-900 font-semibold bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
           >
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
               <option key={num} value={num}>{num}</option>
@@ -861,7 +861,7 @@ export default function QueueList() {
           <select
             value={editCouponsUsed}
             onChange={(e) => setEditCouponsUsed(Number(e.target.value))}
-            className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
+            className="w-full border-2 border-slate-900 rounded-lg p-2 text-gray-900 bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
           >
             {Array.from({ length: editWashCount + 1 }, (_, i) => i).map((num) => (
               <option key={num} value={num}>{num}</option>

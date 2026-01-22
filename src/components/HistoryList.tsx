@@ -430,7 +430,10 @@ export default function HistoryList() {
                     disabled={clearing}
                     className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed"
                   >
-                    {t("history.deleteOnly")}
+                    <span className="inline-flex items-center justify-center gap-2">
+                      {clearing && <WashingSpinner className="w-4 h-4" />}
+                      {t("history.deleteOnly")}
+                    </span>
                   </button>
                   <button
                     type="button"
@@ -438,7 +441,10 @@ export default function HistoryList() {
                     disabled={clearing}
                     className="w-full rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-70 disabled:cursor-not-allowed"
                   >
-                    {t("history.deleteAllUser")}
+                    <span className="inline-flex items-center justify-center gap-2">
+                      {clearing && <WashingSpinner className="w-4 h-4" />}
+                      {t("history.deleteAllUser")}
+                    </span>
                   </button>
                 </>
               )}
