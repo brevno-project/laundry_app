@@ -327,10 +327,6 @@ export default function StudentsList() {
         ? 5
         : 4;
 
-    const registrationLabel = student.is_registered
-      ? t("students.badge.registeredShort")
-      : t("students.badge.unregisteredShort");
-
     return (
       <React.Fragment key={student.id}>
         {showDivider && (
@@ -396,15 +392,11 @@ export default function StudentsList() {
           </td>
           <td className="p-1 text-center text-gray-700 whitespace-nowrap">{student.room || "-"}</td>
           <td className="p-1 text-center">
-            <span
-              className={`inline-flex min-w-[2.5rem] justify-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-                student.is_registered
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-900/25 dark:text-emerald-200"
-                  : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/40 dark:bg-amber-900/25 dark:text-amber-200"
-              }`}
-            >
-              {registrationLabel}
-            </span>
+            {student.is_registered ? (
+              <CheckIcon className="mx-auto h-5 w-5 text-emerald-600 dark:text-emerald-300" />
+            ) : (
+              <CloseIcon className="mx-auto h-5 w-5 text-rose-500 dark:text-rose-300" />
+            )}
           </td>
           {showTelegramColumn && (
             <td className="p-1 text-center">
@@ -486,7 +478,7 @@ export default function StudentsList() {
                     onClick={() => setStayFilter("all")}
                     className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
                       stayFilter === "all"
-                        ? "bg-blue-50 text-blue-700 border-blue-600 dark:bg-slate-900/60 dark:text-sky-200 dark:border-sky-400"
+                        ? "bg-blue-50 text-blue-700 border-blue-600 dark:bg-slate-900/60 dark:text-blue-200 dark:border-blue-600"
                         : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
                     }`}
                     aria-pressed={stayFilter === "all"}
@@ -498,7 +490,7 @@ export default function StudentsList() {
                     onClick={() => setStayFilter("unknown")}
                     className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
                       stayFilter === "unknown"
-                        ? "bg-blue-50 text-blue-700 border-blue-600 dark:bg-slate-900/60 dark:text-sky-200 dark:border-sky-400"
+                        ? "bg-blue-50 text-blue-700 border-blue-600 dark:bg-slate-900/60 dark:text-blue-200 dark:border-blue-600"
                         : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
                     }`}
                     aria-pressed={stayFilter === "unknown"}
@@ -510,7 +502,7 @@ export default function StudentsList() {
                     onClick={() => setStayFilter("5days")}
                     className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
                       stayFilter === "5days"
-                        ? "bg-blue-50 text-blue-700 border-blue-600 dark:bg-slate-900/60 dark:text-sky-200 dark:border-sky-400"
+                        ? "bg-blue-50 text-blue-700 border-blue-600 dark:bg-slate-900/60 dark:text-blue-200 dark:border-blue-600"
                         : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
                     }`}
                     aria-pressed={stayFilter === "5days"}
@@ -522,7 +514,7 @@ export default function StudentsList() {
                     onClick={() => setStayFilter("weekends")}
                     className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
                       stayFilter === "weekends"
-                        ? "bg-blue-50 text-blue-700 border-blue-600 dark:bg-slate-900/60 dark:text-sky-200 dark:border-sky-400"
+                        ? "bg-blue-50 text-blue-700 border-blue-600 dark:bg-slate-900/60 dark:text-blue-200 dark:border-blue-600"
                         : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
                     }`}
                     aria-pressed={stayFilter === "weekends"}
@@ -576,7 +568,7 @@ export default function StudentsList() {
                     <DoorIcon className="w-5 h-5 inline-block" />
                   </th>
                   <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
-                    {t("students.header.registrationShort")}
+                    {t("students.filter.registration")}
                   </th>
                   {showTelegramColumn && (
                     <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
@@ -634,7 +626,7 @@ export default function StudentsList() {
                     <DoorIcon className="w-5 h-5 inline-block" />
                   </th>
                   <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
-                    {t("students.header.registrationShort")}
+                    {t("students.filter.registration")}
                   </th>
                   {showTelegramColumn && (
                     <th className="text-center p-1 font-bold text-gray-900 dark:text-slate-100">
@@ -666,7 +658,7 @@ export default function StudentsList() {
                   type="text"
                   value={editLastName}
                   onChange={(e) => setEditLastName(e.target.value)}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
                 />
               </div>
 
@@ -676,7 +668,7 @@ export default function StudentsList() {
                   type="text"
                   value={editFirstName}
                   onChange={(e) => setEditFirstName(e.target.value)}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
                   required
                 />
               </div>
@@ -688,7 +680,7 @@ export default function StudentsList() {
                   value={editMiddleName}
                   onChange={(e) => setEditMiddleName(e.target.value)}
                   placeholder={t("students.field.middleNamePlaceholder")}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
                 />
               </div>
 
@@ -699,7 +691,7 @@ export default function StudentsList() {
                   value={editRoom}
                   onChange={(e) => setEditRoom(e.target.value)}
                   placeholder={t("students.field.roomPlaceholder")}
-                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
+                  className="w-full border-2 border-gray-300 rounded-lg p-2 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
                 />
               </div>
 
@@ -712,7 +704,7 @@ export default function StudentsList() {
                     <select
                       value={editStayType}
                       onChange={(e) => setEditStayType(e.target.value as any)}
-                      className="flex-1 rounded-lg border-2 border-gray-300 bg-white px-2 py-1 text-sm font-semibold text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
+                      className="flex-1 rounded-lg border-2 border-gray-300 bg-white px-2 py-1 text-sm font-semibold text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
                     >
                       <option value="unknown">{t("students.stay.unknown")}</option>
                       <option value="5days">{t("students.stay.5days")}</option>

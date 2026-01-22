@@ -151,7 +151,7 @@ export default function StudentAuth() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t("auth.searchPlaceholder")}
-          className="w-full p-4 rounded-lg border-2 border-gray-300 bg-white text-gray-900 text-xl font-semibold mb-4 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-300 placeholder:text-gray-600 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
+          className="w-full p-4 rounded-lg border-2 border-gray-300 bg-white text-gray-900 text-xl font-semibold mb-4 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-300 placeholder:text-gray-600 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
         />
 
         <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -164,7 +164,7 @@ export default function StudentAuth() {
               <button
                 key={student.id}
                 onClick={() => handleStudentSelect(student)}
-                className="w-full bg-white hover:bg-slate-50 border-3 border-gray-400 hover:border-slate-500 rounded-lg p-4 text-left transition-all shadow-md hover:shadow-xl dark:bg-slate-900 dark:hover:bg-slate-800 dark:border-slate-700 dark:hover:border-sky-500"
+                className="w-full bg-white hover:bg-slate-50 border-3 border-gray-400 hover:border-slate-500 rounded-lg p-4 text-left transition-all shadow-md hover:shadow-xl dark:bg-slate-900 dark:hover:bg-slate-800 dark:border-slate-700 dark:hover:border-blue-600"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -218,7 +218,7 @@ export default function StudentAuth() {
           setError("");
           setBanNotice("");
         }}
-        className="text-blue-600 hover:text-blue-800 font-bold mb-4 flex items-center gap-2 dark:text-sky-300 dark:hover:text-sky-200"
+        className="text-blue-600 hover:text-blue-800 font-bold mb-4 flex items-center gap-2 dark:text-blue-300 dark:hover:text-blue-200"
       >
         <BackIcon className="w-5 h-5" /> {t("auth.back")}
       </button>
@@ -271,7 +271,7 @@ export default function StudentAuth() {
                 setError("");
               }}
               onKeyDown={(e) => e.key === "Enter" && handleAuth()}
-              className="w-full rounded-lg border-2 border-gray-400 bg-white/60 backdrop-blur-sm text-gray-900 p-4 pr-20 text-lg font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
+              className="w-full rounded-lg border-2 border-gray-400 bg-white/60 backdrop-blur-sm text-gray-900 p-4 pr-20 text-lg font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
               placeholder={t("auth.password")}
               autoFocus
             />
@@ -300,18 +300,27 @@ export default function StudentAuth() {
             >
               {t("auth.confirmPassword")}
             </label>
-            <input
-              id="confirmPassword"
-              type={showPassword ? "text" : "password"}
-              value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.target.value);
-                setError("");
-              }}
-              onKeyDown={(e) => e.key === "Enter" && handleAuth()}
-              className="w-full rounded-lg border-2 border-gray-400 bg-white/60 backdrop-blur-sm text-gray-900 p-4 text-lg font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-500/30"
-              placeholder={t("auth.confirmPassword")}
-            />
+            <div className="relative">
+              <input
+                id="confirmPassword"
+                type={showPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  setError("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handleAuth()}
+                className="w-full rounded-lg border-2 border-gray-400 bg-white/60 backdrop-blur-sm text-gray-900 p-4 pr-20 text-lg font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
+                placeholder={t("auth.confirmPassword")}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-gray-700 hover:text-gray-900 dark:text-slate-300 dark:hover:text-slate-200"
+              >
+                {showPassword ? t("auth.hide") : t("auth.show")}
+              </button>
+            </div>
           </div>
         )}
 

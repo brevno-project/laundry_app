@@ -97,14 +97,14 @@ export default function AddStudentModal({ onClose }: AddStudentModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white/80 backdrop-blur-sm dark:bg-slate-800 rounded-lg p-6 max-w-md w-full">
-        <h3 className="text-xl font-bold text-gray-900 mb-4">
+      <div className="bg-white border border-slate-200 dark:bg-slate-800 dark:border-slate-700 rounded-lg p-6 max-w-md w-full">
+        <h3 className="text-xl font-bold text-gray-900 mb-4 dark:text-slate-100">
           {t("students.addTitle")}
         </h3>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-bold mb-2 text-gray-900">
+            <label className="block text-sm font-bold mb-2 text-gray-900 dark:text-slate-200">
               {t("students.field.room")} <span className="text-red-500">*</span>
             </label>
             <input
@@ -112,52 +112,52 @@ export default function AddStudentModal({ onClose }: AddStudentModalProps) {
               value={room}
               onChange={(event) => handleRoomChange(event.target.value)}
               placeholder={t("students.field.roomPlaceholder")}
-              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900 uppercase"
+              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900 uppercase bg-white placeholder:text-gray-500 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
               maxLength={4}
               disabled={isSubmitting}
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 mt-1 dark:text-slate-400">
               {t("students.addRoomHint")}
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-2 text-gray-900">
+            <label className="block text-sm font-bold mb-2 text-gray-900 dark:text-slate-200">
               {t("students.field.lastName")} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               value={lastName}
               onChange={(event) => setLastName(event.target.value)}
-              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900"
+              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
               placeholder={t("students.field.lastNamePlaceholder")}
               disabled={isSubmitting}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-2 text-gray-900">
+            <label className="block text-sm font-bold mb-2 text-gray-900 dark:text-slate-200">
               {t("students.field.firstName")} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               value={firstName}
               onChange={(event) => setFirstName(event.target.value)}
-              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900"
+              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
               placeholder={t("students.field.firstNamePlaceholder")}
               disabled={isSubmitting}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-2 text-gray-900">
+            <label className="block text-sm font-bold mb-2 text-gray-900 dark:text-slate-200">
               {t("students.field.middleName")}
             </label>
             <input
               type="text"
               value={middleName}
               onChange={(event) => setMiddleName(event.target.value)}
-              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900"
+              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-blue-600 dark:focus:ring-blue-500/30"
               placeholder={t("students.field.middleNamePlaceholder")}
               disabled={isSubmitting}
             />
@@ -168,7 +168,7 @@ export default function AddStudentModal({ onClose }: AddStudentModalProps) {
           <button
             onClick={onClose}
             disabled={isSubmitting}
-            className="flex-1 btn btn-neutral"
+            className="flex-1 btn btn-neutral dark:bg-slate-900/40 dark:text-slate-200 dark:border dark:border-slate-700 dark:hover:bg-slate-900/55"
           >
             {t("common.cancel")}
           </button>

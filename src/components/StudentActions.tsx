@@ -170,11 +170,11 @@ export default function StudentActions() {
 
   return (
     <div id="student-action-button" className="mb-6 w-full animate-slideDown">
-      <div className="rounded-2xl shadow-xl p-6 border border-slate-700 bg-slate-900/70 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-950/70">
+      <div className="rounded-2xl shadow-xl p-6 border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950/70">
         {myQueueItem.status === QueueStatus.KEY_ISSUED && (
           <>
             {startSent ? (
-              <div className="w-full rounded-xl bg-emerald-500/20 border border-emerald-200 px-4 py-3 text-emerald-50 text-center dark:border-emerald-500/40 dark:text-emerald-100">
+              <div className="w-full rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-emerald-800 text-center dark:bg-emerald-500/20 dark:border-emerald-500/40 dark:text-emerald-100">
                 <div className="flex items-center justify-center gap-2 font-semibold">
                   <CheckIcon className="w-5 h-5" />
                   {t("studentActions.noticeSent")}
@@ -184,11 +184,11 @@ export default function StudentActions() {
               <>
                 <div className="text-center mb-4">
                   <div className="flex items-center justify-center gap-3 mb-2">
-                    <KeyIcon className="w-7 h-7 text-white flex-shrink-0" />
-                    <h3 className="text-2xl font-bold text-white dark:text-slate-100">{t("studentActions.startTitle")}</h3>
+                    <KeyIcon className="w-7 h-7 text-slate-900 dark:text-slate-100 flex-shrink-0" />
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t("studentActions.startTitle")}</h3>
                   </div>
-                  <p className="text-slate-200 dark:text-slate-300">{t("studentActions.startHint")}</p>
-                  <div className="flex items-center justify-center gap-1 text-slate-300 text-sm mt-2 dark:text-slate-400">
+                  <p className="text-slate-700 dark:text-slate-300">{t("studentActions.startHint")}</p>
+                  <div className="flex items-center justify-center gap-1 text-slate-600 text-sm mt-2 dark:text-slate-400">
                     <InfoIcon className="w-4 h-4 flex-shrink-0" />
                     <span>{t("studentActions.startInfo")}</span>
                   </div>
@@ -225,13 +225,13 @@ export default function StudentActions() {
             ) : (
               <>
                 <div className="text-center mb-4">
-                  <h3 className="text-2xl font-bold text-white mb-2 dark:text-slate-100">{t("studentActions.washingTitle")}</h3>
-                  <div className="bg-black/20 rounded-xl py-3 px-6 mb-3 dark:bg-slate-950/30">
-                    <div className="text-slate-200 text-sm mb-1 dark:text-slate-300">{t("studentActions.elapsedLabel")}</div>
-                    <div className="text-4xl font-black text-white dark:text-slate-100">{washingTime}</div>
+                  <h3 className="text-2xl font-bold text-slate-900 mb-2 dark:text-slate-100">{t("studentActions.washingTitle")}</h3>
+                  <div className="bg-slate-100 rounded-xl py-3 px-6 mb-3 dark:bg-slate-950/30">
+                    <div className="text-slate-600 text-sm mb-1 dark:text-slate-300">{t("studentActions.elapsedLabel")}</div>
+                    <div className="text-4xl font-black text-slate-900 dark:text-slate-100">{washingTime}</div>
                   </div>
-                  <p className="text-slate-200 text-sm dark:text-slate-300">{t("studentActions.finishHint")}</p>
-                  <div className="flex items-center justify-center gap-1 text-slate-300 text-sm mt-2 dark:text-slate-400">
+                  <p className="text-slate-700 text-sm dark:text-slate-300">{t("studentActions.finishHint")}</p>
+                  <div className="flex items-center justify-center gap-1 text-slate-600 text-sm mt-2 dark:text-slate-400">
                     <InfoIcon className="w-4 h-4 flex-shrink-0" />
                     <span>{t("studentActions.startInfo")}</span>
                   </div>
@@ -240,7 +240,7 @@ export default function StudentActions() {
                 <button
                   onClick={handleFinishWashing}
                   disabled={sending === "finish"}
-                  className="w-full bg-blue-500/20 border border-blue-300/40 text-blue-50 font-bold py-4 px-6 rounded-xl text-xl hover:bg-blue-500/30 hover:border-blue-200/50 transition-all shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed dark:bg-blue-500/15 dark:border-blue-400/30"
+                  className="w-full bg-rose-600 text-white border border-rose-600 font-bold py-4 px-6 rounded-xl text-xl hover:bg-rose-700 hover:border-rose-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed dark:bg-rose-500/15 dark:border-rose-400/30 dark:text-rose-100 dark:hover:bg-rose-500/25"
                 >
                   <div className="flex items-center justify-center gap-2">
                     {sending === "finish" ? (
