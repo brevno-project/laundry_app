@@ -323,6 +323,132 @@ export default function StudentsList() {
     );
   };
 
+  const renderStudentCompact = (student: Student, index: number) => {
+    const displayName =
+      [student.first_name, student.last_name, student.middle_name].filter(Boolean).join(" ") ||
+      student.full_name ||
+      "-";
+
+    const stayType = (student.stay_type || "unknown") as "unknown" | "5days" | "weekends";
+    const stayLabel =
+      stayType === "weekends"
+        ? t("students.stay.weekends")
+        : stayType === "5days"
+          ? t("students.stay.5days")
+          : t("students.stay.unknown");
+
+    return (
+      <div
+        key={student.id}
+        className="flex items-center gap-2 border-b border-slate-200/70 px-2 py-2 last:border-b-0 dark:border-slate-700/60"
+      >
+        <div className="w-5 text-[10px] font-semibold text-slate-400 dark:text-slate-500">{index + 1}</div>
+        <Avatar
+          name={student.full_name}
+          style={student.avatar_style}
+          seed={student.avatar_seed}
+          className="h-8 w-8"
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+              {displayName}
+            </div>
+            <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+              {student.room || "-"}
+            </div>
+          </div>
+          <div className="mt-1 flex flex-wrap items-center gap-1">
+            <span
+              className={`${badgeBase} ${
+                stayType === "weekends"
+                  ? "border-blue-200 bg-blue-100 text-blue-800 dark:border-blue-500/50 dark:bg-blue-900/35 dark:text-blue-200"
+                  : stayType === "5days"
+                    ? "border-indigo-200 bg-indigo-100 text-indigo-800 dark:border-indigo-800/40 dark:bg-indigo-900/25 dark:text-indigo-200"
+                    : "border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-100"
+              }`}
+            >
+              {stayLabel}
+            </span>
+            <span
+              className={`${badgeBase} flex items-center gap-1 ${
+                student.key_issued
+                  ? "border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-400/50 dark:bg-blue-500/15 dark:text-blue-100"
+                  : "border-slate-200 bg-slate-100 text-slate-500 dark:border-slate-600/50 dark:bg-slate-700/45 dark:text-slate-200"
+              }`}
+            >
+              <KeyIcon className="h-3.5 w-3.5" />
+              {student.key_issued ? t("students.keyIssued") : t("students.keyNone")}
+            </span>
+            {student.key_lost && (
+              <span className={`${badgeBase} border-rose-200 bg-rose-100 text-rose-700 dark:border-rose-500/40 dark:bg-rose-900/30 dark:text-rose-200`}>
+                {t("students.keyLost")}
+              </span>
+            )}
+            {student.is_super_admin && (
+              <span className={`${badgeBase} border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-500/40 dark:bg-amber-900/30 dark:text-amber-200`}>
+                {t("admin.status.superAdmin")}
+              </span>
+            )}
+            {!student.is_super_admin && student.is_admin && (
+              <span className={`${badgeBase} border-violet-200 bg-violet-100 text-violet-800 dark:border-violet-500/40 dark:bg-violet-900/30 dark:text-violet-200`}>
+                {t("admin.status.admin")}
+              </span>
+            )}
+            {student.is_cleanup_admin && (
+              <span className={`${badgeBase} border-indigo-200 bg-indigo-100 text-indigo-800 dark:border-indigo-500/40 dark:bg-indigo-900/35 dark:text-indigo-200`}>
+                {t("header.leader")}
+              </span>
+            )}
+            {student.is_banned && (
+              <span className={`${badgeBase} border-rose-200 bg-rose-100 text-rose-700 dark:border-rose-500/40 dark:bg-rose-900/30 dark:text-rose-200`}>
+                {t("admin.status.banned")}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          {showTelegramColumn && (
+            <div title={hasTelegram(student) ? t("students.connected") : t("students.notConnected")}>
+              {hasTelegram(student) ? (
+                <TelegramIcon className="h-5 w-5 text-blue-600 dark:text-blue-300" />
+              ) : (
+                <CloseIcon className="h-5 w-5 text-slate-300 dark:text-slate-600" />
+              )}
+            </div>
+          )}
+          <div title={student.is_registered ? t("students.badge.registered") : t("students.badge.unregistered")}>
+            {student.is_registered ? (
+              <CheckIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-300" />
+            ) : (
+              <CloseIcon className="h-5 w-5 text-rose-500 dark:text-rose-300" />
+            )}
+          </div>
+          {canManageStudent(student) && (
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => openEditModal(student)}
+                className="btn btn-primary px-2 py-1"
+              >
+                <EditIcon className="h-4 w-4" />
+              </button>
+              {canDeleteStudents && (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteStudent(student)}
+                  className="btn btn-danger px-2 py-1"
+                >
+                  <DeleteIcon className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700">
@@ -421,33 +547,44 @@ export default function StudentsList() {
             <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 px-1">
               <RoomIcon className="w-5 h-5" />{t("students.blockA")} ({blockA.length})
             </h3>
-            <div className="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-              <table className="min-w-[860px] w-full text-xs sm:text-sm">
-                <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-900/40 dark:text-slate-400">
-                  <tr>
-                    <th className="px-2 py-2 text-left">#</th>
-                    <th className="px-2 py-2 text-left">{t("students.title")}</th>
-                    <th className="px-2 py-2 text-left">{t("students.field.room")}</th>
-                    <th className="px-2 py-2 text-left">{t("students.stay.label")}</th>
-                    <th className="px-2 py-2 text-left">{t("students.keyIssued")}</th>
-                    <th className="px-2 py-2 text-left">{t("students.keyLost")}</th>
-                    <th className="px-2 py-2 text-left">{t("students.telegram")}</th>
-                    <th className="px-2 py-2 text-left">{t("students.badge.registered")}</th>
-                    <th className="px-2 py-2 text-left"></th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-slate-900/30">
-                  {blockA.length === 0 ? (
+            <div className="mt-2 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div className="divide-y divide-slate-200 dark:divide-slate-700 md:hidden">
+                {blockA.length === 0 ? (
+                  <div className="px-3 py-4 text-center text-sm text-slate-500 dark:text-slate-400">
+                    {t("students.empty")}
+                  </div>
+                ) : (
+                  blockA.map((student, index) => renderStudentCompact(student, index))
+                )}
+              </div>
+              <div className="hidden md:block">
+                <table className="w-full table-fixed text-xs sm:text-sm">
+                  <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-900/40 dark:text-slate-400">
                     <tr>
-                      <td colSpan={9} className="px-3 py-4 text-center text-sm text-slate-500 dark:text-slate-400">
-                        {t("students.empty")}
-                      </td>
+                      <th className="w-8 px-2 py-2 text-left">#</th>
+                      <th className="px-2 py-2 text-left">{t("students.title")}</th>
+                      <th className="w-20 px-2 py-2 text-left">{t("students.field.room")}</th>
+                      <th className="w-28 px-2 py-2 text-left">{t("students.stay.label")}</th>
+                      <th className="w-28 px-2 py-2 text-left">{t("students.keyIssued")}</th>
+                      <th className="w-24 px-2 py-2 text-left">{t("students.keyLost")}</th>
+                      <th className="w-20 px-2 py-2 text-left">{t("students.telegram")}</th>
+                      <th className="w-24 px-2 py-2 text-left">{t("students.badge.registered")}</th>
+                      <th className="w-20 px-2 py-2 text-left"></th>
                     </tr>
-                  ) : (
-                    blockA.map((student, index) => renderStudentRow(student, index))
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="bg-white dark:bg-slate-900/30">
+                    {blockA.length === 0 ? (
+                      <tr>
+                        <td colSpan={9} className="px-3 py-4 text-center text-sm text-slate-500 dark:text-slate-400">
+                          {t("students.empty")}
+                        </td>
+                      </tr>
+                    ) : (
+                      blockA.map((student, index) => renderStudentRow(student, index))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
@@ -455,33 +592,44 @@ export default function StudentsList() {
             <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 px-1">
               <RoomIcon className="w-5 h-5" />{t("students.blockB")} ({blockB.length})
             </h3>
-            <div className="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-              <table className="min-w-[860px] w-full text-xs sm:text-sm">
-                <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-900/40 dark:text-slate-400">
-                  <tr>
-                    <th className="px-2 py-2 text-left">#</th>
-                    <th className="px-2 py-2 text-left">{t("students.title")}</th>
-                    <th className="px-2 py-2 text-left">{t("students.field.room")}</th>
-                    <th className="px-2 py-2 text-left">{t("students.stay.label")}</th>
-                    <th className="px-2 py-2 text-left">{t("students.keyIssued")}</th>
-                    <th className="px-2 py-2 text-left">{t("students.keyLost")}</th>
-                    <th className="px-2 py-2 text-left">{t("students.telegram")}</th>
-                    <th className="px-2 py-2 text-left">{t("students.badge.registered")}</th>
-                    <th className="px-2 py-2 text-left"></th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-slate-900/30">
-                  {blockB.length === 0 ? (
+            <div className="mt-2 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div className="divide-y divide-slate-200 dark:divide-slate-700 md:hidden">
+                {blockB.length === 0 ? (
+                  <div className="px-3 py-4 text-center text-sm text-slate-500 dark:text-slate-400">
+                    {t("students.empty")}
+                  </div>
+                ) : (
+                  blockB.map((student, index) => renderStudentCompact(student, index))
+                )}
+              </div>
+              <div className="hidden md:block">
+                <table className="w-full table-fixed text-xs sm:text-sm">
+                  <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-900/40 dark:text-slate-400">
                     <tr>
-                      <td colSpan={9} className="px-3 py-4 text-center text-sm text-slate-500 dark:text-slate-400">
-                        {t("students.empty")}
-                      </td>
+                      <th className="w-8 px-2 py-2 text-left">#</th>
+                      <th className="px-2 py-2 text-left">{t("students.title")}</th>
+                      <th className="w-20 px-2 py-2 text-left">{t("students.field.room")}</th>
+                      <th className="w-28 px-2 py-2 text-left">{t("students.stay.label")}</th>
+                      <th className="w-28 px-2 py-2 text-left">{t("students.keyIssued")}</th>
+                      <th className="w-24 px-2 py-2 text-left">{t("students.keyLost")}</th>
+                      <th className="w-20 px-2 py-2 text-left">{t("students.telegram")}</th>
+                      <th className="w-24 px-2 py-2 text-left">{t("students.badge.registered")}</th>
+                      <th className="w-20 px-2 py-2 text-left"></th>
                     </tr>
-                  ) : (
-                    blockB.map((student, index) => renderStudentRow(student, index))
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="bg-white dark:bg-slate-900/30">
+                    {blockB.length === 0 ? (
+                      <tr>
+                        <td colSpan={9} className="px-3 py-4 text-center text-sm text-slate-500 dark:text-slate-400">
+                          {t("students.empty")}
+                        </td>
+                      </tr>
+                    ) : (
+                      blockB.map((student, index) => renderStudentRow(student, index))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>

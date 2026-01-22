@@ -84,13 +84,14 @@ export default function HistoryList() {
     alert(`${message}${suffix}`);
   };
 
-  const clearHistoryForStudent = async (studentId: string) => {
+  const clearHistoryForOwner = async ({ studentId, userId }: { studentId?: string | null; userId?: string | null }) => {
     if (clearing) return;
+    if (!studentId && !userId) return;
     setClearing(true);
     try {
       const response = await authedFetch('/api/admin/history/clear', {
         method: 'POST',
-        body: JSON.stringify({ mode: 'range', student_id: studentId }),
+        body: JSON.stringify({ mode: 'range', student_id: studentId, user_id: userId }),
       });
       const result = await response.json();
       if (!response.ok) {
@@ -171,9 +172,9 @@ export default function HistoryList() {
   };
 
   const handleDeleteAll = async () => {
-    if (!pendingDelete?.student_id) return;
+    if (!pendingDelete) return;
     try {
-      await clearHistoryForStudent(pendingDelete.student_id);
+      await clearHistoryForOwner({ studentId: pendingDelete.student_id, userId: pendingDelete.user_id });
     } finally {
       setPendingDelete(null);
     }
@@ -412,22 +413,22 @@ export default function HistoryList() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl dark:bg-slate-800">
             <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-              {pendingDelete.student_id ? t("history.deleteChoiceTitle") : t("history.deleteConfirm")}
+              {(pendingDelete.student_id || pendingDelete.user_id) ? t("history.deleteChoiceTitle") : t("history.deleteConfirm")}
             </h3>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              {pendingDelete.student_id
+              {(pendingDelete.student_id || pendingDelete.user_id)
                 ? t("history.deleteChoiceBody", { name: pendingDelete.full_name })
                 : t("history.deleteConfirm")}
             </p>
 
             <div className="mt-4 flex flex-col gap-2">
-              {pendingDelete.student_id && (
+              {(pendingDelete.student_id || pendingDelete.user_id) && (
                 <>
                   <button
                     type="button"
                     onClick={handleDeleteSingle}
                     disabled={clearing}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 disabled:opacity-70 disabled:cursor-not-allowed dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100 dark:hover:bg-slate-900/60"
+                    className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     {t("history.deleteOnly")}
                   </button>

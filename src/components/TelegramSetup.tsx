@@ -59,7 +59,7 @@ export default function TelegramSetup() {
           href={link}
           target="_blank"
           data-focus-target="telegram"
-          className="telegram-pulse relative block rounded-xl bg-blue-600 text-white font-bold text-center py-3 shadow-lg shadow-blue-500/25 hover:bg-blue-700 ring-2 ring-blue-500/35 dark:ring-blue-400/35"
+          className="relative block rounded-xl bg-blue-600 text-white font-bold text-center py-3 shadow-lg shadow-blue-500/25 hover:bg-blue-700 ring-2 ring-blue-400/60 animate-pulse dark:ring-blue-300/60"
         >
           {t("telegram.connectButton")}
         </a>

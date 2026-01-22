@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { mode, from, to, room, student_id, id } = await req.json();
+    const { mode, from, to, room, student_id, user_id, id } = await req.json();
 
     // First, count the records that will be deleted
     let countQuery = supabaseAdmin.from("history").select("id", { count: "exact", head: true });
@@ -47,7 +47,11 @@ export async function POST(req: NextRequest) {
       if (fromIso) countQuery = countQuery.gte("finished_at", fromIso);
       if (toIso) countQuery = countQuery.lte("finished_at", toIso);
       if (room) countQuery = countQuery.eq("room", room);
-      if (student_id) countQuery = countQuery.eq("student_id", student_id);
+      if (student_id) {
+        countQuery = countQuery.eq("student_id", student_id);
+      } else if (user_id) {
+        countQuery = countQuery.eq("user_id", user_id);
+      }
     }
 
     const { count, error: countError } = await countQuery;
@@ -80,7 +84,11 @@ export async function POST(req: NextRequest) {
       if (fromIso) deleteQuery = deleteQuery.gte("finished_at", fromIso);
       if (toIso) deleteQuery = deleteQuery.lte("finished_at", toIso);
       if (room) deleteQuery = deleteQuery.eq("room", room);
-      if (student_id) deleteQuery = deleteQuery.eq("student_id", student_id);
+      if (student_id) {
+        deleteQuery = deleteQuery.eq("student_id", student_id);
+      } else if (user_id) {
+        deleteQuery = deleteQuery.eq("user_id", user_id);
+      }
     }
 
     const { data, error: deleteError } = await deleteQuery.select("id");
