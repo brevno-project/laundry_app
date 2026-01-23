@@ -20,14 +20,18 @@ export default function TelegramBanner({ onGoToSettings }: TelegramBannerProps) 
   const [shouldShow, setShouldShow] = useState(false);
 
   // Отслеживаем изменения user - показываем баннер при входе
+  const getDismissKey = () => {
+    if (user?.student_id) return `telegramBannerDismissed:${user.student_id}`;
+    if (user?.id) return `telegramBannerDismissed:${user.id}`;
+    return null;
+  };
+
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const dismissalKey = user?.student_id
-      ? `telegramBannerDismissed:${user.student_id}`
-      : null;
+    const dismissalKey = getDismissKey();
     const wasDismissed =
-      dismissalKey && sessionStorage.getItem(dismissalKey) === "1";
+      dismissalKey ? sessionStorage.getItem(dismissalKey) === "1" : false;
 
     if (user && !user.telegram_chat_id && !isAdmin && !wasDismissed) {
       setShouldShow(true);
@@ -47,15 +51,21 @@ export default function TelegramBanner({ onGoToSettings }: TelegramBannerProps) 
   }
 
   const handleDismiss = () => {
-    if (typeof window !== "undefined" && user?.student_id) {
-      sessionStorage.setItem(`telegramBannerDismissed:${user.student_id}`, "1");
+    if (typeof window !== "undefined") {
+      const dismissalKey = getDismissKey();
+      if (dismissalKey) {
+        sessionStorage.setItem(dismissalKey, "1");
+      }
     }
     setDismissed(true);
   };
 
   const handleGoToSettings = () => {
-    if (typeof window !== "undefined" && user?.student_id) {
-      sessionStorage.setItem(`telegramBannerDismissed:${user.student_id}`, "1");
+    if (typeof window !== "undefined") {
+      const dismissalKey = getDismissKey();
+      if (dismissalKey) {
+        sessionStorage.setItem(dismissalKey, "1");
+      }
     }
     setDismissed(true);
     onGoToSettings();
