@@ -12,6 +12,7 @@ import {
   DeleteIcon,
   PeopleIcon,
   CloseIcon,
+  WashingSpinner,
 } from "@/components/Icons";
 
 interface Props {
@@ -26,6 +27,7 @@ interface Props {
   onReset: (s: Student) => void;
   onAddToQueue: (s: Student) => void;
   onToggleAdmin: (id: string, makeAdmin: boolean) => void;
+  loadingAction?: { action: "ban" | "toggleAdmin"; studentId: string } | null;
 }
 
 type ActionKey =
@@ -48,6 +50,7 @@ export default function ActionMenu({
   onReset,
   onAddToQueue,
   onToggleAdmin,
+  loadingAction,
 }: Props) {
   const [open, setOpen] = useState(false);
   const { t } = useUi();
@@ -63,6 +66,11 @@ export default function ActionMenu({
       ? student.telegram_chat_id.trim()
       : "";
   const hasTelegram = !!telegramChatId && !student.is_banned;
+  const isBanActionLoading =
+    loadingAction?.action === "ban" && loadingAction.studentId === student.id;
+  const isToggleAdminLoading =
+    loadingAction?.action === "toggleAdmin" &&
+    loadingAction.studentId === student.id;
 
   if (targetIsSuperAdmin && !isSelf) return null;
 
@@ -289,6 +297,8 @@ export default function ActionMenu({
                   <SheetButton
                     icon={<CheckIcon className="h-4 w-4" />}
                     label={t("admin.action.unban")}
+                    loading={isBanActionLoading}
+                    disabled={isBanActionLoading}
                     onClick={() => {
                       onUnban(student.id);
                       setOpen(false);
@@ -307,6 +317,8 @@ export default function ActionMenu({
                       ? t("admin.action.removeAdmin")
                       : t("admin.action.makeAdmin")
                   }
+                  loading={isToggleAdminLoading}
+                  disabled={isToggleAdminLoading}
                   onClick={() => {
                     onToggleAdmin(student.id, !student.is_admin);
                     setOpen(false);
@@ -359,24 +371,29 @@ function SheetButton({
   label,
   onClick,
   danger = false,
+  loading = false,
+  disabled = false,
 }: {
   icon: ReactNode;
   label: string;
   onClick: () => void;
   danger?: boolean;
+  loading?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center gap-2 border-b border-slate-200 px-4 py-2.5 text-left text-sm transition-colors last:border-b-0 ${
+      disabled={disabled}
+      className={`flex w-full items-center gap-2 border-b border-slate-200 px-4 py-2.5 text-left text-sm transition-colors last:border-b-0 disabled:cursor-not-allowed disabled:opacity-70 ${
         danger
           ? "bg-white text-rose-600 hover:bg-rose-50 dark:bg-slate-800 dark:text-rose-300 dark:hover:bg-rose-900/20"
           : "bg-white text-gray-800 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
       }`}
     >
       <span className={danger ? "text-rose-500 dark:text-rose-300" : "text-gray-500 dark:text-slate-400"}>
-        {icon}
+        {loading ? <WashingSpinner className="h-4 w-4" /> : icon}
       </span>
       <span className="font-medium">{label}</span>
     </button>

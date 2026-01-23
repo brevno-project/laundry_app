@@ -154,7 +154,7 @@ type LaundryContextType = {
 
   // ? УДАЛЕНО: adminLogin - админы входят через loginStudent
 
-  logoutStudent: () => void;
+  logoutStudent: (options?: { keepBanNotice?: boolean }) => Promise<void>;
 
   resetStudentRegistration: (studentId: string) => Promise<void>;
 
@@ -364,6 +364,34 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     lastErrorAt: 0,
 
   });
+  const statusCheckRef = useRef({ inFlight: false, lastRunAt: 0 });
+
+  const clearLocalSession = (options?: { keepBanNotice?: boolean }) => {
+    const keepBanNotice = options?.keepBanNotice;
+    setUser(null);
+    setIsAdmin(false);
+    setIsSuperAdmin(false);
+    setIsCleanupAdmin(false);
+    setIsNewUser(false);
+    setNeedsClaim(false);
+    setQueue([]);
+    setHistory([]);
+    setHistoryHasMore(false);
+    setStudents([]);
+    setMachineState(get_local_machine_state());
+    setIsLoading(false);
+
+    try {
+      localStorage.removeItem("laundryUser");
+      localStorage.removeItem("laundryIsNewUser");
+      if (!keepBanNotice) {
+        localStorage.removeItem("banReason");
+        localStorage.removeItem("banNotice");
+      }
+    } catch (error) {
+      console.warn("?? Storage cleanup error:", error);
+    }
+  };
 
 
 
@@ -1161,7 +1189,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
               if (typeof window !== "undefined") {
                 localStorage.setItem("banReason", banReason);
               }
-              void logoutStudent();
+              void logoutStudent({ keepBanNotice: true });
               return;
             }
 
@@ -1348,46 +1376,25 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
       if (!me) {
-
         console.log('?? User authenticated but not in students table');
-
-        setUser({ id: uid } as any);
-
-        setIsAdmin(false);
-
-        setIsSuperAdmin(false);
-        setIsCleanupAdmin(false);
-
+        await supabase.auth.signOut({ scope: 'local' });
+        clearLocalSession();
         return;
-
       }
-
-
 
       console.log('? User data loaded:', { full_name: me.full_name, is_admin: me.is_admin, is_super_admin: me.is_super_admin, is_cleanup_admin: me.is_cleanup_admin, avatar_style: me.avatar_style, avatar_seed: me.avatar_seed });
 
 
 
       if (me.is_banned) {
-
         const banReason = me.ban_reason || "Не указана";
-
         if (typeof window !== "undefined") {
           localStorage.setItem("banReason", banReason);
         }
 
-
-
         await supabase.auth.signOut({ scope: 'local' });
-        setUser(null);
-
-        setIsAdmin(false);
-
-        setIsSuperAdmin(false);
-        setIsCleanupAdmin(false);
-
+        clearLocalSession({ keepBanNotice: true });
         return;
-
       }
 
 
@@ -2499,67 +2506,95 @@ const loginStudent = async (
 
 
   // Logout student
-  const logoutStudent = async () => {
-    try {
-      if (supabase) {
-        const { error } = await supabase.auth.signOut({ scope: 'local' });
-        if (error) {
-          console.warn('?? SignOut error:', error);
-        }
+  const logoutStudent = async (options?: { keepBanNotice?: boolean }) => {
+  try {
+    if (supabase) {
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
+      if (error) {
+        console.warn('?? SignOut error:', error);
       }
-    } catch (error) {
-      console.warn('?? SignOut error:', error);
-    } finally {
-      // ? Всегда очищаем локальное состояние
-
-      setUser(null);
-
-      setIsAdmin(false);
-
-      setIsSuperAdmin(false);
-      setIsCleanupAdmin(false);
-
-      setIsNewUser(false);
-      setNeedsClaim(false);
-      setQueue([]);
-      setHistory([]);
-      setHistoryHasMore(false);
-      setStudents([]);
-      setMachineState(get_local_machine_state());
-      setIsLoading(false);
+    }
+  } catch (error) {
+    console.warn('?? SignOut error:', error);
+  } finally {
+    // ? ?????????? ??????? ???????????????? ???????????
+    clearLocalSession(options);
+    console.log('? User logged out successfully');
+  }
+};
 
 
 
-      // ? Безопасная очистка localStorage
+
+
+
+  useEffect(() => {
+    if (!authReady || !isSupabaseConfigured || !supabase || !user?.id) return;
+    if (typeof window === "undefined") return;
+
+    let cancelled = false;
+
+    const runCheck = async () => {
+      if (cancelled || statusCheckRef.current.inFlight) return;
+      const now = Date.now();
+      if (now - statusCheckRef.current.lastRunAt < 3000) return;
+
+      statusCheckRef.current.inFlight = true;
+      statusCheckRef.current.lastRunAt = now;
 
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const uid = session?.user?.id;
+        if (!uid) return;
 
-        localStorage.removeItem('laundryUser');
+        const { data: studentData, error } = await supabase
+          .from("students")
+          .select("id, is_banned, ban_reason")
+          .eq("user_id", uid)
+          .maybeSingle();
 
-        localStorage.removeItem('laundryIsNewUser');
+        if (error) {
+          console.warn("?? Status check failed:", error);
+          return;
+        }
 
-        localStorage.removeItem('banReason');
-        localStorage.removeItem('banNotice');
+        if (!studentData) {
+          await supabase.auth.signOut({ scope: 'local' });
+          clearLocalSession();
+          return;
+        }
 
-      } catch (error) {
-
-        console.warn('?? Storage cleanup error:', error);
-
+        if (studentData.is_banned) {
+          const banReason = studentData.ban_reason || "Не указана";
+          localStorage.setItem("banReason", banReason);
+          await supabase.auth.signOut({ scope: 'local' });
+          clearLocalSession({ keepBanNotice: true });
+        }
+      } finally {
+        statusCheckRef.current.inFlight = false;
       }
+    };
 
-      
+    const intervalId = window.setInterval(() => runCheck(), 10000);
 
-      console.log('? User logged out successfully');
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        runCheck();
+      }
+    };
 
-      
+    window.addEventListener("focus", handleVisibility);
+    document.addEventListener("visibilitychange", handleVisibility);
 
-    }
+    runCheck();
 
-  };
-
-
-
-
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", handleVisibility);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [authReady, isSupabaseConfigured, supabase, user?.id]);
 
 // Admin: Reset student registration
 
@@ -3207,7 +3242,7 @@ const joinQueue = async (
           localStorage.setItem("banReason", banReason);
         }
 
-        await logoutStudent();
+        await logoutStudent({ keepBanNotice: true });
 
         return;
 
@@ -3245,7 +3280,7 @@ const joinQueue = async (
           localStorage.setItem("banReason", banReason);
         }
 
-        await logoutStudent();
+        await logoutStudent({ keepBanNotice: true });
 
         return;
 

@@ -44,6 +44,14 @@ export default function AdminPanel() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showAddToQueue, setShowAddToQueue] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [isBanning, setIsBanning] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isAddingToQueue, setIsAddingToQueue] = useState(false);
+  const [actionLoading, setActionLoading] = useState<{
+    action: "ban" | "toggleAdmin";
+    studentId: string;
+  } | null>(null);
 
   // Queue params
   const [queueWashCount, setQueueWashCount] = useState(1);
@@ -177,8 +185,9 @@ export default function AdminPanel() {
   };
 
   const handleResetStudent = async () => {
-    if (!selectedStudent) return;
+    if (!selectedStudent || isResetting) return;
 
+    setIsResetting(true);
     try {
       await resetStudentRegistration(selectedStudent.id);
       setShowResetConfirm(false);
@@ -186,6 +195,8 @@ export default function AdminPanel() {
       alertWithCheck(t("admin.resetSuccess"));
     } catch (err: any) {
       alertWithCheck(t("admin.resetError"));
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -217,8 +228,9 @@ export default function AdminPanel() {
   };
 
   const handleBanStudent = async () => {
-    if (!selectedStudent) return;
+    if (!selectedStudent || isBanning) return;
 
+    setIsBanning(true);
     try {
       await banStudent(selectedStudent.id, banReason || t("ban.reasonUnknown"));
       setShowBanStudent(false);
@@ -227,21 +239,28 @@ export default function AdminPanel() {
       alertWithCheck(t("admin.banSuccess"));
     } catch (err: any) {
       alertWithCheck(t("admin.error", { message: err.message }));
+    } finally {
+      setIsBanning(false);
     }
   };
 
   const handleUnbanStudent = async (studentId: string) => {
+    if (actionLoading?.action === "ban") return;
+    setActionLoading({ action: "ban", studentId });
     try {
       await unbanStudent(studentId);
       alertWithCheck(t("admin.unbanSuccess"));
     } catch (err: any) {
       alertWithCheck(t("admin.error", { message: err.message }));
+    } finally {
+      setActionLoading(null);
     }
   };
 
   const handleDeleteStudent = async () => {
-    if (!selectedStudent) return;
+    if (!selectedStudent || isDeleting) return;
 
+    setIsDeleting(true);
     try {
       await deleteStudent(selectedStudent.id);
       setShowDeleteConfirm(false);
@@ -249,12 +268,15 @@ export default function AdminPanel() {
       alertWithCheck(t("admin.deleteSuccess"));
     } catch (err: any) {
       alertWithCheck(t("admin.error", { message: err.message }));
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   const handleAddToQueue = async () => {
-    if (!selectedStudent) return;
+    if (!selectedStudent || isAddingToQueue) return;
 
+    setIsAddingToQueue(true);
     try {
       await adminAddToQueue(
         selectedStudent.room || undefined,
@@ -269,10 +291,14 @@ export default function AdminPanel() {
       alertWithCheck(t("admin.addQueueSuccess"));
     } catch (err: any) {
       alertWithCheck(t("admin.error", { message: err.message }));
+    } finally {
+      setIsAddingToQueue(false);
     }
   };
 
   const handleToggleAdmin = async (studentId: string, makeAdmin: boolean) => {
+    if (actionLoading?.action === "toggleAdmin") return;
+    setActionLoading({ action: "toggleAdmin", studentId });
     try {
       await toggleAdminStatus(studentId, makeAdmin);
       alertWithCheck(
@@ -280,6 +306,8 @@ export default function AdminPanel() {
       );
     } catch (error: any) {
       alertWithCheck(t("admin.error", { message: error.message }));
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -506,6 +534,7 @@ export default function AdminPanel() {
                       onReset={openResetConfirm}
                       onAddToQueue={openAddToQueueModal}
                       onToggleAdmin={handleToggleAdmin}
+                      loadingAction={actionLoading}
                     />
                   </div>
                 </div>
@@ -624,16 +653,25 @@ export default function AdminPanel() {
             <button
               type="button"
               onClick={() => setShowResetConfirm(false)}
-              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
+              disabled={isResetting}
+              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {t("common.cancel")}
             </button>
             <button
               type="button"
               onClick={handleResetStudent}
-              className="flex-1 rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700"
+              disabled={isResetting}
+              className="flex-1 rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {t("admin.resetAction")}
+              {isResetting ? (
+                <>
+                  <WashingSpinner className="w-4 h-4" />
+                  {t("common.loading")}
+                </>
+              ) : (
+                t("admin.resetAction")
+              )}
             </button>
           </div>
         </Modal>
@@ -655,16 +693,25 @@ export default function AdminPanel() {
             <button
               type="button"
               onClick={() => setShowBanStudent(false)}
-              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
+              disabled={isBanning}
+              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {t("common.cancel")}
             </button>
             <button
               type="button"
               onClick={handleBanStudent}
-              className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+              disabled={isBanning}
+              className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {t("admin.banAction")}
+              {isBanning ? (
+                <>
+                  <WashingSpinner className="w-4 h-4" />
+                  {t("common.loading")}
+                </>
+              ) : (
+                t("admin.banAction")
+              )}
             </button>
           </div>
         </Modal>
@@ -683,16 +730,25 @@ export default function AdminPanel() {
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(false)}
-              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
+              disabled={isDeleting}
+              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {t("common.cancel")}
             </button>
             <button
               type="button"
               onClick={handleDeleteStudent}
-              className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+              disabled={isDeleting}
+              className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {t("admin.deleteAction")}
+              {isDeleting ? (
+                <>
+                  <WashingSpinner className="w-4 h-4" />
+                  {t("common.loading")}
+                </>
+              ) : (
+                t("admin.deleteAction")
+              )}
             </button>
           </div>
         </Modal>
@@ -764,16 +820,25 @@ export default function AdminPanel() {
             <button
               type="button"
               onClick={() => setShowAddToQueue(false)}
-              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
+              disabled={isAddingToQueue}
+              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {t("common.cancel")}
             </button>
             <button
               type="button"
               onClick={handleAddToQueue}
-              className="flex-1 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700"
+              disabled={isAddingToQueue}
+              className="flex-1 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {t("admin.addQueueAction")}
+              {isAddingToQueue ? (
+                <>
+                  <WashingSpinner className="w-4 h-4" />
+                  {t("common.loading")}
+                </>
+              ) : (
+                t("admin.addQueueAction")
+              )}
             </button>
           </div>
         </Modal>
