@@ -1140,6 +1140,41 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
   }
 
+    if (user?.student_id) {
+      const statusSub = supabase
+        .channel("students-status-updates")
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "students",
+            filter: `id=eq.${user.student_id}`,
+          },
+          (payload) => {
+            const isBanned = !!payload.new.is_banned;
+            const isRegistered = payload.new.is_registered !== false;
+            const hasUserId = !!payload.new.user_id;
+
+            if (isBanned) {
+              const banReason = payload.new.ban_reason || "Не указана";
+              if (typeof window !== "undefined") {
+                localStorage.setItem("banReason", banReason);
+              }
+              void logoutStudent();
+              return;
+            }
+
+            if (!isRegistered || !hasUserId) {
+              void logoutStudent();
+            }
+          }
+        )
+        .subscribe();
+
+      subs.push(statusSub);
+    }
+
 
 
   // --- CLEANUP ---
