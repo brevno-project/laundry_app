@@ -2517,7 +2517,7 @@ const loginStudent = async (
   } catch (error) {
     console.warn('?? SignOut error:', error);
   } finally {
-    // ? ?????????? ??????? ???????????????? ???????????
+    // ? ?????????? ????? ????????? ???????????
     clearLocalSession(options);
     console.log('? User logged out successfully');
   }
@@ -2534,8 +2534,11 @@ const loginStudent = async (
 
     let cancelled = false;
 
+    const client = supabase;
+
     const runCheck = async () => {
       if (cancelled || statusCheckRef.current.inFlight) return;
+      if (!client) return;
       const now = Date.now();
       if (now - statusCheckRef.current.lastRunAt < 3000) return;
 
@@ -2543,11 +2546,11 @@ const loginStudent = async (
       statusCheckRef.current.lastRunAt = now;
 
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await client.auth.getSession();
         const uid = session?.user?.id;
         if (!uid) return;
 
-        const { data: studentData, error } = await supabase
+        const { data: studentData, error } = await client
           .from("students")
           .select("id, is_banned, ban_reason")
           .eq("user_id", uid)
@@ -2559,7 +2562,7 @@ const loginStudent = async (
         }
 
         if (!studentData) {
-          await supabase.auth.signOut({ scope: 'local' });
+          await client.auth.signOut({ scope: 'local' });
           clearLocalSession();
           return;
         }
@@ -2567,7 +2570,7 @@ const loginStudent = async (
         if (studentData.is_banned) {
           const banReason = studentData.ban_reason || "Не указана";
           localStorage.setItem("banReason", banReason);
-          await supabase.auth.signOut({ scope: 'local' });
+          await client.auth.signOut({ scope: 'local' });
           clearLocalSession({ keepBanNotice: true });
         }
       } finally {
