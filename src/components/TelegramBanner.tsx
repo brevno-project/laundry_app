@@ -21,8 +21,14 @@ export default function TelegramBanner({ onGoToSettings }: TelegramBannerProps) 
 
   // Отслеживаем изменения user - показываем баннер при входе
   const getDismissKey = () => {
-    if (user?.student_id) return `telegramBannerDismissed:${user.student_id}`;
     if (user?.id) return `telegramBannerDismissed:${user.id}`;
+    if (user?.student_id) return `telegramBannerDismissed:${user.student_id}`;
+    return null;
+  };
+
+  const getShownKey = () => {
+    if (user?.id) return `telegramBannerShown:${user.id}`;
+    if (user?.student_id) return `telegramBannerShown:${user.student_id}`;
     return null;
   };
 
@@ -30,16 +36,24 @@ export default function TelegramBanner({ onGoToSettings }: TelegramBannerProps) 
     if (typeof window === "undefined") return;
 
     const dismissalKey = getDismissKey();
+    const shownKey = getShownKey();
     const wasDismissed =
       dismissalKey ? sessionStorage.getItem(dismissalKey) === "1" : false;
+    const wasShown =
+      shownKey ? sessionStorage.getItem(shownKey) === "1" : false;
 
     if (user && !user.telegram_chat_id && !isAdmin && !wasDismissed) {
-      setShouldShow(true);
-      setDismissed(false);
+      if (!shouldShow && !wasShown && shownKey) {
+        sessionStorage.setItem(shownKey, "1");
+      }
+      if (!wasShown || shouldShow) {
+        setShouldShow(true);
+        setDismissed(false);
+      }
     } else {
       setShouldShow(false);
     }
-  }, [user, isAdmin]);
+  }, [user, isAdmin, shouldShow]);
 
   // Не показываем если:
   // - Пользователь не вошел
