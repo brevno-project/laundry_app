@@ -29,6 +29,7 @@ export default function Home() {
   
   const [activeTab, setActiveTab] = React.useState("main");
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+  const [showAuthFallback, setShowAuthFallback] = React.useState(false);
   
   const [showScrollButton, setShowScrollButton] = React.useState(false);
   const [scrollTarget, setScrollTarget] = React.useState<string | null>(null);
@@ -55,6 +56,19 @@ export default function Home() {
       setDidSyncLanguageFromDb(false);
     }
   }, [user, authReady]);
+
+  React.useEffect(() => {
+    if (!authReady) {
+      setShowAuthFallback(false);
+      return;
+    }
+    if (user) {
+      setShowAuthFallback(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setShowAuthFallback(true), 700);
+    return () => window.clearTimeout(timer);
+  }, [authReady, user]);
 
   React.useEffect(() => {
     if (!authReady) return;
@@ -384,7 +398,14 @@ export default function Home() {
             {/* Логика входа */}
             {!user ? (
               <>
-                <StudentAuth />
+                {showAuthFallback ? (
+                  <StudentAuth />
+                ) : (
+                  <div className="flex items-center justify-center py-12 text-slate-600 dark:text-slate-300">
+                    <WashingSpinner className="mr-2 h-5 w-5" />
+                    {t("common.loading")}
+                  </div>
+                )}
               </>
             ) : (
               <>
