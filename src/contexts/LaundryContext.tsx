@@ -403,6 +403,31 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
   }, [isSupabaseConfigured, supabase]);
 
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) return;
+
+    const refreshVisible = () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") {
+        return;
+      }
+      fetchQueue();
+      fetchMachineState();
+      fetchHistory();
+      loadStudents();
+    };
+
+    const handleVisibility = () => refreshVisible();
+    const handleOnline = () => refreshVisible();
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("online", handleOnline);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("online", handleOnline);
+    };
+  }, [isSupabaseConfigured, supabase, isAdmin, isSuperAdmin, isCleanupAdmin, user?.can_view_students]);
+
 
 
   const optimisticUpdateQueueItem = (queueItemId: string, updates: Partial<QueueItem>) => {

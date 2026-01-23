@@ -692,7 +692,31 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       .from("apartments")
       .select("id, code, block")
       .order("code", { ascending: true });
-    setApartments((data as Apartment[]) || []);
+
+    const apartmentsList = (data as Apartment[]) || [];
+
+    const { data: studentRows } = await supabase
+      .from("students")
+      .select("apartment_id, room");
+
+    const activeApartmentIds = new Set<string>();
+    const activeRoomCodes = new Set<string>();
+
+    (studentRows || []).forEach((student: any) => {
+      if (student.apartment_id) {
+        activeApartmentIds.add(student.apartment_id);
+      }
+      if (typeof student.room === "string" && student.room.trim()) {
+        activeRoomCodes.add(student.room.trim().toUpperCase());
+      }
+    });
+
+    const filtered = apartmentsList.filter((apt) => {
+      const aptCode = apt.code?.toUpperCase() || "";
+      return activeApartmentIds.has(apt.id) || (aptCode && activeRoomCodes.has(aptCode));
+    });
+
+    setApartments(filtered);
   };
 
   const loadResults = async () => {

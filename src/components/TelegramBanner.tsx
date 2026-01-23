@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import { useUi } from '@/contexts/UiContext';
 import { TelegramIcon } from '@/components/Icons';
@@ -18,6 +18,7 @@ export default function TelegramBanner({ onGoToSettings }: TelegramBannerProps) 
   const { t } = useUi();
   const [dismissed, setDismissed] = useState(false);
   const [shouldShow, setShouldShow] = useState(false);
+  const lastUserKeyRef = useRef<string | null>(null);
 
   // Отслеживаем изменения user - показываем баннер при входе
   const getDismissKey = () => {
@@ -35,6 +36,15 @@ export default function TelegramBanner({ onGoToSettings }: TelegramBannerProps) 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    const userKey = getShownKey();
+    if (userKey && lastUserKeyRef.current !== userKey) {
+      lastUserKeyRef.current = userKey;
+      setDismissed(false);
+      setShouldShow(false);
+    } else if (!userKey) {
+      lastUserKeyRef.current = null;
+    }
+
     const dismissalKey = getDismissKey();
     const shownKey = getShownKey();
     const wasDismissed =
@@ -42,18 +52,26 @@ export default function TelegramBanner({ onGoToSettings }: TelegramBannerProps) 
     const wasShown =
       shownKey ? sessionStorage.getItem(shownKey) === "1" : false;
 
-    if (user && !user.telegram_chat_id && !isAdmin && !wasDismissed) {
-      if (!shouldShow && !wasShown && shownKey) {
-        sessionStorage.setItem(shownKey, "1");
-      }
-      if (!wasShown || shouldShow) {
-        setShouldShow(true);
-        setDismissed(false);
-      }
+    if (dismissed || wasDismissed) {
+      setShouldShow(false);
+      return;
+    }
+
+    if (user && !user.telegram_chat_id && !isAdmin && (!wasShown || shouldShow)) {
+      setShouldShow(true);
     } else {
       setShouldShow(false);
     }
-  }, [user, isAdmin, shouldShow]);
+  }, [user, isAdmin, shouldShow, dismissed]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!shouldShow) return;
+    const shownKey = getShownKey();
+    if (shownKey) {
+      sessionStorage.setItem(shownKey, "1");
+    }
+  }, [shouldShow, user?.id, user?.student_id]);
 
   // Не показываем если:
   // - Пользователь не вошел
