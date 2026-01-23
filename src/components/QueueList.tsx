@@ -493,7 +493,7 @@ export default function QueueList() {
                     <div className="grid grid-cols-3 gap-2 mb-2 text-sm">
                       <div className="flex flex-col">
                         <span className="text-xs text-gray-600">{t("queue.label.washCount")}</span>
-                        <span className="text-lg font-bold text-blue-700">{item.wash_count || 1}</span>
+                        <span className="text-lg font-bold text-blue-700 dark:text-white">{item.wash_count || 1}</span>
                       </div>
                       <div className="flex flex-col">
                         <span className="text-xs text-gray-600">{t("queue.label.payment")}</span>

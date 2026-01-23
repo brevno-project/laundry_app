@@ -21,9 +21,17 @@ export default function TelegramBanner({ onGoToSettings }: TelegramBannerProps) 
 
   // Отслеживаем изменения user - показываем баннер при входе
   useEffect(() => {
-    if (user && !user.telegram_chat_id && !isAdmin) {
+    if (typeof window === "undefined") return;
+
+    const dismissalKey = user?.student_id
+      ? `telegramBannerDismissed:${user.student_id}`
+      : null;
+    const wasDismissed =
+      dismissalKey && sessionStorage.getItem(dismissalKey) === "1";
+
+    if (user && !user.telegram_chat_id && !isAdmin && !wasDismissed) {
       setShouldShow(true);
-      setDismissed(false); // Сбрасываем dismissed при новом входе
+      setDismissed(false);
     } else {
       setShouldShow(false);
     }
@@ -39,10 +47,16 @@ export default function TelegramBanner({ onGoToSettings }: TelegramBannerProps) 
   }
 
   const handleDismiss = () => {
+    if (typeof window !== "undefined" && user?.student_id) {
+      sessionStorage.setItem(`telegramBannerDismissed:${user.student_id}`, "1");
+    }
     setDismissed(true);
   };
 
   const handleGoToSettings = () => {
+    if (typeof window !== "undefined" && user?.student_id) {
+      sessionStorage.setItem(`telegramBannerDismissed:${user.student_id}`, "1");
+    }
     setDismissed(true);
     onGoToSettings();
   };

@@ -498,15 +498,15 @@ export default function StudentsList() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setStayFilter("weekends")}
+                    onClick={() => setStayFilter("unknown")}
                     className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
-                      stayFilter === "weekends"
+                      stayFilter === "unknown"
                         ? "bg-blue-600 text-white border-blue-600"
                         : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
                     }`}
-                    aria-pressed={stayFilter === "weekends"}
+                    aria-pressed={stayFilter === "unknown"}
                   >
-                    {t("students.stay.weekends")}
+                    {t("students.stay.unknown")}
                   </button>
                   <button
                     type="button"
@@ -522,15 +522,15 @@ export default function StudentsList() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setStayFilter("unknown")}
+                    onClick={() => setStayFilter("weekends")}
                     className={`w-full rounded-full px-3 py-1 text-xs font-semibold border sm:w-auto ${
-                      stayFilter === "unknown"
+                      stayFilter === "weekends"
                         ? "bg-blue-600 text-white border-blue-600"
                         : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
                     }`}
-                    aria-pressed={stayFilter === "unknown"}
+                    aria-pressed={stayFilter === "weekends"}
                   >
-                    {t("students.stay.unknown")}
+                    {t("students.stay.weekends")}
                   </button>
                 </div>
               </div>

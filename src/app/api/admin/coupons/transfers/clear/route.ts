@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
     const { caller, error: authError } = await getCaller(req);
     if (authError) return authError;
 
-    if (!caller.is_admin && !caller.is_super_admin) {
+    if (!caller.is_super_admin) {
       return NextResponse.json({ error: "Not allowed" }, { status: 403 });
     }
 

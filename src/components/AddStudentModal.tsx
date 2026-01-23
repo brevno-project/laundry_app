@@ -107,7 +107,7 @@ export default function AddStudentModal({ onClose }: AddStudentModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white border border-slate-200 dark:bg-slate-800 dark:border-slate-700 rounded-lg p-6 max-w-md w-full">
+      <div className="bg-white border border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:ring-1 dark:ring-white/20 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_28px_60px_rgba(0,0,0,0.65)] rounded-lg p-6 max-w-md w-full">
         <h3 className="text-xl font-bold text-gray-900 mb-4 dark:text-slate-100">
           {t("students.addTitle")}
         </h3>
@@ -128,7 +128,7 @@ export default function AddStudentModal({ onClose }: AddStudentModalProps) {
               value={room}
               onChange={(event) => handleRoomChange(event.target.value)}
               placeholder={t("students.field.roomPlaceholder")}
-              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900 uppercase bg-white placeholder:text-gray-500 focus:outline-none focus:border-slate-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-slate-400"
+              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900 uppercase bg-white placeholder:text-gray-500 focus:outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-white dark:focus:ring-white/30"
               maxLength={4}
               disabled={isSubmitting}
             />
@@ -145,7 +145,7 @@ export default function AddStudentModal({ onClose }: AddStudentModalProps) {
               type="text"
               value={lastName}
               onChange={(event) => setLastName(event.target.value)}
-              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-slate-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-slate-400"
+              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-white dark:focus:ring-white/30"
               placeholder={t("students.field.lastNamePlaceholder")}
               disabled={isSubmitting}
             />
@@ -159,7 +159,7 @@ export default function AddStudentModal({ onClose }: AddStudentModalProps) {
               type="text"
               value={firstName}
               onChange={(event) => setFirstName(event.target.value)}
-              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-slate-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-slate-400"
+              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-white dark:focus:ring-white/30"
               placeholder={t("students.field.firstNamePlaceholder")}
               disabled={isSubmitting}
             />
@@ -173,7 +173,7 @@ export default function AddStudentModal({ onClose }: AddStudentModalProps) {
               type="text"
               value={middleName}
               onChange={(event) => setMiddleName(event.target.value)}
-              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-slate-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-slate-400"
+              className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-200 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-white dark:focus:ring-white/30"
               placeholder={t("students.field.middleNamePlaceholder")}
               disabled={isSubmitting}
             />

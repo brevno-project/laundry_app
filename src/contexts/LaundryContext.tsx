@@ -527,7 +527,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
   const addStudent = async (firstName: string, lastName: string, room?: string, middleName?: string) => {
-    if (!isAdmin && !isSuperAdmin) return;
+    if (!isAdmin && !isSuperAdmin && !isCleanupAdmin) return;
     if (!supabase || !isSupabaseConfigured) return;
 
     const token = await getFreshToken();
@@ -2704,7 +2704,7 @@ const resetStudentRegistration = async (studentId: string) => {
 
       try {
 
-        const todayStr = new Date().toISOString().slice(0, 10);
+        const todayStr = format(new Date(), 'yyyy-MM-dd');
 
         if (user?.student_id && !cleanupStateRef.current.inFlight) {
 
@@ -3211,7 +3211,7 @@ const joinQueue = async (
 
   // Определяем целевую дату
 
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const todayISO = format(new Date(), 'yyyy-MM-dd');
 
   const targetDate = chosenDate || todayISO;
 

@@ -1497,7 +1497,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               </div>
             </div>
           </div>
-          {(isAdmin || isSuperAdmin) && (
+          {isSuperAdmin && (
             <div className="flex flex-col items-end gap-2">
               <button
                 type="button"
@@ -1927,7 +1927,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 <CheckIcon className="w-5 h-5 text-emerald-600" />
                 <h3 className="text-lg font-bold text-gray-900">{t("cleanup.transfers.title")}</h3>
               </div>
-              {(isAdmin || isSuperAdmin) && (
+              {isSuperAdmin && (
                 <button
                   type="button"
                   onClick={handleClearTransfers}
