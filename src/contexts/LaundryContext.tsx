@@ -1383,8 +1383,9 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
         .maybeSingle();
 
-      if (!me && registeringRef.current) {
-        const linked = await waitForStudentLink(uid);
+      if (!me) {
+        const attempts = registeringRef.current ? 10 : 4;
+        const linked = await waitForStudentLink(uid, attempts, 250);
         if (linked) {
           me = linked;
           error = null;
@@ -1724,8 +1725,17 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       if (canViewStudents) {
 
         const { data: { session } } = await client.auth.getSession();
+        let accessToken = session?.access_token;
 
-        if (session?.access_token) {
+        if (!accessToken) {
+          const ok = await waitForSession();
+          if (ok) {
+            const { data: { session: retrySession } } = await client.auth.getSession();
+            accessToken = retrySession?.access_token;
+          }
+        }
+
+        if (accessToken) {
 
           const response = await fetch("/api/students/list", {
 
@@ -1733,7 +1743,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
             headers: {
 
-              Authorization: `Bearer ${session.access_token}`,
+              Authorization: `Bearer ${accessToken}`,
 
             },
 
@@ -2315,23 +2325,23 @@ const registerStudent = async (
 
 
 
-    // 4) Загрузка обновлённого студента (теперь безопасно - сессия есть)
+    // 4) Wait for user_id link
+    const linkedStudent = await waitForStudentLink(authUser.id, 10, 300);
 
-    const { data: updatedStudent } = await supabase
+    let updatedStudent = linkedStudent;
+    if (!updatedStudent || updatedStudent.id !== studentId) {
+      const { data } = await supabase
+        .from("students")
+        .select("id, first_name, last_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, is_cleanup_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, avatar_style, avatar_seed")
+        .eq("id", studentId)
+        .single();
 
-      .from("students")
+      updatedStudent = data;
+    }
 
-      .select("id, first_name, last_name, full_name, room, telegram_chat_id, is_admin, is_super_admin, is_cleanup_admin, can_view_students, is_banned, ban_reason, user_id, is_registered, created_at, avatar_style, avatar_seed")
-
-      .eq("id", studentId)
-
-      .single();
-
-
-
-    if (!updatedStudent) throw new Error("Ошибка загрузки данных студента");
-
-
+    if (!updatedStudent || updatedStudent.user_id !== authUser.id || !updatedStudent.is_registered) {
+      throw new Error("Account link not ready. Please try again.");
+    }
 
     // 5) Финализируем
 
@@ -2598,6 +2608,10 @@ const loginStudent = async (
         }
 
         if (!studentData) {
+          const linked = await waitForStudentLink(uid, 4, 250);
+          if (linked) {
+            return;
+          }
           await client.auth.signOut({ scope: 'local' });
           clearLocalSession();
           return;
