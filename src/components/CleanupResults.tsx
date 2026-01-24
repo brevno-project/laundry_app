@@ -522,7 +522,7 @@ const formatRecipientLabel = (recipient: ReminderRecipient) =>
   recipient.room ? `${recipient.name} (${recipient.room})` : recipient.name;
 
 export default function CleanupResults({ embedded = false }: CleanupResultsProps) {
-  const { user, isAdmin, isSuperAdmin, isCleanupAdmin } = useLaundry();
+  const { user, isAdmin, isSuperAdmin, isCleanupAdmin, students } = useLaundry();
   const { t, language } = useUi();
   const locale = language === "ru" ? "ru-RU" : language === "en" ? "en-US" : language === "ko" ? "ko-KR" : "ky-KG";
   const canManageCleanup = isAdmin || isSuperAdmin || isCleanupAdmin;
@@ -695,9 +695,38 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
     const apartmentsList = (data as Apartment[]) || [];
 
-    const { data: studentRows } = await supabase
-      .from("students")
-      .select("apartment_id, room");
+    let studentRows: Array<{ apartment_id: string | null; room: string | null }> = [];
+    let loadedFromApi = false;
+
+    if (canManageCleanup) {
+      try {
+        const response = await authedFetch("/api/students/list");
+        if (response.ok) {
+          const result = await response.json();
+          studentRows = (result.students || []).map((student: any) => ({
+            apartment_id: student.apartment_id ?? null,
+            room: student.room ?? null,
+          }));
+          loadedFromApi = true;
+        }
+      } catch (error) {
+        console.error("Failed to load students list for apartments", error);
+      }
+    }
+
+    if (!loadedFromApi) {
+      if (students && students.length > 0) {
+        studentRows = students.map((student) => ({
+          apartment_id: student.apartment_id ?? null,
+          room: student.room ?? null,
+        }));
+      } else {
+        const { data } = await supabase
+          .from("students")
+          .select("apartment_id, room");
+        studentRows = (data as Array<{ apartment_id: string | null; room: string | null }>) || [];
+      }
+    }
 
     const activeApartmentIds = new Set<string>();
     const activeRoomCodes = new Set<string>();
@@ -927,6 +956,12 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       isActive = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!canManageCleanup || !supabase) return;
+    if (!students || students.length === 0) return;
+    loadApartments();
+  }, [students?.length, canManageCleanup]);
 
   useEffect(() => {
     loadAdminBlock();

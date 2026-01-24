@@ -25,6 +25,7 @@ export default function StudentsList() {
   const { t } = useUi();
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [deletingStudentId, setDeletingStudentId] = useState<string | null>(null);
   const [editRoom, setEditRoom] = useState("");
   const [editFirstName, setEditFirstName] = useState("");
   const [editLastName, setEditLastName] = useState("");
@@ -156,6 +157,7 @@ export default function StudentsList() {
     if (!canDeleteStudents || !canManageStudent(student) || !canDeleteTarget(student)) return;
 
     if (!confirm(t("students.deleteConfirm", { name: student.full_name }))) return;
+    if (deletingStudentId === student.id) return;
 
     const studentName =
       student.full_name ||
@@ -165,6 +167,7 @@ export default function StudentsList() {
       "-";
 
     try {
+      setDeletingStudentId(student.id);
       await deleteStudent(student.id);
       setNotice({
         type: "success",
@@ -175,6 +178,8 @@ export default function StudentsList() {
         type: "error",
         message: t("students.deleteErrorToast", { name: studentName }),
       });
+    } finally {
+      setDeletingStudentId((current) => (current === student.id ? null : current));
     }
   };
 
@@ -304,14 +309,21 @@ export default function StudentsList() {
                 >
                   <EditIcon className="w-4 h-4 inline-block mr-1" />{t("students.edit")}
                 </button>
-                    {canDeleteStudents && canDeleteTarget(student) && (
-                      <button
-                        onClick={() => handleDeleteStudent(student)}
-                        className="btn btn-danger px-3 py-1 text-sm transition-transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
-                      >
-                        <DeleteIcon className="w-4 h-4 inline-block mr-1" />{t("students.delete")}
-                      </button>
-                    )}
+                  {canDeleteStudents && canDeleteTarget(student) && (
+                    <button
+                      onClick={() => handleDeleteStudent(student)}
+                      disabled={deletingStudentId === student.id}
+                      className="btn btn-danger px-3 py-1 text-sm inline-flex items-center justify-center gap-2 transition-transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+                      aria-busy={deletingStudentId === student.id}
+                    >
+                      {deletingStudentId === student.id ? (
+                        <WashingSpinner className="w-4 h-4" />
+                      ) : (
+                        <DeleteIcon className="w-4 h-4" />
+                      )}
+                      {t("students.delete")}
+                    </button>
+                  )}
               </div>
             )}
           </td>
@@ -438,9 +450,15 @@ export default function StudentsList() {
                   {canDeleteStudents && canDeleteTarget(student) && (
                     <button
                       onClick={() => handleDeleteStudent(student)}
-                      className="btn btn-danger px-2 py-1 text-xs transition-transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
+                      disabled={deletingStudentId === student.id}
+                      className="btn btn-danger px-2 py-1 text-xs inline-flex items-center justify-center transition-transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+                      aria-busy={deletingStudentId === student.id}
                     >
-                      <DeleteIcon className="w-3 h-3" />
+                      {deletingStudentId === student.id ? (
+                        <WashingSpinner className="w-3 h-3" />
+                      ) : (
+                        <DeleteIcon className="w-3 h-3" />
+                      )}
                     </button>
                   )}
                 </div>
