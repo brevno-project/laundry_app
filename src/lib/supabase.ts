@@ -29,14 +29,11 @@ export const supabase = isValidUrl(supabaseUrl) && supabaseAnonKey
 // Make supabase available in console for debugging (only on client side)
 if (typeof window !== 'undefined') {
   (window as any).supabase = supabase;
-  console.log('🔧 Supabase client available in console as window.supabase:', supabase);
 
   // Helper function to get supabase client safely
   (window as any).getSupabase = () => {
     if (!supabase) {
       console.error('❌ Supabase client not initialized. Check environment variables:');
-      console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-      console.log('NEXT_PUBLIC_SUPABASE_ANON_KEY:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '***' : 'MISSING');
       return null;
     }
     return supabase;

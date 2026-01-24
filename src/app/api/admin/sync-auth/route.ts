@@ -45,7 +45,6 @@ export async function POST(req: NextRequest) {
         });
 
       if (signUpErr) {
-        console.log("FAILED:", signUpErr);
         continue;
       }
 

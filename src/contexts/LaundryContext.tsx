@@ -89,8 +89,6 @@ async function waitForSession(): Promise<boolean> {
 
     if (data.session?.access_token) {
 
-      console.log('? Session established after', i + 1, 'attempts');
-
       return true;
 
     }
@@ -102,7 +100,6 @@ async function waitForSession(): Promise<boolean> {
   
 
   if (process.env.NODE_ENV !== "production") {
-    console.warn('⚠️ Session not established after 5 attempts');
   }
 
   return false;
@@ -417,7 +414,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem("banNotice");
       }
     } catch (error) {
-      console.warn("?? Storage cleanup error:", error);
     }
   };
 
@@ -442,8 +438,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-
-      console.log('?? Auth state changed:', event);
 
       refreshMyRole();
 
@@ -1053,8 +1047,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
         (payload) => {
 
-          console.log('?? Student avatar update received:', payload.new.id);
-
           // Update the student in the students array
 
           setStudents((prevStudents) => {
@@ -1157,8 +1149,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
             const newChatId = payload.new.telegram_chat_id;
 
-            console.log('?? Telegram realtime update received:', { newChatId, currentChatId: user.telegram_chat_id });
-
 
 
             // Обновляем если новый chat_id отличается от текущего
@@ -1176,10 +1166,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
                 localStorage.setItem("laundryUser", JSON.stringify(updatedUser));
 
               }
-
-              
-
-              console.log('? User telegram_chat_id updated in state and localStorage');
 
             }
 
@@ -1258,8 +1244,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
       } catch (error) {
 
-        console.warn('?? Failed to save user to localStorage:', error);
-
       }
 
     }
@@ -1297,8 +1281,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         console.error('Error claiming queue items:', error);
 
       } else {
-
-        console.log('? Claimed queue items successfully');
 
         // Обновляем очередь чтобы увидеть изменения
 
@@ -1354,8 +1336,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
       if (!uid) {
 
-        console.log('?? No active session');
-
         setUser(null);
 
         setIsAdmin(false);
@@ -1368,10 +1348,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         return;
 
       }
-
-
-
-      console.log('?? Active session found, fetching user data...');
 
       let { data: me, error } = await supabase
 
@@ -1410,13 +1386,10 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
       if (!me) {
-        console.log('?? User authenticated but not in students table');
         await supabase.auth.signOut({ scope: 'local' });
         clearLocalSession();
         return;
       }
-
-      console.log('? User data loaded:', { full_name: me.full_name, is_admin: me.is_admin, is_super_admin: me.is_super_admin, is_cleanup_admin: me.is_cleanup_admin, avatar_style: me.avatar_style, avatar_seed: me.avatar_seed });
 
 
 
@@ -1467,10 +1440,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         can_view_students: me.can_view_students || false,
 
       };
-
-
-
-      console.log('?? Setting user with avatar:', { avatar_style: newUser.avatar_style, avatar_seed: newUser.avatar_seed });
 
       setUser(newUser);
 
@@ -1988,18 +1957,6 @@ const finalizeUserSession = (
 
 ): User => {
 
-  console.log('?? finalizeUserSession called with student:', { 
-
-    id: student.id, 
-
-    full_name: student.full_name, 
-
-    avatar_style: student.avatar_style, 
-
-    avatar_seed: student.avatar_seed 
-
-  });
-
   
 
   const isAdminUser = student.is_admin || false;
@@ -2068,10 +2025,6 @@ const finalizeUserSession = (
     localStorage.setItem("laundryUser", JSON.stringify(newUser));
 
   }
-
-
-
-  console.log('? finalizeUserSession completed, newUser avatar:', { avatar_style: newUser.avatar_style, avatar_seed: newUser.avatar_seed });
 
   return newUser;
 
@@ -2215,8 +2168,6 @@ const registerStudent = async (
 
       if (msg.includes("already registered") || msg.includes("user already registered")) {
 
-        console.log("User already exists - showing login form");
-
         const error = new Error("Аккаунт уже существует. Войдите в систему.") as any;
 
         error.code = "USER_ALREADY_REGISTERED";
@@ -2238,8 +2189,6 @@ const registerStudent = async (
     // Пробуем войти с этими же credentials
 
     if (!authUser && !signUpErr) {
-
-      console.log("User is null after signUp (email confirmation?), trying to sign in...");
 
       const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
 
@@ -2279,10 +2228,6 @@ const registerStudent = async (
 
 
 
-    console.log("Auth user created/retrieved:", authUser.id);
-
-
-
     // 2) Ждём стабильную сессию
 
     const sessionReady = await waitForSession();
@@ -2298,8 +2243,6 @@ const registerStudent = async (
     // 3) ВСЕГДА вызываем backend API для установки user_id
 
     // Это важно даже если пользователь уже существовал в Auth, но не был связан с students
-
-    console.log("Linking auth user to student record...");
 
     const response = await fetch("/api/student/register", {
 
@@ -2557,15 +2500,12 @@ const loginStudent = async (
     if (supabase) {
       const { error } = await supabase.auth.signOut({ scope: 'local' });
       if (error) {
-        console.warn('?? SignOut error:', error);
       }
     }
   } catch (error) {
-    console.warn('?? SignOut error:', error);
   } finally {
     // ? ?????????? ????? ????????? ???????????
     clearLocalSession(options);
-    console.log('? User logged out successfully');
   }
 };
 
@@ -2603,7 +2543,6 @@ const loginStudent = async (
           .maybeSingle();
 
         if (error) {
-          console.warn("?? Status check failed:", error);
           return;
         }
 
@@ -2956,21 +2895,9 @@ const resetStudentRegistration = async (studentId: string) => {
 
         }
 
-        console.log('? Queue loaded with avatars:', data?.length);
-
         // ?? DEBUG: Проверяем данные аватаров
 
         if (data && data.length > 0) {
-
-          console.log('?? Avatar data from queue:', data.map((item: any) => ({
-
-            full_name: item.full_name,
-
-            avatar_style: item.avatar_style,
-
-            avatar_seed: item.avatar_seed,
-
-          })));
 
         }
 
@@ -3072,8 +2999,6 @@ const resetStudentRegistration = async (studentId: string) => {
           totalCount = typeof fullCount === 'number' ? fullCount : null;
         } else {
           // Попытка 2: без avatar полей (если колонки еще не созданы)
-
-          console.log('?? Fetching history without avatar fields (migration may be pending)');
 
           const { data: basicData, error: basicError, count: basicCount } = await supabase
             .from('history')
@@ -3558,26 +3483,6 @@ const joinQueue = async (
 
     }
 
-
-
-    console.log('?? Sending "joined" notification to admins:', {
-
-      type: 'joined',
-
-      student_id: user.student_id,
-
-      full_name: name,
-
-      room,
-
-      wash_count: washCount,
-
-      payment_type: derivedPaymentType,
-
-      queue_length: queue.length + 1
-
-    });
-
     
 
     void sendTelegramNotification({
@@ -3592,7 +3497,6 @@ const joinQueue = async (
       queue_item_id: newItem.id,
     })
       .then((notificationResult) => {
-        console.log('?? "joined" notification result:', notificationResult);
       })
       .catch((err) => {
         console.error('sendTelegramNotification(joined) error:', err);
@@ -3753,13 +3657,9 @@ const joinQueue = async (
 
 const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>, options?: { skipFetch?: boolean }) => {
 
-  console.log('updateQueueItem called:', { queueItemId, updates });
-
   
 
   if (!isSupabaseConfigured || !supabase) {
-
-    console.log('updateQueueItem: No Supabase, using local storage');
 
     // Use local storage fallback
 
@@ -3795,8 +3695,6 @@ const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>,
 
   try {
 
-    console.log('updateQueueItem: Updating database...');
-
     // ? Напрямую обновляем БД (для timestamps и других полей)
 
     const { data, error } = await supabase
@@ -3811,10 +3709,6 @@ const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>,
 
 
 
-    console.log('updateQueueItem result:', { data, error });
-
-
-
     if (error) {
 
       console.error('updateQueueItem error:', error);
@@ -3822,10 +3716,6 @@ const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>,
       throw error;
 
     }
-
-
-
-    console.log('updateQueueItem: Success, fetching queue...');
 
     if (!options?.skipFetch) {
       await fetchQueue();

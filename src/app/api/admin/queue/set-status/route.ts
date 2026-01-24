@@ -155,7 +155,6 @@ export async function POST(req: NextRequest) {
 
       // Если нет других стирающих, сбрасываем machine_state
       if (!washingError && (!washingItems || washingItems.length === 0)) {
-        console.log("🔄 Resetting machine_state to idle - no washing items left");
         await supabaseAdmin
           .from("machine_state")
           .upsert({
@@ -166,7 +165,6 @@ export async function POST(req: NextRequest) {
           });
       } else if (washingItems && washingItems.length > 0) {
         // Если есть другие стирающие, переключаем machine_state на первого из них
-        console.log("🔄 Switching machine_state to next washing user:", washingItems[0].full_name);
         await supabaseAdmin
           .from("machine_state")
           .upsert({

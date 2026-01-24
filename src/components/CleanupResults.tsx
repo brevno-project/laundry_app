@@ -19,6 +19,7 @@ import {
   MoneyIcon,
   PeopleIcon,
   TicketIcon,
+  WashingSpinner,
 } from "@/components/Icons";
 
 const SCORE_CAPTIONS_RU = [
@@ -539,6 +540,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [showAllCoupons, setShowAllCoupons] = useState(false);
   const [showCouponList, setShowCouponList] = useState(false);
+  const [clearMyNotice, setClearMyNotice] = useState<string | null>(null);
+  const [clearMyLoading, setClearMyLoading] = useState(false);
+  const [clearStudentNotice, setClearStudentNotice] = useState<string | null>(null);
+  const [clearStudentLoading, setClearStudentLoading] = useState(false);
   const [transfers, setTransfers] = useState<CouponTransfer[]>([]);
   const [transferNames, setTransferNames] = useState<Record<string, string>>({});
   const [recipients, setRecipients] = useState<Student[]>([]);
@@ -1449,6 +1454,82 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     }
   };
 
+  const handleClearMyCoupons = async () => {
+    if (!supabase || !isSuperAdmin) return;
+    if (!window.confirm(t("cleanup.coupons.clearConfirm"))) return;
+
+    try {
+      setClearMyLoading(true);
+      setClearMyNotice(null);
+
+      const response = await authedFetch("/api/admin/coupons/clear-own", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        setClearMyNotice(result.error || t("cleanup.coupons.clearError"));
+        return;
+      }
+
+      setClearMyNotice(
+        t("cleanup.coupons.clearSuccess", { count: result.cleared ?? 0 })
+      );
+      await refreshCoupons();
+    } catch (error: any) {
+      setClearMyNotice(error?.message || t("cleanup.coupons.clearError"));
+    } finally {
+      setClearMyLoading(false);
+    }
+  };
+
+  const handleClearStudentCoupons = async () => {
+    if (!supabase || !isSuperAdmin) return;
+    if (!grantStudentId) {
+      setClearStudentNotice(t("cleanup.grant.selectStudent"));
+      return;
+    }
+    if (!window.confirm(t("cleanup.coupons.clearStudentConfirm"))) return;
+
+    try {
+      setClearStudentLoading(true);
+      setClearStudentNotice(null);
+
+      const response = await authedFetch("/api/admin/coupons/clear-student", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ student_id: grantStudentId }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        setClearStudentNotice(
+          result.error || t("cleanup.coupons.clearStudentError")
+        );
+        return;
+      }
+
+      setClearStudentNotice(
+        t("cleanup.coupons.clearStudentSuccess", { count: result.cleared ?? 0 })
+      );
+
+      if (user?.student_id === grantStudentId) {
+        await refreshCoupons();
+      }
+    } catch (error: any) {
+      setClearStudentNotice(
+        error?.message || t("cleanup.coupons.clearStudentError")
+      );
+    } finally {
+      setClearStudentLoading(false);
+    }
+  };
+
   const handleGrant = async () => {
     if (!supabase || !grantStudentId) {
       setGrantNotice(t("cleanup.grant.selectStudent"));
@@ -1879,7 +1960,29 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                         ? t("cleanup.coupons.collapseList")
                         : t("cleanup.coupons.showList", { count: visibleCoupons.length })}
                     </button>
+                    {isSuperAdmin && (
+                      <button
+                        type="button"
+                        onClick={handleClearMyCoupons}
+                        disabled={clearMyLoading}
+                        className="btn btn-danger px-3 py-1 text-xs inline-flex items-center gap-2"
+                      >
+                        {clearMyLoading ? (
+                          <>
+                            <WashingSpinner className="w-4 h-4" />
+                            <span>{t("common.loading")}</span>
+                          </>
+                        ) : (
+                          t("cleanup.coupons.clearMine")
+                        )}
+                      </button>
+                    )}
                   </div>
+                  {clearMyNotice && (
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                      {clearMyNotice}
+                    </p>
+                  )}
 
                   {showCouponList && (
                     visibleCoupons.length === 0 ? (
@@ -2103,6 +2206,26 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
             >
               {t("cleanup.grant.submit")}
             </button>
+            <button
+              type="button"
+              onClick={handleClearStudentCoupons}
+              disabled={clearStudentLoading || !grantStudentId}
+              className="w-full btn btn-danger inline-flex items-center justify-center gap-2"
+            >
+              {clearStudentLoading ? (
+                <>
+                  <WashingSpinner className="w-4 h-4" />
+                  <span>{t("common.loading")}</span>
+                </>
+              ) : (
+                t("cleanup.coupons.clearStudent")
+              )}
+            </button>
+            {clearStudentNotice && (
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                {clearStudentNotice}
+              </p>
+            )}
           </div>
         )}
       </div>

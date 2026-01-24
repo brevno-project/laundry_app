@@ -38,8 +38,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("✅ User authenticated:", user.id);
-
     // ✅ Получаем данные из body
     const { avatar_style, avatar_seed } = await req.json();
 
@@ -49,8 +47,6 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
-    console.log("📝 Updating avatar for user:", user.id, { avatar_style, avatar_seed });
 
     // ✅ Используем service_role для обновления (обходит RLS)
     const supabaseAdmin = createClient(
@@ -84,8 +80,6 @@ export async function POST(req: NextRequest) {
         { status: 404 }
       );
     }
-
-    console.log("✅ Avatar updated successfully");
     return NextResponse.json({ success: true, student: data });
   } catch (err: any) {
     console.error("❌ Error in update-avatar:", err);

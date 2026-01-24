@@ -21,7 +21,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (secret !== expectedSecret) {
-      console.warn('⚠️ Unauthorized Telegram link attempt');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -30,8 +29,6 @@ export async function POST(request: NextRequest) {
 
     // Парсим данные
     const { student_id, telegram_chat_id } = await request.json();
-    
-    console.log('🔔 Telegram link request:', { student_id, telegram_chat_id });
 
     if (!student_id || !telegram_chat_id) {
       return NextResponse.json(
@@ -54,8 +51,6 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
-
-    console.log('👤 Current student data:', currentData);
     
     // Обновляем telegram_chat_id
     const { data, error } = await admin
@@ -72,8 +67,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log('✅ Telegram linked successfully:', data);
 
     return NextResponse.json({ 
       success: true, 

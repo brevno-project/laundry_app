@@ -68,7 +68,6 @@ export async function POST(req: NextRequest) {
         await supabaseAdmin.auth.admin.deleteUser(userId);
 
       if (authError) {
-        console.log("Auth delete error (ignored):", authError.message);
       }
     }
 

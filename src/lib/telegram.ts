@@ -10,12 +10,6 @@ import { supabase } from './supabase';
  */
 export async function sendTelegramNotification(notification: TelegramNotification): Promise<boolean> {
   try {
-    console.log('📤 [CLIENT] Sending Telegram notification:', {
-      type: notification.type,
-      full_name: notification.full_name,
-      student_id: notification.student_id,
-      admin_student_id: notification.admin_student_id
-    });
     
     if (!supabase) {
       console.error(' [CLIENT] Supabase client not available');
@@ -38,12 +32,6 @@ export async function sendTelegramNotification(notification: TelegramNotificatio
     });
 
     const result = await response.json();
-    
-    console.log('📥 [CLIENT] Telegram notification response:', {
-      ok: response.ok,
-      status: response.status,
-      result
-    });
     
     if (!response.ok) {
       console.error('❌ [CLIENT] Telegram notification failed:', result);

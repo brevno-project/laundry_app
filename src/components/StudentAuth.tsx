@@ -40,7 +40,6 @@ export default function StudentAuth() {
     // Refresh students list only once on mount
     if (!hasLoadedRef.current) {
       hasLoadedRef.current = true;
-      console.log('StudentAuth: loading fresh students list (once)...');
       loadStudents();
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -67,11 +66,6 @@ export default function StudentAuth() {
   // Логируем данные студентов при их изменении
   useEffect(() => {
     if (students.length > 0) {
-      console.log('StudentAuth: students loaded (first 3):', students.slice(0, 3).map(s => ({
-        full_name: s.full_name,
-        avatar_style: s.avatar_style,
-        avatar_seed: s.avatar_seed
-      })));
     }
   }, [students.length]); // Only log when count changes
 

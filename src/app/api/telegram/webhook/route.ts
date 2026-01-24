@@ -24,8 +24,6 @@ export async function POST(request: NextRequest) {
       const chatId = update.message.chat.id;
       const studentId = update.message.text.split(' ')[1];  // ID студента
 
-      console.log('🔔 Webhook received /start command:', { studentId, chatId });
-
       // ✅ Отправляем в API с секретным заголовком
       const linkRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/telegram/link`, {
         method: "POST",
@@ -53,7 +51,6 @@ export async function POST(request: NextRequest) {
       }
 
       const linkJson = await linkRes.json().catch(() => null);
-      console.log("✅ Telegram linked successfully:", linkJson);
 
       // Готово — подтверждаем
       await sendTelegram({
