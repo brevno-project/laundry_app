@@ -113,6 +113,33 @@ async function waitForSession(): Promise<boolean> {
 
 
 
+
+async function waitForStudentLink(
+  userId: string,
+  attempts = 10,
+  delayMs = 300
+): Promise<any | null> {
+  if (!supabase) return null;
+
+  for (let i = 0; i < attempts; i++) {
+    const { data } = await supabase
+      .from("students")
+      .select(
+        "id, first_name, last_name, full_name, room, telegram_chat_id, ui_language, is_admin, is_super_admin, is_cleanup_admin, can_view_students, is_banned, ban_reason, avatar_style, avatar_seed"
+      )
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (data) {
+      return data;
+    }
+
+    await new Promise((r) => setTimeout(r, delayMs));
+  }
+
+  return null;
+}
+
 // Format date to local timezone
 
 export const formatDate = (dateString: string) => {
@@ -365,6 +392,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
   });
   const statusCheckRef = useRef({ inFlight: false, lastRunAt: 0 });
+  const registeringRef = useRef(false);
 
   const clearLocalSession = (options?: { keepBanNotice?: boolean }) => {
     const keepBanNotice = options?.keepBanNotice;
@@ -1345,7 +1373,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
       console.log('?? Active session found, fetching user data...');
 
-      const { data: me, error } = await supabase
+      let { data: me, error } = await supabase
 
         .from("students")
 
@@ -1355,7 +1383,13 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
         .maybeSingle();
 
-
+      if (!me && registeringRef.current) {
+        const linked = await waitForStudentLink(uid);
+        if (linked) {
+          me = linked;
+          error = null;
+        }
+      }
 
       if (error) {
 
@@ -2065,6 +2099,8 @@ const registerStudent = async (
 
   }
 
+  registeringRef.current = true;
+
 
 
   try {
@@ -2305,8 +2341,9 @@ const registerStudent = async (
 
     throw error;
 
+  } finally {
+    registeringRef.current = false;
   }
-
 };
 
 

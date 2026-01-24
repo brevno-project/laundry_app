@@ -6,6 +6,7 @@ import { useUi } from "@/contexts/UiContext";
 import { Student } from "@/types";
 import { DoorIcon, CheckIcon, CloseIcon, BackIcon, WashingSpinner } from "@/components/Icons";
 import Avatar from "@/components/Avatar";
+import { supabase } from "@/lib/supabase";
 
 export default function StudentAuth() {
   const { students, registerStudent, loginStudent, loadStudents } = useLaundry();
@@ -44,6 +45,25 @@ export default function StudentAuth() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (!supabase) return;
+
+    const channel = supabase
+      .channel("students-auth-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "students" },
+        () => {
+          loadStudents();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [loadStudents]);
+
   // Логируем данные студентов при их изменении
   useEffect(() => {
     if (students.length > 0) {
@@ -54,6 +74,14 @@ export default function StudentAuth() {
       })));
     }
   }, [students.length]); // Only log when count changes
+
+  useEffect(() => {
+    if (!selectedStudent) return;
+    const updatedStudent = students.find((s) => s.id === selectedStudent.id);
+    if (updatedStudent) {
+      setSelectedStudent(updatedStudent);
+    }
+  }, [students, selectedStudent?.id]);
 
   useEffect(() => {
     if (!banNotice) return;
