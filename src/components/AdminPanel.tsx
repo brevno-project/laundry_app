@@ -617,7 +617,7 @@ export default function AdminPanel() {
               type="button"
               onClick={() => setShowEditStudent(false)}
               disabled={isSavingEdit}
-              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:opacity-70 disabled:cursor-not-allowed"
+              className="flex-1 flex items-center justify-center rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {t("common.cancel")}
             </button>
@@ -625,7 +625,7 @@ export default function AdminPanel() {
               type="button"
               onClick={handleEditStudent}
               disabled={isSavingEdit}
-              className="flex-1 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 disabled:opacity-70 disabled:cursor-not-allowed"
+              className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isSavingEdit ? (
                 <>
@@ -654,7 +654,7 @@ export default function AdminPanel() {
               type="button"
               onClick={() => setShowResetConfirm(false)}
               disabled={isResetting}
-              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
+              className="flex-1 flex items-center justify-center rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {t("common.cancel")}
             </button>
@@ -662,7 +662,7 @@ export default function AdminPanel() {
               type="button"
               onClick={handleResetStudent}
               disabled={isResetting}
-              className="flex-1 rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-70"
+              className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isResetting ? (
                 <>
@@ -694,7 +694,7 @@ export default function AdminPanel() {
               type="button"
               onClick={() => setShowBanStudent(false)}
               disabled={isBanning}
-              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
+              className="flex-1 flex items-center justify-center rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {t("common.cancel")}
             </button>
@@ -702,7 +702,7 @@ export default function AdminPanel() {
               type="button"
               onClick={handleBanStudent}
               disabled={isBanning}
-              className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
+              className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isBanning ? (
                 <>
@@ -731,7 +731,7 @@ export default function AdminPanel() {
               type="button"
               onClick={() => setShowDeleteConfirm(false)}
               disabled={isDeleting}
-              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
+              className="flex-1 flex items-center justify-center rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {t("common.cancel")}
             </button>
@@ -739,7 +739,7 @@ export default function AdminPanel() {
               type="button"
               onClick={handleDeleteStudent}
               disabled={isDeleting}
-              className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
+              className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isDeleting ? (
                 <>
@@ -821,7 +821,7 @@ export default function AdminPanel() {
               type="button"
               onClick={() => setShowAddToQueue(false)}
               disabled={isAddingToQueue}
-              className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
+              className="flex-1 flex items-center justify-center rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {t("common.cancel")}
             </button>
@@ -829,7 +829,7 @@ export default function AdminPanel() {
               type="button"
               onClick={handleAddToQueue}
               disabled={isAddingToQueue}
-              className="flex-1 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-70"
+              className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isAddingToQueue ? (
                 <>

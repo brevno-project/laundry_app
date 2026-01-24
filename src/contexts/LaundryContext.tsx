@@ -627,7 +627,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteStudent = async (studentId: string) => {
-    if (!isAdmin && !isSuperAdmin) return;
+    if (!isAdmin && !isSuperAdmin && !isCleanupAdmin) return;
     if (!supabase || !isSupabaseConfigured) return;
     if (!user?.student_id) return;
 

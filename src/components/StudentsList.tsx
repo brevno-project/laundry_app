@@ -48,10 +48,17 @@ export default function StudentsList() {
   }, [notice]);
 
   const canManageStudents = isAdmin || isSuperAdmin || isCleanupAdmin;
-  const canDeleteStudents = isAdmin || isSuperAdmin;
+  const canDeleteStudents = isAdmin || isSuperAdmin || isCleanupAdmin;
   const canViewRegistration = isAdmin || isSuperAdmin;
 
   const badgeBase = "rounded-full border border-slate-200/60 dark:border-slate-700";
+
+  const canDeleteTarget = (student: Student) => {
+    if (isCleanupAdmin && !isAdmin && !isSuperAdmin) {
+      return !student.is_super_admin && !student.is_admin && !student.is_cleanup_admin;
+    }
+    return true;
+  };
 
   const canManageStudent = (student: Student) =>
     canManageStudents && (!student.is_super_admin || student.id === user?.student_id);
@@ -146,7 +153,7 @@ export default function StudentsList() {
   };
 
   const handleDeleteStudent = async (student: Student) => {
-    if (!canDeleteStudents || !canManageStudent(student)) return;
+    if (!canDeleteStudents || !canManageStudent(student) || !canDeleteTarget(student)) return;
 
     if (!confirm(t("students.deleteConfirm", { name: student.full_name }))) return;
 
@@ -297,7 +304,7 @@ export default function StudentsList() {
                 >
                   <EditIcon className="w-4 h-4 inline-block mr-1" />{t("students.edit")}
                 </button>
-                    {canDeleteStudents && (
+                    {canDeleteStudents && canDeleteTarget(student) && (
                       <button
                         onClick={() => handleDeleteStudent(student)}
                         className="btn btn-danger px-3 py-1 text-sm transition-transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
@@ -428,7 +435,7 @@ export default function StudentsList() {
                   >
                     <EditIcon className="w-3 h-3" />
                   </button>
-                  {canDeleteStudents && (
+                  {canDeleteStudents && canDeleteTarget(student) && (
                     <button
                       onClick={() => handleDeleteStudent(student)}
                       className="btn btn-danger px-2 py-1 text-xs transition-transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"

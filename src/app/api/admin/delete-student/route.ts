@@ -17,14 +17,14 @@ export async function POST(req: NextRequest) {
     // --- 1. Проверяем права ---
     const { data: adminInfo } = await supabaseAdmin
       .from("students")
-      .select("is_admin, is_super_admin")
+      .select("is_admin, is_super_admin, is_cleanup_admin")
       .eq("id", adminStudentId)
       .single();
       
       // 1.5) Получить данные удаляемого студента
-      const { data: studentToDelete } = await supabaseAdmin
+    const { data: studentToDelete } = await supabaseAdmin
       .from("students")
-      .select("is_super_admin")
+      .select("is_super_admin, is_admin, is_cleanup_admin")
       .eq("id", studentId)
       .single();
 
@@ -36,11 +36,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!adminInfo || (!adminInfo.is_admin && !adminInfo.is_super_admin)) {
+    const isCleanupAdmin = !!adminInfo?.is_cleanup_admin;
+
+    if (!adminInfo || (!adminInfo.is_admin && !adminInfo.is_super_admin && !isCleanupAdmin)) {
       return NextResponse.json(
         { error: "Insufficient permissions" },
         { status: 403 }
       );
+    }
+
+    if (isCleanupAdmin && !adminInfo?.is_admin && !adminInfo?.is_super_admin) {
+      const targetIsPrivileged =
+        !!studentToDelete?.is_super_admin ||
+        !!studentToDelete?.is_admin ||
+        !!studentToDelete?.is_cleanup_admin;
+      if (targetIsPrivileged) {
+        return NextResponse.json(
+          { error: "Cleanup leaders cannot delete admins or leaders" },
+          { status: 403 }
+        );
+      }
     }
 
     console.log("🔐 Admin verified");
