@@ -638,7 +638,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify({ studentId, adminStudentId: user.student_id }),
+      body: JSON.stringify({ studentId }),
     });
     const result = await response.json();
     if (!response.ok) {
@@ -3855,23 +3855,26 @@ const toggleAdminStatus = async (studentId: string, makeAdmin: boolean) => {
 
   if (!isSuperAdmin) return;
 
-
+  
 
   try {
+
+    const token = await getFreshToken();
 
     const response = await fetch("/api/admin/toggle-admin", {
 
       method: "POST",
 
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
 
       body: JSON.stringify({
 
         studentId,
 
         makeAdmin,
-
-        adminStudentId: user?.student_id,
 
       }),
 
@@ -3917,23 +3920,26 @@ const toggleSuperAdminStatus = async (
 
   if (!isSuperAdmin) return;
 
-
+  
 
   try {
+
+    const token = await getFreshToken();
 
     const response = await fetch("/api/admin/toggle-super-admin", {
 
       method: "POST",
 
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
 
       body: JSON.stringify({
 
         studentId,
 
         makeSuperAdmin,
-
-        adminStudentId: user?.student_id,
 
       }),
 

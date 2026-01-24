@@ -25,7 +25,6 @@ export default function StudentsList() {
   const { t } = useUi();
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
-  const [deletingStudentId, setDeletingStudentId] = useState<string | null>(null);
   const [editRoom, setEditRoom] = useState("");
   const [editFirstName, setEditFirstName] = useState("");
   const [editLastName, setEditLastName] = useState("");
@@ -36,6 +35,8 @@ export default function StudentsList() {
   const [editKeyIssued, setEditKeyIssued] = useState(false);
   const [editKeyLost, setEditKeyLost] = useState(false);
   const [notice, setNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [deleteCandidate, setDeleteCandidate] = useState<Student | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
 
   const [stayFilter, setStayFilter] = useState<"all" | "weekends" | "5days" | "unknown">("all");
@@ -153,22 +154,26 @@ export default function StudentsList() {
     }
   };
 
-  const handleDeleteStudent = async (student: Student) => {
+  const openDeleteModal = (student: Student) => {
     if (!canDeleteStudents || !canManageStudent(student) || !canDeleteTarget(student)) return;
+    setDeleteCandidate(student);
+    setIsDeleting(false);
+  };
 
-    if (!confirm(t("students.deleteConfirm", { name: student.full_name }))) return;
-    if (deletingStudentId === student.id) return;
+  const handleDeleteStudent = async () => {
+    if (!deleteCandidate || isDeleting) return;
 
     const studentName =
-      student.full_name ||
-      [student.first_name, student.last_name, student.middle_name]
+      deleteCandidate.full_name ||
+      [deleteCandidate.first_name, deleteCandidate.last_name, deleteCandidate.middle_name]
         .filter(Boolean)
         .join(" ") ||
       "-";
 
+    setIsDeleting(true);
     try {
-      setDeletingStudentId(student.id);
-      await deleteStudent(student.id);
+      await deleteStudent(deleteCandidate.id);
+      setDeleteCandidate(null);
       setNotice({
         type: "success",
         message: t("students.deleteSuccessToast", { name: studentName }),
@@ -179,7 +184,7 @@ export default function StudentsList() {
         message: t("students.deleteErrorToast", { name: studentName }),
       });
     } finally {
-      setDeletingStudentId((current) => (current === student.id ? null : current));
+      setIsDeleting(false);
     }
   };
 
@@ -309,21 +314,16 @@ export default function StudentsList() {
                 >
                   <EditIcon className="w-4 h-4 inline-block mr-1" />{t("students.edit")}
                 </button>
-                  {canDeleteStudents && canDeleteTarget(student) && (
-                    <button
-                      onClick={() => handleDeleteStudent(student)}
-                      disabled={deletingStudentId === student.id}
-                      className="btn btn-danger px-3 py-1 text-sm inline-flex items-center justify-center gap-2 transition-transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
-                      aria-busy={deletingStudentId === student.id}
-                    >
-                      {deletingStudentId === student.id ? (
-                        <WashingSpinner className="w-4 h-4" />
-                      ) : (
-                        <DeleteIcon className="w-4 h-4" />
-                      )}
-                      {t("students.delete")}
-                    </button>
-                  )}
+                {canDeleteStudents && canDeleteTarget(student) && (
+                  <button
+                    onClick={() => openDeleteModal(student)}
+                    disabled={isDeleting}
+                    className="btn btn-danger px-3 py-1 text-sm inline-flex items-center justify-center gap-2 transition-transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+                  >
+                    <DeleteIcon className="w-4 h-4" />
+                    {t("students.delete")}
+                  </button>
+                )}
               </div>
             )}
           </td>
@@ -449,16 +449,11 @@ export default function StudentsList() {
                   </button>
                   {canDeleteStudents && canDeleteTarget(student) && (
                     <button
-                      onClick={() => handleDeleteStudent(student)}
-                      disabled={deletingStudentId === student.id}
+                      onClick={() => openDeleteModal(student)}
+                      disabled={isDeleting}
                       className="btn btn-danger px-2 py-1 text-xs inline-flex items-center justify-center transition-transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
-                      aria-busy={deletingStudentId === student.id}
                     >
-                      {deletingStudentId === student.id ? (
-                        <WashingSpinner className="w-3 h-3" />
-                      ) : (
-                        <DeleteIcon className="w-3 h-3" />
-                      )}
+                      <DeleteIcon className="w-3 h-3" />
                     </button>
                   )}
                 </div>
@@ -867,7 +862,66 @@ export default function StudentsList() {
         </div>
       )}
 
+      {deleteCandidate && (
+        <Modal onClose={() => setDeleteCandidate(null)}>
+          <h3 className="mb-3 text-xl font-bold text-red-700 dark:text-rose-200">{t("admin.deleteTitle")}</h3>
+          <p className="mb-3 text-sm text-gray-800 dark:text-slate-200">
+            {t("admin.deleteConfirm", { name: deleteCandidate.full_name })}
+          </p>
+          <p className="mb-4 text-xs font-semibold text-red-600 dark:text-rose-200">
+            {t("admin.deleteHint")}
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setDeleteCandidate(null)}
+              disabled={isDeleting}
+              className="flex-1 flex items-center justify-center rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {t("common.cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteStudent}
+              disabled={isDeleting}
+              className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isDeleting ? (
+                <>
+                  <WashingSpinner className="w-4 h-4" />
+                  {t("common.loading")}
+                </>
+              ) : (
+                t("admin.deleteAction")
+              )}
+            </button>
+          </div>
+        </Modal>
+      )}
+
       {showAddModal && <AddStudentModal onClose={() => setShowAddModal(false)} />}
     </>
+  );
+}
+
+function Modal({
+  children,
+  onClose,
+}: {
+  children: React.ReactNode;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-slate-800"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+      </div>
+    </div>
   );
 }

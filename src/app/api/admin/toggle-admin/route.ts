@@ -1,47 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "../../_utils/adminAuth";
+import {
+  canModifyStudent,
+  getCaller,
+  requireLaundryAdmin,
+  supabaseAdmin,
+} from "../../_utils/adminAuth";
 
 export async function POST(req: NextRequest) {
   try {
-    const { studentId, makeAdmin, adminStudentId } = await req.json();
+    const { caller, error: authError } = await getCaller(req);
+    if (authError) return authError;
 
-    if (!studentId || makeAdmin === undefined || !adminStudentId) {
-      return NextResponse.json(
-        { error: "Missing parameters" },
-        { status: 400 }
-      );
-    }
+    const roleError = requireLaundryAdmin(caller);
+    if (roleError) return roleError;
 
-    // 1) Проверяем, что вызывающий — суперадмин
-    const { data: caller } = await supabaseAdmin
-      .from("students")
-      .select("is_super_admin")
-      .eq("id", adminStudentId)
-      .single();
-
-    // 1.5) Получить данные изменяемого студента  
-    const { data: studentToModify } = await supabaseAdmin
-      .from("students")
-      .select("is_super_admin")
-      .eq("id", studentId)
-      .single();
-
-// 1.6) ЗАЩИТА: блокируем изменение прав суперадмина
-    if (studentToModify?.is_super_admin && !caller?.is_super_admin) {
-      return NextResponse.json(
-        { error: "You cannot modify super admin rights" },
-        { status: 403 }
-      );
-    }
-
-    if (!caller?.is_super_admin) {
+    if (!caller.is_super_admin) {
       return NextResponse.json(
         { error: "Only super admin can manage admins" },
         { status: 403 }
       );
     }
 
-    // 2) Берём целевого студента
+    const { studentId, makeAdmin } = await req.json();
+
+    if (!studentId || makeAdmin === undefined) {
+      return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
+    }
+
+    const { allowed, error: modifyError } = await canModifyStudent(
+      caller,
+      studentId
+    );
+    if (!allowed) return modifyError;
+
     const { data: target } = await supabaseAdmin
       .from("students")
       .select("*")
@@ -52,7 +43,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Student not found" }, { status: 404 });
     }
 
-    // 3) Если назначаем админом и нет user_id → создаём auth user
     let userId = target.user_id;
 
     if (makeAdmin && !userId) {
@@ -80,7 +70,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 4) Обновляем admin статус
     const { error: updateErr } = await supabaseAdmin
       .from("students")
       .update({ is_admin: makeAdmin })
