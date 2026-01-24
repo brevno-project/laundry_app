@@ -42,12 +42,21 @@ export default function AdminPanel() {
   const [showBanStudent, setShowBanStudent] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showUnbanConfirm, setShowUnbanConfirm] = useState(false);
+  const [showToggleAdminConfirm, setShowToggleAdminConfirm] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [pendingUnbanStudent, setPendingUnbanStudent] = useState<Student | null>(null);
+  const [pendingAdminToggle, setPendingAdminToggle] = useState<{
+    student: Student;
+    makeAdmin: boolean;
+  } | null>(null);
   const [showAddToQueue, setShowAddToQueue] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isBanning, setIsBanning] = useState(false);
+  const [isUnbanning, setIsUnbanning] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAddingToQueue, setIsAddingToQueue] = useState(false);
+  const [isTogglingAdmin, setIsTogglingAdmin] = useState(false);
   const [actionLoading, setActionLoading] = useState<{
     action: "ban" | "toggleAdmin";
     studentId: string;
@@ -244,15 +253,26 @@ export default function AdminPanel() {
     }
   };
 
-  const handleUnbanStudent = async (studentId: string) => {
-    if (actionLoading?.action === "ban") return;
-    setActionLoading({ action: "ban", studentId });
+  const openUnbanModal = (student: Student) => {
+    setPendingUnbanStudent(student);
+    setShowUnbanConfirm(true);
+    setIsUnbanning(false);
+  };
+
+  const confirmUnbanStudent = async () => {
+    if (!pendingUnbanStudent || isUnbanning) return;
+
+    setIsUnbanning(true);
+    setActionLoading({ action: "ban", studentId: pendingUnbanStudent.id });
     try {
-      await unbanStudent(studentId);
+      await unbanStudent(pendingUnbanStudent.id);
+      setShowUnbanConfirm(false);
+      setPendingUnbanStudent(null);
       alertWithCheck(t("admin.unbanSuccess"));
     } catch (err: any) {
       alertWithCheck(t("admin.error", { message: err.message }));
     } finally {
+      setIsUnbanning(false);
       setActionLoading(null);
     }
   };
@@ -296,17 +316,33 @@ export default function AdminPanel() {
     }
   };
 
-  const handleToggleAdmin = async (studentId: string, makeAdmin: boolean) => {
-    if (actionLoading?.action === "toggleAdmin") return;
-    setActionLoading({ action: "toggleAdmin", studentId });
+  const openToggleAdminModal = (student: Student, makeAdmin: boolean) => {
+    setPendingAdminToggle({ student, makeAdmin });
+    setShowToggleAdminConfirm(true);
+    setIsTogglingAdmin(false);
+  };
+
+  const confirmToggleAdmin = async () => {
+    if (!pendingAdminToggle || isTogglingAdmin) return;
+
+    setIsTogglingAdmin(true);
+    setActionLoading({ action: "toggleAdmin", studentId: pendingAdminToggle.student.id });
     try {
-      await toggleAdminStatus(studentId, makeAdmin);
-      alertWithCheck(
-        makeAdmin ? t("admin.toggleAdminGranted") : t("admin.toggleAdminRevoked")
+      await toggleAdminStatus(
+        pendingAdminToggle.student.id,
+        pendingAdminToggle.makeAdmin
       );
+      alertWithCheck(
+        pendingAdminToggle.makeAdmin
+          ? t("admin.toggleAdminGranted")
+          : t("admin.toggleAdminRevoked")
+      );
+      setShowToggleAdminConfirm(false);
+      setPendingAdminToggle(null);
     } catch (error: any) {
       alertWithCheck(t("admin.error", { message: error.message }));
     } finally {
+      setIsTogglingAdmin(false);
       setActionLoading(null);
     }
   };
@@ -529,11 +565,11 @@ export default function AdminPanel() {
                       currentUserId={user?.id}
                       onEdit={openEditModal}
                       onBan={openBanModal}
-                      onUnban={handleUnbanStudent}
+                      onUnban={openUnbanModal}
                       onDelete={openDeleteModal}
                       onReset={openResetConfirm}
                       onAddToQueue={openAddToQueueModal}
-                      onToggleAdmin={handleToggleAdmin}
+                      onToggleAdmin={openToggleAdminModal}
                       loadingAction={actionLoading}
                     />
                   </div>
@@ -711,6 +747,94 @@ export default function AdminPanel() {
                 </>
               ) : (
                 t("admin.banAction")
+              )}
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {showUnbanConfirm && pendingUnbanStudent && (
+        <Modal
+          onClose={() => {
+            setShowUnbanConfirm(false);
+            setPendingUnbanStudent(null);
+          }}
+        >
+          <h3 className="mb-4 text-xl font-bold text-gray-900 dark:text-slate-100">{t("admin.unbanTitle")}</h3>
+          <p className="mb-4 text-sm text-gray-800 dark:text-slate-200">
+            {t("admin.unbanConfirm", { name: pendingUnbanStudent.full_name })}
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setShowUnbanConfirm(false);
+                setPendingUnbanStudent(null);
+              }}
+              disabled={isUnbanning}
+              className="flex-1 flex items-center justify-center rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {t("common.cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={confirmUnbanStudent}
+              disabled={isUnbanning}
+              className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isUnbanning ? (
+                <>
+                  <WashingSpinner className="w-4 h-4" />
+                  {t("common.loading")}
+                </>
+              ) : (
+                t("admin.action.unban")
+              )}
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {showToggleAdminConfirm && pendingAdminToggle && (
+        <Modal
+          onClose={() => {
+            setShowToggleAdminConfirm(false);
+            setPendingAdminToggle(null);
+          }}
+        >
+          <h3 className="mb-3 text-xl font-bold text-gray-900 dark:text-slate-100">{t("admin.toggleAdminTitle")}</h3>
+          <p className="mb-4 text-sm text-gray-800 dark:text-slate-200">
+            {pendingAdminToggle.makeAdmin
+              ? t("admin.toggleAdminConfirmGrant", { name: pendingAdminToggle.student.full_name })
+              : t("admin.toggleAdminConfirmRevoke", { name: pendingAdminToggle.student.full_name })}
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setShowToggleAdminConfirm(false);
+                setPendingAdminToggle(null);
+              }}
+              disabled={isTogglingAdmin}
+              className="flex-1 flex items-center justify-center rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {t("common.cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={confirmToggleAdmin}
+              disabled={isTogglingAdmin}
+              className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isTogglingAdmin ? (
+                <>
+                  <WashingSpinner className="w-4 h-4" />
+                  {t("common.loading")}
+                </>
+              ) : pendingAdminToggle.makeAdmin ? (
+                t("admin.action.makeAdmin")
+              ) : (
+                t("admin.action.removeAdmin")
               )}
             </button>
           </div>

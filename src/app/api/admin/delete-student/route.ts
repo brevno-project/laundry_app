@@ -30,6 +30,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Student not found" }, { status: 404 });
     }
 
+    if (studentData.is_super_admin || studentData.is_admin || studentData.is_cleanup_admin) {
+      return NextResponse.json(
+        { error: "Cannot delete privileged accounts" },
+        { status: 403 }
+      );
+    }
+
     if (caller.is_cleanup_admin && !caller.is_admin && !caller.is_super_admin) {
       const targetIsPrivileged =
         !!studentData.is_super_admin ||

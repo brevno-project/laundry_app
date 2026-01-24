@@ -675,7 +675,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         coupons_used: couponsUsed,
         expected_finish_at: expectedFinishAt,
         scheduled_for_date: chosenDate,
-        admin_student_id: user.student_id,
         student_room: studentRoom,
       }),
     });

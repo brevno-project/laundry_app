@@ -56,8 +56,8 @@ export default function StudentsList() {
   const badgeBase = "rounded-full border border-slate-200/60 dark:border-slate-700";
 
   const canDeleteTarget = (student: Student) => {
-    if (isCleanupAdmin && !isAdmin && !isSuperAdmin) {
-      return !student.is_super_admin && !student.is_admin && !student.is_cleanup_admin;
+    if (student.is_super_admin || student.is_admin || student.is_cleanup_admin) {
+      return false;
     }
     return true;
   };

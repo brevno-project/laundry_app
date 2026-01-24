@@ -1,11 +1,18 @@
-// /api/admin/sync-auth/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "../../_utils/adminAuth";
+import { getCaller, supabaseAdmin } from "../../_utils/adminAuth";
 
 export async function POST(req: NextRequest) {
   try {
-    // Все админы и супер-админы без user_id
+    const { caller, error: authError } = await getCaller(req);
+    if (authError) return authError;
+
+    if (!caller.is_super_admin) {
+      return NextResponse.json(
+        { error: "Only super admin can sync auth users" },
+        { status: 403 }
+      );
+    }
+
     const { data: admins } = await supabaseAdmin
       .from("students")
       .select("*")
@@ -13,14 +20,16 @@ export async function POST(req: NextRequest) {
       .is("user_id", null);
 
     if (!admins || admins.length === 0) {
-      return NextResponse.json({ ok: true, message: "Все админы уже синхронизированы" });
+      return NextResponse.json({
+        ok: true,
+        message: "Все админы уже синхронизированы",
+      });
     }
 
     for (const admin of admins) {
       const email = `admin-${admin.id.slice(0, 8)}@example.com`;
       const password = crypto.randomUUID().slice(0, 12);
 
-      // Создаём auth user
       const { data: signUpData, error: signUpErr } =
         await supabaseAdmin.auth.admin.createUser({
           email,
@@ -44,14 +53,16 @@ export async function POST(req: NextRequest) {
 
       if (!authUserId) continue;
 
-      // Записываем user_id в таблицу students
       await supabaseAdmin
         .from("students")
         .update({ user_id: authUserId })
         .eq("id", admin.id);
     }
 
-    return NextResponse.json({ ok: true, message: "Админы синхронизированы" });
+    return NextResponse.json({
+      ok: true,
+      message: "Админы синхронизированы",
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

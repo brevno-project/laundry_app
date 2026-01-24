@@ -22,11 +22,11 @@ interface Props {
   currentUserId?: string;
   onEdit: (s: Student) => void;
   onBan: (s: Student) => void;
-  onUnban: (id: string) => void;
+  onUnban: (s: Student) => void;
   onDelete: (s: Student) => void;
   onReset: (s: Student) => void;
   onAddToQueue: (s: Student) => void;
-  onToggleAdmin: (id: string, makeAdmin: boolean) => void;
+  onToggleAdmin: (s: Student, makeAdmin: boolean) => void;
   loadingAction?: { action: "ban" | "toggleAdmin"; studentId: string } | null;
 }
 
@@ -60,6 +60,7 @@ export default function ActionMenu({
   const isSelf = currentUserId ? student.id === currentUserId : false;
   const targetIsAdmin = !!student.is_admin;
   const targetIsSuperAdmin = !!student.is_super_admin;
+  const targetIsCleanupAdmin = !!student.is_cleanup_admin;
   const targetIsBanned = !!student.is_banned;
   const telegramChatId =
     typeof student.telegram_chat_id === "string"
@@ -89,6 +90,10 @@ export default function ActionMenu({
       }
 
       if (action === "delete" && targetIsSuperAdmin) {
+        return false;
+      }
+
+      if (action === "delete" && (targetIsAdmin || targetIsCleanupAdmin)) {
         return false;
       }
 
@@ -150,6 +155,10 @@ export default function ActionMenu({
           toggleAdmin: false,
         };
         return overAdminOrSuper[action];
+      }
+
+      if (targetIsCleanupAdmin && action === "delete") {
+        return false;
       }
 
       const overStudent: Record<ActionKey, boolean> = {
@@ -300,7 +309,7 @@ export default function ActionMenu({
                     loading={isBanActionLoading}
                     disabled={isBanActionLoading}
                     onClick={() => {
-                      onUnban(student.id);
+                      onUnban(student);
                       setOpen(false);
                     }}
                   />
@@ -320,7 +329,7 @@ export default function ActionMenu({
                   loading={isToggleAdminLoading}
                   disabled={isToggleAdminLoading}
                   onClick={() => {
-                    onToggleAdmin(student.id, !student.is_admin);
+                    onToggleAdmin(student, !student.is_admin);
                     setOpen(false);
                   }}
                 />
