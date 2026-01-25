@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 8oCf4a6ORk2cphfmo7rJuqhcClBeJiieZ11E03oGgZOmcdyJUgbSqWimbJWphoe
+
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 18.1
@@ -23,14 +23,6 @@ SET row_security = off;
 -- Name: public; Type: SCHEMA; Schema: -; Owner: -
 --
 
-CREATE SCHEMA public;
-
-
---
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
---
-
-COMMENT ON SCHEMA public IS 'standard public schema';
 
 
 --
@@ -2044,5 +2036,4 @@ CREATE POLICY students_update_self ON public.students FOR UPDATE TO authenticate
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 8oCf4a6ORk2cphfmo7rJuqhcClBeJiieZ11E03oGgZOmcdyJUgbSqWimbJWphoe
 
