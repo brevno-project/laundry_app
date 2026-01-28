@@ -519,8 +519,11 @@ const formatTtlLabel = (
   return t("cleanup.ttl.seconds", { count: seconds });
 };
 
-const formatRecipientLabel = (recipient: ReminderRecipient) =>
-  recipient.room ? `${recipient.name} (${recipient.room})` : recipient.name;
+const formatRecipientLabel = (recipient: ReminderRecipient, fallback: string) => {
+  const name = (recipient.name || "").trim();
+  const safeName = name ? name : fallback;
+  return recipient.room ? `${safeName} (${recipient.room})` : safeName;
+};
 
 export default function CleanupResults({ embedded = false }: CleanupResultsProps) {
   const { user, isAdmin, isSuperAdmin, isCleanupAdmin, students } = useLaundry();
@@ -556,6 +559,14 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [announcementText, setAnnouncementText] = useState("");
   const [announcementMode, setAnnouncementMode] = useState("manual");
   const [publishNotice, setPublishNotice] = useState<string | null>(null);
+  const [publishDelivery, setPublishDelivery] = useState<{
+    sent: ReminderRecipient[];
+    failed: ReminderRecipient[];
+    skipped: ReminderRecipient[];
+    attempted: number;
+    total: number;
+    telegramEnabled: boolean;
+  } | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [transferCouponId, setTransferCouponId] = useState("");
   const [transferRecipientId, setTransferRecipientId] = useState("");
@@ -1228,6 +1239,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     try {
       setIsPublishing(true);
       setPublishNotice(null);
+      setPublishDelivery(null);
       const response = await authedFetch("/api/admin/cleanup/publish", {
         method: "POST",
         headers: {
@@ -1250,6 +1262,26 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       }
 
       setPublishNotice(t("cleanup.publish.success"));
+      const sentList = Array.isArray(result?.sent_to) ? result.sent_to : [];
+      const failedList = Array.isArray(result?.failed_to) ? result.failed_to : [];
+      const skippedList = Array.isArray(result?.skipped_to) ? result.skipped_to : [];
+      const telegramEnabled = result?.telegram_enabled !== false;
+      const attempted =
+        typeof result?.attempted === "number"
+          ? result.attempted
+          : sentList.length + failedList.length;
+      const total =
+        typeof result?.recipients_total === "number"
+          ? result.recipients_total
+          : attempted + skippedList.length;
+      setPublishDelivery({
+        sent: sentList,
+        failed: failedList,
+        skipped: skippedList,
+        attempted,
+        total,
+        telegramEnabled,
+      });
       await refreshResults();
       await refreshCoupons();
     } catch (error: any) {
@@ -1384,13 +1416,19 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         )}
         {reminderRecipients[block].length > 0 && (
           <p className="text-xs text-emerald-700">
-            {t("cleanup.reminders.recipients", { recipients: reminderRecipients[block].map(formatRecipientLabel).join(", ") })}
+            {t("cleanup.reminders.recipients", {
+              recipients: reminderRecipients[block]
+                .map((recipient) => formatRecipientLabel(recipient, t("cleanup.publish.noName")))
+                .join(", "),
+            })}
           </p>
         )}
         {reminderFailures[block].length > 0 && (
           <p className="text-xs text-rose-600">
             {t("cleanup.reminders.notDelivered", {
-              recipients: reminderFailures[block].map(formatRecipientLabel).join(", "),
+              recipients: reminderFailures[block]
+                .map((recipient) => formatRecipientLabel(recipient, t("cleanup.publish.noName")))
+                .join(", "),
             })}
           </p>
         )}
@@ -1901,6 +1939,59 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               <div className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
                 {publishNotice}
               </div>
+            )}
+            {publishDelivery && publishDelivery.telegramEnabled && publishDelivery.total > 0 && (
+              <p className="text-xs text-slate-600">
+                {t("cleanup.publish.summary", {
+                  sent: publishDelivery.sent.length,
+                  attempted: publishDelivery.attempted,
+                })}
+              </p>
+            )}
+            {publishDelivery && !publishDelivery.telegramEnabled && (
+              <p className="text-xs text-amber-700">
+                {t("cleanup.publish.telegramDisabled")}
+              </p>
+            )}
+            {publishDelivery &&
+              publishDelivery.telegramEnabled &&
+              publishDelivery.sent.length > 0 && (
+                <p className="text-xs text-emerald-700">
+                  {t("cleanup.publish.recipients", {
+                    recipients: publishDelivery.sent
+                      .map((recipient) => formatRecipientLabel(recipient, t("cleanup.publish.noName")))
+                      .join(", "),
+                  })}
+                </p>
+            )}
+            {publishDelivery &&
+              publishDelivery.telegramEnabled &&
+              publishDelivery.failed.length > 0 && (
+                <p className="text-xs text-rose-600">
+                  {t("cleanup.publish.notDelivered", {
+                    recipients: publishDelivery.failed
+                      .map((recipient) => formatRecipientLabel(recipient, t("cleanup.publish.noName")))
+                      .join(", "),
+                  })}
+                </p>
+            )}
+            {publishDelivery &&
+              !publishDelivery.telegramEnabled &&
+              publishDelivery.skipped.length > 0 && (
+                <p className="text-xs text-slate-600">
+                  {t("cleanup.publish.skipped", {
+                    recipients: publishDelivery.skipped
+                      .map((recipient) => formatRecipientLabel(recipient, t("cleanup.publish.noName")))
+                      .join(", "),
+                  })}
+                </p>
+            )}
+            {publishDelivery &&
+              publishDelivery.telegramEnabled &&
+              publishDelivery.total === 0 && (
+                <p className="text-xs text-slate-600">
+                  {t("cleanup.publish.noRecipientsWithTelegram")}
+                </p>
             )}
 
             <button

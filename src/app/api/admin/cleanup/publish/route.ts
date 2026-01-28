@@ -2,6 +2,213 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCaller, supabaseAdmin } from "../../../_utils/adminAuth";
 
 const DEFAULT_COUPON_TTL_SECONDS = 604800;
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+
+type UiLanguage = "ru" | "en" | "ko" | "ky";
+
+type Recipient = {
+  id: string;
+  name: string;
+  room?: string | null;
+  telegram_chat_id: string | null;
+  is_banned?: boolean | null;
+  ui_language?: UiLanguage;
+};
+
+const normalizeUiLanguage = (value: unknown): UiLanguage => {
+  if (value === "ru" || value === "en" || value === "ko" || value === "ky") return value;
+  return "ru";
+};
+
+const formatDateLabel = (dateStr: string, language: UiLanguage) => {
+  const date = new Date(`${dateStr}T00:00:00`);
+  const locale =
+    language === "en" ? "en-US" : language === "ko" ? "ko-KR" : language === "ky" ? "ky-KG" : "ru-RU";
+  return date.toLocaleDateString(locale, { day: "numeric", month: "long" });
+};
+
+const formatStudentName = (student: any) => {
+  const fullName = (student.full_name || "").trim();
+  if (fullName) return fullName;
+  const parts = [student.first_name, student.last_name, student.middle_name]
+    .filter(Boolean)
+    .map((value: string) => value.trim());
+  if (parts.length > 0) return parts.join(" ");
+  return "";
+};
+
+const MAX_TELEGRAM_CHARS = 3800;
+
+const formatPublishMessage = ({
+  block,
+  dateLabel,
+  winnerLabel,
+  announcement,
+  language,
+}: {
+  block: string;
+  dateLabel: string;
+  winnerLabel: string;
+  announcement: string;
+  language: UiLanguage;
+}) => {
+  const announcementBody = announcement || "";
+  const normalizeAnnouncement = (fallback: string) => {
+    const base = announcementBody.trim() || fallback;
+    return base;
+  };
+  const buildMessage = (headerLines: string[], fallbackAnnouncement: string) => {
+    const base = `${headerLines.join("\n")}\n`;
+    const body = normalizeAnnouncement(fallbackAnnouncement);
+    const maxBody = MAX_TELEGRAM_CHARS - base.length;
+    if (maxBody <= 0) {
+      return base.slice(0, MAX_TELEGRAM_CHARS - 1) + "…";
+    }
+    if (body.length > maxBody) {
+      const trimmed = body.slice(0, Math.max(0, maxBody - 1)).trimEnd();
+      return `${base}${trimmed}…`;
+    }
+    return `${base}${body}`;
+  };
+  if (language === "en") {
+    return buildMessage(
+      [
+        `🧹 Cleanup results for block ${block}`,
+        `Date: ${dateLabel}`,
+        `Winner: ${winnerLabel}`,
+        "",
+      ],
+      "Results are published."
+    );
+  }
+  if (language === "ko") {
+    return buildMessage(
+      [
+        `🧹 ${block} 블록 청소 결과`,
+        `날짜: ${dateLabel}`,
+        `우승 아파트: ${winnerLabel}`,
+        "",
+      ],
+      "결과가 게시되었습니다."
+    );
+  }
+  if (language === "ky") {
+    return buildMessage(
+      [
+        `🧹 ${block} блогунун тазалык жыйынтыгы`,
+        `Күнү: ${dateLabel}`,
+        `Жеңүүчү: ${winnerLabel}`,
+        "",
+      ],
+      "Жыйынтык жарыяланды."
+    );
+  }
+  return buildMessage(
+    [
+      `🧹 Итоги уборки блока ${block}`,
+      `Дата: ${dateLabel}`,
+      `Победитель: ${winnerLabel}`,
+      "",
+    ],
+    "Результаты опубликованы."
+  );
+};
+
+async function sendTelegramMessage(chatId: string, message: string): Promise<boolean> {
+  if (!TELEGRAM_BOT_TOKEN) return false;
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+      }),
+    });
+
+    const data = await response.json();
+    return !!data.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function getBlockRecipients(block: string) {
+  const { data: apartments } = await supabaseAdmin
+    .from("apartments")
+    .select("id, code")
+    .eq("block", block);
+
+  const typedApartments = (apartments as { id: string; code: string | null }[] | null | undefined) || [];
+  const apartmentIds = typedApartments.map((apt: { id: string; code: string | null }) => apt.id);
+  const apartmentCodes = typedApartments
+    .map((apt: { id: string; code: string | null }) => apt.code)
+    .filter(Boolean);
+  const residentsMap = new Map<string, Recipient>();
+
+  const selectFields = "id, telegram_chat_id, is_banned, room, full_name, first_name, last_name, middle_name, ui_language";
+
+  if (apartmentIds.length > 0) {
+    const { data: byApartment } = await supabaseAdmin
+      .from("students")
+      .select(selectFields)
+      .in("apartment_id", apartmentIds);
+
+    (byApartment || []).forEach((student: any) => {
+      residentsMap.set(student.id, {
+        id: student.id,
+        name: formatStudentName(student),
+        room: student.room || null,
+        telegram_chat_id: student.telegram_chat_id || null,
+        is_banned: student.is_banned,
+        ui_language: normalizeUiLanguage(student.ui_language),
+      });
+    });
+  }
+
+  if (apartmentCodes.length > 0) {
+    const { data: byRoom } = await supabaseAdmin
+      .from("students")
+      .select(selectFields)
+      .in("room", apartmentCodes);
+
+    (byRoom || []).forEach((student: any) => {
+      if (!residentsMap.has(student.id)) {
+        residentsMap.set(student.id, {
+          id: student.id,
+          name: formatStudentName(student),
+          room: student.room || null,
+          telegram_chat_id: student.telegram_chat_id || null,
+          is_banned: student.is_banned,
+          ui_language: normalizeUiLanguage(student.ui_language),
+        });
+      }
+    });
+  } else {
+    const { data: byRoomPrefix } = await supabaseAdmin
+      .from("students")
+      .select(selectFields)
+      .ilike("room", `${block}%`);
+
+    (byRoomPrefix || []).forEach((student: any) => {
+      if (!residentsMap.has(student.id)) {
+        residentsMap.set(student.id, {
+          id: student.id,
+          name: formatStudentName(student),
+          room: student.room || null,
+          telegram_chat_id: student.telegram_chat_id || null,
+          is_banned: student.is_banned,
+          ui_language: normalizeUiLanguage(student.ui_language),
+        });
+      }
+    });
+  }
+
+  return Array.from(residentsMap.values()).filter(
+    (student) => !student.is_banned && student.telegram_chat_id
+  );
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -208,11 +415,62 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const announcementBody =
+      typeof announcement_text === "string" ? announcement_text.trim() : "";
+
+    const recipients = await getBlockRecipients(block);
+    const sentTo: Recipient[] = [];
+    const failedTo: Recipient[] = [];
+    const skippedTo: Recipient[] = [];
+    const telegramEnabled = !!TELEGRAM_BOT_TOKEN;
+
+    if (telegramEnabled && recipients.length > 0) {
+      for (const recipient of recipients) {
+        const language = recipient.ui_language || "ru";
+        const dateLabel = formatDateLabel(week_start, language);
+        const message = formatPublishMessage({
+          block,
+          dateLabel,
+          winnerLabel: winningApartment.code || "—",
+          announcement: announcementBody,
+          language,
+        });
+
+        const ok = await sendTelegramMessage(recipient.telegram_chat_id as string, message);
+        if (ok) {
+          sentTo.push(recipient);
+        } else {
+          failedTo.push(recipient);
+        }
+      }
+    } else if (!telegramEnabled && recipients.length > 0) {
+      skippedTo.push(...recipients);
+    }
+
     return NextResponse.json({
       success: true,
       result_id: result.id,
       coupons_issued: eligibleResidents.length,
       expires_at: expiresAt,
+      telegram_enabled: telegramEnabled,
+      sent: sentTo.length,
+      attempted: telegramEnabled ? recipients.length : 0,
+      recipients_total: recipients.length,
+      sent_to: sentTo.map((recipient) => ({
+        id: recipient.id,
+        name: recipient.name,
+        room: recipient.room,
+      })),
+      failed_to: failedTo.map((recipient) => ({
+        id: recipient.id,
+        name: recipient.name,
+        room: recipient.room,
+      })),
+      skipped_to: skippedTo.map((recipient) => ({
+        id: recipient.id,
+        name: recipient.name,
+        room: recipient.room,
+      })),
     });
   } catch (err: any) {
     console.error("Error in cleanup publish:", err);
