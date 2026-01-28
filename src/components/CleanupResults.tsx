@@ -508,6 +508,23 @@ type ReminderRecipient = {
   room?: string | null;
 };
 
+type CouponSummary = {
+  active: number;
+  reserved: number;
+  used: number;
+  expired: number;
+  total: number;
+  valid: number;
+};
+
+type CouponSummaryRow = {
+  id: string;
+  name: string;
+  room: string | null;
+  block: Block | null;
+  stats: CouponSummary;
+};
+
 const formatTtlLabel = (
   seconds: number,
   t: (key: string, vars?: Record<string, string | number>) => string
@@ -549,6 +566,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [clearStudentLoading, setClearStudentLoading] = useState(false);
   const [transfers, setTransfers] = useState<CouponTransfer[]>([]);
   const [transferNames, setTransferNames] = useState<Record<string, string>>({});
+  const [couponSummaryByStudent, setCouponSummaryByStudent] = useState<Record<string, CouponSummary>>({});
+  const [couponSummaryLoading, setCouponSummaryLoading] = useState(false);
+  const [couponSummaryNotice, setCouponSummaryNotice] = useState<string | null>(null);
+  const [couponSummaryFilter, setCouponSummaryFilter] = useState<"all" | Block>("all");
   const [recipients, setRecipients] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
@@ -692,6 +713,61 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const apartmentsForBlock = useMemo(() => {
     return apartments.filter((apt) => !apt.block || apt.block === selectedBlock);
   }, [apartments, selectedBlock]);
+
+  const couponSummaryRows = useMemo(() => {
+    if (!canManageCleanup) return [];
+    const rows: CouponSummaryRow[] = [];
+    const knownIds = new Set<string>();
+
+    (students || []).forEach((student) => {
+      const stats = couponSummaryByStudent[student.id];
+      if (!stats || stats.valid <= 0) return;
+      const nameParts = [student.first_name, student.last_name, student.middle_name].filter(Boolean);
+      const name = (student.full_name || nameParts.join(" ") || t("cleanup.couponsSummary.unknownStudent")).trim();
+      const room = student.room ?? null;
+      const blockValue = room ? room.trim().charAt(0).toUpperCase() : "";
+      const block = blockValue === "A" || blockValue === "B" ? (blockValue as Block) : null;
+
+      rows.push({
+        id: student.id,
+        name: name || t("cleanup.couponsSummary.unknownStudent"),
+        room,
+        block,
+        stats,
+      });
+      knownIds.add(student.id);
+    });
+
+    Object.entries(couponSummaryByStudent).forEach(([studentId, stats]) => {
+      if (knownIds.has(studentId) || stats.valid <= 0) return;
+      rows.push({
+        id: studentId,
+        name: t("cleanup.couponsSummary.unknownStudent"),
+        room: null,
+        block: null,
+        stats,
+      });
+    });
+
+    rows.sort((a, b) => {
+      const blockA = a.block ?? "Z";
+      const blockB = b.block ?? "Z";
+      if (blockA !== blockB) {
+        return blockA.localeCompare(blockB);
+      }
+      const roomA = parseInt(a.room?.slice(1) || "9999", 10);
+      const roomB = parseInt(b.room?.slice(1) || "9999", 10);
+      if (roomA !== roomB) return roomA - roomB;
+      return a.name.localeCompare(b.name);
+    });
+
+    return rows;
+  }, [students, couponSummaryByStudent, canManageCleanup, t]);
+
+  const filteredCouponSummaryRows = useMemo(() => {
+    if (couponSummaryFilter === "all") return couponSummaryRows;
+    return couponSummaryRows.filter((row) => row.block === couponSummaryFilter);
+  }, [couponSummaryRows, couponSummaryFilter]);
 
   useEffect(() => {
     if (!scoreCaptions.some((caption) => caption.key === scoreCaptionKey)) {
@@ -862,6 +938,35 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     setCoupons((data as Coupon[]) || []);
   };
 
+  const loadCouponSummary = async () => {
+    if (!canManageCleanup) return;
+    setCouponSummaryLoading(true);
+    setCouponSummaryNotice(null);
+    try {
+      const response = await authedFetch("/api/admin/coupons/summary");
+      const result = await response.json();
+      if (!response.ok) {
+        const message =
+          typeof result?.error === "string" && result.error.trim()
+            ? result.error.trim()
+            : t("cleanup.couponsSummary.loadError");
+        setCouponSummaryNotice(message);
+        setCouponSummaryByStudent({});
+        return;
+      }
+      setCouponSummaryByStudent(result.stats || {});
+    } catch (error: any) {
+      const message =
+        typeof error?.message === "string" && error.message.trim()
+          ? error.message.trim()
+          : t("cleanup.couponsSummary.loadError");
+      setCouponSummaryNotice(message);
+      setCouponSummaryByStudent({});
+    } finally {
+      setCouponSummaryLoading(false);
+    }
+  };
+
   const loadTransfers = async () => {
     if (!supabase) return;
     let query = supabase
@@ -991,6 +1096,14 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   }, [user?.student_id]);
 
   useEffect(() => {
+    if (!canManageCleanup || !user?.student_id) {
+      setCouponSummaryByStudent({});
+      return;
+    }
+    loadCouponSummary();
+  }, [canManageCleanup, user?.student_id]);
+
+  useEffect(() => {
     loadTransfers();
   }, [user?.student_id, isAdmin, isSuperAdmin]);
 
@@ -1056,6 +1169,9 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const refreshCoupons = async () => {
     await loadCoupons();
     await loadTransfers();
+    if (canManageCleanup) {
+      await loadCouponSummary();
+    }
   };
 
   const handleScheduleSave = async (block: Block) => {
@@ -2170,6 +2286,104 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 </>
               )}
             </div>
+
+            {canManageCleanup && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4 dark:border-slate-700 dark:bg-slate-800 lg:col-span-2">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <TicketIcon className="w-5 h-5 text-purple-600" />
+                    <h3 className="text-lg font-bold text-gray-900">{t("cleanup.couponsSummary.title")}</h3>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-semibold text-slate-600">
+                      {t("cleanup.couponsSummary.filterLabel")}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setCouponSummaryFilter("all")}
+                      className={`rounded-full px-3 py-1 text-xs font-semibold border ${
+                        couponSummaryFilter === "all"
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+                      }`}
+                      aria-pressed={couponSummaryFilter === "all"}
+                    >
+                      {t("cleanup.couponsSummary.filter.all")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCouponSummaryFilter("A")}
+                      className={`rounded-full px-3 py-1 text-xs font-semibold border ${
+                        couponSummaryFilter === "A"
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+                      }`}
+                      aria-pressed={couponSummaryFilter === "A"}
+                    >
+                      {t("cleanup.couponsSummary.filter.blockA")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCouponSummaryFilter("B")}
+                      className={`rounded-full px-3 py-1 text-xs font-semibold border ${
+                        couponSummaryFilter === "B"
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+                      }`}
+                      aria-pressed={couponSummaryFilter === "B"}
+                    >
+                      {t("cleanup.couponsSummary.filter.blockB")}
+                    </button>
+                  </div>
+                </div>
+
+                {couponSummaryNotice && (
+                  <p className="text-sm text-rose-600">{couponSummaryNotice}</p>
+                )}
+
+                {couponSummaryLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-slate-600">
+                    <WashingSpinner className="w-4 h-4" />
+                    <span>{t("common.loading")}</span>
+                  </div>
+                ) : filteredCouponSummaryRows.length === 0 ? (
+                  <p className="text-sm text-gray-500">{t("cleanup.couponsSummary.empty")}</p>
+                ) : (
+                  <div className="space-y-2">
+                    {filteredCouponSummaryRows.map((row) => (
+                      <div
+                        key={row.id}
+                        className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-gray-700 dark:border-slate-700 dark:bg-slate-900/40"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="font-semibold text-gray-900">
+                            {row.name}
+                            {row.room ? ` (${row.room})` : ""}
+                          </span>
+                          <span className="text-xs font-semibold text-slate-600">
+                            {t("students.coupons", { count: row.stats.valid })}
+                          </span>
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-700">
+                          <span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
+                            {t("cleanup.coupons.stats.active", { count: row.stats.active })}
+                          </span>
+                          <span className="rounded-full bg-blue-50 px-2 py-1 text-blue-700">
+                            {t("cleanup.coupons.stats.reserved", { count: row.stats.reserved })}
+                          </span>
+                          <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-700">
+                            {t("cleanup.coupons.stats.used", { count: row.stats.used })}
+                          </span>
+                          <span className="rounded-full bg-amber-50 px-2 py-1 text-amber-700">
+                            {t("cleanup.coupons.stats.expired", { count: row.stats.expired })}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
