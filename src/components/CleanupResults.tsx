@@ -2376,12 +2376,12 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                         key={row.id}
                         className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-gray-700 dark:border-slate-700 dark:bg-slate-900/40"
                       >
-                        <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                           <span className="font-semibold text-gray-900">
                             {row.name}
                             {row.room ? ` (${row.room})` : ""}
                           </span>
-                          <div className="text-right text-xs font-semibold text-slate-600 space-y-0.5">
+                          <div className="text-xs font-semibold text-slate-600 space-y-0.5 sm:text-right">
                             <div>{t("students.coupons", { count: row.stats.valid })}</div>
                             {row.stats.valid_until && (
                               <div className="text-[11px] font-medium text-slate-500">
