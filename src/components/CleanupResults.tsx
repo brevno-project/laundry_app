@@ -515,6 +515,7 @@ type CouponSummary = {
   expired: number;
   total: number;
   valid: number;
+  valid_until?: string | null;
 };
 
 type CouponSummaryRow = {
@@ -555,6 +556,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   }, [language]);
   const [results, setResults] = useState<CleanupResult[]>([]);
   const [apartments, setApartments] = useState<Apartment[]>([]);
+  const [resultApartments, setResultApartments] = useState<Apartment[]>([]);
   const [schedules, setSchedules] = useState<CleanupSchedule[]>([]);
   const [announcers, setAnnouncers] = useState<Record<string, string>>({});
   const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -690,11 +692,11 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
   const apartmentMap = useMemo(() => {
     const map: Record<string, Apartment> = {};
-    apartments.forEach((apt) => {
+    [...resultApartments, ...apartments].forEach((apt) => {
       map[apt.id] = apt;
     });
     return map;
-  }, [apartments]);
+  }, [apartments, resultApartments]);
 
   const resultsByBlock = useMemo(() => {
     return {
@@ -852,6 +854,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
     const rows = (data as CleanupResult[]) || [];
     setResults(rows);
+    await loadResultApartments(rows);
 
     const announcerIds = Array.from(
       new Set(rows.map((row) => row.announced_by).filter(Boolean))
@@ -965,6 +968,22 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     } finally {
       setCouponSummaryLoading(false);
     }
+  };
+
+  const loadResultApartments = async (rows: CleanupResult[]) => {
+    if (!supabase) return;
+    const ids = Array.from(
+      new Set(rows.map((row) => row.winning_apartment_id).filter(Boolean))
+    ) as string[];
+    if (ids.length === 0) {
+      setResultApartments([]);
+      return;
+    }
+    const { data } = await supabase
+      .from("apartments")
+      .select("id, code, block")
+      .in("id", ids);
+    setResultApartments((data as Apartment[]) || []);
   };
 
   const loadTransfers = async () => {
@@ -2362,9 +2381,16 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                             {row.name}
                             {row.room ? ` (${row.room})` : ""}
                           </span>
-                          <span className="text-xs font-semibold text-slate-600">
-                            {t("students.coupons", { count: row.stats.valid })}
-                          </span>
+                          <div className="text-right text-xs font-semibold text-slate-600 space-y-0.5">
+                            <div>{t("students.coupons", { count: row.stats.valid })}</div>
+                            {row.stats.valid_until && (
+                              <div className="text-[11px] font-medium text-slate-500">
+                                {t("cleanup.couponsSummary.validUntil", {
+                                  date: formatDateTime(row.stats.valid_until, locale),
+                                })}
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-700">
                           <span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">

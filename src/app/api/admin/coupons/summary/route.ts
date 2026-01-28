@@ -16,6 +16,7 @@ type CouponStats = {
   expired: number;
   total: number;
   valid: number;
+  valid_until?: string | null;
 };
 
 const emptyStats = (): CouponStats => ({
@@ -25,6 +26,7 @@ const emptyStats = (): CouponStats => ({
   expired: 0,
   total: 0,
   valid: 0,
+  valid_until: null,
 });
 
 export async function GET(req: NextRequest) {
@@ -74,6 +76,13 @@ export async function GET(req: NextRequest) {
       }
 
       entry.valid = entry.active + entry.reserved;
+
+      if (!isUsed && !isExpired && expiresAt !== null && !Number.isNaN(expiresAt)) {
+        const currentMax = entry.valid_until ? new Date(entry.valid_until).getTime() : null;
+        if (!currentMax || Number.isNaN(currentMax) || expiresAt > currentMax) {
+          entry.valid_until = new Date(expiresAt).toISOString();
+        }
+      }
       stats[ownerId] = entry;
     });
 
