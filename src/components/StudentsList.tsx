@@ -51,7 +51,7 @@ export default function StudentsList() {
 
   const canManageStudents = isAdmin || isSuperAdmin || isCleanupAdmin;
   const canDeleteStudents = isAdmin || isSuperAdmin || isCleanupAdmin;
-  const canViewRegistration = isAdmin || isSuperAdmin;
+  const canViewRegistration = isAdmin || isSuperAdmin || isCleanupAdmin;
 
   const badgeBase = "rounded-full border border-slate-200/60 dark:border-slate-700";
 
