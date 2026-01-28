@@ -188,6 +188,7 @@ export type CleanupResult = {
   announcement_mode?: string;
   template_key?: string | null;
   announced_by?: string | null;
+  announced_by_name?: string | null;
   created_by?: string | null;
   published_at?: string | null;
   coupons_issued_at?: string | null;

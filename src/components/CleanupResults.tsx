@@ -845,7 +845,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const { data } = await supabase
       .from("cleanup_results")
       .select(
-        "id, week_start, block, announcement_text, announcement_mode, template_key, announced_by, published_at, winning_apartment_id, created_at"
+        "id, week_start, block, announcement_text, announcement_mode, template_key, announced_by, announced_by_name, published_at, winning_apartment_id, created_at"
       )
       .order("week_start", { ascending: false })
       .order("created_at", { ascending: false });
@@ -1730,7 +1730,9 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
   const renderResultCard = (item: CleanupResult) => {
     const apartment = apartmentMap[item.winning_apartment_id];
-    const announcer = item.announced_by ? announcers[item.announced_by] : null;
+    const announcer =
+      (item.announced_by_name || "").trim() ||
+      (item.announced_by ? announcers[item.announced_by] : null);
 
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">

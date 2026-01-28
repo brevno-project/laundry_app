@@ -309,6 +309,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const { data: announcerRow } = await supabaseAdmin
+      .from("students")
+      .select("full_name, first_name, last_name, middle_name")
+      .eq("id", caller.student_id)
+      .maybeSingle();
+    const announcerName = announcerRow ? formatStudentName(announcerRow) : "";
+
     const now = new Date();
     const nowIso = now.toISOString();
     const { data: ttlSetting } = await supabaseAdmin
@@ -333,6 +340,7 @@ export async function POST(req: NextRequest) {
         announcement_mode: announcement_mode || "template",
         template_key: template_key || null,
         announced_by: caller.student_id,
+        announced_by_name: announcerName || null,
         created_by: caller.student_id,
         published_at: nowIso,
         coupons_issued_at: nowIso,
