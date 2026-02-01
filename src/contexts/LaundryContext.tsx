@@ -4357,7 +4357,7 @@ const updateQueueItemDetails = async (
 
 
 
-  if (item.status !== QueueStatus.WAITING) {
+  if (item.status === QueueStatus.DONE) {
 
     return;
 

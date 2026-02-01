@@ -49,6 +49,7 @@ export default function QueueList() {
   const [editWashCount, setEditWashCount] = useState(1);
   const [editCouponsUsed, setEditCouponsUsed] = useState(0);
   const [editDate, setEditDate] = useState('');
+  const canEditDate = editingItem?.status === QueueStatus.WAITING;
   const [openActionFor, setOpenActionFor] = useState<string | null>(null);
   const [leavingQueueId, setLeavingQueueId] = useState<string | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -382,6 +383,7 @@ export default function QueueList() {
                 const displayName = item.full_name || targetStudent?.full_name || "-";
                 const displayRoom = item.room || targetStudent?.room;
                 const couponsUsed = item.coupons_used || 0;
+                const canEditItem = item.status !== QueueStatus.DONE;
 
                 // ✅ Определяем цвет левой рамки по активному таймеру
                 let leftBorderColor = 'border-l-slate-300 dark:border-l-slate-600';
@@ -621,6 +623,18 @@ export default function QueueList() {
                             ref={(el) => { actionMenuRefs.current[item.id] = el; }}
                             className="mt-3 bg-gray-50 border rounded-lg shadow-inner p-3 space-y-2 dark:bg-slate-900/40 dark:border-slate-700"
                           >
+                          {canEditItem && (
+                            <button
+                              className="w-full btn bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600"
+                              onClick={() => {
+                                setEditingItem(item);
+                                setShowEditModal(true);
+                                setOpenActionFor(null);
+                              }}
+                            >
+                              <EditIcon className="w-4 h-4" /> {t("queue.action.editTitle")}
+                            </button>
+                          )}
 
                           {/* Позвать */}
                           <button
@@ -831,7 +845,8 @@ export default function QueueList() {
           <select
             value={editDate}
             onChange={(e) => setEditDate(e.target.value)}
-            className="w-full border-2 border-slate-900 rounded-lg p-2 text-gray-900 bg-white focus:outline-none focus:border-slate-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-slate-400"
+            disabled={!canEditDate}
+            className="w-full border-2 border-slate-900 rounded-lg p-2 text-gray-900 bg-white focus:outline-none focus:border-slate-900 disabled:opacity-60 disabled:cursor-not-allowed dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-slate-400"
           >
             {getAvailableDates().map(date => (
               <option key={date.value} value={date.value}>

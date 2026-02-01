@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ✅ Можно обновлять только WAITING
-    if (fullQueueItem.status !== "waiting") {
+    if (fullQueueItem.status === "done") {
       return NextResponse.json(
         { error: "Можно редактировать только записи со статусом ожидания" },
         { status: 400 }
@@ -66,9 +66,10 @@ export async function POST(req: NextRequest) {
     const nextCouponsUsedRaw =
       updates.coupons_used !== undefined ? updates.coupons_used : currentCouponsUsed;
     const nextCouponsUsed = Math.max(0, Math.min(nextCouponsUsedRaw, nextWashCount));
+    const canEditDate = fullQueueItem.status === "waiting";
     const nextPaymentType =
       nextCouponsUsed === 0 ? "money" : nextCouponsUsed >= nextWashCount ? "coupon" : "both";
-    const targetQueueDate = updates.chosen_date ?? fullQueueItem.queue_date;
+    const targetQueueDate = (canEditDate ? updates.chosen_date : undefined) ?? fullQueueItem.queue_date;
 
     if (updates.wash_count !== undefined) updateData.wash_count = nextWashCount;
     if (updates.coupons_used !== undefined || updates.wash_count !== undefined) {
@@ -76,18 +77,19 @@ export async function POST(req: NextRequest) {
       updateData.payment_type = nextPaymentType;
     }
     if (updates.expected_finish_at !== undefined) updateData.expected_finish_at = updates.expected_finish_at;
-    if (updates.chosen_date !== undefined) {
+    if (updates.chosen_date !== undefined && canEditDate) {
       updateData.queue_date = updates.chosen_date;
       updateData.scheduled_for_date = updates.chosen_date;
     }
     if (updates.admin_message !== undefined) updateData.admin_message = updates.admin_message;
 
     // ✅ Обновляем
+    const hasDateChange = canEditDate && updates.chosen_date !== undefined;
     const shouldUpdateCoupons =
       (updates.coupons_used !== undefined ||
         updates.wash_count !== undefined ||
-        updates.chosen_date !== undefined) &&
-      (nextCouponsUsed !== currentCouponsUsed || updates.chosen_date !== undefined);
+        hasDateChange) &&
+      (nextCouponsUsed !== currentCouponsUsed || hasDateChange);
 
     let reserveCouponIds: string[] = [];
     if (shouldUpdateCoupons && nextCouponsUsed > 0) {
