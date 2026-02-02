@@ -38,6 +38,13 @@ export default function QueueList() {
   } = useLaundry();
   const { t, language } = useUi();
   const locale = language === "ru" ? "ru-RU" : language === "en" ? "en-US" : language === "ko" ? "ko-KR" : "ky-KG";
+  const getKeyFetchLabel = (room: string | undefined, fallbackKey: string) => {
+    if (language !== "ru") return t(fallbackKey);
+    const normalizedRoom = (room || "").trim().toUpperCase();
+    if (normalizedRoom.startsWith("B")) return "Шла за ключом";
+    if (normalizedRoom.startsWith("A")) return "Шел за ключом";
+    return t(fallbackKey);
+  };
 
   const [tempTimes, setTempTimes] = useState<{ [key: string]: string }>({});
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -383,6 +390,7 @@ export default function QueueList() {
                 const displayName = item.full_name || targetStudent?.full_name || "-";
                 const displayRoom = item.room || targetStudent?.room;
                 const couponsUsed = item.coupons_used || 0;
+                const keyFetchLabel = getKeyFetchLabel(displayRoom, "queue.timer.ready");
                 const canEditItem = item.status !== QueueStatus.DONE;
 
                 // ✅ Определяем цвет левой рамки по активному таймеру
@@ -484,7 +492,7 @@ export default function QueueList() {
                             <Timer 
                               startTime={item.ready_at} 
                               endTime={item.key_issued_at || undefined}
-                              label={t("queue.timer.ready")} 
+                              label={keyFetchLabel} 
                               color="yellow" 
                             />
                           )}

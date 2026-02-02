@@ -78,6 +78,13 @@ export default function HistoryList() {
   const [clearing, setClearing] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<HistoryItem | null>(null);
   const [deleteAction, setDeleteAction] = useState<"single" | "all" | null>(null);
+  const getKeyFetchLabel = (room?: string | null) => {
+    if (language !== "ru") return t("history.keyFetch");
+    const normalizedRoom = (room || "").trim().toUpperCase();
+    if (normalizedRoom.startsWith("B")) return "Шла за ключом";
+    if (normalizedRoom.startsWith("A")) return "Шел за ключом";
+    return t("history.keyFetch");
+  };
 
   const alertWithCheck = (message: string) => {
     const trimmed = message.trim();
@@ -377,7 +384,7 @@ export default function HistoryList() {
                     <Timer 
                       startTime={item.ready_at} 
                       endTime={item.key_issued_at}
-                      label={t("history.keyFetch")} 
+                      label={getKeyFetchLabel(item.room)} 
                       color="yellow"
                     />
                   )}
