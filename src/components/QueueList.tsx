@@ -507,28 +507,30 @@ export default function QueueList() {
                       </div>
                       <div className="flex flex-col">
                         <span className="text-xs text-gray-600">{t("queue.label.payment")}</span>
-                        <span className="text-sm font-bold text-gray-900 flex items-center gap-1">
+                        <span className="text-sm font-bold text-gray-900 flex flex-wrap items-center gap-x-1 gap-y-1">
                           {couponsUsed > 0 || item.payment_type === 'coupon' || item.payment_type === 'both' ? (
                             <>
-                              <TicketIcon className="w-4 h-4 text-purple-600" />
-                              <span>
-                                {couponsUsed > 0
-                                  ? t("payment.coupons", { count: couponsUsed })
-                                  : t("payment.coupon")}
+                              <span className="flex items-center gap-1 whitespace-nowrap">
+                                <TicketIcon className="w-4 h-4 text-purple-600" />
+                                <span>
+                                  {couponsUsed > 0
+                                    ? t("payment.coupons", { count: couponsUsed })
+                                    : t("payment.coupon")}
+                                </span>
                               </span>
                               {item.payment_type === 'both' && (
-                                <>
+                                <span className="flex items-center gap-1 whitespace-nowrap">
                                   <span>+</span>
                                   <MoneyIcon className="w-4 h-4 text-green-600" />
                                   <span>{t("payment.money")}</span>
-                                </>
+                                </span>
                               )}
                             </>
                           ) : (
-                            <>
+                            <span className="flex items-center gap-1 whitespace-nowrap">
                               <MoneyIcon className="w-4 h-4 text-green-600" />
                               <span>{t("payment.money")}</span>
-                            </>
+                            </span>
                           )}
                         </span>
                       </div>
