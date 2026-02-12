@@ -388,7 +388,8 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     lastErrorAt: 0,
 
   });
-  const statusCheckRef = useRef({ inFlight: false, lastRunAt: 0 });
+  const statusCheckRef = useRef({ inFlight: false, lastRunAt: 0, missingLinkHits: 0 });
+  const tokenRefreshRef = useRef<Promise<string> | null>(null);
   const registeringRef = useRef(false);
 
   const clearLocalSession = (options?: { keepBanNotice?: boolean }) => {
@@ -437,10 +438,17 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        clearLocalSession();
+        setAuthReady(true);
+        return;
+      }
 
-      refreshMyRole();
-
+      // Avoid aggressive profile re-fetch on hourly token refresh in Safari.
+      if (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "USER_UPDATED") {
+        void refreshMyRole();
+      }
     });
 
 
@@ -1393,14 +1401,6 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       if (error) {
 
         console.error('? Error fetching user data:', error);
-
-        setUser(null);
-
-        setIsAdmin(false);
-
-        setIsSuperAdmin(false);
-        setIsCleanupAdmin(false);
-
         return;
 
       }
@@ -1408,8 +1408,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
       if (!me) {
-        await supabase.auth.signOut({ scope: 'local' });
-        clearLocalSession();
+        // Keep current session; a temporary RLS/network glitch should not force logout.
         return;
       }
 
@@ -2556,7 +2555,10 @@ const loginStudent = async (
       try {
         const { data: { session } } = await client.auth.getSession();
         const uid = session?.user?.id;
-        if (!uid) return;
+        if (!uid) {
+          statusCheckRef.current.missingLinkHits = 0;
+          return;
+        }
 
         const { data: studentData, error } = await client
           .from("students")
@@ -2571,12 +2573,19 @@ const loginStudent = async (
         if (!studentData) {
           const linked = await waitForStudentLink(uid, 4, 250);
           if (linked) {
+            statusCheckRef.current.missingLinkHits = 0;
+            return;
+          }
+          statusCheckRef.current.missingLinkHits += 1;
+          if (statusCheckRef.current.missingLinkHits < 3) {
             return;
           }
           await client.auth.signOut({ scope: 'local' });
           clearLocalSession();
           return;
         }
+
+        statusCheckRef.current.missingLinkHits = 0;
 
         if (studentData.is_banned) {
           const banReason = studentData.ban_reason || "Не указана";
@@ -3550,35 +3559,35 @@ const joinQueue = async (
 
     if (!supabase) throw new Error('Supabase not configured');
 
-    
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    const currentToken = currentSession?.access_token;
+    const expiresAtMs = currentSession?.expires_at ? currentSession.expires_at * 1000 : null;
 
-    // Ð’ÑÐµÐ³Ð´Ð° Ð¾Ð±Ð½Ð¾Ð²Ð»ÑÐµÐ¼ ÑÐµÑÑÐ¸ÑŽ Ð´Ð»Ñ Ð¿Ð¾Ð»ÑƒÑ‡ÐµÐ½Ð¸Ñ ÑÐ²ÐµÐ¶ÐµÐ³Ð¾ Ñ‚Ð¾ÐºÐµÐ½Ð°
-
-    const { data: { session }, error } = await supabase.auth.refreshSession();
-
-    
-
-    if (error || !session?.access_token) {
-
-      console.error('Failed to refresh session:', error);
-
-      // Fallback: Ð¿Ñ€Ð¾Ð±ÑƒÐµÐ¼ Ð¿Ð¾Ð»ÑƒÑ‡Ð¸Ñ‚ÑŒ Ñ‚ÐµÐºÑƒÑ‰ÑƒÑŽ ÑÐµÑÑÐ¸ÑŽ
-
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-
-      if (!currentSession?.access_token) {
-
-        throw new Error('No active session');
-
-      }
-
-      return currentSession.access_token;
-
+    // Reuse current token while it is still valid enough.
+    if (currentToken && (!expiresAtMs || expiresAtMs - Date.now() > 60_000)) {
+      return currentToken;
     }
 
-    
+    if (!tokenRefreshRef.current) {
+      tokenRefreshRef.current = (async () => {
+        const { data: { session }, error } = await supabase.auth.refreshSession();
 
-    return session.access_token;
+        if (error || !session?.access_token) {
+          console.error('Failed to refresh session:', error);
+          const { data: { session: fallbackSession } } = await supabase.auth.getSession();
+          if (!fallbackSession?.access_token) {
+            throw new Error('No active session');
+          }
+          return fallbackSession.access_token;
+        }
+
+        return session.access_token;
+      })().finally(() => {
+        tokenRefreshRef.current = null;
+      });
+    }
+
+    return tokenRefreshRef.current;
 
   };
 
