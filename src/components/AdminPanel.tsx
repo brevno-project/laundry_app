@@ -1003,15 +1003,20 @@ function Modal({
   children: React.ReactNode;
   onClose: () => void;
 }) {
-  const { t } = useUi();
+  const handleBackdropMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    // Close only when the press starts on backdrop itself (not on modal content).
+    if (event.target === event.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
+      onMouseDown={handleBackdropMouseDown}
     >
       <div
         className="w-full max-w-md rounded-lg bg-white dark:bg-slate-800 p-6 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
       >
         {children}
       </div>
