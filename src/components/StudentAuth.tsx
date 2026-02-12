@@ -24,6 +24,8 @@ export default function StudentAuth() {
   const banNoticeRef = useRef<HTMLDivElement | null>(null);
 
   const hasLoadedRef = useRef(false);
+  const loadStudentsRef = useRef(loadStudents);
+  const studentsRefreshTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -45,23 +47,39 @@ export default function StudentAuth() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    loadStudentsRef.current = loadStudents;
+  }, [loadStudents]);
+
+  useEffect(() => {
     if (!supabase) return;
+
+    const scheduleStudentsRefresh = () => {
+      if (studentsRefreshTimerRef.current !== null) {
+        return;
+      }
+      studentsRefreshTimerRef.current = window.setTimeout(() => {
+        studentsRefreshTimerRef.current = null;
+        void loadStudentsRef.current();
+      }, 300);
+    };
 
     const channel = supabase
       .channel("students-auth-live")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "students" },
-        () => {
-          loadStudents();
-        }
+        scheduleStudentsRefresh
       )
       .subscribe();
 
     return () => {
+      if (studentsRefreshTimerRef.current !== null) {
+        window.clearTimeout(studentsRefreshTimerRef.current);
+        studentsRefreshTimerRef.current = null;
+      }
       channel.unsubscribe();
     };
-  }, [loadStudents]);
+  }, []);
 
   // Логируем данные студентов при их изменении
   useEffect(() => {
@@ -111,6 +129,38 @@ export default function StudentAuth() {
     setBanNotice("");
   };
 
+  const decodePotentialMojibake = (message: string): string => {
+    if (!/[\u00D0\u00D1]/.test(message)) return message;
+    try {
+      const bytes = Uint8Array.from(message, (char) => char.charCodeAt(0));
+      const decoded = new TextDecoder("utf-8", { fatal: false }).decode(bytes).trim();
+      return decoded || message;
+    } catch {
+      return message;
+    }
+  };
+
+  const normalizeAuthError = (rawError: unknown, isRegistered: boolean): string => {
+    const fallback = isRegistered ? t("auth.invalidPassword") : t("auth.registrationError");
+    const baseMessage =
+      rawError instanceof Error ? rawError.message.trim() : String(rawError ?? "").trim();
+
+    if (!baseMessage) {
+      return fallback;
+    }
+
+    if (baseMessage.toLowerCase().includes("invalid login credentials")) {
+      return t("auth.invalidPassword");
+    }
+
+    const decodedMessage = decodePotentialMojibake(baseMessage);
+    if (decodedMessage === "Неправильный пароль") {
+      return t("auth.invalidPassword");
+    }
+
+    return decodedMessage;
+  };
+
   const handleAuth = async () => {
     if (!selectedStudent) return;
 
@@ -151,12 +201,7 @@ export default function StudentAuth() {
         await registerStudent(selectedStudent.id, password);
       }
     } catch (err: any) {
-      setError(
-        err.message ||
-          (selectedStudent.is_registered
-            ? t("auth.invalidPassword")
-            : t("auth.registrationError"))
-      );
+      setError(normalizeAuthError(err, selectedStudent.is_registered));
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 
 
@@ -71,7 +71,7 @@ const isSupabaseConfigured = !!SUPABASE_URL && !!SUPABASE_KEY && !!supabase;
 
 // ========================================
 
-// Ожидание стабильной сессии после auth
+// ÐžÐ¶Ð¸Ð´Ð°Ð½Ð¸Ðµ ÑÑ‚Ð°Ð±Ð¸Ð»ÑŒÐ½Ð¾Ð¹ ÑÐµÑÑÐ¸Ð¸ Ð¿Ð¾ÑÐ»Ðµ auth
 
 // ========================================
 
@@ -81,7 +81,7 @@ async function waitForSession(): Promise<boolean> {
 
   
 
-  // Ждём пока session стабильно доступна (до 5 попыток)
+  // Ð–Ð´Ñ‘Ð¼ Ð¿Ð¾ÐºÐ° session ÑÑ‚Ð°Ð±Ð¸Ð»ÑŒÐ½Ð¾ Ð´Ð¾ÑÑ‚ÑƒÐ¿Ð½Ð° (Ð´Ð¾ 5 Ð¿Ð¾Ð¿Ñ‹Ñ‚Ð¾Ðº)
 
   for (let i = 0; i < 5; i++) {
 
@@ -176,7 +176,7 @@ type LaundryContextType = {
 
   loginStudent: (studentId: string, password: string) => Promise<User | null>;
 
-  // ? УДАЛЕНО: adminLogin - админы входят через loginStudent
+  // Clear local session after logout options are applied.
 
   logoutStudent: (options?: { keepBanNotice?: boolean }) => Promise<void>;
 
@@ -314,15 +314,15 @@ const LaundryContext = createContext<LaundryContextType | undefined>(undefined);
 
 export function LaundryProvider({ children }: { children: ReactNode }) {
 
-  // ? User стартует null, НЕ из localStorage!
+  // Clear local session after logout options are applied.
 
-  // refreshMyRole() установит правильное значение из Supabase Auth session
+  // refreshMyRole() ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð¸Ñ‚ Ð¿Ñ€Ð°Ð²Ð¸Ð»ÑŒÐ½Ð¾Ðµ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ Ð¸Ð· Supabase Auth session
 
   const [user, setUser] = useState<User | null>(null);
 
   
 
-  // ? Права определяются ТОЛЬКО из Supabase Auth session + БД
+  // Clear local session after logout options are applied.
 
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
@@ -419,7 +419,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-  // ? ПРИ СТАРТЕ: Синхронизация прав с Supabase Auth
+  // Clear local session after logout options are applied.
 
   useEffect(() => {
 
@@ -429,7 +429,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-  // ? ПРИ ИЗМЕНЕНИИ AUTH: Обновляем права
+  // Clear local session after logout options are applied.
 
   useEffect(() => {
 
@@ -456,25 +456,45 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return;
 
-    const refreshVisible = () => {
+    const refreshVisible = (options?: { includeHeavy?: boolean }) => {
       if (typeof document !== "undefined" && document.visibilityState !== "visible") {
+        return;
+      }
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
         return;
       }
       fetchQueue();
       fetchMachineState();
-      fetchHistory();
-      loadStudents();
+      if (options?.includeHeavy) {
+        fetchHistory();
+        loadStudents();
+      }
     };
 
-    const handleVisibility = () => refreshVisible();
-    const handleOnline = () => refreshVisible();
+    const refreshFull = () => refreshVisible({ includeHeavy: true });
+    const handleVisibility = () => refreshFull();
+    const handleFocus = () => refreshFull();
+    const handleOnline = () => refreshFull();
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        refreshFull();
+      }
+    };
+
+    const pollId = window.setInterval(() => refreshVisible(), 15000);
 
     document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", handleFocus);
     window.addEventListener("online", handleOnline);
+    window.addEventListener("pageshow", handlePageShow);
+    refreshFull();
 
     return () => {
+      window.clearInterval(pollId);
       document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", handleFocus);
       window.removeEventListener("online", handleOnline);
+      window.removeEventListener("pageshow", handlePageShow);
     };
   }, [isSupabaseConfigured, supabase, isAdmin, isSuperAdmin, isCleanupAdmin, user?.can_view_students]);
 
@@ -750,7 +770,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-  // Пользователь: покинуть очередь
+  // ÐŸÐ¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÑŒ: Ð¿Ð¾ÐºÐ¸Ð½ÑƒÑ‚ÑŒ Ð¾Ñ‡ÐµÑ€ÐµÐ´ÑŒ
   const leaveQueue = async (queueItemId: string) => {
     if (!supabase) return;
 
@@ -1151,7 +1171,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-            // Обновляем если новый chat_id отличается от текущего
+            // ÐžÐ±Ð½Ð¾Ð²Ð»ÑÐµÐ¼ ÐµÑÐ»Ð¸ Ð½Ð¾Ð²Ñ‹Ð¹ chat_id Ð¾Ñ‚Ð»Ð¸Ñ‡Ð°ÐµÑ‚ÑÑ Ð¾Ñ‚ Ñ‚ÐµÐºÑƒÑ‰ÐµÐ³Ð¾
 
             if (newChatId !== undefined && newChatId !== user.telegram_chat_id) {
 
@@ -1232,7 +1252,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-  // Save user to localStorage when changed (только для UI, не права)
+  // Save user to localStorage when changed (Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð´Ð»Ñ UI, Ð½Ðµ Ð¿Ñ€Ð°Ð²Ð°)
 
   useEffect(() => {
 
@@ -1262,7 +1282,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-  // ? Автопривязка записей очереди при логине студента (через RPC)
+  // Clear local session after logout options are applied.
 
   const claimMyQueueItems = async () => {
 
@@ -1282,7 +1302,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
       } else {
 
-        // Обновляем очередь чтобы увидеть изменения
+        // ÐžÐ±Ð½Ð¾Ð²Ð»ÑÐµÐ¼ Ð¾Ñ‡ÐµÑ€ÐµÐ´ÑŒ Ñ‡Ñ‚Ð¾Ð±Ñ‹ ÑƒÐ²Ð¸Ð´ÐµÑ‚ÑŒ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ñ
 
         await fetchQueue();
 
@@ -1298,7 +1318,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-  // ? ЕДИНАЯ ФУНКЦИЯ: Синхронизация прав с Supabase Auth session
+  // Clear local session after logout options are applied.
 
   const refreshMyRole = async () => {
 
@@ -1430,7 +1450,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-        // ?? Добавляем эти поля в объект пользователя
+        // ?? Ð”Ð¾Ð±Ð°Ð²Ð»ÑÐµÐ¼ ÑÑ‚Ð¸ Ð¿Ð¾Ð»Ñ Ð² Ð¾Ð±ÑŠÐµÐºÑ‚ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»Ñ
 
         is_admin: me.is_admin || false,
 
@@ -1450,7 +1470,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-      // ? Сохраняем только user, НЕ права (права из refreshMyRole)
+      // Clear local session after logout options are applied.
 
       if (typeof window !== "undefined") {
 
@@ -1460,7 +1480,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-      // ?? Автопривязка записей очереди для залогиненного студента
+      // ?? ÐÐ²Ñ‚Ð¾Ð¿Ñ€Ð¸Ð²ÑÐ·ÐºÐ° Ð·Ð°Ð¿Ð¸ÑÐµÐ¹ Ð¾Ñ‡ÐµÑ€ÐµÐ´Ð¸ Ð´Ð»Ñ Ð·Ð°Ð»Ð¾Ð³Ð¸Ð½ÐµÐ½Ð½Ð¾Ð³Ð¾ ÑÑ‚ÑƒÐ´ÐµÐ½Ñ‚Ð°
 
       if (uid && me.id) {
 
@@ -1470,7 +1490,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-      // Сохраняем только user в localStorage (для UI), НЕ права
+      // Ð¡Ð¾Ñ…Ñ€Ð°Ð½ÑÐµÐ¼ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ user Ð² localStorage (Ð´Ð»Ñ UI), ÐÐ• Ð¿Ñ€Ð°Ð²Ð°
 
       if (typeof window !== 'undefined') {
 
@@ -1791,7 +1811,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
       try {
 
-        // Запрашиваем с avatar полями (после миграции 20250116_add_avatar_to_login_view)
+        // Ð—Ð°Ð¿Ñ€Ð°ÑˆÐ¸Ð²Ð°ÐµÐ¼ Ñ avatar Ð¿Ð¾Ð»ÑÐ¼Ð¸ (Ð¿Ð¾ÑÐ»Ðµ Ð¼Ð¸Ð³Ñ€Ð°Ñ†Ð¸Ð¸ 20250116_add_avatar_to_login_view)
 
         const { data, error } = await client
 
@@ -1855,7 +1875,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
       } catch (error) {
 
-        // Fallback без avatar полей (если view еще не обновлена)
+        // Fallback Ð±ÐµÐ· avatar Ð¿Ð¾Ð»ÐµÐ¹ (ÐµÑÐ»Ð¸ view ÐµÑ‰Ðµ Ð½Ðµ Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½Ð°)
 
         const { data, error: legacyError } = await client
 
@@ -1945,7 +1965,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-  // Универсальный хелпер: формирует локального пользователя и статусы
+  // Ð£Ð½Ð¸Ð²ÐµÑ€ÑÐ°Ð»ÑŒÐ½Ñ‹Ð¹ Ñ…ÐµÐ»Ð¿ÐµÑ€: Ñ„Ð¾Ñ€Ð¼Ð¸Ñ€ÑƒÐµÑ‚ Ð»Ð¾ÐºÐ°Ð»ÑŒÐ½Ð¾Ð³Ð¾ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»Ñ Ð¸ ÑÑ‚Ð°Ñ‚ÑƒÑÑ‹
 
 const finalizeUserSession = (
 
@@ -1992,7 +2012,7 @@ const finalizeUserSession = (
 
 
 
-    // ?? Добавляем эти поля в объект пользователя
+    // ?? Ð”Ð¾Ð±Ð°Ð²Ð»ÑÐµÐ¼ ÑÑ‚Ð¸ Ð¿Ð¾Ð»Ñ Ð² Ð¾Ð±ÑŠÐµÐºÑ‚ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»Ñ
 
     is_admin: isAdminUser,
 
@@ -2018,7 +2038,7 @@ const finalizeUserSession = (
 
 
 
-  // ? Сохраняем только user, НЕ права (права из refreshMyRole)
+  // Clear local session after logout options are applied.
 
   if (typeof window !== "undefined") {
 
@@ -2034,7 +2054,7 @@ const finalizeUserSession = (
 
     // ========================================
 
-// ФУНКЦИЯ РЕГИСТРАЦИИ
+// Ð¤Ð£ÐÐšÐ¦Ð˜Ð¯ Ð Ð•Ð“Ð˜Ð¡Ð¢Ð ÐÐ¦Ð˜Ð˜
 
 // ========================================
 
@@ -2042,7 +2062,7 @@ const finalizeUserSession = (
 
 // ========================================
 
-// ФУНКЦИЯ РЕГИСТРАЦИИ (НОВАЯ, ФИКС)
+// Ð¤Ð£ÐÐšÐ¦Ð˜Ð¯ Ð Ð•Ð“Ð˜Ð¡Ð¢Ð ÐÐ¦Ð˜Ð˜ (ÐÐžÐ’ÐÐ¯, Ð¤Ð˜ÐšÐ¡)
 
 // ========================================
 
@@ -2092,7 +2112,7 @@ const registerStudent = async (
 
 
 
-    // Проверка длины пароля
+    // ÐŸÑ€Ð¾Ð²ÐµÑ€ÐºÐ° Ð´Ð»Ð¸Ð½Ñ‹ Ð¿Ð°Ñ€Ð¾Ð»Ñ
 
     if (password.length < 6) {
 
@@ -2102,7 +2122,7 @@ const registerStudent = async (
 
 
 
-    // 1) Получаем auth_email из БД (обязательное поле после миграции)
+    // 1) ÐŸÐ¾Ð»ÑƒÑ‡Ð°ÐµÐ¼ auth_email Ð¸Ð· Ð‘Ð” (Ð¾Ð±ÑÐ·Ð°Ñ‚ÐµÐ»ÑŒÐ½Ð¾Ðµ Ð¿Ð¾Ð»Ðµ Ð¿Ð¾ÑÐ»Ðµ Ð¼Ð¸Ð³Ñ€Ð°Ñ†Ð¸Ð¸)
 
     const { data: studentData, error: emailErr } = await supabase
 
@@ -2126,7 +2146,7 @@ const registerStudent = async (
 
 
 
-    // 2) Создаём auth user
+    // 2) Ð¡Ð¾Ð·Ð´Ð°Ñ‘Ð¼ auth user
 
     const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
 
@@ -2164,7 +2184,7 @@ const registerStudent = async (
 
       
 
-      // Если пользователь уже существует - выбрасываем специальную ошибку
+      // Ð•ÑÐ»Ð¸ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÑŒ ÑƒÐ¶Ðµ ÑÑƒÑ‰ÐµÑÑ‚Ð²ÑƒÐµÑ‚ - Ð²Ñ‹Ð±Ñ€Ð°ÑÑ‹Ð²Ð°ÐµÐ¼ ÑÐ¿ÐµÑ†Ð¸Ð°Ð»ÑŒÐ½ÑƒÑŽ Ð¾ÑˆÐ¸Ð±ÐºÑƒ
 
       if (msg.includes("already registered") || msg.includes("user already registered")) {
 
@@ -2184,9 +2204,9 @@ const registerStudent = async (
 
 
 
-    // Если user null, но нет ошибки - возможно включен email confirmation
+    // Ð•ÑÐ»Ð¸ user null, Ð½Ð¾ Ð½ÐµÑ‚ Ð¾ÑˆÐ¸Ð±ÐºÐ¸ - Ð²Ð¾Ð·Ð¼Ð¾Ð¶Ð½Ð¾ Ð²ÐºÐ»ÑŽÑ‡ÐµÐ½ email confirmation
 
-    // Пробуем войти с этими же credentials
+    // ÐŸÑ€Ð¾Ð±ÑƒÐµÐ¼ Ð²Ð¾Ð¹Ñ‚Ð¸ Ñ ÑÑ‚Ð¸Ð¼Ð¸ Ð¶Ðµ credentials
 
     if (!authUser && !signUpErr) {
 
@@ -2216,7 +2236,7 @@ const registerStudent = async (
 
 
 
-    // Проверяем что пользователь создан
+    // ÐŸÑ€Ð¾Ð²ÐµÑ€ÑÐµÐ¼ Ñ‡Ñ‚Ð¾ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÑŒ ÑÐ¾Ð·Ð´Ð°Ð½
 
     if (!authUser) {
 
@@ -2228,7 +2248,7 @@ const registerStudent = async (
 
 
 
-    // 2) Ждём стабильную сессию
+    // 2) Ð–Ð´Ñ‘Ð¼ ÑÑ‚Ð°Ð±Ð¸Ð»ÑŒÐ½ÑƒÑŽ ÑÐµÑÑÐ¸ÑŽ
 
     const sessionReady = await waitForSession();
 
@@ -2240,9 +2260,9 @@ const registerStudent = async (
 
 
 
-    // 3) ВСЕГДА вызываем backend API для установки user_id
+    // 3) Ð’Ð¡Ð•Ð“Ð”Ð Ð²Ñ‹Ð·Ñ‹Ð²Ð°ÐµÐ¼ backend API Ð´Ð»Ñ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ¸ user_id
 
-    // Это важно даже если пользователь уже существовал в Auth, но не был связан с students
+    // Ð­Ñ‚Ð¾ Ð²Ð°Ð¶Ð½Ð¾ Ð´Ð°Ð¶Ðµ ÐµÑÐ»Ð¸ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÑŒ ÑƒÐ¶Ðµ ÑÑƒÑ‰ÐµÑÑ‚Ð²Ð¾Ð²Ð°Ð» Ð² Auth, Ð½Ð¾ Ð½Ðµ Ð±Ñ‹Ð» ÑÐ²ÑÐ·Ð°Ð½ Ñ students
 
     const response = await fetch("/api/student/register", {
 
@@ -2286,7 +2306,7 @@ const registerStudent = async (
       throw new Error("Account link not ready. Please try again.");
     }
 
-    // 5) Финализируем
+    // 5) Ð¤Ð¸Ð½Ð°Ð»Ð¸Ð·Ð¸Ñ€ÑƒÐµÐ¼
 
     return finalizeUserSession(authUser.id, updatedStudent, true);
 
@@ -2305,7 +2325,7 @@ const registerStudent = async (
 
 // ========================================
 
-// loginStudent — безопасная версия
+// loginStudent â€” Ð±ÐµÐ·Ð¾Ð¿Ð°ÑÐ½Ð°Ñ Ð²ÐµÑ€ÑÐ¸Ñ
 
 // ========================================
 
@@ -2329,7 +2349,7 @@ const loginStudent = async (
 
   try {
 
-    // 1) Получаем auth_email из БД (обязательное поле после миграции)
+    // 1) ÐŸÐ¾Ð»ÑƒÑ‡Ð°ÐµÐ¼ auth_email Ð¸Ð· Ð‘Ð” (Ð¾Ð±ÑÐ·Ð°Ñ‚ÐµÐ»ÑŒÐ½Ð¾Ðµ Ð¿Ð¾Ð»Ðµ Ð¿Ð¾ÑÐ»Ðµ Ð¼Ð¸Ð³Ñ€Ð°Ñ†Ð¸Ð¸)
 
     const { data: studentData, error: emailErr } = await supabase
 
@@ -2353,7 +2373,7 @@ const loginStudent = async (
 
     
 
-    // ? Валидация email перед отправкой
+    // Clear local session after logout options are applied.
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -2365,7 +2385,7 @@ const loginStudent = async (
 
 
 
-    // 2) Логин через Supabase Auth
+    // 2) Ð›Ð¾Ð³Ð¸Ð½ Ñ‡ÐµÑ€ÐµÐ· Supabase Auth
 
     const { data: authData, error: authError } =
 
@@ -2405,7 +2425,7 @@ const loginStudent = async (
 
 
 
-    // 3) Ждём стабильную сессию
+    // 3) Ð–Ð´Ñ‘Ð¼ ÑÑ‚Ð°Ð±Ð¸Ð»ÑŒÐ½ÑƒÑŽ ÑÐµÑÑÐ¸ÑŽ
 
     const sessionReady = await waitForSession();
 
@@ -2417,7 +2437,7 @@ const loginStudent = async (
 
 
 
-    // 4) Только ПОСЛЕ логина и установки сессии читаем students по user_id (RLS безопасно)
+    // 4) Ð¢Ð¾Ð»ÑŒÐºÐ¾ ÐŸÐžÐ¡Ð›Ð• Ð»Ð¾Ð³Ð¸Ð½Ð° Ð¸ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ¸ ÑÐµÑÑÐ¸Ð¸ Ñ‡Ð¸Ñ‚Ð°ÐµÐ¼ students Ð¿Ð¾ user_id (RLS Ð±ÐµÐ·Ð¾Ð¿Ð°ÑÐ½Ð¾)
 
     const { data: updatedStudent, error: studentError } = await supabase
 
@@ -2435,11 +2455,11 @@ const loginStudent = async (
 
     
 
-    // Если студент не найден по user_id - значит нужно сделать claim
+    // Ð•ÑÐ»Ð¸ ÑÑ‚ÑƒÐ´ÐµÐ½Ñ‚ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½ Ð¿Ð¾ user_id - Ð·Ð½Ð°Ñ‡Ð¸Ñ‚ Ð½ÑƒÐ¶Ð½Ð¾ ÑÐ´ÐµÐ»Ð°Ñ‚ÑŒ claim
 
     if (!updatedStudent) {
 
-      // Выходим и показываем экран claim
+      // Ð’Ñ‹Ñ…Ð¾Ð´Ð¸Ð¼ Ð¸ Ð¿Ð¾ÐºÐ°Ð·Ñ‹Ð²Ð°ÐµÐ¼ ÑÐºÑ€Ð°Ð½ claim
 
       setNeedsClaim(true);
 
@@ -2449,7 +2469,7 @@ const loginStudent = async (
 
 
 
-    // 4) Проверяем бан (только после логина)
+    // 4) ÐŸÑ€Ð¾Ð²ÐµÑ€ÑÐµÐ¼ Ð±Ð°Ð½ (Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð¿Ð¾ÑÐ»Ðµ Ð»Ð¾Ð³Ð¸Ð½Ð°)
 
     if (updatedStudent.is_banned) {
 
@@ -2504,7 +2524,7 @@ const loginStudent = async (
     }
   } catch (error) {
   } finally {
-    // ? ?????????? ????? ????????? ???????????
+    // Clear local session after logout options are applied.
     clearLocalSession(options);
   }
 };
@@ -2602,7 +2622,7 @@ const resetStudentRegistration = async (studentId: string) => {
 
 
 
-  // берём JWT текущей сессии, чтобы сервер мог проверить права
+  // Ð±ÐµÑ€Ñ‘Ð¼ JWT Ñ‚ÐµÐºÑƒÑ‰ÐµÐ¹ ÑÐµÑÑÐ¸Ð¸, Ñ‡Ñ‚Ð¾Ð±Ñ‹ ÑÐµÑ€Ð²ÐµÑ€ Ð¼Ð¾Ð³ Ð¿Ñ€Ð¾Ð²ÐµÑ€Ð¸Ñ‚ÑŒ Ð¿Ñ€Ð°Ð²Ð°
 
   const token = await getFreshToken();
 
@@ -2638,7 +2658,7 @@ const resetStudentRegistration = async (studentId: string) => {
 
 
 
-  // если сбросили себя — разлогин
+  // ÐµÑÐ»Ð¸ ÑÐ±Ñ€Ð¾ÑÐ¸Ð»Ð¸ ÑÐµÐ±Ñ â€” Ñ€Ð°Ð·Ð»Ð¾Ð³Ð¸Ð½
 
   if (user && user.student_id === studentId) {
 
@@ -2699,7 +2719,7 @@ const resetStudentRegistration = async (studentId: string) => {
 
 
 
-      // Проверяем что данные обновились в базе
+      // ÐŸÑ€Ð¾Ð²ÐµÑ€ÑÐµÐ¼ Ñ‡Ñ‚Ð¾ Ð´Ð°Ð½Ð½Ñ‹Ðµ Ð¾Ð±Ð½Ð¾Ð²Ð¸Ð»Ð¸ÑÑŒ Ð² Ð±Ð°Ð·Ðµ
 
       if (isSupabaseConfigured && supabase) {
 
@@ -2895,7 +2915,7 @@ const resetStudentRegistration = async (studentId: string) => {
 
         }
 
-        // ?? DEBUG: Проверяем данные аватаров
+        // ?? DEBUG: ÐŸÑ€Ð¾Ð²ÐµÑ€ÑÐµÐ¼ Ð´Ð°Ð½Ð½Ñ‹Ðµ Ð°Ð²Ð°Ñ‚Ð°Ñ€Ð¾Ð²
 
         if (data && data.length > 0) {
 
@@ -2980,12 +3000,12 @@ const resetStudentRegistration = async (studentId: string) => {
 
       try {
 
-        // Получаем историю - сначала пробуем с avatar_style/avatar_seed
+        // ÐŸÐ¾Ð»ÑƒÑ‡Ð°ÐµÐ¼ Ð¸ÑÑ‚Ð¾Ñ€Ð¸ÑŽ - ÑÐ½Ð°Ñ‡Ð°Ð»Ð° Ð¿Ñ€Ð¾Ð±ÑƒÐµÐ¼ Ñ avatar_style/avatar_seed
         let historyData: any[] = [];
         let totalCount: number | null = null;
         
 
-        // Попытка 1: полный запрос с avatar_style и avatar_seed
+        // ÐŸÐ¾Ð¿Ñ‹Ñ‚ÐºÐ° 1: Ð¿Ð¾Ð»Ð½Ñ‹Ð¹ Ð·Ð°Ð¿Ñ€Ð¾Ñ Ñ avatar_style Ð¸ avatar_seed
 
         const { data: fullData, error: fullError, count: fullCount } = await supabase
           .from('history')
@@ -2998,7 +3018,7 @@ const resetStudentRegistration = async (studentId: string) => {
           historyData = fullData;
           totalCount = typeof fullCount === 'number' ? fullCount : null;
         } else {
-          // Попытка 2: без avatar полей (если колонки еще не созданы)
+          // ÐŸÐ¾Ð¿Ñ‹Ñ‚ÐºÐ° 2: Ð±ÐµÐ· avatar Ð¿Ð¾Ð»ÐµÐ¹ (ÐµÑÐ»Ð¸ ÐºÐ¾Ð»Ð¾Ð½ÐºÐ¸ ÐµÑ‰Ðµ Ð½Ðµ ÑÐ¾Ð·Ð´Ð°Ð½Ñ‹)
 
           const { data: basicData, error: basicError, count: basicCount } = await supabase
             .from('history')
@@ -3009,7 +3029,7 @@ const resetStudentRegistration = async (studentId: string) => {
 
           if (!basicError && basicData) {
 
-            // Добавляем дефолтные значения для аватара
+            // Ð”Ð¾Ð±Ð°Ð²Ð»ÑÐµÐ¼ Ð´ÐµÑ„Ð¾Ð»Ñ‚Ð½Ñ‹Ðµ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ñ Ð´Ð»Ñ Ð°Ð²Ð°Ñ‚Ð°Ñ€Ð°
 
             historyData = basicData.map((item: any) => ({
               ...item,
@@ -3026,7 +3046,7 @@ const resetStudentRegistration = async (studentId: string) => {
 
         
 
-        // ? Синхронизируем аватары из текущего списка студентов
+        // Clear local session after logout options are applied.
 
         if (historyData && students) {
 
@@ -3090,11 +3110,11 @@ const resetStudentRegistration = async (studentId: string) => {
 
 
 
-  // ФУНКЦИЯ 1: joinQueue ( 
+  // Ð¤Ð£ÐÐšÐ¦Ð˜Ð¯ 1: joinQueue ( 
 
 // ========================================
 
-// ? ИСПРАВЛЕННАЯ ФУНКЦИЯ
+// Clear local session after logout options are applied.
 
 // ========================================
 
@@ -3146,11 +3166,11 @@ const joinQueue = async (
 
 
 
-  // ? ИСПРАВЛЕНИЕ: Разделить логику для новых и существующих пользователей
+  // Clear local session after logout options are applied.
 
   if (!isNewUser) {
 
-    // ?? СТРОГАЯ ПРОВЕРКА для существующих пользователей
+    // ?? Ð¡Ð¢Ð ÐžÐ“ÐÐ¯ ÐŸÐ ÐžÐ’Ð•Ð ÐšÐ Ð´Ð»Ñ ÑÑƒÑ‰ÐµÑÑ‚Ð²ÑƒÑŽÑ‰Ð¸Ñ… Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÐµÐ¹
 
     try {
 
@@ -3234,7 +3254,7 @@ const joinQueue = async (
 
   } else {
 
-    // ?? ПРОСТАЯ ПРОВЕРКА для новых пользователей (только бан)
+    // ?? ÐŸÐ ÐžÐ¡Ð¢ÐÐ¯ ÐŸÐ ÐžÐ’Ð•Ð ÐšÐ Ð´Ð»Ñ Ð½Ð¾Ð²Ñ‹Ñ… Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÐµÐ¹ (Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð±Ð°Ð½)
 
     try {
 
@@ -3282,7 +3302,7 @@ const joinQueue = async (
 
 
 
-  // Определяем целевую дату
+  // ÐžÐ¿Ñ€ÐµÐ´ÐµÐ»ÑÐµÐ¼ Ñ†ÐµÐ»ÐµÐ²ÑƒÑŽ Ð´Ð°Ñ‚Ñƒ
 
   const todayISO = format(new Date(), 'yyyy-MM-dd');
 
@@ -3303,7 +3323,7 @@ const joinQueue = async (
 
 
 
-  // Проверяем по student_id на эту дату через RPC
+  // ÐŸÑ€Ð¾Ð²ÐµÑ€ÑÐµÐ¼ Ð¿Ð¾ student_id Ð½Ð° ÑÑ‚Ñƒ Ð´Ð°Ñ‚Ñƒ Ñ‡ÐµÑ€ÐµÐ· RPC
 
   try {
 
@@ -3351,7 +3371,7 @@ const joinQueue = async (
 
   try {
 
-    // Получаем следующую позицию через RPC
+    // ÐŸÐ¾Ð»ÑƒÑ‡Ð°ÐµÐ¼ ÑÐ»ÐµÐ´ÑƒÑŽÑ‰ÑƒÑŽ Ð¿Ð¾Ð·Ð¸Ñ†Ð¸ÑŽ Ñ‡ÐµÑ€ÐµÐ· RPC
 
     const { data: nextPosData, error: posErr } = await supabase
 
@@ -3377,7 +3397,7 @@ const joinQueue = async (
 
 
 
-    // ?? Получаем сессию для определения user_id
+    // ?? ÐŸÐ¾Ð»ÑƒÑ‡Ð°ÐµÐ¼ ÑÐµÑÑÐ¸ÑŽ Ð´Ð»Ñ Ð¾Ð¿Ñ€ÐµÐ´ÐµÐ»ÐµÐ½Ð¸Ñ user_id
 
     const { data: authData } = await supabase.auth.getSession();
 
@@ -3389,11 +3409,11 @@ const joinQueue = async (
 
       id: crypto.randomUUID(),
 
-      // ? Всегда пишем student_id
+      // Clear local session after logout options are applied.
 
       student_id: user.student_id,
 
-      // ?? ВАЖНО: если студент залогинен — сразу привязываем, иначе null (для админа)
+      // ?? Ð’ÐÐ–ÐÐž: ÐµÑÐ»Ð¸ ÑÑ‚ÑƒÐ´ÐµÐ½Ñ‚ Ð·Ð°Ð»Ð¾Ð³Ð¸Ð½ÐµÐ½ â€” ÑÑ€Ð°Ð·Ñƒ Ð¿Ñ€Ð¸Ð²ÑÐ·Ñ‹Ð²Ð°ÐµÐ¼, Ð¸Ð½Ð°Ñ‡Ðµ null (Ð´Ð»Ñ Ð°Ð´Ð¼Ð¸Ð½Ð°)
 
       user_id: currentUserId,
 
@@ -3419,7 +3439,7 @@ const joinQueue = async (
 
       queue_position: nextPos,
 
-      // ? Копируем аватар из user для синхронизации (snapshot при добавлении в очередь)
+      // Clear local session after logout options are applied.
 
       avatar_style: user.avatar_style || 'bottts',
 
@@ -3473,13 +3493,13 @@ const joinQueue = async (
 
 
 
-    // СБРОС ФЛАГА: После первого успешного действия новый пользователь становится обычным
+    // Ð¡Ð‘Ð ÐžÐ¡ Ð¤Ð›ÐÐ“Ð: ÐŸÐ¾ÑÐ»Ðµ Ð¿ÐµÑ€Ð²Ð¾Ð³Ð¾ ÑƒÑÐ¿ÐµÑˆÐ½Ð¾Ð³Ð¾ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð½Ð¾Ð²Ñ‹Ð¹ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÑŒ ÑÑ‚Ð°Ð½Ð¾Ð²Ð¸Ñ‚ÑÑ Ð¾Ð±Ñ‹Ñ‡Ð½Ñ‹Ð¼
 
     if (isNewUser) {
 
       setIsNewUser(false);
 
-      // localStorage будет обновлен в useEffect
+      // localStorage Ð±ÑƒÐ´ÐµÑ‚ Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½ Ð² useEffect
 
     }
 
@@ -3522,7 +3542,7 @@ const joinQueue = async (
 
 
 
-  // Вспомогательная функция для получения свежего JWT токена
+  // Ð’ÑÐ¿Ð¾Ð¼Ð¾Ð³Ð°Ñ‚ÐµÐ»ÑŒÐ½Ð°Ñ Ñ„ÑƒÐ½ÐºÑ†Ð¸Ñ Ð´Ð»Ñ Ð¿Ð¾Ð»ÑƒÑ‡ÐµÐ½Ð¸Ñ ÑÐ²ÐµÐ¶ÐµÐ³Ð¾ JWT Ñ‚Ð¾ÐºÐµÐ½Ð°
 
   const getFreshToken = async (): Promise<string> => {
 
@@ -3530,7 +3550,7 @@ const joinQueue = async (
 
     
 
-    // Всегда обновляем сессию для получения свежего токена
+    // Ð’ÑÐµÐ³Ð´Ð° Ð¾Ð±Ð½Ð¾Ð²Ð»ÑÐµÐ¼ ÑÐµÑÑÐ¸ÑŽ Ð´Ð»Ñ Ð¿Ð¾Ð»ÑƒÑ‡ÐµÐ½Ð¸Ñ ÑÐ²ÐµÐ¶ÐµÐ³Ð¾ Ñ‚Ð¾ÐºÐµÐ½Ð°
 
     const { data: { session }, error } = await supabase.auth.refreshSession();
 
@@ -3540,7 +3560,7 @@ const joinQueue = async (
 
       console.error('Failed to refresh session:', error);
 
-      // Fallback: пробуем получить текущую сессию
+      // Fallback: Ð¿Ñ€Ð¾Ð±ÑƒÐµÐ¼ Ð¿Ð¾Ð»ÑƒÑ‡Ð¸Ñ‚ÑŒ Ñ‚ÐµÐºÑƒÑ‰ÑƒÑŽ ÑÐµÑÑÐ¸ÑŽ
 
       const { data: { session: currentSession } } = await supabase.auth.getSession();
 
@@ -3562,7 +3582,7 @@ const joinQueue = async (
 
 
 
-  // Admin: Изменить статус записи в очереди
+  // Admin: Ð˜Ð·Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ ÑÑ‚Ð°Ñ‚ÑƒÑ Ð·Ð°Ð¿Ð¸ÑÐ¸ Ð² Ð¾Ñ‡ÐµÑ€ÐµÐ´Ð¸
 
   const setQueueStatus = async (queueItemId: string, status: QueueStatus, options?: { skipFetch?: boolean }) => {
 
@@ -3582,7 +3602,7 @@ const joinQueue = async (
 
     if (targetItem && user?.student_id && targetItem.student_id === user.student_id) {
 
-      // Супер-админ может вызывать себя за ключом, обычные пользователи - нет
+      // Ð¡ÑƒÐ¿ÐµÑ€-Ð°Ð´Ð¼Ð¸Ð½ Ð¼Ð¾Ð¶ÐµÑ‚ Ð²Ñ‹Ð·Ñ‹Ð²Ð°Ñ‚ÑŒ ÑÐµÐ±Ñ Ð·Ð° ÐºÐ»ÑŽÑ‡Ð¾Ð¼, Ð¾Ð±Ñ‹Ñ‡Ð½Ñ‹Ðµ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»Ð¸ - Ð½ÐµÑ‚
 
       if (!isSuperAdmin && (status === QueueStatus.READY || status === QueueStatus.RETURNING_KEY)) {
 
@@ -3596,13 +3616,13 @@ const joinQueue = async (
 
     try {
 
-      // ? Получаем свежий JWT
+      // Clear local session after logout options are applied.
 
       const token = await getFreshToken();
 
 
 
-      // ? Вызываем API route с JWT
+      // Clear local session after logout options are applied.
 
       const response = await fetch('/api/admin/queue/set-status', {
 
@@ -3653,7 +3673,7 @@ const joinQueue = async (
 
 
 
-  // Update queue item details (для timestamps и других полей без проверки статуса)
+  // Update queue item details (Ð´Ð»Ñ timestamps Ð¸ Ð´Ñ€ÑƒÐ³Ð¸Ñ… Ð¿Ð¾Ð»ÐµÐ¹ Ð±ÐµÐ· Ð¿Ñ€Ð¾Ð²ÐµÑ€ÐºÐ¸ ÑÑ‚Ð°Ñ‚ÑƒÑÐ°)
 
 const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>, options?: { skipFetch?: boolean }) => {
 
@@ -3695,7 +3715,7 @@ const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>,
 
   try {
 
-    // ? Напрямую обновляем БД (для timestamps и других полей)
+    // Clear local session after logout options are applied.
 
     const { data, error } = await supabase
 
@@ -3765,7 +3785,7 @@ const updateQueueEndTime = async (queueId: string, endTime: string) => {
 
   } else {
 
-    return;  // Только для WASHING или DONE
+    return;  // Ð¢Ð¾Ð»ÑŒÐºÐ¾ Ð´Ð»Ñ WASHING Ð¸Ð»Ð¸ DONE
 
   }
 
@@ -3785,7 +3805,7 @@ const updateQueueEndTime = async (queueId: string, endTime: string) => {
 
 // ========================================
 
-// АДМИН ФУНКЦИИ
+// ÐÐ”ÐœÐ˜Ð Ð¤Ð£ÐÐšÐ¦Ð˜Ð˜
 
 // ========================================
 
@@ -4159,7 +4179,7 @@ const transferSelectedToToday = async (selectedIds: string[]) => {
 
 
 
-// ? УНИВЕРСАЛЬНАЯ функция переноса на любую дату
+// Clear local session after logout options are applied.
 
 const transferSelectedToDate = async (selectedIds: string[], targetDateStr: string) => {
 
@@ -4193,7 +4213,7 @@ const transferSelectedToDate = async (selectedIds: string[], targetDateStr: stri
 
     
 
-    // Перенести даты
+    // ÐŸÐµÑ€ÐµÐ½ÐµÑÑ‚Ð¸ Ð´Ð°Ñ‚Ñ‹
 
     for (let i = 0; i < unfinishedItems.length; i++) {
 
@@ -4217,7 +4237,7 @@ const transferSelectedToDate = async (selectedIds: string[], targetDateStr: stri
 
     
 
-    // Пересчитать позиции
+    // ÐŸÐµÑ€ÐµÑÑ‡Ð¸Ñ‚Ð°Ñ‚ÑŒ Ð¿Ð¾Ð·Ð¸Ñ†Ð¸Ð¸
 
     const { data: allOnDate, error: fetchError } = await supabase
 
@@ -4285,7 +4305,7 @@ const transferSelectedToDate = async (selectedIds: string[], targetDateStr: stri
 
 
 
-// Вспомогательная функция для красивого отображения даты
+// Ð’ÑÐ¿Ð¾Ð¼Ð¾Ð³Ð°Ñ‚ÐµÐ»ÑŒÐ½Ð°Ñ Ñ„ÑƒÐ½ÐºÑ†Ð¸Ñ Ð´Ð»Ñ ÐºÑ€Ð°ÑÐ¸Ð²Ð¾Ð³Ð¾ Ð¾Ñ‚Ð¾Ð±Ñ€Ð°Ð¶ÐµÐ½Ð¸Ñ Ð´Ð°Ñ‚Ñ‹
 
 const formatDateForAlert = (dateStr: string) => {
 
@@ -4357,7 +4377,7 @@ const updateQueueItemDetails = async (
 
 
 
-  if (item.status !== QueueStatus.WAITING) {
+  if (item.status === QueueStatus.DONE) {
 
     return;
 
@@ -4405,7 +4425,7 @@ const updateQueueItemDetails = async (
 
 
 
-    // Временное уведомление отключено (нет подходящего типа в новой системе)
+    // Ð’Ñ€ÐµÐ¼ÐµÐ½Ð½Ð¾Ðµ ÑƒÐ²ÐµÐ´Ð¾Ð¼Ð»ÐµÐ½Ð¸Ðµ Ð¾Ñ‚ÐºÐ»ÑŽÑ‡ÐµÐ½Ð¾ (Ð½ÐµÑ‚ Ð¿Ð¾Ð´Ñ…Ð¾Ð´ÑÑ‰ÐµÐ³Ð¾ Ñ‚Ð¸Ð¿Ð° Ð² Ð½Ð¾Ð²Ð¾Ð¹ ÑÐ¸ÑÑ‚ÐµÐ¼Ðµ)
 
     // if (updates.expected_finish_at && user) {
 
@@ -4469,7 +4489,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
 
     
 
-    // ? Получаем JWT
+    // Clear local session after logout options are applied.
 
     const token = await getFreshToken();
 
@@ -4481,7 +4501,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
 
       
 
-      // ? Вызываем API swap-position
+      // Clear local session after logout options are applied.
 
       const response = await fetch('/api/admin/queue/swap-position', {
 
@@ -4523,7 +4543,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
 
       
 
-      // ? Вызываем API swap-position
+      // Clear local session after logout options are applied.
 
       const response = await fetch('/api/admin/queue/swap-position', {
 
@@ -4573,9 +4593,9 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
 
 
 
-// ? УДАЛЕНО: adminLogin больше не нужен
+// Clear local session after logout options are applied.
 
-// Админы входят через обычный loginStudent, права определяются из БД
+// ÐÐ´Ð¼Ð¸Ð½Ñ‹ Ð²Ñ…Ð¾Ð´ÑÑ‚ Ñ‡ÐµÑ€ÐµÐ· Ð¾Ð±Ñ‹Ñ‡Ð½Ñ‹Ð¹ loginStudent, Ð¿Ñ€Ð°Ð²Ð° Ð¾Ð¿Ñ€ÐµÐ´ÐµÐ»ÑÑŽÑ‚ÑÑ Ð¸Ð· Ð‘Ð”
 
 
 
@@ -4605,7 +4625,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
 
     loginStudent,
 
-    // ? УДАЛЕНО: adminLogin, finalizeUserSession (внутренний хелпер)
+    // Clear local session after logout options are applied.
 
     logoutStudent,
 
@@ -4721,6 +4741,8 @@ export function useLaundry() {
   return context;
 
 }
+
+
 
 
 

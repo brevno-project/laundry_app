@@ -508,6 +508,24 @@ type ReminderRecipient = {
   room?: string | null;
 };
 
+type CouponSummary = {
+  active: number;
+  reserved: number;
+  used: number;
+  expired: number;
+  total: number;
+  valid: number;
+  valid_until?: string | null;
+};
+
+type CouponSummaryRow = {
+  id: string;
+  name: string;
+  room: string | null;
+  block: Block | null;
+  stats: CouponSummary;
+};
+
 const formatTtlLabel = (
   seconds: number,
   t: (key: string, vars?: Record<string, string | number>) => string
@@ -519,8 +537,11 @@ const formatTtlLabel = (
   return t("cleanup.ttl.seconds", { count: seconds });
 };
 
-const formatRecipientLabel = (recipient: ReminderRecipient) =>
-  recipient.room ? `${recipient.name} (${recipient.room})` : recipient.name;
+const formatRecipientLabel = (recipient: ReminderRecipient, fallback: string) => {
+  const name = (recipient.name || "").trim();
+  const safeName = name ? name : fallback;
+  return recipient.room ? `${safeName} (${recipient.room})` : safeName;
+};
 
 export default function CleanupResults({ embedded = false }: CleanupResultsProps) {
   const { user, isAdmin, isSuperAdmin, isCleanupAdmin, students } = useLaundry();
@@ -535,6 +556,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   }, [language]);
   const [results, setResults] = useState<CleanupResult[]>([]);
   const [apartments, setApartments] = useState<Apartment[]>([]);
+  const [resultApartments, setResultApartments] = useState<Apartment[]>([]);
   const [schedules, setSchedules] = useState<CleanupSchedule[]>([]);
   const [announcers, setAnnouncers] = useState<Record<string, string>>({});
   const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -546,6 +568,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [clearStudentLoading, setClearStudentLoading] = useState(false);
   const [transfers, setTransfers] = useState<CouponTransfer[]>([]);
   const [transferNames, setTransferNames] = useState<Record<string, string>>({});
+  const [couponSummaryByStudent, setCouponSummaryByStudent] = useState<Record<string, CouponSummary>>({});
+  const [couponSummaryLoading, setCouponSummaryLoading] = useState(false);
+  const [couponSummaryNotice, setCouponSummaryNotice] = useState<string | null>(null);
+  const [couponSummaryFilter, setCouponSummaryFilter] = useState<"all" | Block>("all");
   const [recipients, setRecipients] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
@@ -556,6 +582,14 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [announcementText, setAnnouncementText] = useState("");
   const [announcementMode, setAnnouncementMode] = useState("manual");
   const [publishNotice, setPublishNotice] = useState<string | null>(null);
+  const [publishDelivery, setPublishDelivery] = useState<{
+    sent: ReminderRecipient[];
+    failed: ReminderRecipient[];
+    skipped: ReminderRecipient[];
+    attempted: number;
+    total: number;
+    telegramEnabled: boolean;
+  } | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [transferCouponId, setTransferCouponId] = useState("");
   const [transferRecipientId, setTransferRecipientId] = useState("");
@@ -658,11 +692,11 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
   const apartmentMap = useMemo(() => {
     const map: Record<string, Apartment> = {};
-    apartments.forEach((apt) => {
+    [...resultApartments, ...apartments].forEach((apt) => {
       map[apt.id] = apt;
     });
     return map;
-  }, [apartments]);
+  }, [apartments, resultApartments]);
 
   const resultsByBlock = useMemo(() => {
     return {
@@ -681,6 +715,61 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const apartmentsForBlock = useMemo(() => {
     return apartments.filter((apt) => !apt.block || apt.block === selectedBlock);
   }, [apartments, selectedBlock]);
+
+  const couponSummaryRows = useMemo(() => {
+    if (!canManageCleanup) return [];
+    const rows: CouponSummaryRow[] = [];
+    const knownIds = new Set<string>();
+
+    (students || []).forEach((student) => {
+      const stats = couponSummaryByStudent[student.id];
+      if (!stats || stats.valid <= 0) return;
+      const nameParts = [student.first_name, student.last_name, student.middle_name].filter(Boolean);
+      const name = (student.full_name || nameParts.join(" ") || t("cleanup.couponsSummary.unknownStudent")).trim();
+      const room = student.room ?? null;
+      const blockValue = room ? room.trim().charAt(0).toUpperCase() : "";
+      const block = blockValue === "A" || blockValue === "B" ? (blockValue as Block) : null;
+
+      rows.push({
+        id: student.id,
+        name: name || t("cleanup.couponsSummary.unknownStudent"),
+        room,
+        block,
+        stats,
+      });
+      knownIds.add(student.id);
+    });
+
+    Object.entries(couponSummaryByStudent).forEach(([studentId, stats]) => {
+      if (knownIds.has(studentId) || stats.valid <= 0) return;
+      rows.push({
+        id: studentId,
+        name: t("cleanup.couponsSummary.unknownStudent"),
+        room: null,
+        block: null,
+        stats,
+      });
+    });
+
+    rows.sort((a, b) => {
+      const blockA = a.block ?? "Z";
+      const blockB = b.block ?? "Z";
+      if (blockA !== blockB) {
+        return blockA.localeCompare(blockB);
+      }
+      const roomA = parseInt(a.room?.slice(1) || "9999", 10);
+      const roomB = parseInt(b.room?.slice(1) || "9999", 10);
+      if (roomA !== roomB) return roomA - roomB;
+      return a.name.localeCompare(b.name);
+    });
+
+    return rows;
+  }, [students, couponSummaryByStudent, canManageCleanup, t]);
+
+  const filteredCouponSummaryRows = useMemo(() => {
+    if (couponSummaryFilter === "all") return couponSummaryRows;
+    return couponSummaryRows.filter((row) => row.block === couponSummaryFilter);
+  }, [couponSummaryRows, couponSummaryFilter]);
 
   useEffect(() => {
     if (!scoreCaptions.some((caption) => caption.key === scoreCaptionKey)) {
@@ -758,13 +847,14 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const { data } = await supabase
       .from("cleanup_results")
       .select(
-        "id, week_start, block, announcement_text, announcement_mode, template_key, announced_by, published_at, winning_apartment_id, created_at"
+        "id, week_start, block, announcement_text, announcement_mode, template_key, announced_by, announced_by_name, published_at, winning_apartment_id, created_at"
       )
       .order("week_start", { ascending: false })
       .order("created_at", { ascending: false });
 
     const rows = (data as CleanupResult[]) || [];
     setResults(rows);
+    await loadResultApartments(rows);
 
     const announcerIds = Array.from(
       new Set(rows.map((row) => row.announced_by).filter(Boolean))
@@ -849,6 +939,51 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       .order("issued_at", { ascending: false });
 
     setCoupons((data as Coupon[]) || []);
+  };
+
+  const loadCouponSummary = async () => {
+    if (!canManageCleanup) return;
+    setCouponSummaryLoading(true);
+    setCouponSummaryNotice(null);
+    try {
+      const response = await authedFetch("/api/admin/coupons/summary");
+      const result = await response.json();
+      if (!response.ok) {
+        const message =
+          typeof result?.error === "string" && result.error.trim()
+            ? result.error.trim()
+            : t("cleanup.couponsSummary.loadError");
+        setCouponSummaryNotice(message);
+        setCouponSummaryByStudent({});
+        return;
+      }
+      setCouponSummaryByStudent(result.stats || {});
+    } catch (error: any) {
+      const message =
+        typeof error?.message === "string" && error.message.trim()
+          ? error.message.trim()
+          : t("cleanup.couponsSummary.loadError");
+      setCouponSummaryNotice(message);
+      setCouponSummaryByStudent({});
+    } finally {
+      setCouponSummaryLoading(false);
+    }
+  };
+
+  const loadResultApartments = async (rows: CleanupResult[]) => {
+    if (!supabase) return;
+    const ids = Array.from(
+      new Set(rows.map((row) => row.winning_apartment_id).filter(Boolean))
+    ) as string[];
+    if (ids.length === 0) {
+      setResultApartments([]);
+      return;
+    }
+    const { data } = await supabase
+      .from("apartments")
+      .select("id, code, block")
+      .in("id", ids);
+    setResultApartments((data as Apartment[]) || []);
   };
 
   const loadTransfers = async () => {
@@ -980,6 +1115,14 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   }, [user?.student_id]);
 
   useEffect(() => {
+    if (!canManageCleanup || !user?.student_id) {
+      setCouponSummaryByStudent({});
+      return;
+    }
+    loadCouponSummary();
+  }, [canManageCleanup, user?.student_id]);
+
+  useEffect(() => {
     loadTransfers();
   }, [user?.student_id, isAdmin, isSuperAdmin]);
 
@@ -1045,6 +1188,9 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const refreshCoupons = async () => {
     await loadCoupons();
     await loadTransfers();
+    if (canManageCleanup) {
+      await loadCouponSummary();
+    }
   };
 
   const handleScheduleSave = async (block: Block) => {
@@ -1228,6 +1374,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     try {
       setIsPublishing(true);
       setPublishNotice(null);
+      setPublishDelivery(null);
       const response = await authedFetch("/api/admin/cleanup/publish", {
         method: "POST",
         headers: {
@@ -1250,6 +1397,26 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       }
 
       setPublishNotice(t("cleanup.publish.success"));
+      const sentList = Array.isArray(result?.sent_to) ? result.sent_to : [];
+      const failedList = Array.isArray(result?.failed_to) ? result.failed_to : [];
+      const skippedList = Array.isArray(result?.skipped_to) ? result.skipped_to : [];
+      const telegramEnabled = result?.telegram_enabled !== false;
+      const attempted =
+        typeof result?.attempted === "number"
+          ? result.attempted
+          : sentList.length + failedList.length;
+      const total =
+        typeof result?.recipients_total === "number"
+          ? result.recipients_total
+          : attempted + skippedList.length;
+      setPublishDelivery({
+        sent: sentList,
+        failed: failedList,
+        skipped: skippedList,
+        attempted,
+        total,
+        telegramEnabled,
+      });
       await refreshResults();
       await refreshCoupons();
     } catch (error: any) {
@@ -1384,13 +1551,19 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         )}
         {reminderRecipients[block].length > 0 && (
           <p className="text-xs text-emerald-700">
-            {t("cleanup.reminders.recipients", { recipients: reminderRecipients[block].map(formatRecipientLabel).join(", ") })}
+            {t("cleanup.reminders.recipients", {
+              recipients: reminderRecipients[block]
+                .map((recipient) => formatRecipientLabel(recipient, t("cleanup.publish.noName")))
+                .join(", "),
+            })}
           </p>
         )}
         {reminderFailures[block].length > 0 && (
           <p className="text-xs text-rose-600">
             {t("cleanup.reminders.notDelivered", {
-              recipients: reminderFailures[block].map(formatRecipientLabel).join(", "),
+              recipients: reminderFailures[block]
+                .map((recipient) => formatRecipientLabel(recipient, t("cleanup.publish.noName")))
+                .join(", "),
             })}
           </p>
         )}
@@ -1576,7 +1749,9 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
   const renderResultCard = (item: CleanupResult) => {
     const apartment = apartmentMap[item.winning_apartment_id];
-    const announcer = item.announced_by ? announcers[item.announced_by] : null;
+    const announcer =
+      (item.announced_by_name || "").trim() ||
+      (item.announced_by ? announcers[item.announced_by] : null);
 
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
@@ -1902,6 +2077,59 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 {publishNotice}
               </div>
             )}
+            {publishDelivery && publishDelivery.telegramEnabled && publishDelivery.total > 0 && (
+              <p className="text-xs text-slate-600">
+                {t("cleanup.publish.summary", {
+                  sent: publishDelivery.sent.length,
+                  attempted: publishDelivery.attempted,
+                })}
+              </p>
+            )}
+            {publishDelivery && !publishDelivery.telegramEnabled && (
+              <p className="text-xs text-amber-700">
+                {t("cleanup.publish.telegramDisabled")}
+              </p>
+            )}
+            {publishDelivery &&
+              publishDelivery.telegramEnabled &&
+              publishDelivery.sent.length > 0 && (
+                <p className="text-xs text-emerald-700">
+                  {t("cleanup.publish.recipients", {
+                    recipients: publishDelivery.sent
+                      .map((recipient) => formatRecipientLabel(recipient, t("cleanup.publish.noName")))
+                      .join(", "),
+                  })}
+                </p>
+            )}
+            {publishDelivery &&
+              publishDelivery.telegramEnabled &&
+              publishDelivery.failed.length > 0 && (
+                <p className="text-xs text-rose-600">
+                  {t("cleanup.publish.notDelivered", {
+                    recipients: publishDelivery.failed
+                      .map((recipient) => formatRecipientLabel(recipient, t("cleanup.publish.noName")))
+                      .join(", "),
+                  })}
+                </p>
+            )}
+            {publishDelivery &&
+              !publishDelivery.telegramEnabled &&
+              publishDelivery.skipped.length > 0 && (
+                <p className="text-xs text-slate-600">
+                  {t("cleanup.publish.skipped", {
+                    recipients: publishDelivery.skipped
+                      .map((recipient) => formatRecipientLabel(recipient, t("cleanup.publish.noName")))
+                      .join(", "),
+                  })}
+                </p>
+            )}
+            {publishDelivery &&
+              publishDelivery.telegramEnabled &&
+              publishDelivery.total === 0 && (
+                <p className="text-xs text-slate-600">
+                  {t("cleanup.publish.noRecipientsWithTelegram")}
+                </p>
+            )}
 
             <button
               type="button"
@@ -2079,6 +2307,111 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 </>
               )}
             </div>
+
+            {canManageCleanup && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4 dark:border-slate-700 dark:bg-slate-800 lg:col-span-2">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <TicketIcon className="w-5 h-5 text-purple-600" />
+                    <h3 className="text-lg font-bold text-gray-900">{t("cleanup.couponsSummary.title")}</h3>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-semibold text-slate-600">
+                      {t("cleanup.couponsSummary.filterLabel")}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setCouponSummaryFilter("all")}
+                      className={`rounded-full px-3 py-1 text-xs font-semibold border ${
+                        couponSummaryFilter === "all"
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+                      }`}
+                      aria-pressed={couponSummaryFilter === "all"}
+                    >
+                      {t("cleanup.couponsSummary.filter.all")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCouponSummaryFilter("A")}
+                      className={`rounded-full px-3 py-1 text-xs font-semibold border ${
+                        couponSummaryFilter === "A"
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+                      }`}
+                      aria-pressed={couponSummaryFilter === "A"}
+                    >
+                      {t("cleanup.couponsSummary.filter.blockA")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCouponSummaryFilter("B")}
+                      className={`rounded-full px-3 py-1 text-xs font-semibold border ${
+                        couponSummaryFilter === "B"
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white/50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+                      }`}
+                      aria-pressed={couponSummaryFilter === "B"}
+                    >
+                      {t("cleanup.couponsSummary.filter.blockB")}
+                    </button>
+                  </div>
+                </div>
+
+                {couponSummaryNotice && (
+                  <p className="text-sm text-rose-600">{couponSummaryNotice}</p>
+                )}
+
+                {couponSummaryLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-slate-600">
+                    <WashingSpinner className="w-4 h-4" />
+                    <span>{t("common.loading")}</span>
+                  </div>
+                ) : filteredCouponSummaryRows.length === 0 ? (
+                  <p className="text-sm text-gray-500">{t("cleanup.couponsSummary.empty")}</p>
+                ) : (
+                  <div className="space-y-2">
+                    {filteredCouponSummaryRows.map((row) => (
+                      <div
+                        key={row.id}
+                        className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-gray-700 dark:border-slate-700 dark:bg-slate-900/40"
+                      >
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                          <span className="font-semibold text-gray-900">
+                            {row.name}
+                            {row.room ? ` (${row.room})` : ""}
+                          </span>
+                          <div className="text-xs font-semibold text-slate-600 space-y-0.5 sm:text-right">
+                            <div>{t("students.coupons", { count: row.stats.valid })}</div>
+                            {row.stats.valid_until && (
+                              <div className="text-[11px] font-medium text-slate-500">
+                                {t("cleanup.couponsSummary.validUntil", {
+                                  date: formatDateTime(row.stats.valid_until, locale),
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-700">
+                          <span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
+                            {t("cleanup.coupons.stats.active", { count: row.stats.active })}
+                          </span>
+                          <span className="rounded-full bg-blue-50 px-2 py-1 text-blue-700">
+                            {t("cleanup.coupons.stats.reserved", { count: row.stats.reserved })}
+                          </span>
+                          <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-700">
+                            {t("cleanup.coupons.stats.used", { count: row.stats.used })}
+                          </span>
+                          <span className="rounded-full bg-amber-50 px-2 py-1 text-amber-700">
+                            {t("cleanup.coupons.stats.expired", { count: row.stats.expired })}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 

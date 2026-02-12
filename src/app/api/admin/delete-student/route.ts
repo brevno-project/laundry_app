@@ -52,6 +52,18 @@ export async function POST(req: NextRequest) {
 
     const userId = studentData.user_id;
 
+    const { error: issuedByError } = await supabaseAdmin
+      .from("coupons")
+      .update({ issued_by: null })
+      .eq("issued_by", studentId);
+
+    if (issuedByError) {
+      return NextResponse.json(
+        { error: issuedByError.message },
+        { status: 500 }
+      );
+    }
+
     await supabaseAdmin.from("queue").delete().eq("student_id", studentId);
 
     if (userId) {

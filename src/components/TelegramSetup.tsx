@@ -28,6 +28,9 @@ export default function TelegramSetup() {
         <p className="text-emerald-800 mb-3 dark:text-slate-300">
           {t("telegram.connectedHint")}
         </p>
+        <p className="text-xs text-emerald-700/80 mb-3 dark:text-slate-400">
+          {t("telegram.notificationsHint")}
+        </p>
 
         <a
           href={link}
@@ -67,6 +70,9 @@ export default function TelegramSetup() {
 
       <p className="text-xs text-gray-600 mt-3 text-center dark:text-slate-400">
         {t("telegram.connectHint")}
+      </p>
+      <p className="text-xs text-gray-500 mt-2 text-center dark:text-slate-500">
+        {t("telegram.notificationsHint")}
       </p>
     </div>
   );

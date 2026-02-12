@@ -27,7 +27,7 @@ export default function QueueTimers({ item }: QueueTimersProps) {
       redMin = 15;
     } else if (item.status === QueueStatus.WASHING) {
       startTime = item.washing_started_at;
-      yellowMin = (item.wash_count || 1) * 80;
+      yellowMin = (item.wash_count || 1) * 90;
       redMin = (item.wash_count || 1) * 120;
     } else if (item.status === QueueStatus.WASHING_FINISHED) {
       startTime = item.washing_finished_at;

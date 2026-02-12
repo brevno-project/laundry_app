@@ -7,61 +7,167 @@ import { v4 as uuidv4 } from 'uuid';
 const QUEUE_KEY = 'laundry-app-queue';
 const MACHINE_STATE_KEY = 'laundry-app-machine-state';
 const HISTORY_KEY = 'laundry-app-history';
+const CACHE_META_KEY = 'laundry-app-cache-meta';
+
+const CACHE_VERSION = 2;
+const CACHE_TTL_MS = 14 * 24 * 60 * 60 * 1000;
+const MAX_QUEUE_ITEMS = 500;
+const MAX_HISTORY_ITEMS = 300;
+const MAX_ENTRY_BYTES = 450 * 1024;
+
+let cacheValidated = false;
+
+const canUseStorage = () =>
+  typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+
+const utf8Size = (value: string): number => {
+  try {
+    return new TextEncoder().encode(value).length;
+  } catch {
+    return value.length * 2;
+  }
+};
+
+const clearCacheKeys = () => {
+  if (!canUseStorage()) return;
+  localStorage.removeItem(QUEUE_KEY);
+  localStorage.removeItem(MACHINE_STATE_KEY);
+  localStorage.removeItem(HISTORY_KEY);
+};
+
+const touchCacheMeta = () => {
+  if (!canUseStorage()) return;
+  try {
+    localStorage.setItem(
+      CACHE_META_KEY,
+      JSON.stringify({ version: CACHE_VERSION, updatedAt: Date.now() }),
+    );
+  } catch {}
+};
+
+const ensureFreshCache = () => {
+  if (!canUseStorage() || cacheValidated) return;
+  cacheValidated = true;
+
+  try {
+    const rawMeta = localStorage.getItem(CACHE_META_KEY);
+    if (!rawMeta) {
+      touchCacheMeta();
+      return;
+    }
+
+    const parsed = JSON.parse(rawMeta) as { version?: number; updatedAt?: number } | null;
+    const isVersionStale = parsed?.version !== CACHE_VERSION;
+    const isExpired =
+      typeof parsed?.updatedAt !== 'number' || Date.now() - parsed.updatedAt > CACHE_TTL_MS;
+
+    if (isVersionStale || isExpired) {
+      clearCacheKeys();
+    }
+  } catch {
+    clearCacheKeys();
+  }
+
+  touchCacheMeta();
+};
+
+const readJson = <T>(key: string, fallback: T): T => {
+  if (!canUseStorage()) return fallback;
+  ensureFreshCache();
+
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    if (utf8Size(raw) > MAX_ENTRY_BYTES) {
+      localStorage.removeItem(key);
+      return fallback;
+    }
+    const parsed = JSON.parse(raw) as T;
+    return parsed ?? fallback;
+  } catch {
+    localStorage.removeItem(key);
+    return fallback;
+  }
+};
+
+const writeJson = <T>(key: string, value: T) => {
+  if (!canUseStorage()) return;
+  ensureFreshCache();
+
+  try {
+    const raw = JSON.stringify(value);
+    if (utf8Size(raw) > MAX_ENTRY_BYTES) {
+      localStorage.removeItem(key);
+      return;
+    }
+    if (localStorage.getItem(key) !== raw) {
+      localStorage.setItem(key, raw);
+    }
+    touchCacheMeta();
+  } catch {
+    localStorage.removeItem(key);
+  }
+};
+
+const normalizeQueue = (value: unknown): QueueItem[] => {
+  if (!Array.isArray(value)) return [];
+  return (value as QueueItem[]).slice(0, MAX_QUEUE_ITEMS);
+};
+
+const normalizeMachineState = (value: unknown): MachineState => {
+  if (!value || typeof value !== 'object') {
+    return { status: MachineStatus.IDLE };
+  }
+  const state = value as MachineState;
+  if (state.status !== MachineStatus.IDLE && state.status !== MachineStatus.WASHING) {
+    return { status: MachineStatus.IDLE };
+  }
+  return state;
+};
+
+const normalizeHistory = (value: unknown): HistoryItem[] => {
+  if (!Array.isArray(value)) return [];
+  const items = (value as HistoryItem[]).filter((item) => !!item && typeof item.id === 'string');
+  items.sort((a, b) => {
+    const aTime = Date.parse(a.finished_at || '') || 0;
+    const bTime = Date.parse(b.finished_at || '') || 0;
+    return bTime - aTime;
+  });
+  return items.slice(0, MAX_HISTORY_ITEMS);
+};
 
 // Get data from local storage
 export const get_local_queue = (): QueueItem[] => {
-  try {
-    const storedQueue = localStorage.getItem(QUEUE_KEY);
-    return storedQueue ? JSON.parse(storedQueue) : [];
-  } catch (error) {
-    return [];
-  }
+  return normalizeQueue(readJson<unknown>(QUEUE_KEY, []));
 };
 
 export const get_local_machine_state = (): MachineState => {
-  try {
-    const storedState = localStorage.getItem(MACHINE_STATE_KEY);
-    return storedState 
-      ? JSON.parse(storedState) 
-      : { status: MachineStatus.IDLE };
-  } catch (error) {
-    return { status: MachineStatus.IDLE };
-  }
+  return normalizeMachineState(readJson<unknown>(MACHINE_STATE_KEY, { status: MachineStatus.IDLE }));
 };
 
 export const get_local_history = (): HistoryItem[] => {
-  try {
-    const storedHistory = localStorage.getItem(HISTORY_KEY);
-    return storedHistory ? JSON.parse(storedHistory) : [];
-  } catch (error) {
-    
-    return [];
-  }
+  return normalizeHistory(readJson<unknown>(HISTORY_KEY, []));
 };
 
 // Save data to local storage
 export const save_local_queue = (queue: QueueItem[]) => {
-  try {
-    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
-  } catch (error) {
-    
-  }
+  writeJson(QUEUE_KEY, normalizeQueue(queue));
 };
 
 export const save_local_machine_state = (state: MachineState) => {
-  try {
-    localStorage.setItem(MACHINE_STATE_KEY, JSON.stringify(state));
-  } catch (error) {
-    
-  }
+  writeJson(MACHINE_STATE_KEY, normalizeMachineState(state));
 };
 
 export const save_local_history = (history: HistoryItem[]) => {
-  try {
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-  } catch (error) {
-    
+  writeJson(HISTORY_KEY, normalizeHistory(history));
+};
+
+export const clear_local_cache = () => {
+  clearCacheKeys();
+  if (canUseStorage()) {
+    localStorage.removeItem(CACHE_META_KEY);
   }
+  cacheValidated = false;
 };
 
 export const add_to_local_queue = (

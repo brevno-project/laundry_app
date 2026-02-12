@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import { useUi } from '@/contexts/UiContext';
 import { TelegramIcon } from '@/components/Icons';
@@ -9,6 +9,8 @@ interface TelegramBannerProps {
   onGoToSettings: () => void;
 }
 
+export const TELEGRAM_BANNER_NUDGE_EVENT = "telegram-banner-nudge";
+
 /**
  * Полноэкранный баннер для подключения Telegram
  * Показывается при входе для пользователей без Telegram (не админов)
@@ -16,90 +18,51 @@ interface TelegramBannerProps {
 export default function TelegramBanner({ onGoToSettings }: TelegramBannerProps) {
   const { user, isAdmin } = useLaundry();
   const { t } = useUi();
-  const [dismissed, setDismissed] = useState(false);
   const [shouldShow, setShouldShow] = useState(false);
-  const lastUserKeyRef = useRef<string | null>(null);
 
   // Отслеживаем изменения user - показываем баннер при входе
-  const getDismissKey = () => {
-    if (user?.id) return `telegramBannerDismissed:${user.id}`;
-    if (user?.student_id) return `telegramBannerDismissed:${user.student_id}`;
-    return null;
-  };
-
-  const getShownKey = () => {
-    if (user?.id) return `telegramBannerShown:${user.id}`;
-    if (user?.student_id) return `telegramBannerShown:${user.student_id}`;
-    return null;
-  };
-
-  useEffect(() => {
+  const evaluateVisibility = useCallback(() => {
     if (typeof window === "undefined") return;
 
-    const userKey = getShownKey();
-    if (userKey && lastUserKeyRef.current !== userKey) {
-      lastUserKeyRef.current = userKey;
-      setDismissed(false);
-      setShouldShow(false);
-    } else if (!userKey) {
-      lastUserKeyRef.current = null;
-    }
-
-    const dismissalKey = getDismissKey();
-    const shownKey = getShownKey();
-    const wasDismissed =
-      dismissalKey ? sessionStorage.getItem(dismissalKey) === "1" : false;
-    const wasShown =
-      shownKey ? sessionStorage.getItem(shownKey) === "1" : false;
-
-    if (dismissed || wasDismissed) {
+    if (!user || user.telegram_chat_id || isAdmin) {
       setShouldShow(false);
       return;
     }
 
-    if (user && !user.telegram_chat_id && !isAdmin && (!wasShown || shouldShow)) {
-      setShouldShow(true);
-    } else {
-      setShouldShow(false);
-    }
-  }, [user, isAdmin, shouldShow, dismissed]);
+    setShouldShow(true);
+  }, [user, isAdmin]);
+
+  useEffect(() => {
+    evaluateVisibility();
+  }, [evaluateVisibility]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!shouldShow) return;
-    const shownKey = getShownKey();
-    if (shownKey) {
-      sessionStorage.setItem(shownKey, "1");
-    }
-  }, [shouldShow, user?.id, user?.student_id]);
+
+    const handleNudge = () => evaluateVisibility();
+
+    window.addEventListener(TELEGRAM_BANNER_NUDGE_EVENT, handleNudge as EventListener);
+
+    return () => {
+      window.removeEventListener(TELEGRAM_BANNER_NUDGE_EVENT, handleNudge as EventListener);
+    };
+  }, [evaluateVisibility]);
 
   // Не показываем если:
   // - Пользователь не вошел
   // - Telegram уже подключен
   // - Пользователь - админ
   // - Баннер закрыт кнопкой "Позже"
-  if (!shouldShow || dismissed) {
+  if (!shouldShow) {
     return null;
   }
 
   const handleDismiss = () => {
-    if (typeof window !== "undefined") {
-      const dismissalKey = getDismissKey();
-      if (dismissalKey) {
-        sessionStorage.setItem(dismissalKey, "1");
-      }
-    }
-    setDismissed(true);
+    setShouldShow(false);
   };
 
   const handleGoToSettings = () => {
-    if (typeof window !== "undefined") {
-      const dismissalKey = getDismissKey();
-      if (dismissalKey) {
-        sessionStorage.setItem(dismissalKey, "1");
-      }
-    }
-    setDismissed(true);
+    setShouldShow(false);
     onGoToSettings();
   };
 

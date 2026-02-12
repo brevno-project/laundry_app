@@ -38,6 +38,13 @@ export default function QueueList() {
   } = useLaundry();
   const { t, language } = useUi();
   const locale = language === "ru" ? "ru-RU" : language === "en" ? "en-US" : language === "ko" ? "ko-KR" : "ky-KG";
+  const getKeyFetchLabel = (room: string | undefined, fallbackKey: string) => {
+    if (language !== "ru") return t(fallbackKey);
+    const normalizedRoom = (room || "").trim().toUpperCase();
+    if (normalizedRoom.startsWith("B")) return "Шла за ключом";
+    if (normalizedRoom.startsWith("A")) return "Шел за ключом";
+    return t(fallbackKey);
+  };
 
   const [tempTimes, setTempTimes] = useState<{ [key: string]: string }>({});
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -49,6 +56,7 @@ export default function QueueList() {
   const [editWashCount, setEditWashCount] = useState(1);
   const [editCouponsUsed, setEditCouponsUsed] = useState(0);
   const [editDate, setEditDate] = useState('');
+  const canEditDate = editingItem?.status === QueueStatus.WAITING;
   const [openActionFor, setOpenActionFor] = useState<string | null>(null);
   const [leavingQueueId, setLeavingQueueId] = useState<string | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -382,6 +390,8 @@ export default function QueueList() {
                 const displayName = item.full_name || targetStudent?.full_name || "-";
                 const displayRoom = item.room || targetStudent?.room;
                 const couponsUsed = item.coupons_used || 0;
+                const keyFetchLabel = getKeyFetchLabel(displayRoom, "queue.timer.ready");
+                const canEditItem = item.status !== QueueStatus.DONE;
 
                 // ✅ Определяем цвет левой рамки по активному таймеру
                 let leftBorderColor = 'border-l-slate-300 dark:border-l-slate-600';
@@ -482,7 +492,7 @@ export default function QueueList() {
                             <Timer 
                               startTime={item.ready_at} 
                               endTime={item.key_issued_at || undefined}
-                              label={t("queue.timer.ready")} 
+                              label={keyFetchLabel} 
                               color="yellow" 
                             />
                           )}
@@ -497,28 +507,30 @@ export default function QueueList() {
                       </div>
                       <div className="flex flex-col">
                         <span className="text-xs text-gray-600">{t("queue.label.payment")}</span>
-                        <span className="text-sm font-bold text-gray-900 flex items-center gap-1">
+                        <span className="text-sm font-bold text-gray-900 flex flex-wrap items-center gap-x-1 gap-y-1">
                           {couponsUsed > 0 || item.payment_type === 'coupon' || item.payment_type === 'both' ? (
                             <>
-                              <TicketIcon className="w-4 h-4 text-purple-600" />
-                              <span>
-                                {couponsUsed > 0
-                                  ? t("payment.coupons", { count: couponsUsed })
-                                  : t("payment.coupon")}
+                              <span className="flex items-center gap-1 whitespace-nowrap">
+                                <TicketIcon className="w-4 h-4 text-purple-600" />
+                                <span>
+                                  {couponsUsed > 0
+                                    ? t("payment.coupons", { count: couponsUsed })
+                                    : t("payment.coupon")}
+                                </span>
                               </span>
                               {item.payment_type === 'both' && (
-                                <>
+                                <span className="flex items-center gap-1 whitespace-nowrap">
                                   <span>+</span>
                                   <MoneyIcon className="w-4 h-4 text-green-600" />
                                   <span>{t("payment.money")}</span>
-                                </>
+                                </span>
                               )}
                             </>
                           ) : (
-                            <>
+                            <span className="flex items-center gap-1 whitespace-nowrap">
                               <MoneyIcon className="w-4 h-4 text-green-600" />
                               <span>{t("payment.money")}</span>
-                            </>
+                            </span>
                           )}
                         </span>
                       </div>
@@ -621,6 +633,18 @@ export default function QueueList() {
                             ref={(el) => { actionMenuRefs.current[item.id] = el; }}
                             className="mt-3 bg-gray-50 border rounded-lg shadow-inner p-3 space-y-2 dark:bg-slate-900/40 dark:border-slate-700"
                           >
+                          {canEditItem && (
+                            <button
+                              className="w-full btn bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600"
+                              onClick={() => {
+                                setEditingItem(item);
+                                setShowEditModal(true);
+                                setOpenActionFor(null);
+                              }}
+                            >
+                              <EditIcon className="w-4 h-4" /> {t("queue.action.editTitle")}
+                            </button>
+                          )}
 
                           {/* Позвать */}
                           <button
@@ -831,7 +855,8 @@ export default function QueueList() {
           <select
             value={editDate}
             onChange={(e) => setEditDate(e.target.value)}
-            className="w-full border-2 border-slate-900 rounded-lg p-2 text-gray-900 bg-white focus:outline-none focus:border-slate-900 dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-slate-400"
+            disabled={!canEditDate}
+            className="w-full border-2 border-slate-900 rounded-lg p-2 text-gray-900 bg-white focus:outline-none focus:border-slate-900 disabled:opacity-60 disabled:cursor-not-allowed dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100 dark:focus:border-slate-400"
           >
             {getAvailableDates().map(date => (
               <option key={date.value} value={date.value}>

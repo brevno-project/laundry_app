@@ -13,7 +13,7 @@ import CleanupResults from '@/components/CleanupResults';
 import ClaimAccount from '@/components/ClaimAccount';
 import GlobalAlert from '@/components/GlobalAlert';
 import { HomeIcon, HistoryIcon, PeopleIcon, SettingsIcon, DoorIcon, ListIcon, LaundryIcon, SunIcon, MoonIcon, WashingSpinner } from '@/components/Icons';
-import TelegramBanner from '@/components/TelegramBanner';
+import TelegramBanner, { TELEGRAM_BANNER_NUDGE_EVENT } from '@/components/TelegramBanner';
 import StudentActions from '@/components/StudentActions';
 import PasswordChanger from '@/components/PasswordChanger';
 import AvatarCustomizer from '@/components/AvatarCustomizer';
@@ -35,10 +35,14 @@ export default function Home() {
   const [scrollTarget, setScrollTarget] = React.useState<string | null>(null);
 
   // ✅ Сохраняем activeTab в localStorage при изменении
-  const handleTabChange = (tab: string) => {
+  const handleTabChange = (tab: string, options?: { nudge?: boolean }) => {
     setActiveTab(tab);
     if (typeof window !== 'undefined') {
       localStorage.setItem('activeTab', tab);
+      const shouldNudge = options?.nudge ?? true;
+      if (shouldNudge) {
+        window.dispatchEvent(new Event(TELEGRAM_BANNER_NUDGE_EVENT));
+      }
     }
   };
 
@@ -262,7 +266,7 @@ export default function Home() {
       {/* Полноэкранный баннер для подключения Telegram */}
       <TelegramBanner
         onGoToSettings={() => {
-          handleTabChange('settings');
+          handleTabChange('settings', { nudge: false });
           setScrollTarget('telegram-setup');
         }}
       />

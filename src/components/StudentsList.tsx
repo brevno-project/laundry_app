@@ -1,9 +1,10 @@
 ﻿"use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useLaundry } from "@/contexts/LaundryContext";
 import { useUi } from "@/contexts/UiContext";
 import { Student } from "@/types";
+import { supabase } from "@/lib/supabase";
 import {
   ListIcon,
   RoomIcon,
@@ -16,6 +17,7 @@ import {
   KeyIcon,
   DeleteIcon,
   WashingSpinner,
+  TicketIcon,
 } from "@/components/Icons";
 import Avatar from "@/components/Avatar";
 import AddStudentModal from "@/components/AddStudentModal";
@@ -41,6 +43,19 @@ export default function StudentsList() {
 
   const [stayFilter, setStayFilter] = useState<"all" | "weekends" | "5days" | "unknown">("all");
   const [registrationFilter, setRegistrationFilter] = useState<"all" | "registered" | "unregistered">("all");
+  const [couponStatsByStudent, setCouponStatsByStudent] = useState<Record<string, {
+    active: number;
+    reserved: number;
+    used: number;
+    expired: number;
+    total: number;
+    valid: number;
+  }>>({});
+
+  const canManageStudents = isAdmin || isSuperAdmin || isCleanupAdmin;
+  const canDeleteStudents = isAdmin || isSuperAdmin || isCleanupAdmin;
+  const canViewRegistration = isAdmin || isSuperAdmin || isCleanupAdmin;
+  const canViewCouponStats = isAdmin || isSuperAdmin || isCleanupAdmin;
 
   useEffect(() => {
     if (!notice) return;
@@ -49,9 +64,49 @@ export default function StudentsList() {
     return () => window.clearTimeout(timer);
   }, [notice]);
 
-  const canManageStudents = isAdmin || isSuperAdmin || isCleanupAdmin;
-  const canDeleteStudents = isAdmin || isSuperAdmin || isCleanupAdmin;
-  const canViewRegistration = isAdmin || isSuperAdmin;
+  const authedFetch = useCallback(async (url: string, options: RequestInit = {}) => {
+    if (!supabase) {
+      throw new Error(t("errors.supabaseNotConfigured"));
+    }
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+    if (!accessToken) {
+      throw new Error(t("errors.noActiveSession"));
+    }
+    const nextHeaders = new Headers(options.headers || {});
+    nextHeaders.set("Authorization", `Bearer ${accessToken}`);
+    return fetch(url, { ...options, headers: nextHeaders });
+  }, [t]);
+
+  useEffect(() => {
+    if (!canViewCouponStats || !students || students.length === 0) {
+      setCouponStatsByStudent({});
+      return;
+    }
+
+    let isActive = true;
+    const loadCouponStats = async () => {
+      try {
+        const response = await authedFetch("/api/admin/coupons/summary");
+        const result = await response.json();
+        if (!isActive) return;
+        if (response.ok && result?.stats) {
+          setCouponStatsByStudent(result.stats || {});
+        } else {
+          setCouponStatsByStudent({});
+        }
+      } catch {
+        if (isActive) {
+          setCouponStatsByStudent({});
+        }
+      }
+    };
+
+    void loadCouponStats();
+    return () => {
+      isActive = false;
+    };
+  }, [canViewCouponStats, students.length, authedFetch]);
 
   const badgeBase = "rounded-full border border-slate-200/60 dark:border-slate-700";
 
@@ -208,6 +263,16 @@ export default function StudentsList() {
         : stayType === "5days"
           ? t("students.stay.5days")
           : t("students.stay.unknown");
+    const couponStats = couponStatsByStudent[student.id];
+    const couponCount = couponStats?.valid ?? 0;
+    const couponTitle = couponStats
+      ? t("students.coupons.title", {
+          active: couponStats.active,
+          reserved: couponStats.reserved,
+          used: couponStats.used,
+          expired: couponStats.expired,
+        })
+      : undefined;
 
     return (
       <React.Fragment key={student.id}>
@@ -236,6 +301,19 @@ export default function StudentsList() {
                         {student.is_registered
                           ? t("students.badge.registered")
                           : t("students.badge.unregistered")}
+                      </span>
+                    )}
+                    {canViewCouponStats && couponCount > 0 && (
+                      <span
+                        className={`${badgeBase} inline-flex items-center gap-1 px-2 py-0.5 ${
+                          couponStats?.reserved
+                            ? "bg-amber-100 text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/25 dark:text-amber-200"
+                            : "bg-emerald-100 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/25 dark:text-emerald-200"
+                        }`}
+                        title={couponTitle}
+                      >
+                        <TicketIcon className="w-3 h-3" />
+                        {t("students.coupons", { count: couponCount })}
                       </span>
                     )}
                     <span
@@ -348,6 +426,16 @@ export default function StudentsList() {
         : stayType === "5days"
           ? t("students.stay.5days")
           : t("students.stay.unknown");
+    const couponStats = couponStatsByStudent[student.id];
+    const couponCount = couponStats?.valid ?? 0;
+    const couponTitle = couponStats
+      ? t("students.coupons.title", {
+          active: couponStats.active,
+          reserved: couponStats.reserved,
+          used: couponStats.used,
+          expired: couponStats.expired,
+        })
+      : undefined;
 
     return (
       <React.Fragment key={student.id}>
@@ -378,6 +466,19 @@ export default function StudentsList() {
                         {student.is_registered
                           ? t("students.badge.registered")
                           : t("students.badge.unregistered")}
+                      </span>
+                    )}
+                    {canViewCouponStats && couponCount > 0 && (
+                      <span
+                        className={`${badgeBase} inline-flex items-center gap-1 px-1.5 py-0.5 ${
+                          couponStats?.reserved
+                            ? "bg-amber-100 text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/25 dark:text-amber-200"
+                            : "bg-emerald-100 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/25 dark:text-emerald-200"
+                        }`}
+                        title={couponTitle}
+                      >
+                        <TicketIcon className="w-3 h-3" />
+                        {t("students.coupons", { count: couponCount })}
                       </span>
                     )}
                     <span
