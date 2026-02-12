@@ -24,6 +24,8 @@ export default function StudentAuth() {
   const banNoticeRef = useRef<HTMLDivElement | null>(null);
 
   const hasLoadedRef = useRef(false);
+  const loadStudentsRef = useRef(loadStudents);
+  const studentsRefreshTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -45,23 +47,39 @@ export default function StudentAuth() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    loadStudentsRef.current = loadStudents;
+  }, [loadStudents]);
+
+  useEffect(() => {
     if (!supabase) return;
+
+    const scheduleStudentsRefresh = () => {
+      if (studentsRefreshTimerRef.current !== null) {
+        return;
+      }
+      studentsRefreshTimerRef.current = window.setTimeout(() => {
+        studentsRefreshTimerRef.current = null;
+        void loadStudentsRef.current();
+      }, 300);
+    };
 
     const channel = supabase
       .channel("students-auth-live")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "students" },
-        () => {
-          loadStudents();
-        }
+        scheduleStudentsRefresh
       )
       .subscribe();
 
     return () => {
+      if (studentsRefreshTimerRef.current !== null) {
+        window.clearTimeout(studentsRefreshTimerRef.current);
+        studentsRefreshTimerRef.current = null;
+      }
       channel.unsubscribe();
     };
-  }, [loadStudents]);
+  }, []);
 
   // Логируем данные студентов при их изменении
   useEffect(() => {
