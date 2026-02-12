@@ -1032,9 +1032,11 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
         { event: "*", schema: "public", table: "machine_state" },
 
         (payload) => {
-
-          setMachineState(payload.new as MachineState);
-
+          if (payload.new) {
+            setMachineState(payload.new as MachineState);
+          } else {
+            fetchMachineState();
+          }
         }
 
       )
