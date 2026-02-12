@@ -456,25 +456,45 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return;
 
-    const refreshVisible = () => {
+    const refreshVisible = (options?: { includeHeavy?: boolean }) => {
       if (typeof document !== "undefined" && document.visibilityState !== "visible") {
+        return;
+      }
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
         return;
       }
       fetchQueue();
       fetchMachineState();
-      fetchHistory();
-      loadStudents();
+      if (options?.includeHeavy) {
+        fetchHistory();
+        loadStudents();
+      }
     };
 
-    const handleVisibility = () => refreshVisible();
-    const handleOnline = () => refreshVisible();
+    const refreshFull = () => refreshVisible({ includeHeavy: true });
+    const handleVisibility = () => refreshFull();
+    const handleFocus = () => refreshFull();
+    const handleOnline = () => refreshFull();
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        refreshFull();
+      }
+    };
+
+    const pollId = window.setInterval(() => refreshVisible(), 15000);
 
     document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", handleFocus);
     window.addEventListener("online", handleOnline);
+    window.addEventListener("pageshow", handlePageShow);
+    refreshFull();
 
     return () => {
+      window.clearInterval(pollId);
       document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", handleFocus);
       window.removeEventListener("online", handleOnline);
+      window.removeEventListener("pageshow", handlePageShow);
     };
   }, [isSupabaseConfigured, supabase, isAdmin, isSuperAdmin, isCleanupAdmin, user?.can_view_students]);
 
@@ -517,7 +537,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
     const result = await response.json();
     if (!response.ok) {
-      throw new Error(result.error || 'ÐžÑˆÐ¸Ð±ÐºÐ° Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ñ Ð°Ð»ÐµÑ€Ñ‚Ð° Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚Ð° ÐºÐ»ÑŽÑ‡Ð°');
+      throw new Error(result.error || 'Ошибка обновления алерта возврата ключа');
     }
 
     await fetchQueue();
@@ -540,7 +560,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     });
     const result = await response.json();
     if (!response.ok) {
-      throw new Error(result.error || 'ÐžÑˆÐ¸Ð±ÐºÐ° ÑƒÐ´Ð°Ð»ÐµÐ½Ð¸Ñ Ð¸Ð· Ð¾Ñ‡ÐµÑ€ÐµÐ´Ð¸');
+      throw new Error(result.error || 'Ошибка удаления из очереди');
     }
     await fetchQueue();
     await fetchMachineState();
@@ -570,7 +590,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     });
     const result = await response.json();
     if (!response.ok) {
-      throw new Error(result.error || 'ÐžÑˆÐ¸Ð±ÐºÐ° Ð¾Ñ‡Ð¸ÑÑ‚ÐºÐ¸ Ð¾Ñ‡ÐµÑ€ÐµÐ´Ð¸');
+      throw new Error(result.error || 'Ошибка очистки очереди');
     }
     await fetchQueue();
     await fetchMachineState();
@@ -616,7 +636,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     });
     const result = await response.json();
     if (!response.ok) {
-      throw new Error(result.error || 'ÐžÑˆÐ¸Ð±ÐºÐ° Ð´Ð¾Ð±Ð°Ð²Ð»ÐµÐ½Ð¸Ñ ÑÑ‚ÑƒÐ´ÐµÐ½Ñ‚Ð°');
+      throw new Error(result.error || 'Ошибка добавления студента');
     }
     await loadStudents();
   };
@@ -640,7 +660,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     });
     const result = await response.json();
     if (!response.ok) {
-      throw new Error(result.error || 'ÐžÑˆÐ¸Ð±ÐºÐ° Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ñ ÑÑ‚ÑƒÐ´ÐµÐ½Ñ‚Ð°');
+      throw new Error(result.error || 'Ошибка обновления студента');
     }
     if (!result?.success) {
       throw new Error(result?.error || "Update failed");
@@ -664,7 +684,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     });
     const result = await response.json();
     if (!response.ok) {
-      throw new Error(result.error || 'ÐžÑˆÐ¸Ð±ÐºÐ° ÑƒÐ´Ð°Ð»ÐµÐ½Ð¸Ñ ÑÑ‚ÑƒÐ´ÐµÐ½Ñ‚Ð°');
+      throw new Error(result.error || 'Ошибка удаления студента');
     }
     await loadStudents();
     await fetchQueue();
@@ -702,7 +722,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     });
     const result = await response.json();
     if (!response.ok) {
-      throw new Error(result.error || 'ÐžÑˆÐ¸Ð±ÐºÐ° Ð´Ð¾Ð±Ð°Ð²Ð»ÐµÐ½Ð¸Ñ Ð² Ð¾Ñ‡ÐµÑ€ÐµÐ´ÑŒ');
+      throw new Error(result.error || 'Ошибка добавления в очередь');
     }
     await fetchQueue();
   };
@@ -722,7 +742,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     });
     const result = await response.json();
     if (!response.ok) {
-      throw new Error(result.error || 'ÐžÑˆÐ¸Ð±ÐºÐ° Ð±Ð°Ð½Ð°');
+      throw new Error(result.error || 'Ошибка бана');
     }
     await loadStudents();
     await fetchQueue();
@@ -743,7 +763,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     });
     const result = await response.json();
     if (!response.ok) {
-      throw new Error(result.error || 'ÐžÑˆÐ¸Ð±ÐºÐ° Ñ€Ð°Ð·Ð±Ð°Ð½Ð°');
+      throw new Error(result.error || 'Ошибка разбана');
     }
     await loadStudents();
   };
@@ -808,7 +828,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
           await fetchQueue();
           await fetchMachineState();
         }
-        throw new Error(result.error || 'ÐžÑˆÐ¸Ð±ÐºÐ° Ð·Ð°Ð¿ÑƒÑÐºÐ° ÑÑ‚Ð¸Ñ€ÐºÐ¸');
+        throw new Error(result.error || 'Ошибка запуска стирки');
       }
 
       await fetchQueue();
@@ -854,7 +874,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       });
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || 'ÐžÑˆÐ¸Ð±ÐºÐ° Ð¾Ñ‚Ð¼ÐµÐ½Ñ‹ ÑÑ‚Ð¸Ñ€ÐºÐ¸');
+        throw new Error(result.error || 'Ошибка отмены стирки');
       }
 
       await fetchQueue();
@@ -893,7 +913,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       });
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || 'ÐžÑˆÐ¸Ð±ÐºÐ° Ð·Ð°Ð²ÐµÑ€ÑˆÐµÐ½Ð¸Ñ ÑÑ‚Ð¸Ñ€ÐºÐ¸');
+        throw new Error(result.error || 'Ошибка завершения стирки');
       }
 
       void sendTelegramNotification({
@@ -1198,7 +1218,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
             const hasUserId = !!payload.new.user_id;
 
             if (isBanned) {
-              const banReason = payload.new.ban_reason || "ÐÐµ ÑƒÐºÐ°Ð·Ð°Ð½Ð°";
+              const banReason = payload.new.ban_reason || "Не указана";
               if (typeof window !== "undefined") {
                 localStorage.setItem("banReason", banReason);
               }
@@ -1394,7 +1414,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
       if (me.is_banned) {
-        const banReason = me.ban_reason || "ÐÐµ ÑƒÐºÐ°Ð·Ð°Ð½Ð°";
+        const banReason = me.ban_reason || "Не указана";
         if (typeof window !== "undefined") {
           localStorage.setItem("banReason", banReason);
         }
@@ -2058,7 +2078,7 @@ const registerStudent = async (
 
   if (!isSupabaseConfigured || !supabase) {
 
-    throw new Error("Supabase Ð½Ðµ Ð½Ð°ÑÑ‚Ñ€Ð¾ÐµÐ½");
+    throw new Error("Supabase не настроен");
 
   }
 
@@ -2070,15 +2090,15 @@ const registerStudent = async (
 
     const student = students.find((s) => s.id === studentId);
 
-    if (!student) throw new Error("Ð¡Ñ‚ÑƒÐ´ÐµÐ½Ñ‚ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½");
+    if (!student) throw new Error("Студент не найден");
 
 
 
     if (student.is_banned) {
 
-      const banReason = student.ban_reason || "ÐÐµ ÑƒÐºÐ°Ð·Ð°Ð½Ð°";
+      const banReason = student.ban_reason || "Не указана";
 
-      throw new Error(`Ð’Ñ‹ Ð·Ð°Ð±Ð°Ð½ÐµÐ½Ñ‹. ÐŸÑ€Ð¸Ñ‡Ð¸Ð½Ð°: ${banReason}. ÐžÐ±Ñ€Ð°Ñ‚Ð¸Ñ‚ÐµÑÑŒ Ðº Ð°Ð´Ð¼Ð¸Ð½Ð¸ÑÑ‚Ñ€Ð°Ñ‚Ð¾Ñ€Ñƒ.`);
+      throw new Error(`Вы забанены. Причина: ${banReason}. Обратитесь к администратору.`);
 
     }
 
@@ -2086,7 +2106,7 @@ const registerStudent = async (
 
     if (student.is_registered && student.user_id) {
 
-      throw new Error("Ð¡Ñ‚ÑƒÐ´ÐµÐ½Ñ‚ ÑƒÐ¶Ðµ Ð·Ð°Ñ€ÐµÐ³Ð¸ÑÑ‚Ñ€Ð¸Ñ€Ð¾Ð²Ð°Ð½. ÐÐ°Ð¶Ð¼Ð¸Ñ‚Ðµ Â«Ð’Ð¾Ð¹Ñ‚Ð¸Â».");
+      throw new Error("Студент уже зарегистрирован. Нажмите «Войти».");
 
     }
 
@@ -2096,7 +2116,7 @@ const registerStudent = async (
 
     if (password.length < 6) {
 
-      throw new Error("ÐŸÐ°Ñ€Ð¾Ð»ÑŒ Ð´Ð¾Ð»Ð¶ÐµÐ½ Ð±Ñ‹Ñ‚ÑŒ Ð½Ðµ Ð¼ÐµÐ½ÐµÐµ 6 ÑÐ¸Ð¼Ð²Ð¾Ð»Ð¾Ð²");
+      throw new Error("Пароль должен быть не менее 6 символов");
 
     }
 
@@ -2168,7 +2188,7 @@ const registerStudent = async (
 
       if (msg.includes("already registered") || msg.includes("user already registered")) {
 
-        const error = new Error("ÐÐºÐºÐ°ÑƒÐ½Ñ‚ ÑƒÐ¶Ðµ ÑÑƒÑ‰ÐµÑÑ‚Ð²ÑƒÐµÑ‚. Ð’Ð¾Ð¹Ð´Ð¸Ñ‚Ðµ Ð² ÑÐ¸ÑÑ‚ÐµÐ¼Ñƒ.") as any;
+        const error = new Error("Аккаунт уже существует. Войдите в систему.") as any;
 
         error.code = "USER_ALREADY_REGISTERED";
 
@@ -2176,7 +2196,7 @@ const registerStudent = async (
 
       } else {
 
-        throw new Error(`ÐžÑˆÐ¸Ð±ÐºÐ° Ñ€ÐµÐ³Ð¸ÑÑ‚Ñ€Ð°Ñ†Ð¸Ð¸: ${signUpErr.message}`);
+        throw new Error(`Ошибка регистрации: ${signUpErr.message}`);
 
       }
 
@@ -2204,7 +2224,7 @@ const registerStudent = async (
 
         console.error("SignIn after null user error:", signInErr);
 
-        throw new Error("ÐÐµ ÑƒÐ´Ð°Ð»Ð¾ÑÑŒ Ð²Ð¾Ð¹Ñ‚Ð¸ Ð¿Ð¾ÑÐ»Ðµ Ñ€ÐµÐ³Ð¸ÑÑ‚Ñ€Ð°Ñ†Ð¸Ð¸. Ð’Ð¾Ð·Ð¼Ð¾Ð¶Ð½Ð¾, Ñ‚Ñ€ÐµÐ±ÑƒÐµÑ‚ÑÑ Ð¿Ð¾Ð´Ñ‚Ð²ÐµÑ€Ð¶Ð´ÐµÐ½Ð¸Ðµ email. ÐžÐ±Ñ€Ð°Ñ‚Ð¸Ñ‚ÐµÑÑŒ Ðº Ð°Ð´Ð¼Ð¸Ð½Ð¸ÑÑ‚Ñ€Ð°Ñ‚Ð¾Ñ€Ñƒ.");
+        throw new Error("Не удалось войти после регистрации. Возможно, требуется подтверждение email. Обратитесь к администратору.");
 
       }
 
@@ -2222,7 +2242,7 @@ const registerStudent = async (
 
       console.error("No auth user after all attempts");
 
-      throw new Error("ÐÐµ ÑƒÐ´Ð°Ð»Ð¾ÑÑŒ ÑÐ¾Ð·Ð´Ð°Ñ‚ÑŒ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»Ñ. ÐŸÑ€Ð¾Ð²ÐµÑ€ÑŒÑ‚Ðµ Ð½Ð°ÑÑ‚Ñ€Ð¾Ð¹ÐºÐ¸ Supabase Auth (Ð¾Ñ‚ÐºÐ»ÑŽÑ‡Ð¸Ñ‚Ðµ Email Confirmation).");
+      throw new Error("Не удалось создать пользователя. Проверьте настройки Supabase Auth (отключите Email Confirmation).");
 
     }
 
@@ -2234,7 +2254,7 @@ const registerStudent = async (
 
     if (!sessionReady) {
 
-      throw new Error('Ð¡ÐµÑÑÐ¸Ñ Ð½Ðµ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½Ð°. ÐŸÐ¾Ð¿Ñ€Ð¾Ð±ÑƒÐ¹Ñ‚Ðµ Ð²Ð¾Ð¹Ñ‚Ð¸ ÑÐ½Ð¾Ð²Ð°.');
+      throw new Error('Сессия не установлена. Попробуйте войти снова.');
 
     }
 
@@ -2321,7 +2341,7 @@ const loginStudent = async (
 
   if (!isSupabaseConfigured || !supabase) {
 
-    throw new Error("Supabase Ð½Ðµ Ð½Ð°ÑÑ‚Ñ€Ð¾ÐµÐ½");
+    throw new Error("Supabase не настроен");
 
   }
 
@@ -2359,7 +2379,7 @@ const loginStudent = async (
 
     if (!emailRegex.test(authEmail)) {
 
-      throw new Error("ÐÐµÐ²ÐµÑ€Ð½Ñ‹Ð¹ Ñ„Ð¾Ñ€Ð¼Ð°Ñ‚ email Ð°Ð´Ñ€ÐµÑÐ°");
+      throw new Error("Неверный формат email адреса");
 
     }
 
@@ -2383,11 +2403,11 @@ const loginStudent = async (
 
       if (authError.message === "Invalid login credentials") {
 
-        throw new Error("ÐÐµÐ¿Ñ€Ð°Ð²Ð¸Ð»ÑŒÐ½Ñ‹Ð¹ Ð¿Ð°Ñ€Ð¾Ð»ÑŒ");
+        throw new Error("Неправильный пароль");
 
       }
 
-      throw new Error(authError.message || "ÐžÑˆÐ¸Ð±ÐºÐ° Ð²Ñ…Ð¾Ð´Ð°");
+      throw new Error(authError.message || "Ошибка входа");
 
     }
 
@@ -2395,7 +2415,7 @@ const loginStudent = async (
 
     if (!authData?.user) {
 
-      throw new Error("ÐÐµ ÑƒÐ´Ð°Ð»Ð¾ÑÑŒ Ð²Ð¾Ð¹Ñ‚Ð¸");
+      throw new Error("Не удалось войти");
 
     }
 
@@ -2411,7 +2431,7 @@ const loginStudent = async (
 
     if (!sessionReady) {
 
-      throw new Error('Ð¡ÐµÑÑÐ¸Ñ Ð½Ðµ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½Ð°. ÐŸÐ¾Ð¿Ñ€Ð¾Ð±ÑƒÐ¹Ñ‚Ðµ Ð²Ð¾Ð¹Ñ‚Ð¸ ÑÐ½Ð¾Ð²Ð°.');
+      throw new Error('Сессия не установлена. Попробуйте войти снова.');
 
     }
 
@@ -2453,14 +2473,14 @@ const loginStudent = async (
 
     if (updatedStudent.is_banned) {
 
-      const banReason = updatedStudent.ban_reason || "ÐÐµ ÑƒÐºÐ°Ð·Ð°Ð½Ð°";
+      const banReason = updatedStudent.ban_reason || "Не указана";
 
       if (typeof window !== "undefined") {
         localStorage.setItem("banReason", banReason);
       }
 
       await supabase.auth.signOut({ scope: 'local' });
-      throw new Error(`Ð’Ñ‹ Ð·Ð°Ð±Ð°Ð½ÐµÐ½Ñ‹. ÐŸÑ€Ð¸Ñ‡Ð¸Ð½Ð°: ${banReason}. ÐžÐ±Ñ€Ð°Ñ‚Ð¸Ñ‚ÐµÑÑŒ Ðº Ð°Ð´Ð¼Ð¸Ð½Ð¸ÑÑ‚Ñ€Ð°Ñ‚Ð¾Ñ€Ñƒ.`);
+      throw new Error(`Вы забанены. Причина: ${banReason}. Обратитесь к администратору.`);
 
     }
 
@@ -2557,7 +2577,7 @@ const loginStudent = async (
         }
 
         if (studentData.is_banned) {
-          const banReason = studentData.ban_reason || "ÐÐµ ÑƒÐºÐ°Ð·Ð°Ð½Ð°";
+          const banReason = studentData.ban_reason || "Не указана";
           localStorage.setItem("banReason", banReason);
           await client.auth.signOut({ scope: 'local' });
           clearLocalSession({ keepBanNotice: true });
@@ -2594,11 +2614,11 @@ const resetStudentRegistration = async (studentId: string) => {
 
   if (!isAdmin && !isSuperAdmin) {
 
-    throw new Error("ÐÐµÐ´Ð¾ÑÑ‚Ð°Ñ‚Ð¾Ñ‡Ð½Ð¾ Ð¿Ñ€Ð°Ð² Ð´Ð»Ñ ÑÐ±Ñ€Ð¾ÑÐ° Ñ€ÐµÐ³Ð¸ÑÑ‚Ñ€Ð°Ñ†Ð¸Ð¸");
+    throw new Error("Недостаточно прав для сброса регистрации");
 
   }
 
-  if (!isSupabaseConfigured || !supabase) throw new Error("Supabase Ð½Ðµ Ð½Ð°ÑÑ‚Ñ€Ð¾ÐµÐ½");
+  if (!isSupabaseConfigured || !supabase) throw new Error("Supabase не настроен");
 
 
 
@@ -3214,7 +3234,7 @@ const joinQueue = async (
 
       if (studentData.is_banned) {
 
-        const banReason = studentData.ban_reason || 'ÐÐµ ÑƒÐºÐ°Ð·Ð°Ð½Ð°';
+        const banReason = studentData.ban_reason || 'Не указана';
 
         if (typeof window !== "undefined") {
           localStorage.setItem("banReason", banReason);
@@ -3252,7 +3272,7 @@ const joinQueue = async (
 
       if (studentData?.is_banned) {
 
-        const banReason = studentData.ban_reason || 'ÐÐµ ÑƒÐºÐ°Ð·Ð°Ð½Ð°';
+        const banReason = studentData.ban_reason || 'Не указана';
 
         if (typeof window !== "undefined") {
           localStorage.setItem("banReason", banReason);
@@ -3465,7 +3485,7 @@ const joinQueue = async (
 
         await supabase.from('queue').delete().eq('id', newItem.id);
 
-        throw new Error(reserveError.message || 'ÐÐµ ÑƒÐ´Ð°Ð»Ð¾ÑÑŒ Ð·Ð°Ð±Ñ€Ð¾Ð½Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ ÐºÑƒÐ¿Ð¾Ð½Ñ‹');
+        throw new Error(reserveError.message || 'Не удалось забронировать купоны');
 
       }
 
@@ -3586,7 +3606,7 @@ const joinQueue = async (
 
       if (!isSuperAdmin && (status === QueueStatus.READY || status === QueueStatus.RETURNING_KEY)) {
 
-        throw new Error('ÐÐµÐ»ÑŒÐ·Ñ Ð²Ñ‹Ð·Ð²Ð°Ñ‚ÑŒ ÑÐµÐ±Ñ Ð·Ð° ÐºÐ»ÑŽÑ‡Ð¾Ð¼ Ð¸Ð»Ð¸ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚Ð¾Ð¼ ÐºÐ»ÑŽÑ‡Ð°.');
+        throw new Error('Нельзя вызвать себя за ключом или возвратом ключа.');
 
       }
 
@@ -3631,7 +3651,7 @@ const joinQueue = async (
           await fetchQueue();
         }
 
-        throw new Error(result.error || 'ÐžÑˆÐ¸Ð±ÐºÐ° Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ñ ÑÑ‚Ð°Ñ‚ÑƒÑÐ°');
+        throw new Error(result.error || 'Ошибка изменения статуса');
 
       }
 
@@ -3685,7 +3705,7 @@ const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>,
 
     if (targetItem && targetItem.student_id === user.student_id) {
 
-      throw new Error('ÐÐµÐ»ÑŒÐ·Ñ Ð²Ñ‹Ð·Ð²Ð°Ñ‚ÑŒ ÑÐµÐ±Ñ Ð½Ð° Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚ ÐºÐ»ÑŽÑ‡Ð°.');
+      throw new Error('Нельзя вызвать себя на возврат ключа.');
 
     }
 
@@ -4305,15 +4325,15 @@ const formatDateForAlert = (dateStr: string) => {
 
   
 
-  if (daysDiff === 0) return 'ÑÐµÐ³Ð¾Ð´Ð½Ñ';
+  if (daysDiff === 0) return 'сегодня';
 
-  if (daysDiff === 1) return 'Ð·Ð°Ð²Ñ‚Ñ€Ð°';
+  if (daysDiff === 1) return 'завтра';
 
-  if (daysDiff === -1) return 'Ð²Ñ‡ÐµÑ€Ð°';
+  if (daysDiff === -1) return 'вчера';
 
-  if (daysDiff > 0) return `Ñ‡ÐµÑ€ÐµÐ· ${daysDiff} Ð´Ð½.`;
+  if (daysDiff > 0) return `через ${daysDiff} дн.`;
 
-  return `${Math.abs(daysDiff)} Ð´Ð½. Ð½Ð°Ð·Ð°Ð´`;
+  return `${Math.abs(daysDiff)} дн. назад`;
 
 };
 
@@ -4511,7 +4531,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
 
       if (!response.ok) {
 
-        throw new Error(result.error || 'ÐžÑˆÐ¸Ð±ÐºÐ° ÑÐ¼ÐµÐ½Ñ‹ Ð¿Ð¾Ð·Ð¸Ñ†Ð¸Ð¸');
+        throw new Error(result.error || 'Ошибка смены позиции');
 
       }
 
@@ -4553,7 +4573,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
 
       if (!response.ok) {
 
-        throw new Error(result.error || 'ÐžÑˆÐ¸Ð±ÐºÐ° ÑÐ¼ÐµÐ½Ñ‹ Ð¿Ð¾Ð·Ð¸Ñ†Ð¸Ð¸');
+        throw new Error(result.error || 'Ошибка смены позиции');
 
       }
 

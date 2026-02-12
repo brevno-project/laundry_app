@@ -111,6 +111,38 @@ export default function StudentAuth() {
     setBanNotice("");
   };
 
+  const decodePotentialMojibake = (message: string): string => {
+    if (!/[\u00D0\u00D1]/.test(message)) return message;
+    try {
+      const bytes = Uint8Array.from(message, (char) => char.charCodeAt(0));
+      const decoded = new TextDecoder("utf-8", { fatal: false }).decode(bytes).trim();
+      return decoded || message;
+    } catch {
+      return message;
+    }
+  };
+
+  const normalizeAuthError = (rawError: unknown, isRegistered: boolean): string => {
+    const fallback = isRegistered ? t("auth.invalidPassword") : t("auth.registrationError");
+    const baseMessage =
+      rawError instanceof Error ? rawError.message.trim() : String(rawError ?? "").trim();
+
+    if (!baseMessage) {
+      return fallback;
+    }
+
+    if (baseMessage.toLowerCase().includes("invalid login credentials")) {
+      return t("auth.invalidPassword");
+    }
+
+    const decodedMessage = decodePotentialMojibake(baseMessage);
+    if (decodedMessage === "Неправильный пароль") {
+      return t("auth.invalidPassword");
+    }
+
+    return decodedMessage;
+  };
+
   const handleAuth = async () => {
     if (!selectedStudent) return;
 
@@ -151,12 +183,7 @@ export default function StudentAuth() {
         await registerStudent(selectedStudent.id, password);
       }
     } catch (err: any) {
-      setError(
-        err.message ||
-          (selectedStudent.is_registered
-            ? t("auth.invalidPassword")
-            : t("auth.registrationError"))
-      );
+      setError(normalizeAuthError(err, selectedStudent.is_registered));
     } finally {
       setLoading(false);
     }
