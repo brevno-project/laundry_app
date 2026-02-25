@@ -23,235 +23,55 @@ import {
 } from "@/components/Icons";
 
 const SCORE_CAPTIONS_RU = [
-  { key: "thanks-team", label: "Спасибо всем за старание — вы большие молодцы!" },
-  { key: "keep-going", label: "Так держать! На следующей неделе ждём ещё лучше." },
-  { key: "clean-and-cozy", label: "Было чисто и приятно — благодарим всех." },
-  { key: "great-teamwork", label: "Отличная работа команды, продолжайте в том же духе." },
-  { key: "super-result", label: "Супер-результат, спасибо за порядок." },
-  { key: "everyone-contributed", label: "Каждая квартира внесла вклад — это заметно." },
-  { key: "top-clean", label: "Сегодня чистота на высоте, гордимся вами." },
-  { key: "excellent", label: "Уборка прошла на отлично, спасибо!" },
-  { key: "thanks-participation", label: "Всем спасибо за участие и аккуратность." },
-  { key: "clean-is-ours", label: "Чистота — наше всё. Хороший результат!" },
-  { key: "together-strong", label: "Дружно поработали — молодцы!" },
-  { key: "responsibility", label: "Спасибо за ответственность и дисциплину." },
-  { key: "keep-bar", label: "Продолжайте держать планку." },
-  { key: "order-pleases", label: "Порядок радует глаз — благодарим!" },
-  { key: "week-results", label: "Отличные итоги недели, так держать!" },
-  { key: "line-01", label: "Спасибо! Чисто, аккуратно и приятно." },
-  { key: "line-02", label: "Отличная работа — видно, что старались." },
-  { key: "line-03", label: "Хороший результат — продолжайте в том же духе." },
-  { key: "line-04", label: "Порядок на уровне — спасибо всем." },
-  { key: "line-05", label: "Супер! Уют и чистота заметны сразу." },
-  { key: "line-06", label: "Так держать — дисциплина и аккуратность радуют." },
-  { key: "line-07", label: "Отлично справились — благодарим за старание." },
-  { key: "line-08", label: "Хорошая командная работа — спасибо!" },
-  { key: "line-09", label: "Тут прям приятно находиться — молодцы." },
-  { key: "line-10", label: "Спасибо за порядок — это реально важно." },
-  { key: "line-11", label: "Аккуратно и чисто — отличный уровень." },
-  { key: "line-12", label: "Уборка на совесть — благодарим." },
-  { key: "line-13", label: "Стабильно хорошо — продолжайте так же." },
-  { key: "line-14", label: "Чистота держится — видно вашу ответственность." },
-  { key: "line-15", label: "Класс! Спасибо за вклад каждого." },
-  { key: "line-16", label: "Круто получилось — порядок радует." },
-  { key: "line-17", label: "Спасибо! С таким подходом будет ещё лучше." },
-  { key: "line-18", label: "Уровень чистоты отличный — молодцы." },
-  { key: "line-19", label: "Спасибо за организацию и аккуратность." },
-  { key: "line-20", label: "Отлично — поддерживаем этот стандарт." },
-  { key: "line-21", label: "Хороший результат — спасибо всем участникам." },
-  { key: "line-22", label: "Всё аккуратно — благодарим за внимание к деталям." },
-  { key: "line-23", label: "Порядок и чистота — супер сочетание." },
-  { key: "line-24", label: "Спасибо — чисто, свежо, приятно." },
-  { key: "line-25", label: "Молодцы! Видно, что сделали качественно." },
-  { key: "line-26", label: "Отлично — продолжаем держать планку." },
-  { key: "line-27", label: "Спасибо за аккуратность — это заметно." },
-  { key: "line-28", label: "Очень достойно — спасибо за общий вклад." },
-  { key: "line-29", label: "Уборка прошла отлично — благодарим." },
-  { key: "line-30", label: "Супер! Так приятно видеть порядок." },
-  { key: "line-31", label: "Спасибо всем — чистота держится." },
-  { key: "line-32", label: "Хорошо сработали — отличный результат." },
-  { key: "line-33", label: "Аккуратность — топ. Спасибо!" },
-  { key: "line-34", label: "Отлично — приятно и чисто." },
-  { key: "line-35", label: "Спасибо! Уют начинается с порядка." },
-  { key: "line-36", label: "Хороший уровень — давайте так и дальше." },
-  { key: "line-37", label: "Супер-работа — спасибо за дисциплину." },
-  { key: "line-38", label: "Молодцы — результат отличный." },
-  { key: "line-39", label: "Чисто и аккуратно — спасибо." },
-  { key: "line-40", label: "Спасибо всем — так держать!" },
+  { key: "neutral-01", label: "Итоги разные по квартирам — ориентируемся на баллы." },
+  { key: "neutral-02", label: "Спасибо за участие в уборке. Дальше улучшаем результат." },
+  { key: "neutral-03", label: "Есть сильные и слабые стороны, смотрим по баллам." },
+  { key: "neutral-04", label: "Фиксируем текущий уровень чистоты по каждой квартире." },
+  { key: "neutral-05", label: "Часть квартир справилась лучше, часть — ниже ожиданий." },
+  { key: "neutral-06", label: "Результаты недели в таблице баллов." },
+  { key: "neutral-07", label: "По проверке видно, где нужно усилить внимание." },
+  { key: "neutral-08", label: "Есть прогресс, но ещё есть что подтянуть." },
+  { key: "neutral-09", label: "Работаем дальше над стабильной чистотой." },
+  { key: "neutral-10", label: "Без лишних оценок: смотрим на фактические баллы." },
 ];
 
 const SCORE_CAPTIONS_EN = [
-  { key: "thanks-team", label: "Thanks everyone for the effort — you did great!" },
-  { key: "keep-going", label: "Keep it up! Let’s do even better next week." },
-  { key: "clean-and-cozy", label: "It was clean and pleasant — thank you all." },
-  { key: "great-teamwork", label: "Great teamwork — keep it up." },
-  { key: "super-result", label: "Super result — thanks for keeping it tidy." },
-  { key: "everyone-contributed", label: "Every apartment contributed — it shows." },
-  { key: "top-clean", label: "Cleanliness is top-notch today — proud of you." },
-  { key: "excellent", label: "Excellent cleanup — thank you!" },
-  { key: "thanks-participation", label: "Thanks everyone for participating and being careful." },
-  { key: "clean-is-ours", label: "Cleanliness is our thing — great result!" },
-  { key: "together-strong", label: "Worked together well — great job!" },
-  { key: "responsibility", label: "Thanks for responsibility and discipline." },
-  { key: "keep-bar", label: "Keep the bar high." },
-  { key: "order-pleases", label: "Order is pleasing — thank you!" },
-  { key: "week-results", label: "Great weekly results — keep it up!" },
-  { key: "line-01", label: "Thank you! Clean, neat, and pleasant." },
-  { key: "line-02", label: "Great job — it shows you put effort in." },
-  { key: "line-03", label: "Nice result — keep the same pace." },
-  { key: "line-04", label: "Everything looks tidy — thank you all." },
-  { key: "line-05", label: "Awesome! Cleanliness and comfort are noticeable." },
-  { key: "line-06", label: "Keep it up — discipline really helps." },
-  { key: "line-07", label: "Well done — thanks for the effort." },
-  { key: "line-08", label: "Strong teamwork — thank you!" },
-  { key: "line-09", label: "It feels nice here — great work." },
-  { key: "line-10", label: "Thanks for keeping things in order." },
-  { key: "line-11", label: "Neat and clean — excellent level." },
-  { key: "line-12", label: "Solid cleanup — thank you." },
-  { key: "line-13", label: "Consistently good — keep going." },
-  { key: "line-14", label: "Cleanliness is maintained — great responsibility." },
-  { key: "line-15", label: "Nice! Thanks for everyone’s contribution." },
-  { key: "line-16", label: "Great outcome — order looks good." },
-  { key: "line-17", label: "Thank you! With this approach it will get even better." },
-  { key: "line-18", label: "Excellent level of cleanliness — great job." },
-  { key: "line-19", label: "Thanks for organization and carefulness." },
-  { key: "line-20", label: "Great — let’s keep this standard." },
-  { key: "line-21", label: "Good result — thanks to everyone involved." },
-  { key: "line-22", label: "Everything is neat — thanks for attention to details." },
-  { key: "line-23", label: "Order and cleanliness — perfect combo." },
-  { key: "line-24", label: "Thank you — clean, fresh, and pleasant." },
-  { key: "line-25", label: "Great job! You can see it was done carefully." },
-  { key: "line-26", label: "Awesome — keep the bar high." },
-  { key: "line-27", label: "Thanks for neatness — it’s noticeable." },
-  { key: "line-28", label: "Very solid — thank you for the shared effort." },
-  { key: "line-29", label: "Cleanup went great — thank you." },
-  { key: "line-30", label: "Awesome! It’s nice to see things in order." },
-  { key: "line-31", label: "Thank you all — cleanliness is maintained." },
-  { key: "line-32", label: "Well done — excellent result." },
-  { key: "line-33", label: "Neatness is top — thank you!" },
-  { key: "line-34", label: "Great — clean and comfortable." },
-  { key: "line-35", label: "Thank you! Comfort starts with order." },
-  { key: "line-36", label: "Good level — let’s keep it going." },
-  { key: "line-37", label: "Great work — thanks for discipline." },
-  { key: "line-38", label: "Nice job — great result." },
-  { key: "line-39", label: "Clean and neat — thank you." },
-  { key: "line-40", label: "Thanks everyone — keep it up!" },
+  { key: "neutral-01", label: "Results vary by apartment - please refer to the points." },
+  { key: "neutral-02", label: "Thanks for participating in cleanup. Let us improve further." },
+  { key: "neutral-03", label: "There are strong and weak areas - see the points for details." },
+  { key: "neutral-04", label: "Current cleanliness level is recorded for each apartment." },
+  { key: "neutral-05", label: "Some apartments did better, others are below expectations." },
+  { key: "neutral-06", label: "Weekly results are reflected in the points table." },
+  { key: "neutral-07", label: "The inspection shows where more attention is needed." },
+  { key: "neutral-08", label: "There is progress, but there is still room to improve." },
+  { key: "neutral-09", label: "We continue working toward stable cleanliness." },
+  { key: "neutral-10", label: "No extra judgments - we share factual points." },
 ];
 
 const SCORE_CAPTIONS_KY = [
-  { key: "thanks-team", label: "Баарыңарга аракет үчүн рахмат — чоң молодецсиңер!" },
-  { key: "keep-going", label: "Ушундай уланткыла! Кийинки жумада дагы жакшыраак болсун." },
-  { key: "clean-and-cozy", label: "Таза жана жагымдуу болду — баарыңа рахмат." },
-  { key: "great-teamwork", label: "Команда болуп жакшы иштедиңер — ошол темпте уланталы." },
-  { key: "super-result", label: "Супер жыйынтык, тартип үчүн рахмат." },
-  { key: "everyone-contributed", label: "Ар бир квартира салым кошту — байкалат." },
-  { key: "top-clean", label: "Бүгүн тазалык эң жогорку деңгээлде, сыймыктанабыз." },
-  { key: "excellent", label: "Тазалоо эң сонун өттү, рахмат!" },
-  { key: "thanks-participation", label: "Катышканыңар жана тактыгыңар үчүн рахмат." },
-  { key: "clean-is-ours", label: "Тазалык — биздин баалуулук. Жакшы жыйынтык!" },
-  { key: "together-strong", label: "Бирге иштеп — молодец!" },
-  { key: "responsibility", label: "Жоопкерчилик жана тартип үчүн рахмат." },
-  { key: "keep-bar", label: "Планканы түшүрбөй уланталы." },
-  { key: "order-pleases", label: "Тартип көзгө жагат — рахмат!" },
-  { key: "week-results", label: "Жуманын жыйынтыгы мыкты, ушундай уланткыла!" },
-  { key: "line-01", label: "Рахмат! Таза, тыкан жана жагымдуу." },
-  { key: "line-02", label: "Мыкты иш — аракет байкалып турат." },
-  { key: "line-03", label: "Жакшы жыйынтык — ошол темпте уланталы." },
-  { key: "line-04", label: "Баары тыкан — баарыңа рахмат." },
-  { key: "line-05", label: "Супер! Тазалык дароо көрүнүп турат." },
-  { key: "line-06", label: "Уланта бергиле — тартип жардам берет." },
-  { key: "line-07", label: "Жакшы аткарылды — аракет үчүн рахмат." },
-  { key: "line-08", label: "Команда болуп жакшы иштедиңер — рахмат!" },
-  { key: "line-09", label: "Бул жерде болуу жагымдуу — молодец." },
-  { key: "line-10", label: "Тартипти сактаганыңар үчүн рахмат." },
-  { key: "line-11", label: "Тыкан жана таза — жакшы деңгээл." },
-  { key: "line-12", label: "Жоопкерчиликтүү тазалоо — рахмат." },
-  { key: "line-13", label: "Туруктуу жакшы — ушинтип уланталы." },
-  { key: "line-14", label: "Тазалык кармалып турат — жакшы." },
-  { key: "line-15", label: "Класс! Ар кимдин салымы бар — рахмат." },
-  { key: "line-16", label: "Жыйынтык жакшы — тартип көрүнүп турат." },
-  { key: "line-17", label: "Рахмат! Ушундай болсо андан да жакшы болот." },
-  { key: "line-18", label: "Тазалыктын деңгээли мыкты — молодец." },
-  { key: "line-19", label: "Уюштуруучулук жана тыкандык үчүн рахмат." },
-  { key: "line-20", label: "Мыкты — ушул стандартты кармайлы." },
-  { key: "line-21", label: "Жакшы жыйынтык — баарына рахмат." },
-  { key: "line-22", label: "Баары тыкан — майда нерселерге көңүл бурганыңар үчүн рахмат." },
-  { key: "line-23", label: "Тартип жана тазалык — мыкты айкалыш." },
-  { key: "line-24", label: "Рахмат — таза, жаңы жана жагымдуу." },
-  { key: "line-25", label: "Молодец! Сапаттуу жасалганы көрүнөт." },
-  { key: "line-26", label: "Супер — планканы түшүрбөй уланталы." },
-  { key: "line-27", label: "Тыкандык үчүн рахмат — байкалат." },
-  { key: "line-28", label: "Абдан жакшы — жалпы эмгек үчүн рахмат." },
-  { key: "line-29", label: "Тазалоо жакшы өттү — рахмат." },
-  { key: "line-30", label: "Супер! Тартипти көрүү жагымдуу." },
-  { key: "line-31", label: "Баарыңа рахмат — тазалык кармалып турат." },
-  { key: "line-32", label: "Жакшы иш — жыйынтык сонун." },
-  { key: "line-33", label: "Тыкандык эң жакшы — рахмат!" },
-  { key: "line-34", label: "Мыкты — таза жана жайлуу." },
-  { key: "line-35", label: "Рахмат! Жайлуулук тартиптен башталат." },
-  { key: "line-36", label: "Жакшы деңгээл — ушинтип уланталы." },
-  { key: "line-37", label: "Супер иш — тартип үчүн рахмат." },
-  { key: "line-38", label: "Молодец — жыйынтык мыкты." },
-  { key: "line-39", label: "Таза жана тыкан — рахмат." },
-  { key: "line-40", label: "Баарыңа рахмат — ушундай уланткыла!" },
+  { key: "neutral-01", label: "Жыйынтык квартиралар боюнча ар башка — упайларга карайбыз." },
+  { key: "neutral-02", label: "Тазалоого катышканыңарга рахмат. Натыйжаны дагы жакшыртабыз." },
+  { key: "neutral-03", label: "Күчтүү жана алсыз жактар бар, упайлардан көрүнөт." },
+  { key: "neutral-04", label: "Ар бир квартиранын учурдагы тазалык деңгээлин белгиледик." },
+  { key: "neutral-05", label: "Айрым квартиралар жакшы, айрымдары күткөндөн төмөн." },
+  { key: "neutral-06", label: "Жуманын жыйынтыгы упай таблицасында." },
+  { key: "neutral-07", label: "Текшерүү кайсы жерге көбүрөөк көңүл керек экенин көрсөттү." },
+  { key: "neutral-08", label: "Өсүш бар, бирок дагы жакшырта турган жер бар." },
+  { key: "neutral-09", label: "Туруктуу тазалык үчүн ишти улантабыз." },
+  { key: "neutral-10", label: "Кошумча баа бербейбиз — факт боюнча упайларга карайбыз." },
 ];
 
 const SCORE_CAPTIONS_KO = [
-  { key: "thanks-team", label: "모두 수고했어요 — 정말 잘했어요!" },
-  { key: "keep-going", label: "계속 이렇게 해요! 다음 주엔 더 잘해봅시다." },
-  { key: "clean-and-cozy", label: "깨끗하고 기분 좋았습니다 — 감사합니다." },
-  { key: "great-teamwork", label: "팀워크가 훌륭했어요 — 계속 유지해요." },
-  { key: "super-result", label: "훌륭한 결과입니다 — 정리해줘서 고마워요." },
-  { key: "everyone-contributed", label: "모든 아파트가 기여한 게 보여요." },
-  { key: "top-clean", label: "오늘은 정말 깨끗해요 — 자랑스럽습니다." },
-  { key: "excellent", label: "청소가 아주 잘 됐어요 — 감사합니다!" },
-  { key: "thanks-participation", label: "참여해주고 깔끔하게 해줘서 감사합니다." },
-  { key: "clean-is-ours", label: "청결은 우리의 자랑입니다. 좋은 결과예요!" },
-  { key: "together-strong", label: "함께 잘했어요 — 최고!" },
-  { key: "responsibility", label: "책임감과 규율을 지켜줘서 감사합니다." },
-  { key: "keep-bar", label: "높은 기준을 유지해요." },
-  { key: "order-pleases", label: "정돈된 모습이 보기 좋아요 — 감사합니다!" },
-  { key: "week-results", label: "이번 주 결과가 훌륭해요 — 계속 이렇게 해요!" },
-  { key: "line-01", label: "감사합니다! 깔끔하고 쾌적해요." },
-  { key: "line-02", label: "좋은 작업이에요 — 노력한 게 보여요." },
-  { key: "line-03", label: "좋은 결과입니다 — 그대로 유지해요." },
-  { key: "line-04", label: "정리가 잘 되어 있어요 — 감사합니다." },
-  { key: "line-05", label: "최고예요! 청결함이 바로 느껴져요." },
-  { key: "line-06", label: "계속 이렇게 해요 — 규칙이 도움이 돼요." },
-  { key: "line-07", label: "수고했어요 — 노력에 감사합니다." },
-  { key: "line-08", label: "팀워크가 좋아요 — 감사합니다!" },
-  { key: "line-09", label: "여기가 정말 쾌적해요 — 잘했어요." },
-  { key: "line-10", label: "정돈을 유지해줘서 감사합니다." },
-  { key: "line-11", label: "깔끔하고 깨끗해요 — 훌륭합니다." },
-  { key: "line-12", label: "성실한 청소 — 감사합니다." },
-  { key: "line-13", label: "꾸준히 좋아요 — 계속 유지해요." },
-  { key: "line-14", label: "청결이 잘 유지되고 있어요 — 좋아요." },
-  { key: "line-15", label: "좋아요! 모두의 기여에 감사합니다." },
-  { key: "line-16", label: "결과가 좋아요 — 정돈이 잘 보입니다." },
-  { key: "line-17", label: "감사합니다! 이런 분위기면 더 좋아질 거예요." },
-  { key: "line-18", label: "청결 수준이 훌륭해요 — 최고!" },
-  { key: "line-19", label: "정리와 꼼꼼함에 감사합니다." },
-  { key: "line-20", label: "좋아요 — 이 기준을 유지해요." },
-  { key: "line-21", label: "좋은 결과예요 — 모두 감사합니다." },
-  { key: "line-22", label: "세세한 부분까지 신경 써줘서 감사합니다." },
-  { key: "line-23", label: "정돈과 청결 — 완벽한 조합이에요." },
-  { key: "line-24", label: "감사합니다 — 깨끗하고 상쾌해요." },
-  { key: "line-25", label: "잘했어요! 꼼꼼하게 한 게 보여요." },
-  { key: "line-26", label: "좋아요 — 높은 기준을 계속 유지해요." },
-  { key: "line-27", label: "깔끔함이 눈에 띄어요 — 감사합니다." },
-  { key: "line-28", label: "아주 탄탄해요 — 함께한 노력에 감사합니다." },
-  { key: "line-29", label: "청소가 잘 됐어요 — 감사합니다." },
-  { key: "line-30", label: "최고! 정돈된 모습이 보기 좋아요." },
-  { key: "line-31", label: "모두 감사합니다 — 청결이 유지돼요." },
-  { key: "line-32", label: "수고했어요 — 결과가 훌륭해요." },
-  { key: "line-33", label: "깔끔함 최고예요 — 감사합니다!" },
-  { key: "line-34", label: "좋아요 — 깨끗하고 편안해요." },
-  { key: "line-35", label: "감사합니다! 편안함은 정돈에서 시작돼요." },
-  { key: "line-36", label: "좋은 수준이에요 — 계속 이어가요." },
-  { key: "line-37", label: "훌륭한 작업 — 규율에 감사합니다." },
-  { key: "line-38", label: "최고예요 — 결과가 좋아요." },
-  { key: "line-39", label: "깨끗하고 정돈돼 있어요 — 감사합니다." },
-  { key: "line-40", label: "모두 감사합니다 — 계속 이렇게 해요!" },
+  { key: "neutral-01", label: "아파트별 결과가 다릅니다. 점수를 기준으로 봐주세요." },
+  { key: "neutral-02", label: "청소에 참여해 주셔서 감사합니다. 다음에는 더 개선합시다." },
+  { key: "neutral-03", label: "강점과 보완점이 모두 보입니다. 점수를 참고하세요." },
+  { key: "neutral-04", label: "각 아파트의 현재 청결 수준을 점수로 기록했습니다." },
+  { key: "neutral-05", label: "잘한 곳도 있고, 보완이 필요한 곳도 있습니다." },
+  { key: "neutral-06", label: "이번 주 결과는 점수표로 확인해 주세요." },
+  { key: "neutral-07", label: "점검 결과를 보면 더 신경 써야 할 부분이 보입니다." },
+  { key: "neutral-08", label: "진전은 있지만 아직 개선할 부분이 있습니다." },
+  { key: "neutral-09", label: "안정적인 청결을 위해 계속 관리합시다." },
+  { key: "neutral-10", label: "추가 평가는 하지 않고 실제 점수 기준으로 공유합니다." },
 ];
 
 const formatLocalDate = (date: Date) => {
@@ -605,9 +425,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [grantStudents, setGrantStudents] = useState<Student[]>([]);
   const [couponTtlSeconds, setCouponTtlSeconds] = useState<number | null>(null);
   const [scoreInputs, setScoreInputs] = useState<Record<string, string>>({});
-  const [scoreCaptionKey, setScoreCaptionKey] = useState(
-    SCORE_CAPTIONS_RU[0]?.key || ""
-  );
+  const [scoreCaptionKey, setScoreCaptionKey] = useState("");
   const [scheduleDrafts, setScheduleDrafts] = useState<Record<Block, ScheduleDraft>>(() => ({
     A: { date: getNextWednesdayISO(), time: "19:00" },
     B: { date: getNextWednesdayISO(), time: "19:00" },
@@ -772,13 +590,18 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   }, [couponSummaryRows, couponSummaryFilter]);
 
   useEffect(() => {
-    if (!scoreCaptions.some((caption) => caption.key === scoreCaptionKey)) {
-      setScoreCaptionKey(scoreCaptions[0]?.key || "");
+    if (
+      scoreCaptionKey &&
+      !scoreCaptions.some((caption) => caption.key === scoreCaptionKey)
+    ) {
+      setScoreCaptionKey("");
     }
   }, [scoreCaptions, scoreCaptionKey]);
 
   const selectedScoreCaption =
     scoreCaptions.find((caption) => caption.key === scoreCaptionKey)?.label || "";
+  const isAnnouncementBuilt =
+    announcementMode === "scores" && announcementText.trim().length > 0;
 
   const loadApartments = async () => {
     if (!supabase) return;
@@ -1364,12 +1187,16 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   };
 
   const handlePublish = async () => {
-    if (!supabase || !announcementText || !selectedApartment || !weekStart) {
+    if (!supabase || !selectedApartment || !weekStart) {
       setPublishNotice(t("errors.fillRequired"));
       return;
     }
 
     if (!canManageCleanup) return;
+    if (!isAnnouncementBuilt) {
+      setPublishNotice(t("cleanup.publish.buildMessageFirst"));
+      return;
+    }
 
     try {
       setIsPublishing(true);
@@ -1427,8 +1254,11 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   };
 
   const handleRandomScoreCaption = () => {
+    if (scoreCaptions.length === 0) return;
     const random = scoreCaptions[Math.floor(Math.random() * scoreCaptions.length)];
     setScoreCaptionKey(random.key);
+    setAnnouncementMode("manual");
+    setPublishNotice(null);
   };
 
   const handleBuildScoreAnnouncement = () => {
@@ -1974,7 +1804,12 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 <label className="block text-sm font-semibold text-gray-700 mb-1">{t("cleanup.publish.block")}</label>
                 <select
                   value={selectedBlock}
-                  onChange={(e) => setSelectedBlock(e.target.value as Block)}
+                  onChange={(e) => {
+                    setSelectedBlock(e.target.value as Block);
+                    setSelectedApartment("");
+                    setAnnouncementMode("manual");
+                    setPublishNotice(null);
+                  }}
                   disabled={!isSuperAdmin && !!adminBlock}
                   className="w-full rounded-lg border-2 border-slate-200 bg-white p-2 text-gray-900 disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100 dark:disabled:bg-slate-800"
                 >
@@ -1986,7 +1821,11 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 <label className="block text-sm font-semibold text-gray-700 mb-1">{t("cleanup.publish.winnerApartment")}</label>
                 <select
                   value={selectedApartment}
-                  onChange={(e) => setSelectedApartment(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedApartment(e.target.value);
+                    setAnnouncementMode("manual");
+                    setPublishNotice(null);
+                  }}
                   className="w-full rounded-lg border-2 border-slate-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 >
                   <option value="">{t("cleanup.selectApartment")}</option>
@@ -2014,10 +1853,14 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                       min={0}
                       value={scoreInputs[apt.id] ?? ""}
                       onChange={(e) =>
-                        setScoreInputs((prev) => ({
-                          ...prev,
-                          [apt.id]: e.target.value,
-                        }))
+                        {
+                          setScoreInputs((prev) => ({
+                            ...prev,
+                            [apt.id]: e.target.value,
+                          }));
+                          setAnnouncementMode("manual");
+                          setPublishNotice(null);
+                        }
                       }
                       className="w-full rounded-lg border-2 border-slate-200 bg-white p-2 text-sm text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                       placeholder={t("cleanup.pointsPlaceholder")}
@@ -2029,9 +1872,14 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               <div className="flex flex-wrap gap-2">
                 <select
                   value={scoreCaptionKey}
-                  onChange={(e) => setScoreCaptionKey(e.target.value)}
+                  onChange={(e) => {
+                    setScoreCaptionKey(e.target.value);
+                    setAnnouncementMode("manual");
+                    setPublishNotice(null);
+                  }}
                   className="w-full rounded-lg border-2 border-slate-200 bg-white p-2 text-sm text-gray-900 md:w-auto dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 >
+                  <option value="">{t("cleanup.caption.none")}</option>
                   {scoreCaptions.map((caption) => (
                     <option key={caption.key} value={caption.key}>
                       {caption.label}
@@ -2065,12 +1913,19 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 onChange={(e) => {
                   setAnnouncementText(e.target.value);
                   setAnnouncementMode("manual");
+                  setPublishNotice(null);
                 }}
                 rows={4}
                 className="w-full rounded-lg border-2 border-slate-200 bg-white p-3 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 placeholder={t("cleanup.messagePlaceholder")}
               />
             </div>
+
+            {!isAnnouncementBuilt && (
+              <p className="text-xs text-amber-700">
+                {t("cleanup.publish.buildMessageFirst")}
+              </p>
+            )}
 
             {publishNotice && (
               <div className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
@@ -2134,7 +1989,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
             <button
               type="button"
               onClick={handlePublish}
-              disabled={isPublishing || (!isSuperAdmin && !adminBlock)}
+              disabled={isPublishing || (!isSuperAdmin && !adminBlock) || !isAnnouncementBuilt}
               className="w-full btn btn-primary btn-glow"
             >
               {isPublishing ? t("cleanup.publish.publishing") : t("cleanup.publish.publish")}
