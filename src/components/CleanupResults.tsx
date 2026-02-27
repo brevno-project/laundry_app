@@ -193,6 +193,8 @@ const mapPublishError = (
       return t("cleanup.test.telegramDisabled");
     case "Test send failed":
       return t("cleanup.test.sendFailed");
+    case "Only super admin can use self test":
+      return t("cleanup.test.onlySuperAdmin");
     case "Insert failed":
       return t("cleanup.errors.publish.insertFailed");
     default:
@@ -252,6 +254,8 @@ const mapReminderError = (
       return t("cleanup.test.telegramDisabled");
     case "Test send failed":
       return t("cleanup.test.sendFailed");
+    case "Only super admin can use self test":
+      return t("cleanup.test.onlySuperAdmin");
     case "Internal server error":
       return t("errors.internalServer");
     default:
@@ -280,8 +284,12 @@ const mapResultsError = (
       return t("cleanup.errors.results.notAllowed");
     case "Only super admin can delete result":
       return t("cleanup.errors.results.onlySuperAdminDelete");
+    case "Only super admin can sync coupons":
+      return t("cleanup.resultCard.syncOnlySuperAdmin");
     case "Result not found":
       return t("cleanup.errors.results.notFound");
+    case "Missing result_id":
+      return t("errors.fillRequired");
     default:
       return t("cleanup.errors.results.default");
   }
@@ -439,6 +447,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [editingResultText, setEditingResultText] = useState("");
   const [savingResultId, setSavingResultId] = useState<string | null>(null);
   const [deletingResultId, setDeletingResultId] = useState<string | null>(null);
+  const [syncCouponsResultId, setSyncCouponsResultId] = useState<string | null>(null);
   const [transferCouponId, setTransferCouponId] = useState("");
   const [transferRecipientId, setTransferRecipientId] = useState("");
   const [transferNotice, setTransferNotice] = useState<string | null>(null);
@@ -1245,9 +1254,12 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       const sentList = Array.isArray(result?.sent_to) ? result.sent_to : [];
       const failedList = Array.isArray(result?.failed_to) ? result.failed_to : [];
       if (sentList.length > 0) {
+        const recipientsText = sentList
+          .map((recipient) => formatRecipientLabel(recipient, t("cleanup.publish.noName")))
+          .join(", ");
         setReminderTestNotice((prev) => ({
           ...prev,
-          [block]: t("cleanup.reminders.testSuccess"),
+          [block]: t("cleanup.test.sentTo", { recipients: recipientsText }),
         }));
       } else if (failedList.length > 0) {
         setReminderTestNotice((prev) => ({
@@ -1384,6 +1396,53 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       }
     } finally {
       setDeletingResultId(null);
+    }
+  };
+
+  const handleSyncResultCoupons = async (item: CleanupResult) => {
+    if (!supabase || !isSuperAdmin) return;
+    if (!window.confirm(t("cleanup.resultCard.syncConfirm"))) return;
+
+    try {
+      setSyncCouponsResultId(item.id);
+      const response = await authedFetch("/api/admin/cleanup/coupons/sync", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          result_id: item.id,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(mapResultsError(t, result.error));
+      }
+
+      const blockKey = getBlockKey(item.block);
+      if (blockKey) {
+        setResultsNotice((prev) => ({
+          ...prev,
+          [blockKey]: t("cleanup.resultCard.syncDone", {
+            count: result.updated_coupons || 0,
+            date: formatDateTime(result.expires_at, locale),
+          }),
+        }));
+      }
+      await refreshCoupons();
+      if (canManageCleanup) {
+        await loadCouponSummary();
+      }
+    } catch (error: any) {
+      const blockKey = getBlockKey(item.block);
+      if (blockKey) {
+        setResultsNotice((prev) => ({
+          ...prev,
+          [blockKey]: mapResultsError(t, error?.message),
+        }));
+      }
+    } finally {
+      setSyncCouponsResultId(null);
     }
   };
 
@@ -1577,16 +1636,18 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
             >
               {reminderSending[block] ? t("cleanup.reminders.sending") : t("cleanup.reminders.send")}
             </button>
-            <button
-              type="button"
-              onClick={() => handleSendReminderTest(block)}
-              disabled={!!reminderTestSending[block]}
-              className="w-full btn btn-ghost md:w-auto"
-            >
-              {reminderTestSending[block]
-                ? t("cleanup.reminders.testSending")
-                : t("cleanup.reminders.testSelf")}
-            </button>
+            {canManageCleanup && (
+              <button
+                type="button"
+                onClick={() => handleSendReminderTest(block)}
+                disabled={!!reminderTestSending[block]}
+                className="w-full btn btn-ghost md:w-auto"
+              >
+                {reminderTestSending[block]
+                  ? t("cleanup.reminders.testSending")
+                  : t("cleanup.reminders.testSelf")}
+              </button>
+            )}
           </div>
         </div>
         {scheduleNotice[block] && (
@@ -1829,7 +1890,18 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       if (!response.ok) {
         throw new Error(mapPublishError(t, result.error));
       }
-      setPublishTestNotice(t("cleanup.publish.testSuccess"));
+      const sentList = Array.isArray(result?.sent_to) ? result.sent_to : [];
+      const failedList = Array.isArray(result?.failed_to) ? result.failed_to : [];
+      if (sentList.length > 0) {
+        const recipientsText = sentList
+          .map((recipient) => formatRecipientLabel(recipient, t("cleanup.publish.noName")))
+          .join(", ");
+        setPublishTestNotice(t("cleanup.test.sentTo", { recipients: recipientsText }));
+      } else if (failedList.length > 0) {
+        setPublishTestNotice(t("cleanup.test.sendFailed"));
+      } else {
+        setPublishTestNotice(t("cleanup.test.noTelegram"));
+      }
       await refreshResults();
       await refreshCoupons();
       if (canManageCleanup) {
@@ -1856,6 +1928,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const canEditResult = canEditResultForBlock(item.block);
     const isSaving = savingResultId === item.id;
     const isDeleting = deletingResultId === item.id;
+    const isSyncingCoupons = syncCouponsResultId === item.id;
 
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
@@ -1916,6 +1989,18 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 className="btn btn-secondary px-3 py-2 text-xs"
               >
                 {t("cleanup.resultCard.edit")}
+              </button>
+            )}
+            {isSuperAdmin && !isEditing && (
+              <button
+                type="button"
+                onClick={() => handleSyncResultCoupons(item)}
+                disabled={isSyncingCoupons || isDeleting}
+                className="btn btn-ghost px-3 py-2 text-xs"
+              >
+                {isSyncingCoupons
+                  ? t("common.loading")
+                  : t("cleanup.resultCard.syncCoupons")}
               </button>
             )}
             {isSuperAdmin && !isEditing && (
@@ -2316,16 +2401,18 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
             )}
 
             <div className="flex flex-col gap-2 md:flex-row">
-              <button
-                type="button"
-                onClick={handlePublishTest}
-                disabled={isPublishTesting || (!isSuperAdmin && !adminBlock) || !isAnnouncementBuilt}
-                className="w-full btn btn-ghost md:w-auto"
-              >
-                {isPublishTesting
-                  ? t("cleanup.publish.testingSelf")
-                  : t("cleanup.publish.testSelf")}
-              </button>
+              {canManageCleanup && (
+                <button
+                  type="button"
+                  onClick={handlePublishTest}
+                  disabled={isPublishTesting || (!isSuperAdmin && !adminBlock) || !isAnnouncementBuilt}
+                  className="w-full btn btn-ghost md:w-auto"
+                >
+                  {isPublishTesting
+                    ? t("cleanup.publish.testingSelf")
+                    : t("cleanup.publish.testSelf")}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handlePublish}
