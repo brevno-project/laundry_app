@@ -227,6 +227,9 @@ const mapReminderError = (
     case "Invalid token":
     case "Missing or invalid Authorization header":
       return t("errors.sessionExpired");
+    case "Missing required fields":
+    case "Missing result_id":
+      return t("errors.fillRequired");
     case "Missing block":
       return t("cleanup.errors.blockMissing");
     case "Invalid block":
@@ -261,7 +264,12 @@ const mapResultsError = (
     case "Admin apartment not set":
       return t("cleanup.errors.adminApartmentMissing");
     case "Not allowed to clear results for this block":
+    case "Not allowed to edit result":
       return t("cleanup.errors.results.notAllowed");
+    case "Only super admin can delete result":
+      return t("cleanup.errors.results.onlySuperAdminDelete");
+    case "Result not found":
+      return t("cleanup.errors.results.notFound");
     default:
       return t("cleanup.errors.results.default");
   }
@@ -336,6 +344,7 @@ type CouponSummary = {
   total: number;
   valid: number;
   valid_until?: string | null;
+  valid_until_list?: string[];
 };
 
 type CouponSummaryRow = {
@@ -401,6 +410,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [selectedApartment, setSelectedApartment] = useState<string>("");
   const [announcementText, setAnnouncementText] = useState("");
   const [announcementMode, setAnnouncementMode] = useState("manual");
+  const [isBuildConfirmed, setIsBuildConfirmed] = useState(false);
   const [publishNotice, setPublishNotice] = useState<string | null>(null);
   const [publishDelivery, setPublishDelivery] = useState<{
     sent: ReminderRecipient[];
@@ -411,6 +421,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     telegramEnabled: boolean;
   } | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [editingResultId, setEditingResultId] = useState<string | null>(null);
+  const [editingResultText, setEditingResultText] = useState("");
+  const [savingResultId, setSavingResultId] = useState<string | null>(null);
+  const [deletingResultId, setDeletingResultId] = useState<string | null>(null);
   const [transferCouponId, setTransferCouponId] = useState("");
   const [transferRecipientId, setTransferRecipientId] = useState("");
   const [transferNotice, setTransferNotice] = useState<string | null>(null);
@@ -601,7 +615,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const selectedScoreCaption =
     scoreCaptions.find((caption) => caption.key === scoreCaptionKey)?.label || "";
   const isAnnouncementBuilt =
-    announcementMode === "scores" && announcementText.trim().length > 0;
+    isBuildConfirmed && announcementText.trim().length > 0;
 
   const loadApartments = async () => {
     if (!supabase) return;
@@ -1171,11 +1185,23 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         return;
       }
 
+      const deletedResults = result.deleted || 0;
+      const deletedCoupons = result.deleted_coupons || 0;
       setResultsNotice((prev) => ({
         ...prev,
-        [block]: t("cleanup.results.deletedCount", { count: result.deleted || 0 }),
+        [block]:
+          deletedCoupons > 0
+            ? t("cleanup.results.deletedCountWithCoupons", {
+                count: deletedResults,
+                coupons: deletedCoupons,
+              })
+            : t("cleanup.results.deletedCount", { count: deletedResults }),
       }));
       await loadResults();
+      await refreshCoupons();
+      if (canManageCleanup) {
+        await loadCouponSummary();
+      }
     } catch (error: any) {
       setResultsNotice((prev) => ({
         ...prev,
@@ -1183,6 +1209,134 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       }));
     } finally {
       setResultsClearing((prev) => ({ ...prev, [block]: false }));
+    }
+  };
+
+  const getBlockKey = (block: string): Block | null =>
+    block === "A" || block === "B" ? block : null;
+
+  const handleStartEditResult = (item: CleanupResult) => {
+    setEditingResultId(item.id);
+    setEditingResultText(item.announcement_text || "");
+    const blockKey = getBlockKey(item.block);
+    if (blockKey) {
+      setResultsNotice((prev) => ({ ...prev, [blockKey]: null }));
+    }
+  };
+
+  const handleCancelEditResult = () => {
+    setEditingResultId(null);
+    setEditingResultText("");
+  };
+
+  const handleSaveEditedResult = async (item: CleanupResult) => {
+    if (!supabase || !editingResultId) return;
+    const trimmedText = editingResultText.trim();
+    if (!trimmedText) {
+      const blockKey = getBlockKey(item.block);
+      if (blockKey) {
+        setResultsNotice((prev) => ({
+          ...prev,
+          [blockKey]: t("errors.fillRequired"),
+        }));
+      }
+      return;
+    }
+
+    try {
+      setSavingResultId(item.id);
+      const response = await authedFetch("/api/admin/cleanup/results/update", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          result_id: item.id,
+          announcement_text: trimmedText,
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(mapResultsError(t, result.error));
+      }
+
+      const blockKey = getBlockKey(item.block);
+      if (blockKey) {
+        setResultsNotice((prev) => ({
+          ...prev,
+          [blockKey]: t("cleanup.resultCard.updated"),
+        }));
+      }
+      setEditingResultId(null);
+      setEditingResultText("");
+      await loadResults();
+    } catch (error: any) {
+      const blockKey = getBlockKey(item.block);
+      if (blockKey) {
+        setResultsNotice((prev) => ({
+          ...prev,
+          [blockKey]: mapResultsError(t, error?.message),
+        }));
+      }
+    } finally {
+      setSavingResultId(null);
+    }
+  };
+
+  const handleDeleteResult = async (item: CleanupResult) => {
+    if (!supabase || !isSuperAdmin) return;
+    if (!window.confirm(t("cleanup.resultCard.deleteConfirm"))) return;
+
+    try {
+      setDeletingResultId(item.id);
+      const response = await authedFetch("/api/admin/cleanup/results/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          result_id: item.id,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(mapResultsError(t, result.error));
+      }
+
+      if (editingResultId === item.id) {
+        setEditingResultId(null);
+        setEditingResultText("");
+      }
+
+      const blockKey = getBlockKey(item.block);
+      if (blockKey) {
+        setResultsNotice((prev) => ({
+          ...prev,
+          [blockKey]:
+            (result.deleted_coupons || 0) > 0
+              ? t("cleanup.resultCard.deletedWithCoupons", {
+                  count: result.deleted_coupons || 0,
+                })
+              : t("cleanup.resultCard.deleted"),
+        }));
+      }
+
+      await loadResults();
+      await refreshCoupons();
+      if (canManageCleanup) {
+        await loadCouponSummary();
+      }
+    } catch (error: any) {
+      const blockKey = getBlockKey(item.block);
+      if (blockKey) {
+        setResultsNotice((prev) => ({
+          ...prev,
+          [blockKey]: mapResultsError(t, error?.message),
+        }));
+      }
+    } finally {
+      setDeletingResultId(null);
     }
   };
 
@@ -1257,6 +1411,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     if (scoreCaptions.length === 0) return;
     const random = scoreCaptions[Math.floor(Math.random() * scoreCaptions.length)];
     setScoreCaptionKey(random.key);
+    setIsBuildConfirmed(false);
     setAnnouncementMode("manual");
     setPublishNotice(null);
   };
@@ -1300,6 +1455,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     }
 
     setAnnouncementText(lines.join("\n"));
+    setIsBuildConfirmed(true);
     setAnnouncementMode("scores");
     setPublishNotice(null);
   };
@@ -1577,15 +1733,24 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     }
   };
 
+  const canEditResultForBlock = (block: string) => {
+    if (isSuperAdmin) return true;
+    return !!adminBlock && block === adminBlock;
+  };
+
   const renderResultCard = (item: CleanupResult) => {
     const apartment = apartmentMap[item.winning_apartment_id];
     const announcer =
       (item.announced_by_name || "").trim() ||
       (item.announced_by ? announcers[item.announced_by] : null);
+    const isEditing = editingResultId === item.id;
+    const canEditResult = canEditResultForBlock(item.block);
+    const isSaving = savingResultId === item.id;
+    const isDeleting = deletingResultId === item.id;
 
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
           <div>
             <h4 className="text-lg font-bold text-gray-900 dark:text-slate-100">
               {t("cleanup.resultCard.checkFrom", {
@@ -1602,7 +1767,60 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
             {apartment?.code || t("cleanup.resultCard.apartmentFallback")}
           </span>
         </div>
-        <p className="text-sm text-gray-700 whitespace-pre-line dark:text-slate-200">{item.announcement_text}</p>
+        {isEditing ? (
+          <div className="space-y-2">
+            <textarea
+              value={editingResultText}
+              onChange={(e) => setEditingResultText(e.target.value)}
+              rows={5}
+              className="w-full rounded-lg border-2 border-slate-200 bg-white p-3 text-sm text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
+              placeholder={t("cleanup.resultCard.editPlaceholder")}
+            />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => handleSaveEditedResult(item)}
+                disabled={isSaving}
+                className="btn btn-primary px-3 py-2 text-xs"
+              >
+                {isSaving ? t("common.saving") : t("common.save")}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelEditResult}
+                disabled={isSaving}
+                className="btn btn-ghost px-3 py-2 text-xs"
+              >
+                {t("common.cancel")}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-700 whitespace-pre-line dark:text-slate-200">{item.announcement_text}</p>
+        )}
+        {(canEditResult || isSuperAdmin) && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {canEditResult && !isEditing && (
+              <button
+                type="button"
+                onClick={() => handleStartEditResult(item)}
+                className="btn btn-secondary px-3 py-2 text-xs"
+              >
+                {t("cleanup.resultCard.edit")}
+              </button>
+            )}
+            {isSuperAdmin && !isEditing && (
+              <button
+                type="button"
+                onClick={() => handleDeleteResult(item)}
+                disabled={isDeleting}
+                className="btn btn-danger px-3 py-2 text-xs"
+              >
+                {isDeleting ? t("cleanup.results.clearing") : t("cleanup.resultCard.delete")}
+              </button>
+            )}
+          </div>
+        )}
         {announcer && (
           <p className="mt-3 text-xs text-gray-500 dark:text-slate-400">
             {t("cleanup.resultCard.announcedBy", { name: announcer })}
@@ -1652,12 +1870,12 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               >
                 {resultsClearing[block] ? t("cleanup.results.clearing") : t("cleanup.results.clear")}
               </button>
-              {resultsNotice[block] && (
-                <span className="text-xs text-slate-600">{resultsNotice[block]}</span>
-              )}
             </div>
           )}
         </div>
+        {resultsNotice[block] && (
+          <p className="text-xs text-slate-600">{resultsNotice[block]}</p>
+        )}
 
         {latest ? (
           renderResultCard(latest)
@@ -1807,6 +2025,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   onChange={(e) => {
                     setSelectedBlock(e.target.value as Block);
                     setSelectedApartment("");
+                    setIsBuildConfirmed(false);
                     setAnnouncementMode("manual");
                     setPublishNotice(null);
                   }}
@@ -1823,6 +2042,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   value={selectedApartment}
                   onChange={(e) => {
                     setSelectedApartment(e.target.value);
+                    setIsBuildConfirmed(false);
                     setAnnouncementMode("manual");
                     setPublishNotice(null);
                   }}
@@ -1858,6 +2078,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                             ...prev,
                             [apt.id]: e.target.value,
                           }));
+                          setIsBuildConfirmed(false);
                           setAnnouncementMode("manual");
                           setPublishNotice(null);
                         }
@@ -1874,6 +2095,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   value={scoreCaptionKey}
                   onChange={(e) => {
                     setScoreCaptionKey(e.target.value);
+                    setIsBuildConfirmed(false);
                     setAnnouncementMode("manual");
                     setPublishNotice(null);
                   }}
@@ -2226,7 +2448,14 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   <p className="text-sm text-gray-500">{t("cleanup.couponsSummary.empty")}</p>
                 ) : (
                   <div className="space-y-2">
-                    {filteredCouponSummaryRows.map((row) => (
+                    {filteredCouponSummaryRows.map((row) => {
+                      const validUntilItems =
+                        row.stats.valid_until_list && row.stats.valid_until_list.length > 0
+                          ? row.stats.valid_until_list
+                          : row.stats.valid_until
+                            ? [row.stats.valid_until]
+                            : [];
+                      return (
                       <div
                         key={row.id}
                         className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-gray-700 dark:border-slate-700 dark:bg-slate-900/40"
@@ -2238,10 +2467,12 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                           </span>
                           <div className="text-xs font-semibold text-slate-600 space-y-0.5 sm:text-right">
                             <div>{t("students.coupons", { count: row.stats.valid })}</div>
-                            {row.stats.valid_until && (
+                            {validUntilItems.length > 0 && (
                               <div className="text-[11px] font-medium text-slate-500">
-                                {t("cleanup.couponsSummary.validUntil", {
-                                  date: formatDateTime(row.stats.valid_until, locale),
+                                {t("cleanup.couponsSummary.validUntilList", {
+                                  dates: validUntilItems
+                                    .map((date) => formatDateTime(date, locale))
+                                    .join(", "),
                                 })}
                               </div>
                             )}
@@ -2262,7 +2493,8 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                           </span>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

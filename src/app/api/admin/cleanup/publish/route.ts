@@ -27,6 +27,38 @@ const formatDateLabel = (dateStr: string, language: UiLanguage) => {
   return date.toLocaleDateString(locale, { day: "numeric", month: "long" });
 };
 
+const parseDateTime = (dateStr?: string | null, timeStr?: string | null): Date | null => {
+  if (!dateStr) return null;
+  const normalizedTime = typeof timeStr === "string" && timeStr.trim() ? timeStr.slice(0, 5) : "00:00";
+  const parsed = new Date(`${dateStr}T${normalizedTime}:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const resolveCouponBaseDate = ({
+  now,
+  weekStart,
+  scheduleDate,
+  scheduleTime,
+}: {
+  now: Date;
+  weekStart: string;
+  scheduleDate?: string | null;
+  scheduleTime?: string | null;
+}) => {
+  const nowMs = now.getTime();
+  const scheduleDt = parseDateTime(scheduleDate, scheduleTime);
+  if (scheduleDt && scheduleDt.getTime() <= nowMs) {
+    return scheduleDt;
+  }
+
+  const weekStartDt = parseDateTime(weekStart, "00:00");
+  if (weekStartDt && weekStartDt.getTime() <= nowMs) {
+    return weekStartDt;
+  }
+
+  return now;
+};
+
 const formatStudentName = (student: any) => {
   const fullName = (student.full_name || "").trim();
   if (fullName) return fullName;
@@ -318,6 +350,20 @@ export async function POST(req: NextRequest) {
 
     const now = new Date();
     const nowIso = now.toISOString();
+    const { data: scheduleRow } = await supabaseAdmin
+      .from("cleanup_schedules")
+      .select("check_date, check_time")
+      .eq("block", block)
+      .maybeSingle();
+
+    const couponBaseDate = resolveCouponBaseDate({
+      now,
+      weekStart: week_start,
+      scheduleDate: scheduleRow?.check_date || null,
+      scheduleTime: scheduleRow?.check_time || null,
+    });
+    const couponBaseIso = couponBaseDate.toISOString();
+
     const { data: ttlSetting } = await supabaseAdmin
       .from("app_settings")
       .select("value_int")
@@ -328,7 +374,7 @@ export async function POST(req: NextRequest) {
       typeof ttlSetting?.value_int === "number"
         ? ttlSetting.value_int
         : DEFAULT_COUPON_TTL_SECONDS;
-    const expiresAt = new Date(now.getTime() + ttlSeconds * 1000).toISOString();
+    const expiresAt = new Date(couponBaseDate.getTime() + ttlSeconds * 1000).toISOString();
 
     const { data: result, error: insertError } = await supabaseAdmin
       .from("cleanup_results")
@@ -343,7 +389,7 @@ export async function POST(req: NextRequest) {
         announced_by_name: announcerName || null,
         created_by: caller.student_id,
         published_at: nowIso,
-        coupons_issued_at: nowIso,
+        coupons_issued_at: couponBaseIso,
       })
       .select("id")
       .single();
@@ -406,7 +452,7 @@ export async function POST(req: NextRequest) {
         source_id: result.id,
         issued_by: caller.student_id,
         issued_at: nowIso,
-        valid_from: nowIso,
+        valid_from: couponBaseIso,
         expires_at: expiresAt,
       }));
 
@@ -459,6 +505,7 @@ export async function POST(req: NextRequest) {
       success: true,
       result_id: result.id,
       coupons_issued: eligibleResidents.length,
+      valid_from: couponBaseIso,
       expires_at: expiresAt,
       telegram_enabled: telegramEnabled,
       sent: sentTo.length,

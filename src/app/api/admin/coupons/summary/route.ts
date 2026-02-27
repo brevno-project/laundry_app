@@ -17,6 +17,7 @@ type CouponStats = {
   total: number;
   valid: number;
   valid_until?: string | null;
+  valid_until_list?: string[];
 };
 
 const emptyStats = (): CouponStats => ({
@@ -27,6 +28,7 @@ const emptyStats = (): CouponStats => ({
   total: 0,
   valid: 0,
   valid_until: null,
+  valid_until_list: [],
 });
 
 export async function GET(req: NextRequest) {
@@ -78,12 +80,21 @@ export async function GET(req: NextRequest) {
       entry.valid = entry.active + entry.reserved;
 
       if (!isUsed && !isExpired && expiresAt !== null && !Number.isNaN(expiresAt)) {
+        entry.valid_until_list = entry.valid_until_list || [];
+        entry.valid_until_list.push(new Date(expiresAt).toISOString());
         const currentMax = entry.valid_until ? new Date(entry.valid_until).getTime() : null;
         if (!currentMax || Number.isNaN(currentMax) || expiresAt > currentMax) {
           entry.valid_until = new Date(expiresAt).toISOString();
         }
       }
       stats[ownerId] = entry;
+    });
+
+    Object.values(stats).forEach((entry) => {
+      if (!entry.valid_until_list || entry.valid_until_list.length === 0) return;
+      entry.valid_until_list.sort(
+        (a, b) => new Date(a).getTime() - new Date(b).getTime()
+      );
     });
 
     return NextResponse.json({
