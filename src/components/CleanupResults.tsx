@@ -392,6 +392,9 @@ const formatRecipientLabel = (recipient: ReminderRecipient, fallback: string) =>
   return recipient.room ? `${safeName} (${recipient.room})` : safeName;
 };
 
+const parseReminderRecipients = (value: unknown): ReminderRecipient[] =>
+  Array.isArray(value) ? (value as ReminderRecipient[]) : [];
+
 export default function CleanupResults({ embedded = false }: CleanupResultsProps) {
   const { user, isAdmin, isSuperAdmin, isCleanupAdmin, students } = useLaundry();
   const { t, language } = useUi();
@@ -1156,8 +1159,8 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         return;
       }
 
-      const sentList = Array.isArray(result?.sent_to) ? result.sent_to : [];
-      const failedList = Array.isArray(result?.failed_to) ? result.failed_to : [];
+      const sentList = parseReminderRecipients(result?.sent_to);
+      const failedList = parseReminderRecipients(result?.failed_to);
       setReminderRecipients((prev) => ({ ...prev, [block]: sentList }));
       setReminderFailures((prev) => ({ ...prev, [block]: failedList }));
 
@@ -1251,8 +1254,8 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         return;
       }
 
-      const sentList = Array.isArray(result?.sent_to) ? result.sent_to : [];
-      const failedList = Array.isArray(result?.failed_to) ? result.failed_to : [];
+      const sentList = parseReminderRecipients(result?.sent_to);
+      const failedList = parseReminderRecipients(result?.failed_to);
       if (sentList.length > 0) {
         const recipientsText = sentList
           .map((recipient) => formatRecipientLabel(recipient, t("cleanup.publish.noName")))
@@ -1485,9 +1488,9 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       }
 
       setPublishNotice(t("cleanup.publish.success"));
-      const sentList = Array.isArray(result?.sent_to) ? result.sent_to : [];
-      const failedList = Array.isArray(result?.failed_to) ? result.failed_to : [];
-      const skippedList = Array.isArray(result?.skipped_to) ? result.skipped_to : [];
+      const sentList = parseReminderRecipients(result?.sent_to);
+      const failedList = parseReminderRecipients(result?.failed_to);
+      const skippedList = parseReminderRecipients(result?.skipped_to);
       const telegramEnabled = result?.telegram_enabled !== false;
       const attempted =
         typeof result?.attempted === "number"
@@ -1890,8 +1893,8 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       if (!response.ok) {
         throw new Error(mapPublishError(t, result.error));
       }
-      const sentList = Array.isArray(result?.sent_to) ? result.sent_to : [];
-      const failedList = Array.isArray(result?.failed_to) ? result.failed_to : [];
+      const sentList = parseReminderRecipients(result?.sent_to);
+      const failedList = parseReminderRecipients(result?.failed_to);
       if (sentList.length > 0) {
         const recipientsText = sentList
           .map((recipient) => formatRecipientLabel(recipient, t("cleanup.publish.noName")))
