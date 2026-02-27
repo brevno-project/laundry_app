@@ -187,6 +187,12 @@ const mapPublishError = (
       return t("cleanup.errors.apartmentNotFound");
     case "Apartment block mismatch":
       return t("cleanup.errors.apartmentBlockMismatch");
+    case "Caller has no Telegram":
+      return t("cleanup.test.noTelegram");
+    case "Telegram disabled":
+      return t("cleanup.test.telegramDisabled");
+    case "Test send failed":
+      return t("cleanup.test.sendFailed");
     case "Insert failed":
       return t("cleanup.errors.publish.insertFailed");
     default:
@@ -240,6 +246,12 @@ const mapReminderError = (
       return t("cleanup.errors.reminders.notAllowed");
     case "Schedule not found":
       return t("cleanup.errors.schedule.notFound");
+    case "Caller has no Telegram":
+      return t("cleanup.test.noTelegram");
+    case "Telegram disabled":
+      return t("cleanup.test.telegramDisabled");
+    case "Test send failed":
+      return t("cleanup.test.sendFailed");
     case "Internal server error":
       return t("errors.internalServer");
     default:
@@ -412,6 +424,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [announcementMode, setAnnouncementMode] = useState("manual");
   const [isBuildConfirmed, setIsBuildConfirmed] = useState(false);
   const [publishNotice, setPublishNotice] = useState<string | null>(null);
+  const [publishTestNotice, setPublishTestNotice] = useState<string | null>(null);
   const [publishDelivery, setPublishDelivery] = useState<{
     sent: ReminderRecipient[];
     failed: ReminderRecipient[];
@@ -421,6 +434,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     telegramEnabled: boolean;
   } | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isPublishTesting, setIsPublishTesting] = useState(false);
   const [editingResultId, setEditingResultId] = useState<string | null>(null);
   const [editingResultText, setEditingResultText] = useState("");
   const [savingResultId, setSavingResultId] = useState<string | null>(null);
@@ -452,10 +466,6 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     A: false,
     B: false,
   });
-  const [resultsClearing, setResultsClearing] = useState<Record<Block, boolean>>({
-    A: false,
-    B: false,
-  });
   const [resultsNotice, setResultsNotice] = useState<Record<Block, string | null>>({
     A: null,
     B: null,
@@ -464,7 +474,15 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     A: null,
     B: null,
   });
+  const [reminderTestNotice, setReminderTestNotice] = useState<Record<Block, string | null>>({
+    A: null,
+    B: null,
+  });
   const [reminderSending, setReminderSending] = useState<Record<Block, boolean>>({
+    A: false,
+    B: false,
+  });
+  const [reminderTestSending, setReminderTestSending] = useState<Record<Block, boolean>>({
     A: false,
     B: false,
   });
@@ -1088,6 +1106,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     try {
       setReminderSending((prev) => ({ ...prev, [block]: true }));
       setReminderNotice((prev) => ({ ...prev, [block]: null }));
+      setReminderTestNotice((prev) => ({ ...prev, [block]: null }));
       setReminderRecipients((prev) => ({ ...prev, [block]: [] }));
       setReminderFailures((prev) => ({ ...prev, [block]: [] }));
       const scheduleResponse = await authedFetch("/api/admin/cleanup/schedule", {
@@ -1161,57 +1180,6 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     }
   };
 
-  const handleClearResults = async (block: Block) => {
-    if (!supabase) return;
-    if (!window.confirm(t("cleanup.results.clearConfirm", { block }))) return;
-
-    try {
-      setResultsClearing((prev) => ({ ...prev, [block]: true }));
-      setResultsNotice((prev) => ({ ...prev, [block]: null }));
-      const response = await authedFetch("/api/admin/cleanup/results/clear", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ block }),
-      });
-
-      const result = await response.json();
-      if (!response.ok) {
-        setResultsNotice((prev) => ({
-          ...prev,
-          [block]: mapResultsError(t, result.error),
-        }));
-        return;
-      }
-
-      const deletedResults = result.deleted || 0;
-      const deletedCoupons = result.deleted_coupons || 0;
-      setResultsNotice((prev) => ({
-        ...prev,
-        [block]:
-          deletedCoupons > 0
-            ? t("cleanup.results.deletedCountWithCoupons", {
-                count: deletedResults,
-                coupons: deletedCoupons,
-              })
-            : t("cleanup.results.deletedCount", { count: deletedResults }),
-      }));
-      await loadResults();
-      await refreshCoupons();
-      if (canManageCleanup) {
-        await loadCouponSummary();
-      }
-    } catch (error: any) {
-      setResultsNotice((prev) => ({
-        ...prev,
-        [block]: mapResultsError(t, error?.message),
-      }));
-    } finally {
-      setResultsClearing((prev) => ({ ...prev, [block]: false }));
-    }
-  };
-
   const getBlockKey = (block: string): Block | null =>
     block === "A" || block === "B" ? block : null;
 
@@ -1221,6 +1189,85 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const blockKey = getBlockKey(item.block);
     if (blockKey) {
       setResultsNotice((prev) => ({ ...prev, [blockKey]: null }));
+    }
+  };
+
+  const handleSendReminderTest = async (block: Block) => {
+    if (!supabase) return;
+    const draft = scheduleDrafts[block];
+    if (!draft?.date) {
+      setReminderTestNotice((prev) => ({ ...prev, [block]: t("cleanup.schedule.missingDate") }));
+      return;
+    }
+
+    try {
+      setReminderTestSending((prev) => ({ ...prev, [block]: true }));
+      setReminderTestNotice((prev) => ({ ...prev, [block]: null }));
+
+      const scheduleResponse = await authedFetch("/api/admin/cleanup/schedule", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          block,
+          check_date: draft.date,
+          check_time: draft.time || null,
+        }),
+      });
+
+      const scheduleResult = await scheduleResponse.json();
+      if (!scheduleResponse.ok) {
+        setReminderTestNotice((prev) => ({
+          ...prev,
+          [block]: mapScheduleError(t, scheduleResult.error),
+        }));
+        return;
+      }
+
+      const response = await authedFetch("/api/admin/cleanup/reminders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ block, notify_self_only: true }),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        setReminderTestNotice((prev) => ({
+          ...prev,
+          [block]: mapReminderError(t, result.error),
+        }));
+        return;
+      }
+
+      const sentList = Array.isArray(result?.sent_to) ? result.sent_to : [];
+      const failedList = Array.isArray(result?.failed_to) ? result.failed_to : [];
+      if (sentList.length > 0) {
+        setReminderTestNotice((prev) => ({
+          ...prev,
+          [block]: t("cleanup.reminders.testSuccess"),
+        }));
+      } else if (failedList.length > 0) {
+        setReminderTestNotice((prev) => ({
+          ...prev,
+          [block]: t("cleanup.test.sendFailed"),
+        }));
+      } else {
+        setReminderTestNotice((prev) => ({
+          ...prev,
+          [block]: t("cleanup.test.noTelegram"),
+        }));
+      }
+      await loadSchedules();
+    } catch (error: any) {
+      setReminderTestNotice((prev) => ({
+        ...prev,
+        [block]: mapReminderError(t, error?.message),
+      }));
+    } finally {
+      setReminderTestSending((prev) => ({ ...prev, [block]: false }));
     }
   };
 
@@ -1355,6 +1402,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     try {
       setIsPublishing(true);
       setPublishNotice(null);
+      setPublishTestNotice(null);
       setPublishDelivery(null);
       const response = await authedFetch("/api/admin/cleanup/publish", {
         method: "POST",
@@ -1414,6 +1462,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     setIsBuildConfirmed(false);
     setAnnouncementMode("manual");
     setPublishNotice(null);
+    setPublishTestNotice(null);
   };
 
   const handleBuildScoreAnnouncement = () => {
@@ -1458,6 +1507,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     setIsBuildConfirmed(true);
     setAnnouncementMode("scores");
     setPublishNotice(null);
+    setPublishTestNotice(null);
   };
 
   const renderScheduleEditor = (block: Block) => {
@@ -1527,6 +1577,16 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
             >
               {reminderSending[block] ? t("cleanup.reminders.sending") : t("cleanup.reminders.send")}
             </button>
+            <button
+              type="button"
+              onClick={() => handleSendReminderTest(block)}
+              disabled={!!reminderTestSending[block]}
+              className="w-full btn btn-ghost md:w-auto"
+            >
+              {reminderTestSending[block]
+                ? t("cleanup.reminders.testSending")
+                : t("cleanup.reminders.testSelf")}
+            </button>
           </div>
         </div>
         {scheduleNotice[block] && (
@@ -1534,6 +1594,9 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         )}
         {reminderNotice[block] && (
           <p className="text-xs text-emerald-600">{reminderNotice[block]}</p>
+        )}
+        {reminderTestNotice[block] && (
+          <p className="text-xs text-indigo-600">{reminderTestNotice[block]}</p>
         )}
         {reminderRecipients[block].length > 0 && (
           <p className="text-xs text-emerald-700">
@@ -1733,6 +1796,52 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     }
   };
 
+  const handlePublishTest = async () => {
+    if (!supabase || !selectedApartment || !weekStart || !announcementText.trim()) {
+      setPublishTestNotice(t("errors.fillRequired"));
+      return;
+    }
+    if (!canManageCleanup) return;
+    if (!isAnnouncementBuilt) {
+      setPublishTestNotice(t("cleanup.publish.buildMessageFirst"));
+      return;
+    }
+
+    try {
+      setIsPublishTesting(true);
+      setPublishTestNotice(null);
+      const response = await authedFetch("/api/admin/cleanup/publish", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          week_start: weekStart,
+          block: selectedBlock,
+          apartment_id: selectedApartment,
+          announcement_text: announcementText,
+          announcement_mode: announcementMode,
+          template_key: null,
+          notify_self_only: true,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(mapPublishError(t, result.error));
+      }
+      setPublishTestNotice(t("cleanup.publish.testSuccess"));
+      await refreshResults();
+      await refreshCoupons();
+      if (canManageCleanup) {
+        await loadCouponSummary();
+      }
+    } catch (error: any) {
+      setPublishTestNotice(mapPublishError(t, error?.message));
+    } finally {
+      setIsPublishTesting(false);
+    }
+  };
+
   const canEditResultForBlock = (block: string) => {
     if (isSuperAdmin) return true;
     return !!adminBlock && block === adminBlock;
@@ -1860,18 +1969,6 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
               </div>
             </div>
           </div>
-          {isSuperAdmin && (
-            <div className="flex flex-col items-end gap-2">
-              <button
-                type="button"
-                onClick={() => handleClearResults(block)}
-                disabled={!!resultsClearing[block]}
-                className="btn btn-danger px-3 py-2 text-xs"
-              >
-                {resultsClearing[block] ? t("cleanup.results.clearing") : t("cleanup.results.clear")}
-              </button>
-            </div>
-          )}
         </div>
         {resultsNotice[block] && (
           <p className="text-xs text-slate-600">{resultsNotice[block]}</p>
@@ -2028,6 +2125,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                     setIsBuildConfirmed(false);
                     setAnnouncementMode("manual");
                     setPublishNotice(null);
+                    setPublishTestNotice(null);
                   }}
                   disabled={!isSuperAdmin && !!adminBlock}
                   className="w-full rounded-lg border-2 border-slate-200 bg-white p-2 text-gray-900 disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100 dark:disabled:bg-slate-800"
@@ -2045,6 +2143,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                     setIsBuildConfirmed(false);
                     setAnnouncementMode("manual");
                     setPublishNotice(null);
+                    setPublishTestNotice(null);
                   }}
                   className="w-full rounded-lg border-2 border-slate-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 >
@@ -2081,6 +2180,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                           setIsBuildConfirmed(false);
                           setAnnouncementMode("manual");
                           setPublishNotice(null);
+                          setPublishTestNotice(null);
                         }
                       }
                       className="w-full rounded-lg border-2 border-slate-200 bg-white p-2 text-sm text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
@@ -2098,6 +2198,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                     setIsBuildConfirmed(false);
                     setAnnouncementMode("manual");
                     setPublishNotice(null);
+                    setPublishTestNotice(null);
                   }}
                   className="w-full rounded-lg border-2 border-slate-200 bg-white p-2 text-sm text-gray-900 md:w-auto dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                 >
@@ -2136,6 +2237,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   setAnnouncementText(e.target.value);
                   setAnnouncementMode("manual");
                   setPublishNotice(null);
+                  setPublishTestNotice(null);
                 }}
                 rows={4}
                 className="w-full rounded-lg border-2 border-slate-200 bg-white p-3 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
@@ -2152,6 +2254,11 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
             {publishNotice && (
               <div className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
                 {publishNotice}
+              </div>
+            )}
+            {publishTestNotice && (
+              <div className="rounded-lg bg-indigo-50 px-3 py-2 text-sm text-indigo-700">
+                {publishTestNotice}
               </div>
             )}
             {publishDelivery && publishDelivery.telegramEnabled && publishDelivery.total > 0 && (
@@ -2208,14 +2315,26 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 </p>
             )}
 
-            <button
-              type="button"
-              onClick={handlePublish}
-              disabled={isPublishing || (!isSuperAdmin && !adminBlock) || !isAnnouncementBuilt}
-              className="w-full btn btn-primary btn-glow"
-            >
-              {isPublishing ? t("cleanup.publish.publishing") : t("cleanup.publish.publish")}
-            </button>
+            <div className="flex flex-col gap-2 md:flex-row">
+              <button
+                type="button"
+                onClick={handlePublishTest}
+                disabled={isPublishTesting || (!isSuperAdmin && !adminBlock) || !isAnnouncementBuilt}
+                className="w-full btn btn-ghost md:w-auto"
+              >
+                {isPublishTesting
+                  ? t("cleanup.publish.testingSelf")
+                  : t("cleanup.publish.testSelf")}
+              </button>
+              <button
+                type="button"
+                onClick={handlePublish}
+                disabled={isPublishing || (!isSuperAdmin && !adminBlock) || !isAnnouncementBuilt}
+                className="w-full btn btn-primary btn-glow"
+              >
+                {isPublishing ? t("cleanup.publish.publishing") : t("cleanup.publish.publish")}
+              </button>
+            </div>
           </div>
         )}
 

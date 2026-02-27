@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
     const { caller, error: authError } = await getCaller(req);
     if (authError) return authError;
 
-    const { block } = await req.json();
+    const { block, notify_self_only } = await req.json();
 
     if (!block) {
       return NextResponse.json({ error: "Missing block" }, { status: 400 });
@@ -198,11 +198,32 @@ export async function POST(req: NextRequest) {
     const message = `Напоминание: проверка блока ${schedule.block}\n${dateLabel}${timeText}.`;
 
     const recipients = await getBlockRecipients(schedule.block);
+    let recipientsToNotify = recipients;
+    if (notify_self_only) {
+      const { data: callerStudent } = await supabaseAdmin
+        .from("students")
+        .select("id, telegram_chat_id, is_banned, full_name, first_name, last_name, middle_name, room")
+        .eq("id", caller.student_id)
+        .maybeSingle();
+
+      recipientsToNotify =
+        callerStudent?.telegram_chat_id && !callerStudent?.is_banned
+          ? ([
+              {
+                id: callerStudent.id,
+                name: formatStudentName(callerStudent),
+                room: callerStudent.room || null,
+                telegram_chat_id: callerStudent.telegram_chat_id,
+                is_banned: callerStudent.is_banned,
+              },
+            ] as Recipient[])
+          : [];
+    }
     const sentTo: Recipient[] = [];
     const failedTo: Recipient[] = [];
 
-    if (TELEGRAM_BOT_TOKEN && recipients.length > 0) {
-      for (const recipient of recipients) {
+    if (TELEGRAM_BOT_TOKEN && recipientsToNotify.length > 0) {
+      for (const recipient of recipientsToNotify) {
         const ok = await sendTelegramMessage(recipient.telegram_chat_id as string, message);
         if (ok) {
           sentTo.push(recipient);
@@ -220,7 +241,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       sent: sentTo.length,
-      attempted: recipients.length,
+      attempted: recipientsToNotify.length,
+      notify_self_only: !!notify_self_only,
       sent_to: sentTo.map((recipient) => ({
         id: recipient.id,
         name: recipient.name,

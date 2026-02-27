@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { fromZonedTime } from "date-fns-tz";
 import { getCaller, supabaseAdmin } from "../../../_utils/adminAuth";
 
 const DEFAULT_COUPON_TTL_SECONDS = 604800;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TIMEZONE = "Asia/Bishkek";
 
 type UiLanguage = "ru" | "en" | "ko" | "ky";
 
@@ -30,7 +32,8 @@ const formatDateLabel = (dateStr: string, language: UiLanguage) => {
 const parseDateTime = (dateStr?: string | null, timeStr?: string | null): Date | null => {
   if (!dateStr) return null;
   const normalizedTime = typeof timeStr === "string" && timeStr.trim() ? timeStr.slice(0, 5) : "00:00";
-  const parsed = new Date(`${dateStr}T${normalizedTime}:00`);
+  const localDateTime = `${dateStr}T${normalizedTime}:00`;
+  const parsed = fromZonedTime(localDateTime, TIMEZONE);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
@@ -254,6 +257,7 @@ export async function POST(req: NextRequest) {
       announcement_text,
       announcement_mode,
       template_key,
+      notify_self_only,
     } = await req.json();
 
     if (!week_start || !block || !apartment_id || !announcement_text) {
@@ -343,7 +347,9 @@ export async function POST(req: NextRequest) {
 
     const { data: announcerRow } = await supabaseAdmin
       .from("students")
-      .select("full_name, first_name, last_name, middle_name")
+      .select(
+        "full_name, first_name, last_name, middle_name, room, telegram_chat_id, ui_language, is_banned"
+      )
       .eq("id", caller.student_id)
       .maybeSingle();
     const announcerName = announcerRow ? formatStudentName(announcerRow) : "";
@@ -473,13 +479,28 @@ export async function POST(req: NextRequest) {
       typeof announcement_text === "string" ? announcement_text.trim() : "";
 
     const recipients = await getBlockRecipients(block);
+    const recipientsToNotify =
+      notify_self_only && announcerRow?.telegram_chat_id
+        ? ([
+            {
+              id: caller.student_id,
+              name: announcerName || "—",
+              room: announcerRow.room || null,
+              telegram_chat_id: announcerRow.telegram_chat_id,
+              is_banned: announcerRow.is_banned,
+              ui_language: normalizeUiLanguage(announcerRow.ui_language),
+            },
+          ] as Recipient[])
+        : notify_self_only
+          ? ([] as Recipient[])
+          : recipients;
     const sentTo: Recipient[] = [];
     const failedTo: Recipient[] = [];
     const skippedTo: Recipient[] = [];
     const telegramEnabled = !!TELEGRAM_BOT_TOKEN;
 
-    if (telegramEnabled && recipients.length > 0) {
-      for (const recipient of recipients) {
+    if (telegramEnabled && recipientsToNotify.length > 0) {
+      for (const recipient of recipientsToNotify) {
         const language = recipient.ui_language || "ru";
         const dateLabel = formatDateLabel(week_start, language);
         const message = formatPublishMessage({
@@ -497,8 +518,8 @@ export async function POST(req: NextRequest) {
           failedTo.push(recipient);
         }
       }
-    } else if (!telegramEnabled && recipients.length > 0) {
-      skippedTo.push(...recipients);
+    } else if (!telegramEnabled && recipientsToNotify.length > 0) {
+      skippedTo.push(...recipientsToNotify);
     }
 
     return NextResponse.json({
@@ -507,10 +528,11 @@ export async function POST(req: NextRequest) {
       coupons_issued: eligibleResidents.length,
       valid_from: couponBaseIso,
       expires_at: expiresAt,
+      notify_self_only: !!notify_self_only,
       telegram_enabled: telegramEnabled,
       sent: sentTo.length,
-      attempted: telegramEnabled ? recipients.length : 0,
-      recipients_total: recipients.length,
+      attempted: telegramEnabled ? recipientsToNotify.length : 0,
+      recipients_total: recipientsToNotify.length,
       sent_to: sentTo.map((recipient) => ({
         id: recipient.id,
         name: recipient.name,
