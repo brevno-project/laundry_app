@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLaundry } from "@/contexts/LaundryContext";
 import { useUi } from "@/contexts/UiContext";
@@ -302,16 +302,28 @@ const mapTransferError = (
   if (!message) return t("cleanup.errors.transfer.default");
   if (hasCyrillic(message)) return message;
   switch (message) {
+    case "Invalid token":
+    case "Missing or invalid Authorization header":
+      return t("errors.sessionExpired");
     case "Coupon not found":
       return t("cleanup.errors.transfer.couponNotFound");
     case "Coupon expired":
       return t("cleanup.errors.transfer.couponExpired");
+    case "Missing coupon_id or to_student_id":
+    case "Source and target students must be different":
+      return t("cleanup.transfer.missingSelection");
     case "Not allowed":
+    case "Insufficient permissions":
+    case "Only super admin can transfer coupons":
       return t("cleanup.errors.transfer.notAllowed");
+    case "Target student not found":
+      return t("cleanup.transfer.selectStudent");
     case "Coupon is reserved or used":
       return t("cleanup.errors.transfer.couponReservedOrUsed");
     case "Different apartment":
       return t("cleanup.errors.transfer.differentApartment");
+    case "Internal server error":
+      return t("errors.internalServer");
     default:
       return t("cleanup.errors.transfer.default");
   }
@@ -453,6 +465,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [syncCouponsResultId, setSyncCouponsResultId] = useState<string | null>(null);
   const [transferCouponId, setTransferCouponId] = useState("");
   const [transferRecipientId, setTransferRecipientId] = useState("");
+  const [superTransferFromStudentId, setSuperTransferFromStudentId] = useState("");
+  const [superTransferCoupons, setSuperTransferCoupons] = useState<Coupon[]>([]);
+  const [superTransferCouponsLoading, setSuperTransferCouponsLoading] = useState(false);
+  const [transferSubmitting, setTransferSubmitting] = useState(false);
   const [transferNotice, setTransferNotice] = useState<string | null>(null);
   const [transferHistoryNotice, setTransferHistoryNotice] = useState<string | null>(null);
   const [transferClearing, setTransferClearing] = useState(false);
@@ -950,6 +966,44 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     setGrantStudents((data as Student[]) || []);
   };
 
+  const loadSuperTransferCoupons = useCallback(
+    async (fromStudentId: string) => {
+      if (!supabase || !isSuperAdmin || !fromStudentId) {
+        setSuperTransferCoupons([]);
+        return;
+      }
+
+      try {
+        setSuperTransferCouponsLoading(true);
+        const nowIso = new Date().toISOString();
+        const { data, error } = await supabase
+          .from("coupons")
+          .select(
+            "id, owner_student_id, source_type, source_id, issued_by, issued_at, valid_from, expires_at, reserved_queue_id, reserved_at, used_in_queue_id, used_at, note"
+          )
+          .eq("owner_student_id", fromStudentId)
+          .is("reserved_queue_id", null)
+          .is("used_at", null)
+          .is("used_in_queue_id", null)
+          .gt("expires_at", nowIso)
+          .order("expires_at", { ascending: true })
+          .order("issued_at", { ascending: true });
+
+        if (error) {
+          throw error;
+        }
+
+        setSuperTransferCoupons((data as Coupon[]) || []);
+      } catch (error: any) {
+        setSuperTransferCoupons([]);
+        setTransferNotice(mapTransferError(t, error?.message));
+      } finally {
+        setSuperTransferCouponsLoading(false);
+      }
+    },
+    [isSuperAdmin, t]
+  );
+
   useEffect(() => {
     let isActive = true;
     const loadInitial = async () => {
@@ -1002,6 +1056,29 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     if (!isSuperAdmin) return;
     loadGrantStudents();
   }, [isSuperAdmin]);
+
+  useEffect(() => {
+    if (!isSuperAdmin) {
+      setSuperTransferFromStudentId("");
+      setSuperTransferCoupons([]);
+      setSuperTransferCouponsLoading(false);
+      return;
+    }
+
+    setTransferCouponId("");
+    if (!superTransferFromStudentId) {
+      setSuperTransferCoupons([]);
+      return;
+    }
+    loadSuperTransferCoupons(superTransferFromStudentId);
+  }, [isSuperAdmin, superTransferFromStudentId, loadSuperTransferCoupons]);
+
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    if (transferRecipientId && transferRecipientId === superTransferFromStudentId) {
+      setTransferRecipientId("");
+    }
+  }, [isSuperAdmin, transferRecipientId, superTransferFromStudentId]);
 
   useEffect(() => {
     if (apartments.length === 0) return;
@@ -1690,28 +1767,57 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   };
 
   const handleTransfer = async () => {
-    if (!supabase || !transferCouponId || !transferRecipientId) {
+    if (
+      !supabase ||
+      !transferCouponId ||
+      !transferRecipientId ||
+      (isSuperAdmin && !superTransferFromStudentId)
+    ) {
       setTransferNotice(t("cleanup.transfer.missingSelection"));
       return;
     }
 
     try {
+      setTransferSubmitting(true);
       setTransferNotice(null);
-      const { error } = await supabase.rpc("transfer_coupon", {
-        p_coupon_id: transferCouponId,
-        p_to_student_id: transferRecipientId,
-      });
+      if (isSuperAdmin) {
+        const response = await authedFetch("/api/admin/coupons/transfer", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            coupon_id: transferCouponId,
+            to_student_id: transferRecipientId,
+          }),
+        });
 
-      if (error) {
-        throw new Error(mapTransferError(t, error.message));
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || "Internal server error");
+        }
+      } else {
+        const { error } = await supabase.rpc("transfer_coupon", {
+          p_coupon_id: transferCouponId,
+          p_to_student_id: transferRecipientId,
+        });
+
+        if (error) {
+          throw new Error(error.message);
+        }
       }
 
       setTransferCouponId("");
       setTransferRecipientId("");
       setTransferNotice(t("cleanup.transfer.success"));
       await refreshCoupons();
+      if (isSuperAdmin && superTransferFromStudentId) {
+        await loadSuperTransferCoupons(superTransferFromStudentId);
+      }
     } catch (error: any) {
       setTransferNotice(mapTransferError(t, error?.message));
+    } finally {
+      setTransferSubmitting(false);
     }
   };
 
@@ -2094,6 +2200,12 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const isUsed = !!coupon.used_at || !!coupon.used_in_queue_id;
     return !isUsed && !coupon.reserved_queue_id && !isExpired;
   });
+
+  const transferCouponOptions = isSuperAdmin ? superTransferCoupons : transferableCoupons;
+  const transferRecipientOptions = isSuperAdmin
+    ? grantStudents.filter((student) => student.id !== superTransferFromStudentId)
+    : recipients;
+  const canUseTransferForm = isSuperAdmin ? grantStudents.length > 1 : recipients.length > 0;
 
   const couponStats = coupons.reduce(
     (acc, coupon) => {
@@ -2549,19 +2661,50 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                 <h3 className="text-lg font-bold text-gray-900">{t("cleanup.transfer.title")}</h3>
               </div>
 
-              {recipients.length === 0 ? (
+              {!canUseTransferForm ? (
                 <p className="text-sm text-gray-500">{t("cleanup.transfer.noRecipients")}</p>
               ) : (
                 <>
+                  {isSuperAdmin && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        {t("cleanup.grant.student")}
+                      </label>
+                      <select
+                        value={superTransferFromStudentId}
+                        onChange={(e) => {
+                          setSuperTransferFromStudentId(e.target.value);
+                          setTransferNotice(null);
+                        }}
+                        className="w-full rounded-lg border-2 border-slate-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
+                      >
+                        <option value="">{t("cleanup.grant.selectStudentOption")}</option>
+                        {grantStudents.map((student) => (
+                          <option key={student.id} value={student.id}>
+                            {student.full_name} {student.room ? `(${student.room})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">{t("cleanup.transfer.coupon")}</label>
                     <select
                       value={transferCouponId}
-                      onChange={(e) => setTransferCouponId(e.target.value)}
+                      onChange={(e) => {
+                        setTransferCouponId(e.target.value);
+                        setTransferNotice(null);
+                      }}
+                      disabled={(isSuperAdmin && !superTransferFromStudentId) || superTransferCouponsLoading}
                       className="w-full rounded-lg border-2 border-slate-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                     >
-                      <option value="">{t("cleanup.transfer.selectCoupon")}</option>
-                      {transferableCoupons.map((coupon) => (
+                      <option value="">
+                        {isSuperAdmin && !superTransferFromStudentId
+                          ? t("cleanup.grant.selectStudentOption")
+                          : t("cleanup.transfer.selectCoupon")}
+                      </option>
+                      {transferCouponOptions.map((coupon) => (
                         <option key={coupon.id} value={coupon.id}>
                           {formatCouponOptionLabel(coupon, locale, t)}
                         </option>
@@ -2572,17 +2715,24 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                     <label className="block text-sm font-semibold text-gray-700 mb-1">{t("cleanup.transfer.to")}</label>
                     <select
                       value={transferRecipientId}
-                      onChange={(e) => setTransferRecipientId(e.target.value)}
+                      onChange={(e) => {
+                        setTransferRecipientId(e.target.value);
+                        setTransferNotice(null);
+                      }}
                       className="w-full rounded-lg border-2 border-slate-200 bg-white p-2 text-gray-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100"
                     >
                       <option value="">{t("cleanup.transfer.selectStudent")}</option>
-                      {recipients.map((student) => (
+                      {transferRecipientOptions.map((student) => (
                         <option key={student.id} value={student.id}>
                           {student.full_name} {student.room ? `(${student.room})` : ""}
                         </option>
                       ))}
                     </select>
                   </div>
+
+                  {isSuperAdmin && superTransferCouponsLoading && (
+                    <p className="text-sm text-slate-600">{t("common.loading")}</p>
+                  )}
 
                   {transferNotice && (
                     <p className="text-sm text-blue-600">{transferNotice}</p>
@@ -2591,9 +2741,10 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
                   <button
                     type="button"
                     onClick={handleTransfer}
+                    disabled={transferSubmitting || (isSuperAdmin && !superTransferFromStudentId)}
                     className="w-full btn btn-primary"
                   >
-                    {t("cleanup.transfer.send")}
+                    {transferSubmitting ? t("common.saving") : t("cleanup.transfer.send")}
                   </button>
                 </>
               )}
