@@ -97,21 +97,29 @@ export async function POST(req: NextRequest) {
       const todayStr = now.toISOString().slice(0, 10);
       const { data: couponRows } = await supabaseAdmin
         .from("coupons")
-        .select("id, issued_at, expires_at")
+        .select("id, issued_at, expires_at, reserved_queue_id")
         .eq("owner_student_id", queueItem.student_id)
-        .is("reserved_queue_id", null)
         .is("used_at", null)
         .is("used_in_queue_id", null)
         .gt("expires_at", now.toISOString());
 
       const typedCoupons =
         (couponRows as
-          | { id: string; issued_at: string; expires_at: string }[]
+          | {
+              id: string;
+              issued_at: string;
+              expires_at: string;
+              reserved_queue_id: string | null;
+            }[]
           | null
           | undefined) || [];
 
       const eligible = typedCoupons
-        .filter((coupon: { id: string; issued_at: string; expires_at: string }) => {
+        .filter((coupon) => {
+          if (coupon.reserved_queue_id && coupon.reserved_queue_id !== queue_item_id) {
+            return false;
+          }
+
           const issuedAt = new Date(coupon.issued_at).getTime();
           const expiresAt = new Date(coupon.expires_at).getTime();
           const ttlMs = expiresAt - issuedAt;

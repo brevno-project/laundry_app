@@ -711,13 +711,18 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
   const loadResults = async () => {
     if (!supabase) return;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("cleanup_results")
       .select(
         "id, week_start, block, announcement_text, announcement_mode, template_key, announced_by, announced_by_name, published_at, winning_apartment_id, created_at"
       )
       .order("week_start", { ascending: false })
       .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error loading cleanup results:", error);
+      return;
+    }
 
     const rows = (data as CleanupResult[]) || [];
     setResults(rows);

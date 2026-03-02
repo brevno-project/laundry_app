@@ -101,15 +101,19 @@ export default function QueueList() {
       alertWithCheck(t("queue.error.onlyAdmin"));
       return;
     }
-  
-    await updateQueueItemDetails(editingItem.id, {
-      wash_count: editWashCount,
-      coupons_used: editCouponsUsed,
-      chosen_date: editDate,
-    });
-  
-    setShowEditModal(false);
-    setEditingItem(null);
+
+    try {
+      await updateQueueItemDetails(editingItem.id, {
+        wash_count: editWashCount,
+        coupons_used: editCouponsUsed,
+        chosen_date: editDate,
+      });
+
+      setShowEditModal(false);
+      setEditingItem(null);
+    } catch (error) {
+      showActionError(error, "Не удалось обновить запись");
+    }
   };
 
   // ✅ Группировка по датам
