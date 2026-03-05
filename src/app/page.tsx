@@ -17,6 +17,7 @@ import TelegramBanner, { TELEGRAM_BANNER_NUDGE_EVENT } from '@/components/Telegr
 import StudentActions from '@/components/StudentActions';
 import PasswordChanger from '@/components/PasswordChanger';
 import AvatarCustomizer from '@/components/AvatarCustomizer';
+import DailySpinCard from '@/components/DailySpinCard';
 import { useUi } from '@/contexts/UiContext';
 import { supabase } from '@/lib/supabase';
 
@@ -418,6 +419,12 @@ export default function Home() {
                 
                 {/* Всегда показываем основные компоненты */}
                 {isAdmin && <AdminPanel />}
+
+                {user && !isAdmin && !isSuperAdmin && !isCleanupAdmin && (
+                  <div className="px-3">
+                    <DailySpinCard />
+                  </div>
+                )}
                 
                 {/* Показываем пользовательские компоненты если есть пользователь ИЛИ админ */}
                 {(user || isAdmin) && (
