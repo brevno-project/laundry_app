@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 
 
@@ -91,7 +91,7 @@ const isTimeoutError = (error: unknown): boolean =>
 
 // ========================================
 
-// ÐžÐ¶Ð¸Ð´Ð°Ð½Ð¸Ðµ ÑÑ‚Ð°Ð±Ð¸Ð»ÑŒÐ½Ð¾Ð¹ ÑÐµÑÑÐ¸Ð¸ Ð¿Ð¾ÑÐ»Ðµ auth
+
 
 // ========================================
 
@@ -101,7 +101,7 @@ async function waitForSession(): Promise<boolean> {
 
   
 
-  // Ð–Ð´Ñ‘Ð¼ Ð¿Ð¾ÐºÐ° session ÑÑ‚Ð°Ð±Ð¸Ð»ÑŒÐ½Ð¾ Ð´Ð¾ÑÑ‚ÑƒÐ¿Ð½Ð° (Ð´Ð¾ 5 Ð¿Ð¾Ð¿Ñ‹Ñ‚Ð¾Ðº)
+
 
   for (let i = 0; i < 5; i++) {
     try {
@@ -357,7 +357,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
   // Clear local session after logout options are applied.
 
-  // refreshMyRole() ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð¸Ñ‚ Ð¿Ñ€Ð°Ð²Ð¸Ð»ÑŒÐ½Ð¾Ðµ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ Ð¸Ð· Supabase Auth session
+
 
   const [user, setUser] = useState<User | null>(null);
 
@@ -413,6 +413,8 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const queueFetchStateRef = useRef({ inFlight: false, lastRunAt: 0 });
+  const machineFetchStateRef = useRef({ inFlight: false, lastRunAt: 0 });
+  const historyFetchStateRef = useRef({ inFlight: false, lastRunAt: 0 });
 
   const historyLimitRef = useRef(HISTORY_PAGE_SIZE);
 
@@ -842,7 +844,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-  // ÐŸÐ¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÑŒ: Ð¿Ð¾ÐºÐ¸Ð½ÑƒÑ‚ÑŒ Ð¾Ñ‡ÐµÑ€ÐµÐ´ÑŒ
+
   const leaveQueue = async (queueItemId: string) => {
     if (!supabase) return;
 
@@ -1066,11 +1068,31 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
     // Machine state
 
     const machineStateSub = supabase
-
       .channel("machine-state-changes")
-
-      .on("postgres_changes", { event: "*", schema: "public", table: "machine_state" }, fetchMachineState)
-
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "machine_state" },
+        (payload) => {
+          if (payload.new) {
+            const next = payload.new as MachineState;
+            setMachineState((prev) => {
+              if (
+                prev &&
+                prev.status === next.status &&
+                prev.current_queue_item_id === next.current_queue_item_id &&
+                prev.started_at === next.started_at &&
+                prev.expected_finish_at === next.expected_finish_at
+              ) {
+                return prev;
+              }
+              return next;
+            });
+            save_local_machine_state(next);
+          } else {
+            fetchMachineState();
+          }
+        }
+      )
       .subscribe();
 
     subs.push(machineStateSub);
@@ -1105,7 +1127,20 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
         (payload) => {
           if (payload.new) {
-            setMachineState(payload.new as MachineState);
+            const next = payload.new as MachineState;
+            setMachineState((prev) => {
+              if (
+                prev &&
+                prev.status === next.status &&
+                prev.current_queue_item_id === next.current_queue_item_id &&
+                prev.started_at === next.started_at &&
+                prev.expected_finish_at === next.expected_finish_at
+              ) {
+                return prev;
+              }
+              return next;
+            });
+            save_local_machine_state(next);
           } else {
             fetchMachineState();
           }
@@ -1201,9 +1236,24 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
           
 
-          // Refresh queue to get updated avatars
+          // Update queue avatars in place to avoid an extra network fetch.
+          setQueue((prevQueue) => {
+            if (!prevQueue || prevQueue.length === 0) return prevQueue;
 
-          fetchQueue();
+            const nextQueue = prevQueue.map((item) => {
+              if (item.student_id !== payload.new.id) return item;
+              return {
+                ...item,
+                avatar_style: payload.new.avatar_style || item.avatar_style,
+                avatar_seed: payload.new.avatar_seed || item.avatar_seed,
+              };
+            });
+
+            try {
+              save_local_queue(nextQueue);
+            } catch {}
+            return nextQueue;
+          });
 
         }
 
@@ -1245,7 +1295,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-            // ÐžÐ±Ð½Ð¾Ð²Ð»ÑÐµÐ¼ ÐµÑÐ»Ð¸ Ð½Ð¾Ð²Ñ‹Ð¹ chat_id Ð¾Ñ‚Ð»Ð¸Ñ‡Ð°ÐµÑ‚ÑÑ Ð¾Ñ‚ Ñ‚ÐµÐºÑƒÑ‰ÐµÐ³Ð¾
+
 
             if (newChatId !== undefined && newChatId !== user.telegram_chat_id) {
 
@@ -1326,7 +1376,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-  // Save user to localStorage when changed (Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð´Ð»Ñ UI, Ð½Ðµ Ð¿Ñ€Ð°Ð²Ð°)
+
 
   useEffect(() => {
 
@@ -1376,7 +1426,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
       } else {
 
-        // ÐžÐ±Ð½Ð¾Ð²Ð»ÑÐµÐ¼ Ð¾Ñ‡ÐµÑ€ÐµÐ´ÑŒ Ñ‡Ñ‚Ð¾Ð±Ñ‹ ÑƒÐ²Ð¸Ð´ÐµÑ‚ÑŒ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ñ
+
 
         await fetchQueue();
 
@@ -1523,7 +1573,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-        // ?? Ð”Ð¾Ð±Ð°Ð²Ð»ÑÐµÐ¼ ÑÑ‚Ð¸ Ð¿Ð¾Ð»Ñ Ð² Ð¾Ð±ÑŠÐµÐºÑ‚ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»Ñ
+
 
         is_admin: me.is_admin || false,
 
@@ -1553,7 +1603,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-      // ?? ÐÐ²Ñ‚Ð¾Ð¿Ñ€Ð¸Ð²ÑÐ·ÐºÐ° Ð·Ð°Ð¿Ð¸ÑÐµÐ¹ Ð¾Ñ‡ÐµÑ€ÐµÐ´Ð¸ Ð´Ð»Ñ Ð·Ð°Ð»Ð¾Ð³Ð¸Ð½ÐµÐ½Ð½Ð¾Ð³Ð¾ ÑÑ‚ÑƒÐ´ÐµÐ½Ñ‚Ð°
+
 
       if (uid && me.id) {
 
@@ -1563,7 +1613,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-      // Ð¡Ð¾Ñ…Ñ€Ð°Ð½ÑÐµÐ¼ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ user Ð² localStorage (Ð´Ð»Ñ UI), ÐÐ• Ð¿Ñ€Ð°Ð²Ð°
+
 
       if (typeof window !== 'undefined') {
 
@@ -1888,7 +1938,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
       try {
 
-        // Ð—Ð°Ð¿Ñ€Ð°ÑˆÐ¸Ð²Ð°ÐµÐ¼ Ñ avatar Ð¿Ð¾Ð»ÑÐ¼Ð¸ (Ð¿Ð¾ÑÐ»Ðµ Ð¼Ð¸Ð³Ñ€Ð°Ñ†Ð¸Ð¸ 20250116_add_avatar_to_login_view)
+
 
         const { data, error } = await client
 
@@ -1952,7 +2002,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
       } catch (error) {
 
-        // Fallback Ð±ÐµÐ· avatar Ð¿Ð¾Ð»ÐµÐ¹ (ÐµÑÐ»Ð¸ view ÐµÑ‰Ðµ Ð½Ðµ Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½Ð°)
+
 
         const { data, error: legacyError } = await client
 
@@ -2042,7 +2092,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
 
-  // Ð£Ð½Ð¸Ð²ÐµÑ€ÑÐ°Ð»ÑŒÐ½Ñ‹Ð¹ Ñ…ÐµÐ»Ð¿ÐµÑ€: Ñ„Ð¾Ñ€Ð¼Ð¸Ñ€ÑƒÐµÑ‚ Ð»Ð¾ÐºÐ°Ð»ÑŒÐ½Ð¾Ð³Ð¾ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»Ñ Ð¸ ÑÑ‚Ð°Ñ‚ÑƒÑÑ‹
+
 
 const finalizeUserSession = (
 
@@ -2089,7 +2139,7 @@ const finalizeUserSession = (
 
 
 
-    // ?? Ð”Ð¾Ð±Ð°Ð²Ð»ÑÐµÐ¼ ÑÑ‚Ð¸ Ð¿Ð¾Ð»Ñ Ð² Ð¾Ð±ÑŠÐµÐºÑ‚ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»Ñ
+
 
     is_admin: isAdminUser,
 
@@ -2131,15 +2181,15 @@ const finalizeUserSession = (
 
     // ========================================
 
-// Ð¤Ð£ÐÐšÐ¦Ð˜Ð¯ Ð Ð•Ð“Ð˜Ð¡Ð¢Ð ÐÐ¦Ð˜Ð˜
-
-// ========================================
-
 
 
 // ========================================
 
-// Ð¤Ð£ÐÐšÐ¦Ð˜Ð¯ Ð Ð•Ð“Ð˜Ð¡Ð¢Ð ÐÐ¦Ð˜Ð˜ (ÐÐžÐ’ÐÐ¯, Ð¤Ð˜ÐšÐ¡)
+
+
+// ========================================
+
+
 
 // ========================================
 
@@ -2189,7 +2239,7 @@ const registerStudent = async (
 
 
 
-    // ÐŸÑ€Ð¾Ð²ÐµÑ€ÐºÐ° Ð´Ð»Ð¸Ð½Ñ‹ Ð¿Ð°Ñ€Ð¾Ð»Ñ
+
 
     if (password.length < 6) {
 
@@ -2199,7 +2249,7 @@ const registerStudent = async (
 
 
 
-    // 1) ÐŸÐ¾Ð»ÑƒÑ‡Ð°ÐµÐ¼ auth_email Ð¸Ð· Ð‘Ð” (Ð¾Ð±ÑÐ·Ð°Ñ‚ÐµÐ»ÑŒÐ½Ð¾Ðµ Ð¿Ð¾Ð»Ðµ Ð¿Ð¾ÑÐ»Ðµ Ð¼Ð¸Ð³Ñ€Ð°Ñ†Ð¸Ð¸)
+
 
     const { data: studentData, error: emailErr } = await supabase
 
@@ -2223,7 +2273,7 @@ const registerStudent = async (
 
 
 
-    // 2) Ð¡Ð¾Ð·Ð´Ð°Ñ‘Ð¼ auth user
+
 
     const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
 
@@ -2261,7 +2311,7 @@ const registerStudent = async (
 
       
 
-      // Ð•ÑÐ»Ð¸ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÑŒ ÑƒÐ¶Ðµ ÑÑƒÑ‰ÐµÑÑ‚Ð²ÑƒÐµÑ‚ - Ð²Ñ‹Ð±Ñ€Ð°ÑÑ‹Ð²Ð°ÐµÐ¼ ÑÐ¿ÐµÑ†Ð¸Ð°Ð»ÑŒÐ½ÑƒÑŽ Ð¾ÑˆÐ¸Ð±ÐºÑƒ
+
 
       if (msg.includes("already registered") || msg.includes("user already registered")) {
 
@@ -2281,9 +2331,9 @@ const registerStudent = async (
 
 
 
-    // Ð•ÑÐ»Ð¸ user null, Ð½Ð¾ Ð½ÐµÑ‚ Ð¾ÑˆÐ¸Ð±ÐºÐ¸ - Ð²Ð¾Ð·Ð¼Ð¾Ð¶Ð½Ð¾ Ð²ÐºÐ»ÑŽÑ‡ÐµÐ½ email confirmation
 
-    // ÐŸÑ€Ð¾Ð±ÑƒÐµÐ¼ Ð²Ð¾Ð¹Ñ‚Ð¸ Ñ ÑÑ‚Ð¸Ð¼Ð¸ Ð¶Ðµ credentials
+
+
 
     if (!authUser && !signUpErr) {
 
@@ -2313,7 +2363,7 @@ const registerStudent = async (
 
 
 
-    // ÐŸÑ€Ð¾Ð²ÐµÑ€ÑÐµÐ¼ Ñ‡Ñ‚Ð¾ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÑŒ ÑÐ¾Ð·Ð´Ð°Ð½
+
 
     if (!authUser) {
 
@@ -2325,7 +2375,7 @@ const registerStudent = async (
 
 
 
-    // 2) Ð–Ð´Ñ‘Ð¼ ÑÑ‚Ð°Ð±Ð¸Ð»ÑŒÐ½ÑƒÑŽ ÑÐµÑÑÐ¸ÑŽ
+
 
     const sessionReady = await waitForSession();
 
@@ -2337,9 +2387,9 @@ const registerStudent = async (
 
 
 
-    // 3) Ð’Ð¡Ð•Ð“Ð”Ð Ð²Ñ‹Ð·Ñ‹Ð²Ð°ÐµÐ¼ backend API Ð´Ð»Ñ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ¸ user_id
 
-    // Ð­Ñ‚Ð¾ Ð²Ð°Ð¶Ð½Ð¾ Ð´Ð°Ð¶Ðµ ÐµÑÐ»Ð¸ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÑŒ ÑƒÐ¶Ðµ ÑÑƒÑ‰ÐµÑÑ‚Ð²Ð¾Ð²Ð°Ð» Ð² Auth, Ð½Ð¾ Ð½Ðµ Ð±Ñ‹Ð» ÑÐ²ÑÐ·Ð°Ð½ Ñ students
+
+
 
     const response = await fetch("/api/student/register", {
 
@@ -2383,7 +2433,7 @@ const registerStudent = async (
       throw new Error("Account link not ready. Please try again.");
     }
 
-    // 5) Ð¤Ð¸Ð½Ð°Ð»Ð¸Ð·Ð¸Ñ€ÑƒÐµÐ¼
+
 
     return finalizeUserSession(authUser.id, updatedStudent, true);
 
@@ -2402,7 +2452,7 @@ const registerStudent = async (
 
 // ========================================
 
-// loginStudent â€” Ð±ÐµÐ·Ð¾Ð¿Ð°ÑÐ½Ð°Ñ Ð²ÐµÑ€ÑÐ¸Ñ
+
 
 // ========================================
 
@@ -2426,7 +2476,7 @@ const loginStudent = async (
 
   try {
 
-    // 1) ÐŸÐ¾Ð»ÑƒÑ‡Ð°ÐµÐ¼ auth_email Ð¸Ð· Ð‘Ð” (Ð¾Ð±ÑÐ·Ð°Ñ‚ÐµÐ»ÑŒÐ½Ð¾Ðµ Ð¿Ð¾Ð»Ðµ Ð¿Ð¾ÑÐ»Ðµ Ð¼Ð¸Ð³Ñ€Ð°Ñ†Ð¸Ð¸)
+
 
     const { data: studentData, error: emailErr } = await supabase
 
@@ -2462,7 +2512,7 @@ const loginStudent = async (
 
 
 
-    // 2) Ð›Ð¾Ð³Ð¸Ð½ Ñ‡ÐµÑ€ÐµÐ· Supabase Auth
+
 
     const { data: authData, error: authError } =
 
@@ -2502,7 +2552,7 @@ const loginStudent = async (
 
 
 
-    // 3) Ð–Ð´Ñ‘Ð¼ ÑÑ‚Ð°Ð±Ð¸Ð»ÑŒÐ½ÑƒÑŽ ÑÐµÑÑÐ¸ÑŽ
+
 
     const sessionReady = await waitForSession();
 
@@ -2514,7 +2564,7 @@ const loginStudent = async (
 
 
 
-    // 4) Ð¢Ð¾Ð»ÑŒÐºÐ¾ ÐŸÐžÐ¡Ð›Ð• Ð»Ð¾Ð³Ð¸Ð½Ð° Ð¸ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ¸ ÑÐµÑÑÐ¸Ð¸ Ñ‡Ð¸Ñ‚Ð°ÐµÐ¼ students Ð¿Ð¾ user_id (RLS Ð±ÐµÐ·Ð¾Ð¿Ð°ÑÐ½Ð¾)
+
 
     const { data: updatedStudent, error: studentError } = await supabase
 
@@ -2532,11 +2582,11 @@ const loginStudent = async (
 
     
 
-    // Ð•ÑÐ»Ð¸ ÑÑ‚ÑƒÐ´ÐµÐ½Ñ‚ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½ Ð¿Ð¾ user_id - Ð·Ð½Ð°Ñ‡Ð¸Ñ‚ Ð½ÑƒÐ¶Ð½Ð¾ ÑÐ´ÐµÐ»Ð°Ñ‚ÑŒ claim
+
 
     if (!updatedStudent) {
 
-      // Ð’Ñ‹Ñ…Ð¾Ð´Ð¸Ð¼ Ð¸ Ð¿Ð¾ÐºÐ°Ð·Ñ‹Ð²Ð°ÐµÐ¼ ÑÐºÑ€Ð°Ð½ claim
+
 
       setNeedsClaim(true);
 
@@ -2546,7 +2596,7 @@ const loginStudent = async (
 
 
 
-    // 4) ÐŸÑ€Ð¾Ð²ÐµÑ€ÑÐµÐ¼ Ð±Ð°Ð½ (Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð¿Ð¾ÑÐ»Ðµ Ð»Ð¾Ð³Ð¸Ð½Ð°)
+
 
     if (updatedStudent.is_banned) {
 
@@ -2709,7 +2759,7 @@ const resetStudentRegistration = async (studentId: string) => {
 
 
 
-  // Ð±ÐµÑ€Ñ‘Ð¼ JWT Ñ‚ÐµÐºÑƒÑ‰ÐµÐ¹ ÑÐµÑÑÐ¸Ð¸, Ñ‡Ñ‚Ð¾Ð±Ñ‹ ÑÐµÑ€Ð²ÐµÑ€ Ð¼Ð¾Ð³ Ð¿Ñ€Ð¾Ð²ÐµÑ€Ð¸Ñ‚ÑŒ Ð¿Ñ€Ð°Ð²Ð°
+
 
   const token = await getFreshToken();
 
@@ -2745,7 +2795,7 @@ const resetStudentRegistration = async (studentId: string) => {
 
 
 
-  // ÐµÑÐ»Ð¸ ÑÐ±Ñ€Ð¾ÑÐ¸Ð»Ð¸ ÑÐµÐ±Ñ â€” Ñ€Ð°Ð·Ð»Ð¾Ð³Ð¸Ð½
+
 
   if (user && user.student_id === studentId) {
 
@@ -2806,7 +2856,7 @@ const resetStudentRegistration = async (studentId: string) => {
 
 
 
-      // ÐŸÑ€Ð¾Ð²ÐµÑ€ÑÐµÐ¼ Ñ‡Ñ‚Ð¾ Ð´Ð°Ð½Ð½Ñ‹Ðµ Ð¾Ð±Ð½Ð¾Ð²Ð¸Ð»Ð¸ÑÑŒ Ð² Ð±Ð°Ð·Ðµ
+
 
       if (isSupabaseConfigured && supabase) {
 
@@ -2915,7 +2965,7 @@ const resetStudentRegistration = async (studentId: string) => {
 
         }
 
-        // ?? DEBUG: ÐŸÑ€Ð¾Ð²ÐµÑ€ÑÐµÐ¼ Ð´Ð°Ð½Ð½Ñ‹Ðµ Ð°Ð²Ð°Ñ‚Ð°Ñ€Ð¾Ð²
+
 
         if (data && data.length > 0) {
 
@@ -2943,7 +2993,7 @@ const resetStudentRegistration = async (studentId: string) => {
 
     // Fetch machine state from Supabase or local storage
 
-    const fetchMachineState = async () => {
+    const fetchMachineState = async (options?: { force?: boolean }) => {
 
       if (!isSupabaseConfigured || !supabase) {
 
@@ -2953,7 +3003,12 @@ const resetStudentRegistration = async (studentId: string) => {
 
       }
 
-      
+      const nowMs = Date.now();
+      if (machineFetchStateRef.current.inFlight) return;
+      if (!options?.force && nowMs - machineFetchStateRef.current.lastRunAt < 300) return;
+
+      machineFetchStateRef.current.inFlight = true;
+      machineFetchStateRef.current.lastRunAt = nowMs;
 
       try {
 
@@ -2979,6 +3034,8 @@ const resetStudentRegistration = async (studentId: string) => {
 
         console.error('fetchMachineState error:', error);
 
+      } finally {
+        machineFetchStateRef.current.inFlight = false;
       }
 
     };
@@ -2987,7 +3044,7 @@ const resetStudentRegistration = async (studentId: string) => {
 
     // Fetch history from Supabase or local storage
 
-    const fetchHistory = async () => {
+    const fetchHistory = async (options?: { force?: boolean }) => {
 
       if (!isSupabaseConfigured || !supabase) {
         const localHistory = get_local_history();
@@ -2996,16 +3053,22 @@ const resetStudentRegistration = async (studentId: string) => {
         setHistoryHasMore(false);
         return;
       }
-      
+
+      const nowMs = Date.now();
+      if (historyFetchStateRef.current.inFlight) return;
+      if (!options?.force && nowMs - historyFetchStateRef.current.lastRunAt < 800) return;
+
+      historyFetchStateRef.current.inFlight = true;
+      historyFetchStateRef.current.lastRunAt = nowMs;
 
       try {
 
-        // ÐŸÐ¾Ð»ÑƒÑ‡Ð°ÐµÐ¼ Ð¸ÑÑ‚Ð¾Ñ€Ð¸ÑŽ - ÑÐ½Ð°Ñ‡Ð°Ð»Ð° Ð¿Ñ€Ð¾Ð±ÑƒÐµÐ¼ Ñ avatar_style/avatar_seed
+
         let historyData: any[] = [];
         let totalCount: number | null = null;
         
 
-        // ÐŸÐ¾Ð¿Ñ‹Ñ‚ÐºÐ° 1: Ð¿Ð¾Ð»Ð½Ñ‹Ð¹ Ð·Ð°Ð¿Ñ€Ð¾Ñ Ñ avatar_style Ð¸ avatar_seed
+
 
         const { data: fullData, error: fullError, count: fullCount } = await supabase
           .from('history')
@@ -3018,7 +3081,7 @@ const resetStudentRegistration = async (studentId: string) => {
           historyData = fullData;
           totalCount = typeof fullCount === 'number' ? fullCount : null;
         } else {
-          // ÐŸÐ¾Ð¿Ñ‹Ñ‚ÐºÐ° 2: Ð±ÐµÐ· avatar Ð¿Ð¾Ð»ÐµÐ¹ (ÐµÑÐ»Ð¸ ÐºÐ¾Ð»Ð¾Ð½ÐºÐ¸ ÐµÑ‰Ðµ Ð½Ðµ ÑÐ¾Ð·Ð´Ð°Ð½Ñ‹)
+
 
           const { data: basicData, error: basicError, count: basicCount } = await supabase
             .from('history')
@@ -3029,7 +3092,7 @@ const resetStudentRegistration = async (studentId: string) => {
 
           if (!basicError && basicData) {
 
-            // Ð”Ð¾Ð±Ð°Ð²Ð»ÑÐµÐ¼ Ð´ÐµÑ„Ð¾Ð»Ñ‚Ð½Ñ‹Ðµ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ñ Ð´Ð»Ñ Ð°Ð²Ð°Ñ‚Ð°Ñ€Ð°
+
 
             historyData = basicData.map((item: any) => ({
               ...item,
@@ -3092,6 +3155,8 @@ const resetStudentRegistration = async (studentId: string) => {
         setHistory(localHistory);
         setHistoryTotalCount(localHistory.length);
 
+      } finally {
+        historyFetchStateRef.current.inFlight = false;
       }
 
     };
@@ -3104,13 +3169,13 @@ const resetStudentRegistration = async (studentId: string) => {
 
     historyLimitRef.current += HISTORY_PAGE_SIZE;
 
-    await fetchHistory();
+    await fetchHistory({ force: true });
 
   };
 
 
 
-  // Ð¤Ð£ÐÐšÐ¦Ð˜Ð¯ 1: joinQueue ( 
+
 
 // ========================================
 
@@ -3170,7 +3235,7 @@ const joinQueue = async (
 
   if (!isNewUser) {
 
-    // ?? Ð¡Ð¢Ð ÐžÐ“ÐÐ¯ ÐŸÐ ÐžÐ’Ð•Ð ÐšÐ Ð´Ð»Ñ ÑÑƒÑ‰ÐµÑÑ‚Ð²ÑƒÑŽÑ‰Ð¸Ñ… Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÐµÐ¹
+
 
     try {
 
@@ -3254,7 +3319,7 @@ const joinQueue = async (
 
   } else {
 
-    // ?? ÐŸÐ ÐžÐ¡Ð¢ÐÐ¯ ÐŸÐ ÐžÐ’Ð•Ð ÐšÐ Ð´Ð»Ñ Ð½Ð¾Ð²Ñ‹Ñ… Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÐµÐ¹ (Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð±Ð°Ð½)
+
 
     try {
 
@@ -3302,7 +3367,7 @@ const joinQueue = async (
 
 
 
-  // ÐžÐ¿Ñ€ÐµÐ´ÐµÐ»ÑÐµÐ¼ Ñ†ÐµÐ»ÐµÐ²ÑƒÑŽ Ð´Ð°Ñ‚Ñƒ
+
 
   const todayISO = format(new Date(), 'yyyy-MM-dd');
 
@@ -3323,7 +3388,7 @@ const joinQueue = async (
 
 
 
-  // ÐŸÑ€Ð¾Ð²ÐµÑ€ÑÐµÐ¼ Ð¿Ð¾ student_id Ð½Ð° ÑÑ‚Ñƒ Ð´Ð°Ñ‚Ñƒ Ñ‡ÐµÑ€ÐµÐ· RPC
+
 
   try {
 
@@ -3371,7 +3436,7 @@ const joinQueue = async (
 
   try {
 
-    // ÐŸÐ¾Ð»ÑƒÑ‡Ð°ÐµÐ¼ ÑÐ»ÐµÐ´ÑƒÑŽÑ‰ÑƒÑŽ Ð¿Ð¾Ð·Ð¸Ñ†Ð¸ÑŽ Ñ‡ÐµÑ€ÐµÐ· RPC
+
 
     const { data: nextPosData, error: posErr } = await supabase
 
@@ -3397,7 +3462,7 @@ const joinQueue = async (
 
 
 
-    // ?? ÐŸÐ¾Ð»ÑƒÑ‡Ð°ÐµÐ¼ ÑÐµÑÑÐ¸ÑŽ Ð´Ð»Ñ Ð¾Ð¿Ñ€ÐµÐ´ÐµÐ»ÐµÐ½Ð¸Ñ user_id
+
 
     const { data: authData } = await supabase.auth.getSession();
 
@@ -3413,7 +3478,7 @@ const joinQueue = async (
 
       student_id: user.student_id,
 
-      // ?? Ð’ÐÐ–ÐÐž: ÐµÑÐ»Ð¸ ÑÑ‚ÑƒÐ´ÐµÐ½Ñ‚ Ð·Ð°Ð»Ð¾Ð³Ð¸Ð½ÐµÐ½ â€” ÑÑ€Ð°Ð·Ñƒ Ð¿Ñ€Ð¸Ð²ÑÐ·Ñ‹Ð²Ð°ÐµÐ¼, Ð¸Ð½Ð°Ñ‡Ðµ null (Ð´Ð»Ñ Ð°Ð´Ð¼Ð¸Ð½Ð°)
+
 
       user_id: currentUserId,
 
@@ -3493,13 +3558,13 @@ const joinQueue = async (
 
 
 
-    // Ð¡Ð‘Ð ÐžÐ¡ Ð¤Ð›ÐÐ“Ð: ÐŸÐ¾ÑÐ»Ðµ Ð¿ÐµÑ€Ð²Ð¾Ð³Ð¾ ÑƒÑÐ¿ÐµÑˆÐ½Ð¾Ð³Ð¾ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð½Ð¾Ð²Ñ‹Ð¹ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÑŒ ÑÑ‚Ð°Ð½Ð¾Ð²Ð¸Ñ‚ÑÑ Ð¾Ð±Ñ‹Ñ‡Ð½Ñ‹Ð¼
+
 
     if (isNewUser) {
 
       setIsNewUser(false);
 
-      // localStorage Ð±ÑƒÐ´ÐµÑ‚ Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½ Ð² useEffect
+
 
     }
 
@@ -3542,7 +3607,7 @@ const joinQueue = async (
 
 
 
-  // Ð’ÑÐ¿Ð¾Ð¼Ð¾Ð³Ð°Ñ‚ÐµÐ»ÑŒÐ½Ð°Ñ Ñ„ÑƒÐ½ÐºÑ†Ð¸Ñ Ð´Ð»Ñ Ð¿Ð¾Ð»ÑƒÑ‡ÐµÐ½Ð¸Ñ ÑÐ²ÐµÐ¶ÐµÐ³Ð¾ JWT Ñ‚Ð¾ÐºÐµÐ½Ð°
+
 
   const getFreshToken = async (): Promise<string> => {
 
@@ -3594,7 +3659,7 @@ const joinQueue = async (
 
 
 
-  // Admin: Ð˜Ð·Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ ÑÑ‚Ð°Ñ‚ÑƒÑ Ð·Ð°Ð¿Ð¸ÑÐ¸ Ð² Ð¾Ñ‡ÐµÑ€ÐµÐ´Ð¸
+
 
   const setQueueStatus = async (queueItemId: string, status: QueueStatus, options?: { skipFetch?: boolean }) => {
 
@@ -3614,7 +3679,7 @@ const joinQueue = async (
 
     if (targetItem && user?.student_id && targetItem.student_id === user.student_id) {
 
-      // Ð¡ÑƒÐ¿ÐµÑ€-Ð°Ð´Ð¼Ð¸Ð½ Ð¼Ð¾Ð¶ÐµÑ‚ Ð²Ñ‹Ð·Ñ‹Ð²Ð°Ñ‚ÑŒ ÑÐµÐ±Ñ Ð·Ð° ÐºÐ»ÑŽÑ‡Ð¾Ð¼, Ð¾Ð±Ñ‹Ñ‡Ð½Ñ‹Ðµ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»Ð¸ - Ð½ÐµÑ‚
+
 
       if (!isSuperAdmin && (status === QueueStatus.READY || status === QueueStatus.RETURNING_KEY)) {
 
@@ -3685,7 +3750,7 @@ const joinQueue = async (
 
 
 
-  // Update queue item details (Ð´Ð»Ñ timestamps Ð¸ Ð´Ñ€ÑƒÐ³Ð¸Ñ… Ð¿Ð¾Ð»ÐµÐ¹ Ð±ÐµÐ· Ð¿Ñ€Ð¾Ð²ÐµÑ€ÐºÐ¸ ÑÑ‚Ð°Ñ‚ÑƒÑÐ°)
+
 
 const updateQueueItem = async (queueItemId: string, updates: Partial<QueueItem>, options?: { skipFetch?: boolean }) => {
 
@@ -3797,7 +3862,7 @@ const updateQueueEndTime = async (queueId: string, endTime: string) => {
 
   } else {
 
-    return;  // Ð¢Ð¾Ð»ÑŒÐºÐ¾ Ð´Ð»Ñ WASHING Ð¸Ð»Ð¸ DONE
+    return;  // Only for WASHING or DONE
 
   }
 
@@ -3817,7 +3882,7 @@ const updateQueueEndTime = async (queueId: string, endTime: string) => {
 
 // ========================================
 
-// ÐÐ”ÐœÐ˜Ð Ð¤Ð£ÐÐšÐ¦Ð˜Ð˜
+
 
 // ========================================
 
@@ -4225,7 +4290,7 @@ const transferSelectedToDate = async (selectedIds: string[], targetDateStr: stri
 
     
 
-    // ÐŸÐµÑ€ÐµÐ½ÐµÑÑ‚Ð¸ Ð´Ð°Ñ‚Ñ‹
+
 
     for (let i = 0; i < unfinishedItems.length; i++) {
 
@@ -4249,7 +4314,7 @@ const transferSelectedToDate = async (selectedIds: string[], targetDateStr: stri
 
     
 
-    // ÐŸÐµÑ€ÐµÑÑ‡Ð¸Ñ‚Ð°Ñ‚ÑŒ Ð¿Ð¾Ð·Ð¸Ñ†Ð¸Ð¸
+
 
     const { data: allOnDate, error: fetchError } = await supabase
 
@@ -4317,7 +4382,7 @@ const transferSelectedToDate = async (selectedIds: string[], targetDateStr: stri
 
 
 
-// Ð’ÑÐ¿Ð¾Ð¼Ð¾Ð³Ð°Ñ‚ÐµÐ»ÑŒÐ½Ð°Ñ Ñ„ÑƒÐ½ÐºÑ†Ð¸Ñ Ð´Ð»Ñ ÐºÑ€Ð°ÑÐ¸Ð²Ð¾Ð³Ð¾ Ð¾Ñ‚Ð¾Ð±Ñ€Ð°Ð¶ÐµÐ½Ð¸Ñ Ð´Ð°Ñ‚Ñ‹
+
 
 const formatDateForAlert = (dateStr: string) => {
 
@@ -4437,7 +4502,7 @@ const updateQueueItemDetails = async (
 
 
 
-    // Ð’Ñ€ÐµÐ¼ÐµÐ½Ð½Ð¾Ðµ ÑƒÐ²ÐµÐ´Ð¾Ð¼Ð»ÐµÐ½Ð¸Ðµ Ð¾Ñ‚ÐºÐ»ÑŽÑ‡ÐµÐ½Ð¾ (Ð½ÐµÑ‚ Ð¿Ð¾Ð´Ñ…Ð¾Ð´ÑÑ‰ÐµÐ³Ð¾ Ñ‚Ð¸Ð¿Ð° Ð² Ð½Ð¾Ð²Ð¾Ð¹ ÑÐ¸ÑÑ‚ÐµÐ¼Ðµ)
+
 
     // if (updates.expected_finish_at && user) {
 
@@ -4607,7 +4672,7 @@ const changeQueuePosition = async (queueId: string, direction: 'up' | 'down') =>
 
 // Clear local session after logout options are applied.
 
-// ÐÐ´Ð¼Ð¸Ð½Ñ‹ Ð²Ñ…Ð¾Ð´ÑÑ‚ Ñ‡ÐµÑ€ÐµÐ· Ð¾Ð±Ñ‹Ñ‡Ð½Ñ‹Ð¹ loginStudent, Ð¿Ñ€Ð°Ð²Ð° Ð¾Ð¿Ñ€ÐµÐ´ÐµÐ»ÑÑŽÑ‚ÑÑ Ð¸Ð· Ð‘Ð”
+
 
 
 
