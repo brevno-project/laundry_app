@@ -21,6 +21,29 @@ create index if not exists daily_coupon_spins_date_idx
 
 alter table public.daily_coupon_spins enable row level security;
 
+create or replace function public.is_cleanup_admin()
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.role() = 'service_role' then
+    return true;
+  end if;
+
+  return exists (
+    select 1
+    from public.students
+    where user_id = auth.uid()
+      and is_cleanup_admin = true
+      and is_banned = false
+  );
+end;
+$$;
+
+grant execute on function public.is_cleanup_admin() to authenticated, service_role;
+
 drop policy if exists daily_coupon_spins_select_own_or_admin on public.daily_coupon_spins;
 create policy daily_coupon_spins_select_own_or_admin
   on public.daily_coupon_spins

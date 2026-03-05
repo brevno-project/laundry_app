@@ -18,6 +18,36 @@ type DailySpinStatus = {
 };
 
 const SPIN_ANIMATION_MS = 2200;
+const REQUEST_TIMEOUT_MS = 12000;
+
+const withTimeout = async <T,>(
+  promiseLike: PromiseLike<T>,
+  timeoutMs: number,
+  label: string
+): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const promise = Promise.resolve(promiseLike);
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+    }
+  });
+};
+
+const isAbortLikeError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+  return (
+    error.name === "AbortError" ||
+    /timed out/i.test(error.message) ||
+    /aborted/i.test(error.message)
+  );
+};
 
 const formatChance = (value: number) => {
   const fixed = value.toFixed(2);
@@ -41,20 +71,31 @@ export default function DailySpinCard() {
         throw new Error(t("errors.supabaseNotConfigured"));
       }
 
-      const { data } = await supabase.auth.getSession();
+      const { data } = await withTimeout(
+        supabase.auth.getSession(),
+        REQUEST_TIMEOUT_MS,
+        "auth.getSession(dailySpin)"
+      );
       const token = data.session?.access_token;
       if (!token) {
         throw new Error(t("errors.noActiveSession"));
       }
 
-      return fetch(url, {
-        ...options,
-        headers: {
-          "Content-Type": "application/json",
-          ...(options.headers || {}),
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const controller = new AbortController();
+      const abortId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      try {
+        return await fetch(url, {
+          ...options,
+          signal: controller.signal,
+          headers: {
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } finally {
+        clearTimeout(abortId);
+      }
     },
     [t]
   );
@@ -64,14 +105,15 @@ export default function DailySpinCard() {
     setError(null);
     try {
       const response = await authedFetch("/api/student/daily-spin", { method: "GET" });
-      const result = await response.json();
+      const raw = await response.text();
+      const result = raw ? JSON.parse(raw) : {};
       if (!response.ok) {
         throw new Error(result.error || t("dailySpin.errorLoad"));
       }
       setStatus(result as DailySpinStatus);
       setNotice(null);
     } catch (err: any) {
-      setError(err?.message || t("dailySpin.errorLoad"));
+      setError(isAbortLikeError(err) ? t("dailySpin.errorLoad") : err?.message || t("dailySpin.errorLoad"));
     } finally {
       setLoading(false);
     }
@@ -92,7 +134,8 @@ export default function DailySpinCard() {
     const spinStart = Date.now();
     try {
       const response = await authedFetch("/api/student/daily-spin", { method: "POST" });
-      const result = await response.json();
+      const raw = await response.text();
+      const result = raw ? JSON.parse(raw) : {};
 
       const elapsed = Date.now() - spinStart;
       if (elapsed < SPIN_ANIMATION_MS) {
@@ -117,7 +160,7 @@ export default function DailySpinCard() {
       if (elapsed < SPIN_ANIMATION_MS) {
         await new Promise((resolve) => setTimeout(resolve, SPIN_ANIMATION_MS - elapsed));
       }
-      setError(err?.message || t("dailySpin.errorSpin"));
+      setError(isAbortLikeError(err) ? t("dailySpin.errorSpin") : err?.message || t("dailySpin.errorSpin"));
     } finally {
       setSubmitting(false);
       setIsSpinning(false);
