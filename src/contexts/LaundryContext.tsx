@@ -2898,97 +2898,10 @@ const resetStudentRegistration = async (studentId: string) => {
 
       try {
 
-        const todayStr = format(new Date(), 'yyyy-MM-dd');
-
-        if (user?.student_id && !cleanupStateRef.current.inFlight) {
-
-          const cleanupDisabledUntil = cleanupStateRef.current.disableUntil;
-
-          const shouldCleanup =
-
-            cleanupDisabledUntil <= nowMs &&
-
-            cleanupStateRef.current.lastRunDate !== todayStr;
-
-          const shouldExpiredCleanup =
-
-            cleanupDisabledUntil <= nowMs &&
-
-            nowMs - cleanupStateRef.current.lastExpiredRunAt >= 5 * 60 * 1000;
-
-
-
-          if (shouldCleanup || shouldExpiredCleanup) {
-
-            cleanupStateRef.current.inFlight = true;
-
-            let cleanupError: any = null;
-
-            try {
-
-              if (shouldCleanup) {
-
-                const result = await supabase.rpc('cleanup_coupon_queue_for_today');
-
-                cleanupError = result.error;
-
-              }
-
-              if (!cleanupError && shouldExpiredCleanup) {
-
-                const result = await supabase.rpc('cleanup_expired_coupon_queue', {
-
-                  p_grace_minutes: 0,
-
-                });
-
-                cleanupError = result.error;
-
-              }
-
-            } catch (err) {
-
-              cleanupError = err;
-
-            } finally {
-
-              cleanupStateRef.current.inFlight = false;
-
-            }
-
-
-
-            if (cleanupError) {
-
-              if (nowMs - cleanupStateRef.current.lastErrorAt > 60000) {
-
-                console.error('cleanup_coupon_queue_for_today error:', cleanupError);
-
-                cleanupStateRef.current.lastErrorAt = nowMs;
-
-              }
-
-              cleanupStateRef.current.disableUntil = nowMs + 10 * 60 * 1000;
-
-            } else {
-
-              if (shouldCleanup) {
-
-                cleanupStateRef.current.lastRunDate = todayStr;
-
-              }
-
-              if (shouldExpiredCleanup) {
-
-                cleanupStateRef.current.lastExpiredRunAt = nowMs;
-
-              }
-
-            }
-
-          }
-
-        }
+        // IMPORTANT:
+        // Do not run destructive queue cleanup from client fetches.
+        // It could unexpectedly delete active queue rows (e.g. after coupon expiry)
+        // when any student simply opens the app.
 
 
 
