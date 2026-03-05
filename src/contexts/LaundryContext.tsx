@@ -57,7 +57,7 @@ import {
 const TIMEZONE = 'Asia/Bishkek';
 
 const HISTORY_PAGE_SIZE = 50;
-const AUTH_CALL_TIMEOUT_MS = 8000;
+const AUTH_CALL_TIMEOUT_MS = 15000;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -434,6 +434,16 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
   const statusCheckRef = useRef({ inFlight: false, lastRunAt: 0, missingLinkHits: 0 });
   const tokenRefreshRef = useRef<Promise<string> | null>(null);
   const registeringRef = useRef(false);
+  const authRetryTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (authRetryTimerRef.current !== null) {
+        clearTimeout(authRetryTimerRef.current);
+        authRetryTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const clearLocalSession = (options?: { keepBanNotice?: boolean }) => {
     const keepBanNotice = options?.keepBanNotice;
@@ -463,24 +473,20 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
   const resetStuckAuthSession = async (reason: string) => {
     if (process.env.NODE_ENV !== "production") {
-      console.warn(`[auth] ${reason}. Resetting local session.`);
+      console.warn(`[auth] ${reason}. Keeping session and scheduling retry.`);
     }
 
-    if (supabase) {
-      try {
-        await withTimeout(
-          supabase.auth.signOut({ scope: 'local' }),
-          AUTH_CALL_TIMEOUT_MS,
-          'auth.signOut(local)'
-        );
-      } catch (error) {
-        if (process.env.NODE_ENV !== "production") {
-          console.warn('Local signOut failed:', error);
-        }
+    if (typeof window !== "undefined") {
+      if (authRetryTimerRef.current !== null) {
+        window.clearTimeout(authRetryTimerRef.current);
       }
+      authRetryTimerRef.current = window.setTimeout(() => {
+        authRetryTimerRef.current = null;
+        void refreshMyRole();
+      }, 3000);
     }
 
-    clearLocalSession();
+    setIsLoading(false);
     setAuthReady(true);
   };
 
