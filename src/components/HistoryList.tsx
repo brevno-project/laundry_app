@@ -137,6 +137,11 @@ export default function HistoryList() {
       const paymentType = (item.payment_type || '').toLowerCase();
       return couponsUsed > 0 || paymentType === 'coupon' || paymentType === 'both';
     };
+    const getWashCount = (item: HistoryItem) => {
+      const washCount = Number(item.wash_count);
+      if (!Number.isFinite(washCount) || washCount <= 0) return 1;
+      return washCount;
+    };
 
     if (!canUsePaymentFilter) {
       return {
@@ -159,27 +164,29 @@ export default function HistoryList() {
 
     const couponsHistory = nonPrivileged.filter(isCouponPayment);
     const moneyHistory = nonPrivileged.filter((item) => !isCouponPayment(item));
+    const couponsWashCount = couponsHistory.reduce((sum, item) => sum + getWashCount(item), 0);
+    const moneyWashCount = moneyHistory.reduce((sum, item) => sum + getWashCount(item), 0);
 
     if (paymentFilter === 'coupons') {
       return {
         filteredHistory: couponsHistory,
-        couponsCount: couponsHistory.length,
-        moneyCount: moneyHistory.length,
+        couponsCount: couponsWashCount,
+        moneyCount: moneyWashCount,
       };
     }
 
     if (paymentFilter === 'money') {
       return {
         filteredHistory: moneyHistory,
-        couponsCount: couponsHistory.length,
-        moneyCount: moneyHistory.length,
+        couponsCount: couponsWashCount,
+        moneyCount: moneyWashCount,
       };
     }
 
     return {
       filteredHistory: history,
-      couponsCount: couponsHistory.length,
-      moneyCount: moneyHistory.length,
+      couponsCount: couponsWashCount,
+      moneyCount: moneyWashCount,
     };
   }, [canUsePaymentFilter, history, students, paymentFilter]);
 
