@@ -57,6 +57,7 @@ import {
 const TIMEZONE = 'Asia/Bishkek';
 
 const HISTORY_PAGE_SIZE = 50;
+const AUTH_CALL_TIMEOUT_MS = 8000;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -66,6 +67,24 @@ const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 // Check if Supabase is configured
 
 const isSupabaseConfigured = !!SUPABASE_URL && !!SUPABASE_KEY && !!supabase;
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+    }
+  });
+}
+
+const isTimeoutError = (error: unknown): boolean =>
+  error instanceof Error && /timed out/i.test(error.message);
 
 
 
@@ -84,13 +103,21 @@ async function waitForSession(): Promise<boolean> {
   // Ð–Ð´Ñ‘Ð¼ Ð¿Ð¾ÐºÐ° session ÑÑ‚Ð°Ð±Ð¸Ð»ÑŒÐ½Ð¾ Ð´Ð¾ÑÑ‚ÑƒÐ¿Ð½Ð° (Ð´Ð¾ 5 Ð¿Ð¾Ð¿Ñ‹Ñ‚Ð¾Ðº)
 
   for (let i = 0; i < 5; i++) {
+    try {
+      const { data } = await withTimeout(
+        supabase.auth.getSession(),
+        AUTH_CALL_TIMEOUT_MS,
+        'auth.getSession(waitForSession)'
+      );
 
-    const { data } = await supabase.auth.getSession();
-
-    if (data.session?.access_token) {
-
-      return true;
-
+      if (data.session?.access_token) {
+        return true;
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn('waitForSession failed:', error);
+      }
+      return false;
     }
 
     await new Promise((r) => setTimeout(r, 200));
@@ -119,13 +146,26 @@ async function waitForStudentLink(
   if (!supabase) return null;
 
   for (let i = 0; i < attempts; i++) {
-    const { data } = await supabase
-      .from("students")
-      .select(
-        "id, first_name, last_name, full_name, room, telegram_chat_id, ui_language, is_admin, is_super_admin, is_cleanup_admin, can_view_students, is_banned, ban_reason, avatar_style, avatar_seed"
-      )
-      .eq("user_id", userId)
-      .maybeSingle();
+    let data: any = null;
+    try {
+      const result = await withTimeout(
+        supabase
+          .from("students")
+          .select(
+            "id, first_name, last_name, full_name, room, telegram_chat_id, ui_language, is_admin, is_super_admin, is_cleanup_admin, can_view_students, is_banned, ban_reason, avatar_style, avatar_seed"
+          )
+          .eq("user_id", userId)
+          .maybeSingle(),
+        AUTH_CALL_TIMEOUT_MS,
+        'students.select(waitForStudentLink)'
+      );
+      data = result.data;
+    } catch (error) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn('waitForStudentLink failed:', error);
+      }
+      return null;
+    }
 
     if (data) {
       return data;
@@ -416,6 +456,29 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
     }
+  };
+
+  const resetStuckAuthSession = async (reason: string) => {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(`[auth] ${reason}. Resetting local session.`);
+    }
+
+    if (supabase) {
+      try {
+        await withTimeout(
+          supabase.auth.signOut({ scope: 'local' }),
+          AUTH_CALL_TIMEOUT_MS,
+          'auth.signOut(local)'
+        );
+      } catch (error) {
+        if (process.env.NODE_ENV !== "production") {
+          console.warn('Local signOut failed:', error);
+        }
+      }
+    }
+
+    clearLocalSession();
+    setAuthReady(true);
   };
 
 
@@ -1350,14 +1413,22 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
     try {
 
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await withTimeout(
+        supabase.auth.getSession(),
+        AUTH_CALL_TIMEOUT_MS,
+        'auth.getSession(refreshMyRole)'
+      );
 
       let uid = session?.user?.id;
 
       if (!uid) {
         const ok = await waitForSession();
         if (ok) {
-          const { data: { session: retrySession } } = await supabase.auth.getSession();
+          const { data: { session: retrySession } } = await withTimeout(
+            supabase.auth.getSession(),
+            AUTH_CALL_TIMEOUT_MS,
+            'auth.getSession(refreshMyRole.retry)'
+          );
           uid = retrySession?.user?.id;
         }
       }
@@ -1379,15 +1450,15 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
       }
 
-      let { data: me, error } = await supabase
-
-        .from("students")
-
-        .select("id, first_name, last_name, full_name, room, telegram_chat_id, ui_language, is_admin, is_super_admin, is_cleanup_admin, can_view_students, is_banned, ban_reason, avatar_style, avatar_seed")
-
-        .eq("user_id", uid)
-
-        .maybeSingle();
+      let { data: me, error } = await withTimeout(
+        supabase
+          .from("students")
+          .select("id, first_name, last_name, full_name, room, telegram_chat_id, ui_language, is_admin, is_super_admin, is_cleanup_admin, can_view_students, is_banned, ban_reason, avatar_style, avatar_seed")
+          .eq("user_id", uid)
+          .maybeSingle(),
+        AUTH_CALL_TIMEOUT_MS,
+        'students.select(refreshMyRole)'
+      );
 
       if (!me) {
         const attempts = registeringRef.current ? 10 : 4;
@@ -1499,9 +1570,13 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
       }
 
-    } catch (error) {
+    } catch (error: unknown) {
+      if (isTimeoutError(error)) {
+        await resetStuckAuthSession('Auth initialization timed out');
+        return;
+      }
 
-      console.error('? Error in refreshMyRole:', error);
+      console.error('Error in refreshMyRole:', error);
 
       setUser(null);
 
@@ -3559,7 +3634,11 @@ const joinQueue = async (
 
     if (!supabase) throw new Error('Supabase not configured');
 
-    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    const { data: { session: currentSession } } = await withTimeout(
+      supabase.auth.getSession(),
+      AUTH_CALL_TIMEOUT_MS,
+      'auth.getSession(getFreshToken)'
+    );
     const currentToken = currentSession?.access_token;
     const expiresAtMs = currentSession?.expires_at ? currentSession.expires_at * 1000 : null;
 
@@ -3570,11 +3649,19 @@ const joinQueue = async (
 
     if (!tokenRefreshRef.current) {
       tokenRefreshRef.current = (async () => {
-        const { data: { session }, error } = await supabase.auth.refreshSession();
+        const { data: { session }, error } = await withTimeout(
+          supabase.auth.refreshSession(),
+          AUTH_CALL_TIMEOUT_MS,
+          'auth.refreshSession(getFreshToken)'
+        );
 
         if (error || !session?.access_token) {
           console.error('Failed to refresh session:', error);
-          const { data: { session: fallbackSession } } = await supabase.auth.getSession();
+          const { data: { session: fallbackSession } } = await withTimeout(
+            supabase.auth.getSession(),
+            AUTH_CALL_TIMEOUT_MS,
+            'auth.getSession(getFreshToken.fallback)'
+          );
           if (!fallbackSession?.access_token) {
             throw new Error('No active session');
           }
