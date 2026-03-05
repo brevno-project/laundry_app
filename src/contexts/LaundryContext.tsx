@@ -1105,7 +1105,13 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
       .channel("history-changes")
 
-      .on("postgres_changes", { event: "*", schema: "public", table: "history" }, fetchHistory)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "history" },
+        () => {
+          void fetchHistory();
+        }
+      )
 
       .subscribe();
 
