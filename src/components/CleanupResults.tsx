@@ -807,7 +807,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
         studentRows = (slimRows as Array<{ apartment_id: string | null; room: string | null }>) || [];
       } else if (canManageCleanup) {
         try {
-          const response = await authedFetch("/api/students/list");
+          const response = await authedFetch("/api/students/list?minimal=1");
           if (response.ok) {
             const result = await response.json();
             studentRows = (result.students || []).map((student: any) => ({
@@ -860,27 +860,37 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     setResults(rows);
     await loadResultApartments(rows);
 
-    const announcerIds = Array.from(
-      new Set(
-        rows
-          .filter((row) => !row.announced_by_name)
-          .map((row) => row.announced_by)
-          .filter(Boolean)
-      )
-    ) as string[];
+    const announcerMap: Record<string, string> = {};
+    const contextNames = new Map<string, string>(
+      (students || []).map((student) => [student.id, student.full_name || ""])
+    );
+    const missingIds: string[] = [];
 
+    rows
+      .filter((row) => !row.announced_by_name && !!row.announced_by)
+      .forEach((row) => {
+        const announcerId = row.announced_by as string;
+        const fromContext = contextNames.get(announcerId);
+        if (fromContext) {
+          announcerMap[announcerId] = fromContext;
+          return;
+        }
+        missingIds.push(announcerId);
+      });
+
+    const announcerIds = Array.from(new Set(missingIds));
     if (announcerIds.length > 0) {
       const { data: announcerRows } = await supabase
         .from("students")
         .select("id, full_name")
         .in("id", announcerIds);
 
-      const announcerMap: Record<string, string> = {};
       (announcerRows || []).forEach((student: any) => {
         announcerMap[student.id] = student.full_name;
       });
-      setAnnouncers(announcerMap);
     }
+
+    setAnnouncers(announcerMap);
   };
 
   const loadSchedules = async () => {
@@ -1021,12 +1031,29 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
       new Set(rows.flatMap((row) => [row.from_student_id, row.to_student_id]))
     );
     if (studentIds.length > 0) {
+      const nameMap: Record<string, string> = {};
+      const contextNames = new Map<string, string>(
+        (students || []).map((student) => [student.id, student.full_name || ""])
+      );
+      const missingIds = studentIds.filter((id) => {
+        const name = contextNames.get(id);
+        if (name) {
+          nameMap[id] = name;
+          return false;
+        }
+        return true;
+      });
+
+      if (missingIds.length === 0) {
+        setTransferNames(nameMap);
+        return;
+      }
+
       const { data: studentRows } = await supabase
         .from("students")
         .select("id, full_name")
-        .in("id", studentIds);
+        .in("id", missingIds);
 
-      const nameMap: Record<string, string> = {};
       (studentRows || []).forEach((student: any) => {
         nameMap[student.id] = student.full_name;
       });
@@ -1036,6 +1063,33 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
   const loadRecipients = async () => {
     if (!supabase || !user?.student_id) return;
+
+    if (students && students.length > 0) {
+      const currentStudent = students.find((student) => student.id === user.student_id);
+      if (!currentStudent) {
+        setRecipients([]);
+        return;
+      }
+
+      const residents = students.filter((student) => {
+        if (student.id === user.student_id) return false;
+        if (
+          currentStudent.apartment_id &&
+          student.apartment_id &&
+          student.apartment_id === currentStudent.apartment_id
+        ) {
+          return true;
+        }
+        if (currentStudent.room && student.room && student.room === currentStudent.room) {
+          return true;
+        }
+        return false;
+      });
+
+      setRecipients(residents);
+      return;
+    }
+
     const { data: currentStudent } = await supabase
       .from("students")
       .select("apartment_id, room")
@@ -1080,6 +1134,17 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
 
   const loadGrantStudents = async () => {
     if (!supabase || !isSuperAdmin) return;
+
+    if (students && students.length > 0) {
+      const sorted = [...students].sort((a, b) => {
+        const roomA = a.room || "";
+        const roomB = b.room || "";
+        return roomA.localeCompare(roomB);
+      });
+      setGrantStudents(sorted);
+      return;
+    }
+
     const { data } = await supabase
       .from("students")
       .select("id, full_name, room")

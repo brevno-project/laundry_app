@@ -42,10 +42,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Not allowed" }, { status: 403 });
   }
 
+  const minimal = req.nextUrl.searchParams.get("minimal") === "1";
+
   const query = supabaseAdmin
     .from("students")
     .select(
-      "id, first_name, last_name, middle_name, full_name, room, apartment_id, avatar_style, avatar_seed, telegram_chat_id, is_registered, is_banned, is_admin, is_super_admin, is_cleanup_admin, can_view_students, key_issued, key_lost, stay_type"
+      minimal
+        ? "id, apartment_id, room"
+        : "id, first_name, last_name, middle_name, full_name, room, apartment_id, avatar_style, avatar_seed, telegram_chat_id, is_registered, is_banned, is_admin, is_super_admin, is_cleanup_admin, can_view_students, key_issued, key_lost, stay_type"
     );
   const { data, error } = await query.order("full_name", { ascending: true });
 
