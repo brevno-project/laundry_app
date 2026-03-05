@@ -557,6 +557,7 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   const [recipients, setRecipients] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const [secondaryLoadsEnabled, setSecondaryLoadsEnabled] = useState(false);
   const [adminBlock, setAdminBlock] = useState<Block | null>(null);
   const [weekStart, setWeekStart] = useState(getNextWednesdayISO());
   const [selectedBlock, setSelectedBlock] = useState<Block>("A");
@@ -791,35 +792,32 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     const apartmentsList = (data as Apartment[]) || [];
 
     let studentRows: Array<{ apartment_id: string | null; room: string | null }> = [];
-    let loadedFromApi = false;
 
-    if (canManageCleanup) {
-      try {
-        const response = await authedFetch("/api/students/list");
-        if (response.ok) {
-          const result = await response.json();
-          studentRows = (result.students || []).map((student: any) => ({
-            apartment_id: student.apartment_id ?? null,
-            room: student.room ?? null,
-          }));
-          loadedFromApi = true;
+    if (students && students.length > 0) {
+      studentRows = students.map((student) => ({
+        apartment_id: student.apartment_id ?? null,
+        room: student.room ?? null,
+      }));
+    } else {
+      const { data: slimRows, error: slimError } = await supabase
+        .from("students")
+        .select("apartment_id, room");
+
+      if (!slimError && slimRows) {
+        studentRows = (slimRows as Array<{ apartment_id: string | null; room: string | null }>) || [];
+      } else if (canManageCleanup) {
+        try {
+          const response = await authedFetch("/api/students/list");
+          if (response.ok) {
+            const result = await response.json();
+            studentRows = (result.students || []).map((student: any) => ({
+              apartment_id: student.apartment_id ?? null,
+              room: student.room ?? null,
+            }));
+          }
+        } catch (error) {
+          console.error("Failed to load students list for apartments", error);
         }
-      } catch (error) {
-        console.error("Failed to load students list for apartments", error);
-      }
-    }
-
-    if (!loadedFromApi) {
-      if (students && students.length > 0) {
-        studentRows = students.map((student) => ({
-          apartment_id: student.apartment_id ?? null,
-          room: student.room ?? null,
-        }));
-      } else {
-        const { data } = await supabase
-          .from("students")
-          .select("apartment_id, room");
-        studentRows = (data as Array<{ apartment_id: string | null; room: string | null }>) || [];
       }
     }
 
@@ -863,7 +861,12 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
     await loadResultApartments(rows);
 
     const announcerIds = Array.from(
-      new Set(rows.map((row) => row.announced_by).filter(Boolean))
+      new Set(
+        rows
+          .filter((row) => !row.announced_by_name)
+          .map((row) => row.announced_by)
+          .filter(Boolean)
+      )
     ) as string[];
 
     if (announcerIds.length > 0) {
@@ -1142,6 +1145,17 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   }, []);
 
   useEffect(() => {
+    if (!hasLoadedOnce) return;
+    const timerId = window.setTimeout(() => {
+      setSecondaryLoadsEnabled(true);
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timerId);
+    };
+  }, [hasLoadedOnce]);
+
+  useEffect(() => {
     if (!canManageCleanup || !supabase) return;
     if (!students || students.length === 0) return;
     loadApartments();
@@ -1155,25 +1169,30 @@ export default function CleanupResults({ embedded = false }: CleanupResultsProps
   useEffect(() => {
     if (!user?.student_id) return;
     loadCoupons();
-    loadRecipients();
   }, [user?.student_id]);
 
   useEffect(() => {
-    if (!canManageCleanup || !user?.student_id) {
+    if (!secondaryLoadsEnabled || !user?.student_id) return;
+    loadRecipients();
+  }, [secondaryLoadsEnabled, user?.student_id]);
+
+  useEffect(() => {
+    if (!secondaryLoadsEnabled || !canManageCleanup || !user?.student_id) {
       setCouponSummaryByStudent({});
       return;
     }
     loadCouponSummary();
-  }, [canManageCleanup, user?.student_id]);
+  }, [secondaryLoadsEnabled, canManageCleanup, user?.student_id]);
 
   useEffect(() => {
+    if (!secondaryLoadsEnabled) return;
     loadTransfers();
-  }, [user?.student_id, isAdmin, isSuperAdmin]);
+  }, [secondaryLoadsEnabled, user?.student_id, isAdmin, isSuperAdmin]);
 
   useEffect(() => {
-    if (!isSuperAdmin) return;
+    if (!secondaryLoadsEnabled || !isSuperAdmin) return;
     loadGrantStudents();
-  }, [isSuperAdmin]);
+  }, [secondaryLoadsEnabled, isSuperAdmin]);
 
   useEffect(() => {
     if (!isSuperAdmin) {
