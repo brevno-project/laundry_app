@@ -62,6 +62,11 @@ values
   ('daily_spin_coupon_ttl_seconds', 604800)    -- 7 days
 on conflict (key) do nothing;
 
+insert into public.app_settings (key, value_bool)
+values
+  ('daily_spin_allow_self_reset', true)         -- TEMP for testing: student can reset today's spin
+on conflict (key) do nothing;
+
 create or replace function public.perform_daily_coupon_spin(
   p_student_id uuid,
   p_spin_date date,

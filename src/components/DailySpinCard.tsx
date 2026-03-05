@@ -15,6 +15,7 @@ type DailySpinStatus = {
   chance_percent: number;
   already_spun?: boolean;
   lottery_blocked?: boolean;
+  allow_reset?: boolean;
 };
 
 const SPIN_ANIMATION_MS = 2200;
@@ -62,8 +63,10 @@ export default function DailySpinCard() {
   const [loading, setLoading] = React.useState(true);
   const [isSpinning, setIsSpinning] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
+  const [resetting, setResetting] = React.useState(false);
   const [notice, setNotice] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [wheelRotation, setWheelRotation] = React.useState(0);
 
   const authedFetch = React.useCallback(
     async (url: string, options: RequestInit = {}) => {
@@ -130,6 +133,7 @@ export default function DailySpinCard() {
     setIsSpinning(true);
     setError(null);
     setNotice(null);
+    setWheelRotation((prev) => prev + 1440 + Math.floor(Math.random() * 720));
 
     const spinStart = Date.now();
     try {
@@ -167,6 +171,33 @@ export default function DailySpinCard() {
     }
   };
 
+  const handleReset = async () => {
+    if (resetting) return;
+    if (!status?.allow_reset) return;
+    if (typeof window !== "undefined") {
+      const ok = window.confirm(t("dailySpin.resetConfirm"));
+      if (!ok) return;
+    }
+
+    setResetting(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const response = await authedFetch("/api/student/daily-spin", { method: "DELETE" });
+      const raw = await response.text();
+      const result = raw ? JSON.parse(raw) : {};
+      if (!response.ok) {
+        throw new Error(result.error || t("dailySpin.errorSpin"));
+      }
+      setStatus(result as DailySpinStatus);
+      setNotice(t("dailySpin.resetDone"));
+    } catch (err: any) {
+      setError(err?.message || t("dailySpin.errorSpin"));
+    } finally {
+      setResetting(false);
+    }
+  };
+
   const chanceLabel = status ? `${formatChance(status.chance_percent)}%` : "0.5%";
   const disabled = loading || submitting || isSpinning || !status?.can_spin;
 
@@ -187,9 +218,13 @@ export default function DailySpinCard() {
         <div className="relative h-40 w-40">
           <div className="absolute left-1/2 top-[-6px] z-20 h-0 w-0 -translate-x-1/2 border-l-[8px] border-r-[8px] border-b-[14px] border-l-transparent border-r-transparent border-b-rose-500" />
           <div
-            className={`daily-spin-wheel absolute inset-0 rounded-full border-4 border-white shadow-lg dark:border-slate-700 ${
-              isSpinning ? "daily-spin-wheel-spin" : ""
-            }`}
+            className="daily-spin-wheel absolute inset-0 rounded-full border-4 border-white shadow-lg dark:border-slate-700"
+            style={{
+              transform: `rotate(${wheelRotation}deg)`,
+              transition: isSpinning
+                ? `transform ${SPIN_ANIMATION_MS}ms cubic-bezier(0.12, 0.74, 0.22, 1)`
+                : "transform 220ms ease-out",
+            }}
           />
           <div className="absolute inset-[34%] z-10 flex items-center justify-center rounded-full bg-white text-xs font-bold text-slate-700 shadow dark:bg-slate-800 dark:text-slate-100">
             SPIN
@@ -220,7 +255,29 @@ export default function DailySpinCard() {
             )}
           </button>
 
+          <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => void loadStatus()}
+              disabled={loading || submitting || isSpinning || resetting}
+              className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              {t("dailySpin.refresh")}
+            </button>
+            {status?.allow_reset && (
+              <button
+                type="button"
+                onClick={handleReset}
+                disabled={loading || submitting || isSpinning || resetting}
+                className="inline-flex items-center justify-center rounded-xl border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-700/50 dark:bg-rose-900/20 dark:text-rose-200 dark:hover:bg-rose-900/30"
+              >
+                {resetting ? t("common.loading") : t("dailySpin.reset")}
+              </button>
+            )}
+          </div>
+
           <div className="space-y-1 text-center text-sm">
+            {!status && <p className="text-slate-600 dark:text-slate-300">{t("dailySpin.statusUnavailable")}</p>}
             {!status?.has_spun && <p className="text-slate-600 dark:text-slate-300">{t("dailySpin.onePerDay")}</p>}
             {status?.has_spun && status.won && (
               <p className="font-semibold text-emerald-700 dark:text-emerald-300">{t("dailySpin.alreadySpunWon")}</p>
@@ -252,18 +309,6 @@ export default function DailySpinCard() {
           );
         }
 
-        .daily-spin-wheel-spin {
-          animation: dailySpinWheel ${SPIN_ANIMATION_MS}ms cubic-bezier(0.12, 0.74, 0.22, 1) forwards;
-        }
-
-        @keyframes dailySpinWheel {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(1980deg);
-          }
-        }
       `}</style>
     </div>
   );

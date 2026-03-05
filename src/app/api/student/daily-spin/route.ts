@@ -6,6 +6,7 @@ import { supabaseAdmin } from "../../_utils/adminAuth";
 const TIMEZONE = "Asia/Bishkek";
 const DEFAULT_WIN_PROBABILITY_BPS = 50; // 0.50%
 const DEFAULT_COUPON_TTL_SECONDS = 7 * 24 * 60 * 60;
+const DEFAULT_ALLOW_SELF_RESET = false;
 
 type StudentContext = {
   userId: string;
@@ -38,6 +39,19 @@ const getSettingInt = async (key: string, fallback: number): Promise<number> => 
     return fallback;
   }
   return data.value_int;
+};
+
+const getSettingBool = async (key: string, fallback: boolean): Promise<boolean> => {
+  const { data } = await supabaseAdmin
+    .from("app_settings")
+    .select("value_bool")
+    .eq("key", key)
+    .maybeSingle();
+
+  if (typeof data?.value_bool !== "boolean") {
+    return fallback;
+  }
+  return data.value_bool;
 };
 
 const getStudentContext = async (
@@ -112,6 +126,7 @@ const buildStatusPayload = (params: {
     win_probability_bps: number;
   } | null;
   lotteryBlocked: boolean;
+  allowReset: boolean;
 }) => {
   const hasSpun = !!params.spinRow;
   return {
@@ -122,6 +137,7 @@ const buildStatusPayload = (params: {
     has_spun: hasSpun,
     can_spin: !hasSpun && !params.lotteryBlocked,
     lottery_blocked: params.lotteryBlocked,
+    allow_reset: params.allowReset,
     won: hasSpun ? !!params.spinRow?.won : false,
     coupon_id: hasSpun ? params.spinRow?.coupon_id ?? null : null,
     spun_at: hasSpun ? params.spinRow?.created_at ?? null : null,
@@ -137,6 +153,8 @@ export async function GET(req: NextRequest) {
 
     const { context } = studentResult;
     const lotteryBlocked = context.isAdmin || context.isSuperAdmin || context.isCleanupAdmin;
+    const allowSelfReset = await getSettingBool("daily_spin_allow_self_reset", DEFAULT_ALLOW_SELF_RESET);
+    const allowReset = lotteryBlocked || allowSelfReset;
     const spinDate = getSpinDate();
 
     const chanceBpsRaw = await getSettingInt("daily_spin_win_probability_bps", DEFAULT_WIN_PROBABILITY_BPS);
@@ -158,6 +176,7 @@ export async function GET(req: NextRequest) {
             }
           : null,
         lotteryBlocked,
+        allowReset,
       })
     );
   } catch (err: any) {
@@ -182,6 +201,7 @@ export async function POST(req: NextRequest) {
 
     const ttlSecondsRaw = await getSettingInt("daily_spin_coupon_ttl_seconds", DEFAULT_COUPON_TTL_SECONDS);
     const ttlSeconds = clampInt(ttlSecondsRaw, 60, 365 * 24 * 60 * 60);
+    const allowSelfReset = await getSettingBool("daily_spin_allow_self_reset", DEFAULT_ALLOW_SELF_RESET);
 
     const rollValue = randomInt(0, 10000);
 
@@ -207,6 +227,7 @@ export async function POST(req: NextRequest) {
       spin_date: row.spin_date || spinDate,
       chance_bps: chanceBps,
       chance_percent: chanceBps / 100,
+      allow_reset: allowSelfReset,
       has_spun: true,
       can_spin: false,
       already_spun: !!row.already_spun,
@@ -219,6 +240,95 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: any) {
     console.error("Error in daily spin POST:", err);
+    return NextResponse.json({ error: err?.message || "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const studentResult = await getStudentContext(req);
+    if (studentResult.error) return studentResult.error;
+
+    const { context } = studentResult;
+    const lotteryBlocked = context.isAdmin || context.isSuperAdmin || context.isCleanupAdmin;
+    const allowSelfReset = await getSettingBool("daily_spin_allow_self_reset", DEFAULT_ALLOW_SELF_RESET);
+    const allowReset = lotteryBlocked || allowSelfReset;
+    if (!allowReset) {
+      return NextResponse.json({ error: "Reset is disabled" }, { status: 403 });
+    }
+
+    const spinDate = getSpinDate();
+    const chanceBpsRaw = await getSettingInt("daily_spin_win_probability_bps", DEFAULT_WIN_PROBABILITY_BPS);
+    const chanceBps = clampInt(chanceBpsRaw, 0, 10000);
+
+    const spinRow = await getTodaySpin(context.studentId, spinDate);
+    if (!spinRow) {
+      return NextResponse.json({
+        ...buildStatusPayload({
+          chanceBps,
+          spinDate,
+          spinRow: null,
+          lotteryBlocked,
+          allowReset,
+        }),
+        reset: true,
+      });
+    }
+
+    if (spinRow.coupon_id) {
+      const { data: coupon, error: couponError } = await supabaseAdmin
+        .from("coupons")
+        .select("id, used_at, used_in_queue_id, reserved_queue_id")
+        .eq("id", spinRow.coupon_id)
+        .maybeSingle();
+
+      if (couponError) {
+        return NextResponse.json({ error: couponError.message || "Failed to check coupon" }, { status: 500 });
+      }
+
+      if (coupon?.used_at || coupon?.used_in_queue_id || coupon?.reserved_queue_id) {
+        return NextResponse.json(
+          { error: "Cannot reset: coupon already used or reserved" },
+          { status: 409 }
+        );
+      }
+
+      if (coupon?.id) {
+        const { error: couponDeleteError } = await supabaseAdmin
+          .from("coupons")
+          .delete()
+          .eq("id", coupon.id);
+
+        if (couponDeleteError) {
+          return NextResponse.json(
+            { error: couponDeleteError.message || "Failed to remove coupon" },
+            { status: 500 }
+          );
+        }
+      }
+    }
+
+    const { error: spinDeleteError } = await supabaseAdmin
+      .from("daily_coupon_spins")
+      .delete()
+      .eq("id", spinRow.id);
+
+    if (spinDeleteError) {
+      return NextResponse.json({ error: spinDeleteError.message || "Failed to reset spin" }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      ...buildStatusPayload({
+        chanceBps,
+        spinDate,
+        spinRow: null,
+        lotteryBlocked,
+        allowReset,
+      }),
+      reset: true,
+    });
+  } catch (err: any) {
+    console.error("Error in daily spin DELETE:", err);
     return NextResponse.json({ error: err?.message || "Internal server error" }, { status: 500 });
   }
 }
