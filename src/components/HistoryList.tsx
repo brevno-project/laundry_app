@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLaundry } from '@/contexts/LaundryContext';
 import { UiLanguage, useUi } from '@/contexts/UiContext';
 import Avatar from '@/components/Avatar';
@@ -71,13 +71,15 @@ const getEarliestDate = (dates: Array<string | null | undefined>) => {
 };
 
 export default function HistoryList() {
-  const { history, historyTotalCount, historyHasMore, loadMoreHistory, isSuperAdmin, fetchHistory, students } = useLaundry();
+  const { history, historyTotalCount, historyHasMore, loadMoreHistory, isAdmin, isSuperAdmin, isCleanupAdmin, fetchHistory, students } = useLaundry();
   const { t, language } = useUi();
   const locale = language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : language === 'ko' ? 'ko-KR' : 'ky-KG';
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<HistoryItem | null>(null);
   const [deleteAction, setDeleteAction] = useState<"single" | "all" | null>(null);
+  const [paymentFilter, setPaymentFilter] = useState<'all' | 'coupons' | 'money'>('all');
+  const canUsePaymentFilter = isAdmin || isSuperAdmin || isCleanupAdmin;
   const getKeyFetchLabel = (room?: string | null) => {
     if (language !== "ru") return t("history.keyFetch");
     const normalizedRoom = (room || "").trim().toUpperCase();
@@ -128,6 +130,40 @@ export default function HistoryList() {
     if (paymentType === 'money' || paymentType === 'cash') return t('payment.money');
     return paymentType;
   };
+
+  const filteredHistory = useMemo(() => {
+    if (!canUsePaymentFilter) return history;
+
+    const privilegedStudentIds = new Set(
+      students
+        .filter((student) => student.is_admin || student.is_super_admin || student.is_cleanup_admin)
+        .map((student) => student.id)
+    );
+
+    const nonPrivileged = history.filter((item) => {
+      if (!item.student_id) return true;
+      return !privilegedStudentIds.has(item.student_id);
+    });
+
+    if (paymentFilter === 'coupons') {
+      return nonPrivileged.filter((item) => {
+        const couponsUsed = item.coupons_used ?? 0;
+        const paymentType = (item.payment_type || '').toLowerCase();
+        return couponsUsed > 0 || paymentType === 'coupon' || paymentType === 'both';
+      });
+    }
+
+    if (paymentFilter === 'money') {
+      return nonPrivileged.filter((item) => {
+        const couponsUsed = item.coupons_used ?? 0;
+        const paymentType = (item.payment_type || '').toLowerCase();
+        const isCouponPayment = couponsUsed > 0 || paymentType === 'coupon' || paymentType === 'both';
+        return !isCouponPayment;
+      });
+    }
+
+    return nonPrivileged;
+  }, [canUsePaymentFilter, history, students, paymentFilter]);
 
   const authedFetch = async (url: string, options: RequestInit = {}) => {
     if (!supabase) {
@@ -223,8 +259,56 @@ export default function HistoryList() {
         </div>
       </div>
 
+      {canUsePaymentFilter && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+          <div className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+            {t("history.paymentFilter.title")}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setPaymentFilter('all')}
+              className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
+                paymentFilter === 'all'
+                  ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600'
+              }`}
+            >
+              {t("history.paymentFilter.all")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaymentFilter('coupons')}
+              className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
+                paymentFilter === 'coupons'
+                  ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600'
+              }`}
+            >
+              {t("history.paymentFilter.coupons")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaymentFilter('money')}
+              className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
+                paymentFilter === 'money'
+                  ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600'
+              }`}
+            >
+              {t("history.paymentFilter.money")}
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-3">
-        {history.map((item) => {
+        {filteredHistory.length === 0 && (
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            {t("history.filteredEmpty")}
+          </div>
+        )}
+        {filteredHistory.map((item) => {
           const cycleStart = getEarliestDate([
             item.ready_at,
             item.key_issued_at,
