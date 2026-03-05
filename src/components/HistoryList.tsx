@@ -131,8 +131,20 @@ export default function HistoryList() {
     return paymentType;
   };
 
-  const filteredHistory = useMemo(() => {
-    if (!canUsePaymentFilter) return history;
+  const { filteredHistory, couponsCount, moneyCount } = useMemo(() => {
+    const isCouponPayment = (item: HistoryItem) => {
+      const couponsUsed = item.coupons_used ?? 0;
+      const paymentType = (item.payment_type || '').toLowerCase();
+      return couponsUsed > 0 || paymentType === 'coupon' || paymentType === 'both';
+    };
+
+    if (!canUsePaymentFilter) {
+      return {
+        filteredHistory: history,
+        couponsCount: 0,
+        moneyCount: 0,
+      };
+    }
 
     const privilegedStudentIds = new Set(
       students
@@ -145,24 +157,30 @@ export default function HistoryList() {
       return !privilegedStudentIds.has(item.student_id);
     });
 
+    const couponsHistory = nonPrivileged.filter(isCouponPayment);
+    const moneyHistory = nonPrivileged.filter((item) => !isCouponPayment(item));
+
     if (paymentFilter === 'coupons') {
-      return nonPrivileged.filter((item) => {
-        const couponsUsed = item.coupons_used ?? 0;
-        const paymentType = (item.payment_type || '').toLowerCase();
-        return couponsUsed > 0 || paymentType === 'coupon' || paymentType === 'both';
-      });
+      return {
+        filteredHistory: couponsHistory,
+        couponsCount: couponsHistory.length,
+        moneyCount: moneyHistory.length,
+      };
     }
 
     if (paymentFilter === 'money') {
-      return nonPrivileged.filter((item) => {
-        const couponsUsed = item.coupons_used ?? 0;
-        const paymentType = (item.payment_type || '').toLowerCase();
-        const isCouponPayment = couponsUsed > 0 || paymentType === 'coupon' || paymentType === 'both';
-        return !isCouponPayment;
-      });
+      return {
+        filteredHistory: moneyHistory,
+        couponsCount: couponsHistory.length,
+        moneyCount: moneyHistory.length,
+      };
     }
 
-    return nonPrivileged;
+    return {
+      filteredHistory: history,
+      couponsCount: couponsHistory.length,
+      moneyCount: moneyHistory.length,
+    };
   }, [canUsePaymentFilter, history, students, paymentFilter]);
 
   const authedFetch = async (url: string, options: RequestInit = {}) => {
@@ -285,7 +303,7 @@ export default function HistoryList() {
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600'
               }`}
             >
-              {t("history.paymentFilter.coupons")}
+              {t("history.paymentFilter.coupons")} ({couponsCount})
             </button>
             <button
               type="button"
@@ -296,7 +314,7 @@ export default function HistoryList() {
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600'
               }`}
             >
-              {t("history.paymentFilter.money")}
+              {t("history.paymentFilter.money")} ({moneyCount})
             </button>
           </div>
         </div>
