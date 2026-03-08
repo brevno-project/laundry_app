@@ -1499,6 +1499,11 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
 
 
       if (!uid) {
+        const hasCachedUser = typeof window !== "undefined" && !!localStorage.getItem("laundryUser");
+        if (hasCachedUser) {
+          await resetStuckAuthSession('Missing session user during auth refresh');
+          return;
+        }
 
         setUser(null);
 
@@ -1640,13 +1645,8 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       }
 
       console.error('Error in refreshMyRole:', error);
-
-      setUser(null);
-
-      setIsAdmin(false);
-
-      setIsSuperAdmin(false);
-      setIsCleanupAdmin(false);
+      await resetStuckAuthSession('Auth initialization failed');
+      return;
 
     } finally {
       setAuthReady(true);

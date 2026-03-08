@@ -81,6 +81,20 @@ export default function StudentAuth() {
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (step !== "select") return;
+    if (students.length > 0) return;
+
+    const retryId = window.setInterval(() => {
+      void loadStudentsRef.current();
+    }, 4000);
+
+    return () => {
+      window.clearInterval(retryId);
+    };
+  }, [step, students.length]);
+
   // Логируем данные студентов при их изменении
   useEffect(() => {
     if (students.length > 0) {
